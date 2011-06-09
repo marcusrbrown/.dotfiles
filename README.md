@@ -5,7 +5,11 @@ A place for keeping my configuration files synchronized across machines.
 
 Configs have been compiled from various sources:
 
-https://github.com/isaacs/dotfiles		bash
+<table>
+<tr>
+<td>[isaacs / dotfiles](https://github.com/isaacs/dotfiles)</td><td>bash</td>
+</tr>
+</table>
 https://github.com/aroberts/config_files	install.sh
 https://github.com/rtomayko/dotfiles		everything
 https://github.com/jpalardy/dotfiles		bash, bin/, vim
