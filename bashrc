@@ -1,6 +1,36 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files for examples
 
+if ! [ "$PS1" == "" ]; then
+    DOT_BASHRC_LOADED=1
+    ! [ "$DOT_PROFILE_LOADED" == "1" ] && . ~/.profile
+fi
+
+### TEMP FROM .bash_profile ###
+# source the system wide bashrc if it exists
+if [ -e /etc/bash.bashrc ] ; then
+  source /etc/bash.bashrc
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d ~/bin ] ; then
+    PATH=~/bin:${PATH}
+fi
+
+umask 066
+
+#export TERM=rxvt-cygwin-native
+# Needed for rxvt/vim/etc. under MSYS
+export TERM=msys
+
+# Python to use.
+#export PYTHON=/cygdrive/c/Python26/python.exe
+
+# Make sure Python output is always unbuffered (needed for Win32 Pythons).
+export PYTHONUNBUFFERED=x
+
+### END TEMP FROM .bash_profile ###
+
 
 # Are we running under msys? If so, the terminal, prompt, and a few other settings need to be set differently.
 if [ "$MSYSTEM" -a "$MSYSCON" ]; then
