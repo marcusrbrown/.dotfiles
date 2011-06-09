@@ -1,0 +1,37 @@
+# $HOME/.inputrc
+
+# Key bindings
+"\e[1~": beginning-of-line
+"\e[7~": beginning-of-line
+"\e[2~": paste-from-clipboard
+"\e[3~": delete-char
+"\e[4~": end-of-line
+"\e[8~": end-of-line
+# Common to Console & RXVT
+"\C-?": backward-kill-line     		# Ctrl-BackSpace
+"\e[2~": paste-from-clipboard  		# "Ins. Key"
+"\e[5~": beginning-of-history  		# Page up
+"\e[6~": end-of-history        		# Page down
+"\e[11~": display-shell-version # F1
+"\e[15~": re-read-init-file     # F5
+
+#set bell-style visible
+set bell-style off
+set horizontal-scroll-mode Off
+set show-all-if-ambiguous On
+set visible-stats On
+set mark-directories On
+set editing-mode emacs
+#set meta-flag On
+#set convert-meta Off
+#set output-meta On
+
+# Ask before displaying >50 items
+# Since $WINDIR $PATH var can be in $PATH, this could list
+# all window exectables in C:\WINDOWS
+#set completion-query-items 50
+
+# Ignore case for the command-line-completion functionality
+# on:  default to a Windows style console
+# off: default to a *nix style console
+set completion-ignore-case on
