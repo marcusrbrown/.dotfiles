@@ -44,6 +44,19 @@ symlink() # target, link
   fi
 }
 
+issymlink() # link
+{
+  if [ $no_symlink -eq 0 ]; then
+    if [ -n "$mklink" ]; then
+      cmd //c dir "`wpath $1`" | grep '<SYMLINK>' > /dev/null
+    else
+      test -L "$1"
+    fi
+  else
+    return 1
+  fi
+}
+
 backup_dir=".dotfile_backup"
 
 backup() # original
@@ -72,7 +85,7 @@ install() # src, target
   dst=$2
 
   if [ -e "$dst" ]; then
-    if [ ! -L "$dst" ]; then
+    if ! issymlink "$dst"; then
       cutline=`grep -n -m1 "$cutstring" "$dst" | sed "s/:.*//"`
       if [[ -n $cutline ]]; then
         let "cutline = $cutline - 1"
@@ -105,7 +118,7 @@ for name in *; do
   target=$HOME/.$name
 
   if [[ ! `grep "^$name$" "$PWD/do_not_install"` ]]; then
-    if [ -d "$target" -a ! -L "$target" ]; then
+    if [ -d "$target" ] && ! issymlink "$target"; then
       for subname in "$name/*"; do
         subtarget=$HOME/.$subname
         # echo "install '$subname' '$subtarget'"
