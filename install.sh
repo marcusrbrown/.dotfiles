@@ -72,9 +72,12 @@ backup() # original
   name=`basename "$orig"`
   bak=$bdir/$name
   if [ ! -f "$bak" ]; then
+    echo "Backing up '$orig'"
     cp "$orig" "$bak"
     rm "$orig"
+    return 0
   fi
+  return 1
 }
 
 cutstring="DO NOT EDIT BELOW THIS LINE"
@@ -99,9 +102,9 @@ install() # src, target
         fi
         mv update_tmp "$dst"
       else
-        echo "Backing up '$dst'"
-        backup "$dst"
-        symlink "$PWD/$src" "$dst"
+        if backup "$dst"; then
+          symlink "$PWD/$src" "$dst"
+        fi
       fi
     fi
   else
