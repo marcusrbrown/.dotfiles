@@ -52,7 +52,10 @@ issymlink() # link
 {
   if [ $no_symlink -eq 0 ]; then
     if [ -n "$mklink" ]; then
-      cmd //c dir "`wpath $1`" | grep '<SYMLINK' > /dev/null
+      # The directory listing has the symlink's target following the link name, separated by a space.
+      parent=`dirname "$1"`
+      linkname=`basename "$1"`
+      cmd //c dir //al "`wpath \"$parent\"`" | grep '<SYMLINK' | grep "$linkname " > /dev/null
     else
       test -L "$1"
     fi
