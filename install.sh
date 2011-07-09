@@ -34,7 +34,11 @@ symlink() # target, link
 
   if [ $no_symlink -eq 0 ]; then
     if [ -n "$mklink" ]; then
-      $mklink "`wpath $link`" "`wpath $target`"
+      if [ -d "$target" ]; then
+        $mklink //d "`wpath $link`" "`wpath $target`"
+      else
+        $mklink "`wpath $link`" "`wpath $target`"
+      fi
     else
       ln -s "$target" "$link"
     fi
@@ -48,7 +52,7 @@ issymlink() # link
 {
   if [ $no_symlink -eq 0 ]; then
     if [ -n "$mklink" ]; then
-      cmd //c dir "`wpath $1`" | grep '<SYMLINK>' > /dev/null
+      cmd //c dir "`wpath $1`" | grep '<SYMLINK' > /dev/null
     else
       test -L "$1"
     fi

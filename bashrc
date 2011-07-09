@@ -159,12 +159,4 @@ export LESS LESSEDIT LESSOPEN LESSCHARDEF PAGER
 INPUTRC=~/.inputrc
 export INPUTRC
 
-if [ -z $VIMRUNTIME ]; then
-    if [ "$MSYS" ]; then
-        export VIMRUNTIME=/usr/share/vim/vim72
-    else
-        export VIMRUNTIME=/usr/share/vim/vim73
-    fi
-fi
-
 # ex: ts=4 sw=4 et filetype=sh

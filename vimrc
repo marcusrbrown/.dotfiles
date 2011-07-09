@@ -24,8 +24,10 @@ set title
 
 set encoding=utf-8
 
-colorscheme darkblue
+"colorscheme darkblue
 "colorscheme vividchalk
+set background=dark
+colorscheme solarized
 set tags=tags;
 
 " Suffixes that get lower priority when doing tab completion for filenames.
