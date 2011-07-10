@@ -1,15 +1,9 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files for examples
 
-if ! [ "$PS1" == "" ]; then
-    DOT_BASHRC_LOADED=1
-    ! [ "$DOT_PROFILE_LOADED" == "1" ] && . ~/.profile
-fi
-
-### TEMP FROM .bash_profile ###
-# source the system wide bashrc if it exists
-if [ -e /etc/bash.bashrc ] ; then
-  source /etc/bash.bashrc
+if [ -n "$PS1" ]; then
+  DOT_BASHRC_LOADED=1
+  ! [ "$DOT_PROFILE_LOADED" = "1" ] && . ~/.profile
 fi
 
 # set PATH so it includes user's private bin if it exists
