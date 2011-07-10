@@ -1,0 +1,96 @@
+# .bash/main - Main Bash configuration
+#
+# This file is sourced from ~/.profile to pull in all custom shell configurations.
+#
+# Large portions taken from a variety of sources, including the dotfiles repos of
+# github.com/{isaacs,rtomayko,twerth,sontek} to name a few.
+#
+# ex: ts=2 sw=2 et filetype=sh
+
+main()
+{
+# try to avoid polluting the global namespace with lots of garbage.
+# the *right* way to do this is to have everything inside functions,
+# and use the "local" keyword.  But that would take some work to
+# reorganize all my old messes.  So this is what I've got for now.
+__garbage_list=""
+__garbage () {
+  local i
+  if [ $# -eq 0 ]; then
+    for i in ${__garbage_list}; do
+      unset $i
+    done
+    unset __garbage_list
+  else
+    for i in "$@"; do
+      __garbage_list="${__garbage_list} $i"
+    done
+  fi
+}
+__garbage __garbage
+
+
+##
+# Path utilities.
+
+__garbage __set_path
+__set_path () {
+  local var="$1"
+  local orig=$(eval 'echo $'$var)
+  IFS=:
+  orig=($orig)
+  local p="$2"
+
+  local path_elements=($p)
+  unset IFS
+  p=""
+  local i
+  local fixed
+  for i in "${orig[@]}"; do
+    if [ -d "$i" ]; then
+      fixed="$fixed:$i"
+    fi
+  done
+  fixed=" ${fixed//:/ : } :"
+  for i in "${path_elements[@]}"; do
+    if [ -d "$i" ]; then
+      p="$p:$i"
+      # strip out from the original set.
+      fixed=${fixed/ $i :/}
+    fi
+  done
+  fixed=${fixed// :/:}
+  fixed=${fixed//: /:}
+  # put the original at the front, but only the ones that aren't already present
+  # This preserves the intended ordering, and allows env hijacking tricks like
+  # nave and other subshell programs use.
+  p="${fixed/:/}${p/:/}"
+  export $var="$(echo $p)"
+}
+
+__garbage __form_paths
+local path_roots=( "$HOME/" "$HOME/local/" /usr/local/ /opt/local/ /usr/ /opt/ / )
+__form_paths () {
+  local r p paths
+  paths=""
+  for r in "${path_roots[@]}"; do
+    for p in "$@"; do
+      paths="$paths:$r$p"
+    done
+  done
+  echo ${paths/:/} # remove the first :
+}
+
+__set_path PATH "$(__form_paths bin sbin)"
+__set_path LD_LIBRARY_PATH "$(__form_paths lib)"
+# TODO: Needs mingw path fixup
+#__set_path CLASSPATH "."
+__set_path CDPATH ".:..:$HOME/git:$HOME/hg:$HOME"
+
+
+# Collect local variables and functions.
+__garbage
+}
+
+main
+unset main
