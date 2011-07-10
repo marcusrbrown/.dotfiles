@@ -5,7 +5,6 @@
 # Large portions taken from a variety of sources, including the dotfiles repos of
 # github.com/{isaacs,rtomayko,twerth,sontek} to name a few.
 #
-# ex: ts=2 sw=2 et filetype=sh
 
 main()
 {
@@ -88,9 +87,88 @@ __set_path LD_LIBRARY_PATH "$(__form_paths lib)"
 __set_path CDPATH ".:..:$HOME/git:$HOME/hg:$HOME"
 
 
+##
+# Shell and host environment.
+
+# detect interactive shell
+case "$-" in
+  *i*) INTERACTIVE=yes ;;
+  *)   unset INTERACTIVE ;;
+esac
+
+# detect login shell
+case "$0" in
+  -*) LOGIN=yes ;;
+  *)  unset LOGIN ;;
+esac
+
+# detect remote shell
+if [ -n "$SSH_CONNECTION" ]; then
+  REMOTE=yes
+else
+  unset REMOTE
+fi
+
+
+##
+# Various shell options
+
+export HISTSIZE=10000
+export HISTFILESIZE=1000000000
+export HISTCONTROL=ignoreboth
+export HISTIGNORE="&:cd:ls:ll:[bf]g:exit"
+
+if [ -n "$BASH" ]; then
+  # see http://www.gnu.org/software/bash/manual/html_node/The-Shopt-Builtin.html#The-Shopt-Builtin
+  shopt -s cdspell                  # fix minor cd errors
+  shopt -s checkhash                # check that a command exists in the hash table before executing it
+  shopt -s checkwinsize             # update LINES and COLUMNS after each command to detect window size changes
+  shopt -s cmdhist                  # save a multi-line command in a single history entry
+  shopt -s expand_aliases           # expand aliases when not interactive
+  shopt -s histappend               # append history instead of overwriting it
+  shopt -s hostcomplete             # attempt hostname completion (on words containing '@')
+  shopt -s nocaseglob               # case-insensitive filename match
+  shopt -s no_empty_cmd_completion  # don't search PATH for command completion if the line is empty
+fi
+
+
+##
+# ls
+
+# if the dircolors utility is available, set that up to
+__garbage __dircolors
+__dircolors="$(type -P gdircolors dircolors | head -1)"
+test -n "$dircolors" && {
+  COLORS=/etc/DIR_COLORS
+  test -e "/etc/DIR_COLORS.$TERM"   && COLORS="/etc/DIR_COLORS.$TERM"
+  test -e "$HOME/.dircolors"        && COLORS="$HOME/.dircolors"
+  test ! -e "$COLORS"               && COLORS=
+  eval `$__dircolors --sh $COLORS`
+}
+
+# Setup the options that are always passed to ls
+LS_COMMON="-hBG"
+
+# Does ls support --color?
+if (ls --color) &> /dev/null; then
+  LS_COMMON="$LS_COMMON --color=auto"
+else
+  # No color, so put a slash at the end of directory names, etc. to differentiate.
+  LS_COMMON="$LS_COMMON -F"
+fi
+
+test -n "$LS_COMMON" &&
+alias ls="command ls $LS_COMMON"
+alias ll="ls -l"
+alias la="ls -a"
+alias lal="ll -a"
+
+
 # Collect local variables and functions.
 __garbage
 }
 
 main
 unset main
+
+# ex: ts=2 sw=2 et filetype=sh
