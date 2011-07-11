@@ -164,6 +164,64 @@ alias la="ls -a"
 alias lal="ll -a"
 
 
+##
+# Prompt
+
+# Only set the prompt if the shell is interactive.
+if [ -n "$INTERACTIVE" ]; then
+  NO_COLOR='\[\033[00m\]'
+  RED='\[\033[01;31m\]'
+  GREEN='\[\033[0;32m\]'
+  YELLOW='\[\033[0;33m\]'
+  BLUE='\[\033[01;34m\]'
+  PURPLE='\[\033[01;35m\]'
+  CYAN='\[\033[01;36m\]'
+  WHITE='\[\033[01;37m\]'
+
+  PATH_COLOR=$YELLOW
+  HOST_COLOR=$PURPLE
+
+  function set_title()
+  {
+    echo -ne "\033]0;$1\007"
+  }
+
+  function set_prompt()
+  {
+    last_rv=$?
+
+    history -a
+
+    _cwd=${PWD/$HOME/\~}
+    set_title $HOSTNAME:$_cwd
+
+    path=$_cwd
+    if [ ${#path} -gt 40 ]; then
+      d=$(basename "$path")
+      path=$(dirname "$path")
+      i=$[ ${#path} - 40 ]
+      path=...${path:$i}/$d
+    fi
+    path="${PATH_COLOR}${path}${NO_COLOR}"
+
+    host="${HOST_COLOR}\u@\h${NO_COLOR}"
+
+    time="[${GREEN}$(date +"%R")${NO_COLOR}]"
+
+    if [ $last_rv -eq 0 ]; then
+      end="\n\$${NO_COLOR} "
+    else
+      end="\n${RED}\$${NO_COLOR} "
+    fi
+
+    PS1="\n${time} ${host}:${path} ${end}"
+    unset end time path host _cwd last_rv
+  }
+
+  PROMPT_COMMAND=set_prompt
+fi
+
+
 # Collect local variables and functions.
 __garbage
 }
