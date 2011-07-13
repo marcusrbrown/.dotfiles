@@ -165,6 +165,20 @@ alias lal="ll -a"
 
 
 ##
+# Terminal
+
+if [ -n "$REMOTE" ]; then
+  # Fix the terminal when shelling in from MSYS or Cygwin.
+  case "$TERM" in
+    msys*)
+      # TODO: Make sure the host isn't MSYS or Cygwin.
+      export TERM=xterm
+      ;;
+  esac
+fi
+
+
+##
 # Prompt
 
 # Only set the prompt if the shell is interactive.
