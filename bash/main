@@ -216,7 +216,7 @@ if [ -n "$INTERACTIVE" ]; then
         ;;
 
       host)
-        local user=${USER:-USERNAME}
+        local user=${USER:-$USERNAME}
         local host=${HOSTNAME}
         echo -ne "${HOST_COLOR}${user}@${host}${NO_COLOR}"
         ;;
