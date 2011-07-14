@@ -116,7 +116,7 @@ fi
 export HISTSIZE=10000
 export HISTFILESIZE=1000000000
 export HISTCONTROL=ignoreboth
-export HISTIGNORE="&:cd:ls:ll:[bf]g:exit"
+export HISTIGNORE="&:cd:ls:ll:la:lal:[bf]g:exit"
 
 if [ -n "$BASH" ]; then
   # see http://www.gnu.org/software/bash/manual/html_node/The-Shopt-Builtin.html#The-Shopt-Builtin
