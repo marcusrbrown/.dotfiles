@@ -9,7 +9,7 @@ no_symlink=0
 os=`uname -s`
 case "$os" in
   MINGW* | CYGW*)
-    mklink=`$PWD/testmklink.sh`
+    mklink=`"$PWD/testmklink.sh"`
     if [ -z "$mklink" ]; then
       no_symlink=1
       echo "*** NOTE ***"
@@ -43,8 +43,12 @@ symlink() # target, link
       ln -s "$target" "$link"
     fi
   else
-    rm "$link"
-    cp "$target" "$link"
+    if [ -d "$target" ]; then
+      [ ! -d "$link" ] && mkdir -p "$link"
+      cp -r "$target"/* "$link"
+    else
+      cp "$target" "$link"
+    fi
   fi
 }
 
@@ -80,8 +84,8 @@ backup() # original
   bak=$bdir/$name
   if [ ! -f "$bak" ]; then
     echo "Backing up '$orig'"
-    cp "$orig" "$bak"
-    rm "$orig"
+    cp -r "$orig" "$bak"
+    [ ! -d "$orig" ] && rm "$orig"
     return 0
   fi
   return 1
@@ -129,7 +133,7 @@ for name in *; do
 
   if [[ ! `grep "^$name$" "$PWD/do_not_install"` ]]; then
     if [ -d "$target" ] && ! issymlink "$target"; then
-      for subname in "$name/*"; do
+      for subname in "$name"/*; do
         subtarget=$HOME/.$subname
         # echo "install '$subname' '$subtarget'"
         install "$subname" "$subtarget"

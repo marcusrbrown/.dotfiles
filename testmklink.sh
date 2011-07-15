@@ -6,11 +6,25 @@
 
 #set -x
 
-# TODO: Does Cygwin need different escaping?
-mklink="cmd //c mklink"
+case "`uname -s`" in
+  MINGW*)
+    fslash="//"
+    winpwd="pwd -W"
+    ;;
+
+  CYGW*)
+    fslash="/"
+    winpwd="cygpath -wa ."
+    ;;
+
+  *)
+    echo "This script should only be run under MSYS or Cygwin."
+    exit 1
+    ;;
+esac
+
+mklink="cmd ${fslash}c mklink"
 mklink_success="symbolic link created"
-# TODO: Does Cygwin support `pwd -W`? If not, use cygpath instead.
-winpwd="pwd -W"
 
 # Create a temporary directory and try to make a link to it.
 tmpt=`mktemp -q -d -p $TMP` || exit 1
@@ -24,7 +38,7 @@ watmpt=$(cd "$tmpt" && $winpwd | sed 's/\//\\/g')
 watmpl=$(cd "$tmpl" && $winpwd | sed 's/\//\\/g')
 rm -rf "$tmpl"
 
-success=$($mklink //d "$watmpl" "$watmpt" 2>NUL | grep "$mklink_success")
+success=$($mklink ${fslash}d "$watmpl" "$watmpt" 2>/dev/null | grep "$mklink_success")
 if [ -z "$success" ]; then
     rm -rf "$tmpt"
     exit 1
