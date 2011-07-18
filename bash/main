@@ -143,7 +143,7 @@ test -n "$__dircolors" && {
   test -e "/etc/DIR_COLORS.$TERM"   && COLORS="/etc/DIR_COLORS.$TERM"
   test -e "$HOME/.dircolors"        && COLORS="$HOME/.dircolors"
   test ! -e "$COLORS"               && COLORS=
-  eval `$__dircolors --sh $COLORS`
+  eval `$__dircolors --sh "$COLORS"`
 }
 
 # Setup the options that are always passed to ls
@@ -273,9 +273,9 @@ SSH_ENV="$HOME/.ssh/environment"
 __garbage __start_ssh_agent
 __start_ssh_agent()
 {
-  ssh-agent | sed 's/^echo/#echo/' > ${SSH_ENV}
-  chmod 600 ${SSH_ENV}
-  . ${SSH_ENV} > /dev/null
+  ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+  chmod 600 "${SSH_ENV}"
+  . "${SSH_ENV}" > /dev/null
   if [ -n "$INTERACTIVE" ]; then
     # TODO: Not sure how useful this is when ssh-agent isn't already running, and we're not interactive...
     ssh-add
@@ -283,7 +283,7 @@ __start_ssh_agent()
 }
 
 if [ -f "${SSH_ENV}" ]; then
-  . ${SSH_ENV} > /dev/null
+  . "${SSH_ENV}" > /dev/null
   # TODO: Move ps detection elsewhere.
   __garbage __ps_full
   __ps_full=-x
