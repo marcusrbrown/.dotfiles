@@ -165,6 +165,27 @@ alias lal="ll -a"
 
 
 ##
+# EDITOR and PAGER
+
+EDITOR=vim
+export EDITOR
+
+if [ -n "$(command -v less)" ]; then
+  # Less PAGER opts: Quit if fits on 1 screen, ignore case in searches w/no uppercase, output "raw" control chars,
+  # chop long lines, highlight first new line after forward screen, don't use termcap init/deinit strings
+  PAGER="less -FirSwX"
+  # Less MANPAGER opts: Same as above except don't output "raw" control chars and squeeze multiple blank lines
+  MANPAGER="less -FiRswX"
+else
+  PAGER=more
+  MANPAGER=more
+fi
+export PAGER MANPAGER
+
+alias l=$PAGER
+
+
+##
 # Terminal
 
 if [ -n "$REMOTE" ]; then
