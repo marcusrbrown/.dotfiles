@@ -33,6 +33,7 @@ TERM linux
 TERM linux-c
 TERM mach-color
 TERM mlterm
+TERM msys
 TERM putty
 TERM rxvt
 TERM rxvt-cygwin
