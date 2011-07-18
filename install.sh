@@ -113,7 +113,8 @@ install() # src, target
         fi
         mv update_tmp "$dst"
       else
-        if backup "$dst"; then
+        if backup "$dst" || [ $no_symlink -ne 0 ]; then
+          echo "Overwriting '$dst'"
           symlink "$PWD/$src" "$dst"
         fi
       fi
