@@ -238,7 +238,7 @@ if [ -n "$INTERACTIVE" ]; then
 
       host)
         local user=${USER:-$USERNAME}
-        local host=${HOSTNAME}
+        local host=${HOSTNAME%%.*}
         echo -ne "${HOST_COLOR}${user}@${host}${NO_COLOR}"
         ;;
 
@@ -284,7 +284,11 @@ __start_ssh_agent()
 
 if [ -f "${SSH_ENV}" ]; then
   . ${SSH_ENV} > /dev/null
-  ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+  # TODO: Move ps detection elsewhere.
+  __garbage __ps_full
+  __ps_full=-x
+  [ -n "$WINDIR" ] && __ps_full=
+  ps $__ps_full | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
     __start_ssh_agent
   }
 else
