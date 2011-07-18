@@ -136,9 +136,9 @@ fi
 # ls
 
 # if the dircolors utility is available, set that up to
-__garbage __dircolors
+__garbage __dircolors COLORS
 __dircolors="$(type -P gdircolors dircolors | head -1)"
-test -n "$dircolors" && {
+test -n "$__dircolors" && {
   COLORS=/etc/DIR_COLORS
   test -e "/etc/DIR_COLORS.$TERM"   && COLORS="/etc/DIR_COLORS.$TERM"
   test -e "$HOME/.dircolors"        && COLORS="$HOME/.dircolors"
