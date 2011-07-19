@@ -259,7 +259,7 @@ if [ -n "$INTERACTIVE" ]; then
   }
 
   PROMPT_COMMAND="__prompt_status=\$?; history -a"
-  PS1="\$(__prompt title)\n\$(__prompt time) \$(__prompt host):\$(__prompt path) \$(__prompt status)"
+  PS1="\$(__prompt title)\n\$(__prompt host):\$(__prompt path) \$(__prompt status)"
 fi
 
 
