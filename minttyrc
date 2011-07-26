@@ -1,0 +1,6 @@
+BoldAsFont=yes
+CursorType=underscore
+FontHeight=9
+Columns=120
+Rows=48
+ScrollbackLines=30000
