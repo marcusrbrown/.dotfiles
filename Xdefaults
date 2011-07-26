@@ -51,20 +51,13 @@ Rxvt*title: rxvt
 #define S_cyan          #2aa198
 #define S_green         #859900
 
-!*background:            #002b36
-*background:            #073642
-!*foreground:            #657b83
-!*foreground:            #b58900
-*foreground:            #eee8d5
+*background:            #002b36
+*foreground:            #839496
 *fading:                40
-!*fadeColor:             #002b36
-*fadeColor:             #073642
-!*cursorColor:           #93a1a1
-*cursorColor:           #2aa198
-!*pointerColorBackground:#586e75
-*pointerColorBackground:#859900
-!*pointerColorForeground:#93a1a1
-*pointerColorForeground:#2aa198
+*fadeColor:             #002b36
+*cursorColor:           #93a1a1
+*pointerColorBackground:#586e75
+*pointerColorForeground:#93a1a1
 
 !! black dark/light
 *color0:                #073642
