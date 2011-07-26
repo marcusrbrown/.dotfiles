@@ -4,3 +4,26 @@ FontHeight=9
 Columns=120
 Rows=48
 ScrollbackLines=30000
+
+# Solarized dark color scheme (http://ethanschoonover.com/solarized)
+
+BackgroundColour=0,43,54         # base03
+ForegroundColour=131,148,150     # base0
+CursorColour=147,161,161         # base1
+
+BoldBlack=0,43,54                # base03
+Black=7,54,66                    # base02
+BoldGreen=88,110,117             # base01
+BoldYellow=101,123,131           # base00
+BoldBlue=131,148,150             # base0
+BoldCyan=147,161,161             # base1
+White=238,232,213                # base2
+BoldWhite=253,246,227            # base3
+Yellow=181,137,0                 # yellow
+BoldRed=203,75,22                # orange
+Red=220,50,47                    # red
+Magenta=211,54,130               # magenta
+BoldMagenta=108,113,196          # violet
+Blue=38,139,210                  # blue
+Cyan=42,161,152                  # cyan
+Green=133,153,0                  # green
