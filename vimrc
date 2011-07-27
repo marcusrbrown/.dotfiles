@@ -1,10 +1,12 @@
-set nocompatible
+" ~/.vimrc
+" vim:set ft=vim et tw=78 sw=2:
 
 " Setup pathogen first (https://github.com/tpope/vim-pathogen).
 set runtimepath+=$HOME/.vim/bundle/vim-pathogen
 call pathogen#infect()
 call pathogen#helptags()
 
+set nocompatible
 set autoread
 set backspace=2		" allow backspacing over everything in insert mode
 " Now we set some defaults for the editor
