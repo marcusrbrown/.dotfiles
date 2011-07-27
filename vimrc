@@ -1,11 +1,10 @@
-" Configuration file for gvim
-" Written for Debian GNU/Linux by W.Akkerman <wakkerma@debian.org>
-" Some modifications by J.H.M. Dassen <jdassen@wi.LeidenUniv.nl>
+set nocompatible
 
+" Setup pathogen first (https://github.com/tpope/vim-pathogen).
+set runtimepath+=$HOME/.vim/bundle/vim-pathogen
+call pathogen#infect()
+call pathogen#helptags()
 
-" Normally we use vim-extensions. If you want true vi-compatibility
-" remove change the following statements
-set nocompatible	" Use Vim defaults (much better!)
 set autoread
 set backspace=2		" allow backspacing over everything in insert mode
 " Now we set some defaults for the editor
