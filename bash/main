@@ -60,10 +60,8 @@ __set_path () {
   done
   fixed=${fixed// :/:}
   fixed=${fixed//: /:}
-  # put the original at the front, but only the ones that aren't already present
-  # This preserves the intended ordering, and allows env hijacking tricks like
-  # nave and other subshell programs use.
-  p="${fixed/:/}${p/:/}"
+  fixed=${fixed%:}
+  p="${p/:/}:$(echo ${fixed/:/})"
   export $var="$(echo $p)"
 }
 
@@ -80,7 +78,7 @@ __form_paths () {
   echo ${paths/:/} # remove the first :
 }
 
-__set_path PATH "$(__form_paths bin sbin)"
+__set_path PATH ".:$(__form_paths bin sbin)"
 __set_path LD_LIBRARY_PATH "$(__form_paths lib)"
 # TODO: Needs mingw path fixup
 #__set_path CLASSPATH "."
