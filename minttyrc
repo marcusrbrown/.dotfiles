@@ -1,6 +1,8 @@
 BoldAsFont=no
 CursorType=underscore
 FontHeight=9
+Locale=en_US
+Charset=UTF-8
 Columns=120
 Rows=48
 ScrollbackLines=30000
