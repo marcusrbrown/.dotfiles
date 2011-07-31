@@ -1,0 +1,6 @@
+##
+# Bash aliases
+#
+# vim:set filetype=sh:
+
+alias reload='source ~/.bash/main'

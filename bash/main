@@ -109,6 +109,16 @@ fi
 
 
 ##
+# Locale
+
+: ${LANG:="en_US.UTF-8"}
+: ${LANGUAGE:="en"}
+: ${LC_CTYPE:="en_US.UTF-8"}
+: ${LC_ALL:="en_US.UTF-8"}
+export LANG LANGUAGE LC_CTYPE LC_ALL
+
+
+##
 # Various shell options
 
 export HISTSIZE=10000
@@ -293,6 +303,13 @@ else
   [ -d "$HOME/.ssh" ] || mkdir "$HOME/.ssh"
   __start_ssh_agent
 fi
+
+
+##
+# Functions and aliases
+
+[ -f ~/.bash/functions ] && . ~/.bash/functions
+[ -f ~/.bash/aliases ] && . ~/.bash/aliases
 
 
 # Collect local variables and functions.

@@ -1,0 +1,12 @@
+##
+# Global bash functions.
+#
+# vim:filetype=sh:
+
+add-alias()
+{
+    local name=$1 value="$2"
+    echo "alias $name='$value'" >> ~/.bash/aliases
+    eval "alias $name='$value'"
+    alias $name
+}
