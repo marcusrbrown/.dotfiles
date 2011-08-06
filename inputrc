@@ -15,6 +15,9 @@
 "\e[11~": display-shell-version # F1
 "\e[15~": re-read-init-file     # F5
 
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+
 # The following three are from the discussion at:
 # http://lifehacker.com/274317/turbocharge-your-terminal?comment=1784425#comments
 
@@ -23,10 +26,13 @@
 "\M-d": "cd !$"
 
 # repeat the last command with sudo in front:
-"\M-s": "sudo !!"
+#"\M-s": "sudo !!"
 
 # Load the previous command and position the cursor for typing an option
 "\M-x": "\C-p\C-a\M-f "
+
+# Cycle through file completions.
+"\M-s": menu-complete
 
 #set bell-style visible
 set bell-style off
@@ -48,3 +54,11 @@ set editing-mode emacs
 # on:  default to a Windows style console
 # off: default to a *nix style console
 set completion-ignore-case on
+
+# Must explicitly use '.' to match hidden files.
+set match-hidden-files off
+
+$if Bash
+    # Typing space on the command line will perform history expansion.
+    Space: magic-space
+$endif
