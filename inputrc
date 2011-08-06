@@ -15,6 +15,19 @@
 "\e[11~": display-shell-version # F1
 "\e[15~": re-read-init-file     # F5
 
+# The following three are from the discussion at:
+# http://lifehacker.com/274317/turbocharge-your-terminal?comment=1784425#comments
+
+# Assume the last arg of the previous cmd was a directory and CD there.
+# mkdir -p some/long/path [enter] [Alt-D] [enter] and you're there!
+"\M-d": "cd !$"
+
+# repeat the last command with sudo in front:
+"\M-s": "sudo !!"
+
+# Load the previous command and position the cursor for typing an option
+"\M-x": "\C-p\C-a\M-f "
+
 #set bell-style visible
 set bell-style off
 set horizontal-scroll-mode Off
