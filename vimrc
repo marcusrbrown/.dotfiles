@@ -88,6 +88,17 @@ if has("autocmd")
     " Source vimrc after saving it
     autocmd BufWritePost .vimrc,vimrc,.gvimrc,gvimrc source $MYVIMRC | if has('gui_running') | source $MYGVIMRC | endif
   augroup END
+
+  " When editing a file, always jump to the last known cursor position.
+  " Don't do it when the position is invalid or when inside an event handler
+  " (happens when dropping a file on gvim).
+  " Also don't do it when the mark is in the first line, that is the default
+  " position when opening a file.
+  autocmd BufReadPost *
+    \ if line("'\"") > 1 && line("'\"") <= line("$") |
+    \   exe "normal! g`\"" |
+    \ endif
+
 endif " has ("autocmd")
 
 set statusline=%<%f\ (%{&ft})\ %-4(%m%)%=%-19(%3l,%02c%03V%)
