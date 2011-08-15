@@ -80,6 +80,10 @@ if has("autocmd")
 
   autocmd FileType python set tabstop=4 shiftwidth=4 softtabstop=4 expandtab smarttab
   autocmd FileType python set textwidth=79
+  " auto indent after "def foo():<CR>"
+  autocmd BufRead python set smartindent cinwords=if,elif,else,for,while,try,except,finally,def,class,with
+  " automatically strip trailing whitespace from Python scripts
+  autocmd BufWritePre python normal m`:%s/\s\+$//e ``
 
   autocmd FileType lua set tabstop=4 shiftwidth=4 smarttab
 
