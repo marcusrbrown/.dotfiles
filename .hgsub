@@ -1,1 +1,2 @@
 vim/bundle/vim-pathogen = [git]git://github.com/tpope/vim-pathogen.git
+vim/bundle/pyflakes-vim = [git]git://github.com/kevinw/pyflakes-vim.git
