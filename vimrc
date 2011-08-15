@@ -26,7 +26,6 @@ set ignorecase          " Do case insensitive matching
 set incsearch           " Incremental search
 set autowrite           " Automatically save before commands like :next and :make
 set autoread            " Reread files that have changed
-set laststatus=2        " Always show the status bar
 set notitle             " No thanks, Vim
 
 " Look for Vim modelines at the top or bottom of files, and look at least 6
@@ -105,4 +104,30 @@ if has("autocmd")
 
 endif " has ("autocmd")
 
-set statusline=%<%f\ (%{&ft})\ %-4(%m%)%=%-19(%3l,%02c%03V%)
+set laststatus=2            " Always show the status bar
+
+set statusline=%<%f\        " file name
+set statusline+=(%{&ft})\   " file type
+
+" display a warning if the file format isn't Unix.
+set statusline+=%#warningmsg#
+set statusline+=%{&ff!='unix'?'['.&ff.']':''}
+set statusline+=%*
+
+" display a warning if the file encoding isn't UTF-8.
+set statusline+=%#warningmsg#
+set statusline+=%{(&fenc!='utf-8'&&&fenc!='')?'['.&fenc.']':''}
+set statusline+=%*
+
+set statusline+=%h          " help file flag
+set statusline+=%r          " read-only flag
+set statusline+=%m          " modified flag
+
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
+set statusline+=%=          " left/right separator
+set statusline+=%c,         " cursor column
+set statusline+=%l/%L       " cursor line/total lines
+set statusline+=\ %P        " percent through file
