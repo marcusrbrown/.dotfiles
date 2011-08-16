@@ -228,6 +228,15 @@ if [ -n "$INTERACTIVE" ]; then
   {
     local cwd=${PWD/$HOME/\~}
 
+    if [ -z "$1" ]; then
+      __prompt title
+      echo
+      __prompt host
+      echo -n ":"
+      __prompt path
+      echo
+    fi
+
     case "$1" in
       title)
         echo -ne "\033]0;$HOSTNAME:$cwd\007"
@@ -254,20 +263,20 @@ if [ -n "$INTERACTIVE" ]; then
         echo -ne "[${GREEN}$(date +"%R")${NO_COLOR}]"
         ;;
 
-      status)
-        local status
+      color)
+        local color
         if [ $__prompt_status -eq 0 ]; then
-          status="\n\$${NO_COLOR} "
+          color="${NO_COLOR}"
         else
-          status="\n${RED}\$${NO_COLOR} "
+          color="${RED}"
         fi
-        echo -ne "$status"
+        echo -ne "$color"
         ;;
     esac
   }
 
-  PROMPT_COMMAND="__prompt_status=\$?; history -a"
-  PS1="\$(__prompt title)\n\$(__prompt host):\$(__prompt path) \$(__prompt status)"
+  PROMPT_COMMAND="__prompt_status=\$?; history -a; __prompt"
+  PS1="\[\$(__prompt color)\]\$\[${NO_COLOR}\] "
 fi
 
 
