@@ -281,6 +281,29 @@ fi
 
 
 ##
+# Command completion
+
+# Only source completion if the shell is interactive.
+if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETION" ]; then
+  bash=${BASH_VERSION%.*}; bmajor=${bash%.*}; bminor=${bash#*.}
+  if [ $bmajor -gt 1 ]; then
+    # Search for a bash_completion file to source.
+    for f in /usr/local/etc/bash_completion \
+             /usr/pkg/etc/bash_completion \
+             /opt/local/etc/bash_completion \
+             /etc/bash_completion
+    do
+      if [ -f $f ]; then
+        . $f
+        break
+      fi
+    done
+  fi
+  unset bash bmajor bminor
+fi
+
+
+##
 # ssh-agent
 
 # Code for ~/.ssh/environment is originally from http://www.cygwin.com/ml/cygwin/2001-06/msg00537.html.
