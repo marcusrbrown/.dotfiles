@@ -6,6 +6,7 @@ Charset=UTF-8
 Columns=120
 Rows=48
 ScrollbackLines=30000
+Term=xterm-256color
 
 # Solarized dark color scheme (http://ethanschoonover.com/solarized)
 
