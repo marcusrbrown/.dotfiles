@@ -35,12 +35,14 @@ symlink() # target, link
   if [ $no_symlink -eq 0 ]; then
     if [ -n "$mklink" ]; then
       if [ -d "$target" ]; then
+        cmd //c rd "`wpath $link`" > /dev/null 2>&1
         $mklink //d "`wpath $link`" "`wpath $target`"
       else
+        cmd //c del "`wpath $link`" > /dev/null 2>&1
         $mklink "`wpath $link`" "`wpath $target`"
       fi
     else
-      ln -s "$target" "$link"
+      ln -sf "$target" "$link"
     fi
   else
     if [ -d "$target" ]; then
@@ -121,7 +123,7 @@ install() # src, target
     fi
   else
     echo "Creating '$dst'"
-    if [[ -n `grep "$cutstring" "$src"` ]]; then
+    if [ ! -d "$src" ] && [[ -n `grep "$cutstring" "$src"` ]]; then
       cp "$PWD/$src" "$dst"
     else
       symlink "$PWD/$src" "$dst"
