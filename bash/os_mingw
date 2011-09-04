@@ -1,0 +1,16 @@
+##
+# Bash configuration for mingw.
+#
+# vim:filetype=sh:
+
+# Force the terminal type to "xterm" if using mingw vim, which is built
+# without the terminfo support needed for "xterm-256color".
+__garbage __vim
+__vim=$(type -P vim)
+if [ -x "$__vim" ]; then
+  __garbage __vim_terminfo
+  __vim_terminfo=`"$__vim" --version | grep +terminfo`
+  if [ -z "$__vim_terminfo" ]; then
+    export TERM=xterm
+  fi
+fi
