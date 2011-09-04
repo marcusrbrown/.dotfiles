@@ -352,6 +352,12 @@ fi
 [ -f ~/.bash/aliases ] && . ~/.bash/aliases
 
 
+##
+# Load host OS configuration
+
+[ -f "$HOME/.bash/os_${HOST_OS}" ] && . "$HOME/.bash/os_${HOST_OS}"
+
+
 # Collect local variables and functions.
 __garbage
 }
