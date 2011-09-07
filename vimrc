@@ -66,11 +66,12 @@ imap <Esc>[8~ <End>
 
 syntax on
 
-if has("autocmd")
+filetype plugin indent on
 
-  filetype plugin indent on
+set fileformats=unix,dos,mac	" EOL formats in preferred order
 
-  set fileformats=unix,dos,mac	" EOL formats in preferred order
+augroup filebufcmds
+  autocmd!
 
   autocmd FileType text setlocal expandtab shiftwidth=4 tabstop=4 textwidth=78 smarttab
   autocmd FileType c set formatoptions=croql cindent sw=4 ts=4 smarttab comments=sr:/*,mb:*,el:*/,://
@@ -86,11 +87,20 @@ if has("autocmd")
 
   autocmd FileType lua set tabstop=4 shiftwidth=4 smarttab
 
-  augroup myvimrchooks
-    autocmd!
-    " Source vimrc after saving it
-    autocmd BufWritePost .vimrc,vimrc,.gvimrc,gvimrc source $MYVIMRC | if has('gui_running') | source $MYGVIMRC | endif
-  augroup END
+  autocmd FileType sh setlocal tabstop=2 shiftwidth=2 expandtab smarttab
+
+  autocmd FileType javascript setlocal tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab
+
+augroup END
+
+augroup myvimrchooks
+  autocmd!
+  " Source vimrc after saving it
+  autocmd BufWritePost .vimrc,vimrc,.gvimrc,gvimrc source $MYVIMRC | if has('gui_running') | source $MYGVIMRC | endif
+augroup END
+
+augroup vimrcEx
+  autocmd!
 
   " When editing a file, always jump to the last known cursor position.
   " Don't do it when the position is invalid or when inside an event handler
@@ -102,7 +112,7 @@ if has("autocmd")
     \   exe "normal! g`\"" |
     \ endif
 
-endif " has ("autocmd")
+augroup END
 
 set laststatus=2            " Always show the status bar
 
