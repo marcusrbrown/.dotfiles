@@ -21,10 +21,18 @@ case "$os" in
     ;;
 esac
 
+# Forward slash used for options passed to cmd.exe under Mingw or Cygwin.
+cmdslash="/"
+case "$os" in
+  MINGW*)
+    cmdslash="//"
+    ;;
+esac
+
 wpath() # posix
 {
   # TODO: Use cygpath under Cygwin.
-  cmd //c echo "$1" | sed 's/\//\\/g'
+  cmd ${cmdslash}c echo "$1" | sed 's/\//\\/g'
 }
 
 symlink() # target, link
@@ -35,10 +43,10 @@ symlink() # target, link
   if [ $no_symlink -eq 0 ]; then
     if [ -n "$mklink" ]; then
       if [ -d "$target" ]; then
-        cmd //c rd "`wpath $link`" > /dev/null 2>&1
-        $mklink //d "`wpath $link`" "`wpath $target`"
+        cmd ${cmdslash}c rd "`wpath $link`" > /dev/null 2>&1
+        $mklink ${cmdslash}d "`wpath $link`" "`wpath $target`"
       else
-        cmd //c del "`wpath $link`" > /dev/null 2>&1
+        cmd ${cmdslash}c del "`wpath $link`" > /dev/null 2>&1
         $mklink "`wpath $link`" "`wpath $target`"
       fi
     else
@@ -61,7 +69,7 @@ issymlink() # link
       # The directory listing has the symlink's target following the link name, separated by a space.
       parent=`dirname "$1"`
       linkname=`basename "$1"`
-      cmd //c dir //al "`wpath \"$parent\"`" | grep '<SYMLINK' | grep "$linkname " > /dev/null
+      cmd ${cmdslash}c dir ${cmdslash}al "`wpath \"$parent\"`" | grep '<SYMLINK' | grep "$linkname " > /dev/null
     else
       test -L "$1"
     fi
