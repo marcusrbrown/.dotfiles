@@ -2,6 +2,14 @@
 " vim:set ft=vim et tw=78 sw=2:
 
 set nocompatible
+set viminfo='20,\"50    " read/write a .viminfo file, don't store more than
+                        " 50 lines of registers
+
+" gvim on Windows needs better paths.
+if has('win32') && has('gui')
+  set runtimepath=~/.vim,$VIMRUNTIME
+  set viminfo+=n~/.viminfo
+endif
 
 " Setup pathogen first (https://github.com/tpope/vim-pathogen).
 " Pathogen itself is kept in a subrepo.
@@ -12,12 +20,11 @@ if exists('g:loaded_pathogen')
 endif
 
 set encoding=utf-8
+set fileencoding=utf-8
 
 set backspace=indent,eol,start " Allow backspacing over indents, line start and end
 set textwidth=0         " Don't wrap words by default
 set nobackup            " Don't keep a backup file
-set viminfo='20,\"50    " read/write a .viminfo file, don't store more than
-                        " 50 lines of registers
 set history=2000        " keep 2000 lines of command line history
 set ruler               " show the cursor position all the time
 set showcmd             " Show (partial) command in status line.
@@ -107,10 +114,22 @@ augroup vimrcEx
   " (happens when dropping a file on gvim).
   " Also don't do it when the mark is in the first line, that is the default
   " position when opening a file.
-  autocmd BufReadPost *
-    \ if line("'\"") > 1 && line("'\"") <= line("$") |
-    \   exe "normal! g`\"" |
-    \ endif
+  " Function and commit logic from https://github.com/chestone/homedir, which linked to:
+  " http://structurallysoundtreehouse.com/my-almost-perfect-vim-files
+  " http://github.com/fredlee/mydotfiles/tree/master
+  " Also exclude certain git files (from the msysgit distribution).
+  autocmd BufReadPost * call SetCursorPosition()
+  function! SetCursorPosition()
+    if &filetype !~ 'commit\c' && &filetype !~ 'svn\c'
+      if line("'\"") > 1 && line("'\"") <= line("$")
+            \ && expand("%") !~ "COMMIT_EDITMSG"
+            \ && expand("%") !~ "ADD_EDIT.patch"
+            \ && expand("%") !~ "addp-hunk-edit.diff"
+            \ && expand("%") !~ "git-rebase-todo"
+        exe "normal! g`\""
+      endif
+    end
+  endfunction
 
 augroup END
 
