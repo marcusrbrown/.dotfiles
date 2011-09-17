@@ -33,7 +33,6 @@ set ignorecase          " Do case insensitive matching
 set incsearch           " Incremental search
 set autowrite           " Automatically save before commands like :next and :make
 set autoread            " Reread files that have changed
-set notitle             " No thanks, Vim
 
 " Look for Vim modelines at the top or bottom of files, and look at least 6
 " lines in (past a copyright header, etc.).
@@ -132,6 +131,21 @@ augroup vimrcEx
   endfunction
 
 augroup END
+
+if has('gui_running')
+  set guifont=Consolas:h10
+  " Remove the menubar and toolbar.
+  set guioptions-=m
+  set guioptions-=T
+  " Remove scrollbars.
+  set guioptions-=r
+  set guioptions-=R
+  set guioptions-=l
+  set guioptions-=L
+  " Set default GUI width and height.
+  set lines=36
+  set columns=122
+endif
 
 set laststatus=2            " Always show the status bar
 
