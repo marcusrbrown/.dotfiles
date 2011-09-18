@@ -241,13 +241,7 @@ if [ -n "$INTERACTIVE" ]; then
     local cwd=${PWD/$HOME/\~}
 
     if [ -z "$1" ]; then
-      __prompt title
-      echo
-      __prompt host
-      echo -n ":"
-      __prompt path
-      __prompt git
-      echo
+      echo -e "$(__prompt title)\n$(__prompt host):$(__prompt path)$(__prompt git)"
     fi
 
     case "$1" in
