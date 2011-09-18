@@ -17,18 +17,11 @@ fi
 
 
 # Find the git executable. If git.exe is already on the PATH, there's no need to do anything.
-# If git.cmd is found, verify or create a simple forwarding script - msys doesn't automatically
-# invoke cmd.exe for .cmd files.
+# If git.cmd is found, create an alias to it - msys doesn't automatically invoke cmd.exe for
+# .cmd files.
+#unalias git
 __garbage __git
 __git=$(type -P git.exe git.cmd | head -1)
 if [ "${__git#*.}" == "cmd" ]; then
-  __garbage __git_wrapper
-  __git_wrapper="$HOME/bin/git"
-  if [ ! -x "$__git_wrapper" ]; then
-    cat << EOF > "$__git_wrapper"
-#!/bin/sh
-cmd //c "$(basename "${__git}")" \$*
-EOF
-    chmod +x "$__git_wrapper"
-  fi
+  alias git="cmd //c "$(basename "${__git}")""
 fi
