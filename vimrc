@@ -130,6 +130,17 @@ augroup vimrcEx
     end
   endfunction
 
+  " From http://vimcasts.org/episodes/fugitive-vim-browsing-the-git-object-database/
+  "
+  " Go to the parent directory in a git tree or blob.
+  autocmd User fugitive
+    \ if fugitive#buffer().type() =~# '^\%(tree\|blob\)$' |
+    \   nnoremap <buffer> .. :edit %:h<CR> |
+    \ endif
+
+  " Auto-clean fugitive buffers.
+  autocmd BufReadPost fugitive://* set bufhidden=delete
+
 augroup END
 
 if has('gui_running')
@@ -165,6 +176,8 @@ set statusline+=%*
 set statusline+=%h          " help file flag
 set statusline+=%r          " read-only flag
 set statusline+=%m          " modified flag
+
+set statusline+=%{fugitive#statusline()}
 
 set statusline+=%#warningmsg#
 set statusline+=%{SyntasticStatuslineFlag()}
