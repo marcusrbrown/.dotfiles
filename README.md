@@ -18,5 +18,6 @@ Configs have been compiled from various sources:
 * [kevinw / vim](https://github.com/kevinw/vim "vim")
 * [twerth / dotfiles](https://github.com/twerth/dotfiles "bash, vim")
 * [chestone / homedir](https://github.com/chestone/homedir "vim")
+* [bronson / dotfiles](https://github.com/bronson/dotfiles "bash, vim")
 
 The [Solarized](https://github.com/altercation/solarized) color scheme is used for the terminal (.Xdefaults and .minttyrc), GNU ls ([.dir_colors](https://github.com/seebi/dircolors-solarized)), and vim.
