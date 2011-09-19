@@ -70,6 +70,9 @@ map <Esc>[8~ <End>
 imap <Esc>[7~ <Home>
 imap <Esc>[8~ <End>
 
+" TODO: Make this a bit more robust / check terminal types, etc.
+set t_Co=256
+
 syntax on
 
 filetype plugin indent on
