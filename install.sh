@@ -9,7 +9,7 @@ no_symlink=0
 os=`uname -s`
 case "$os" in
   MINGW* | CYGW*)
-    mklink=`"$PWD/testmklink.sh"`
+    mklink=`bash "$PWD/testmklink.sh"`
     if [ -z "$mklink" ]; then
       no_symlink=1
       echo "*** NOTE ***"
