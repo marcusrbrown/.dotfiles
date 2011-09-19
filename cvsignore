@@ -1,0 +1,6 @@
+tags
+
+# Temporary files.
+*~
+*.sw?
+.*.sw?
