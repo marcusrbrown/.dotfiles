@@ -1,0 +1,15 @@
+# Local configuration goes here:
+
+
+# DO NOT EDIT BELOW THIS LINE
+[core]
+	eol = lf
+	autocrlf = input
+	excludesfile = ~/.cvsignore
+[color]
+	ui = always
+	status = always
+	diff = always
+	branch = always
+	interactive = always
+	grep = always
