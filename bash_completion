@@ -1,0 +1,25 @@
+##
+# .bash_completion - User bash completion.
+#
+# This file will automatically be sourced on systems that have bash
+# completion installed.
+#
+# Based in part on:
+# http://mult.ifario.us/p/getting-bash-completion-magic-on-os-x
+# https://github.com/rtomayko/dotfiles/blob/rtomayko/.bash_completion
+
+: ${USER_BASH_COMPLETION_DIR:=~/.bash/completion.d}
+
+[ -z "$USER_BASH_COMPLETION_DIR" ] && return 0
+
+if [[ -d "$USER_BASH_COMPLETION_DIR" && -r "$USER_BASH_COMPLETION_DIR" \
+      && -x "$USER_BASH_COMPLETION_DIR" ]]; then
+  for i in "$USER_BASH_COMPLETION_DIR"/*; do
+    # Not using @() here to support older bash.
+    [[ ! ${i##*/} =~ \(~\$\|.bak\|.swp\|\#.*\#\|.dpkg.*\|.rpm.*\|Makefile.*\) \
+      && -f "$i" && -r "$i" ]] && . "$i"
+  done
+fi
+unset i
+
+# ex: ts=2 sw=2 et filetype=sh
