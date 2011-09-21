@@ -13,3 +13,10 @@
 	branch = always
 	interactive = always
 	grep = always
+[alias]
+	ci = commit
+	cia = commit -a
+	co = checkout
+	stat = status
+	st = status --short
+	cinum = !git log --pretty=oneline | wc -l | sed -e \"s/ //g\"
