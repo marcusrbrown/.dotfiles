@@ -1,5 +1,5 @@
 " ~/.vimrc
-" vim:set ft=vim et tw=78 sw=2:
+" vim: set ft=vim et tw=78 sw=2:
 
 set nocompatible
 set viminfo='20,\"50    " read/write a .viminfo file, don't store more than
@@ -34,10 +34,13 @@ set incsearch           " Incremental search
 set autowrite           " Automatically save before commands like :next and :make
 set autoread            " Reread files that have changed
 
+" Disable Vim modelines for securemodelines.vim.
+set nomodeline
+
 " Look for Vim modelines at the top or bottom of files, and look at least 6
 " lines in (past a copyright header, etc.).
-set modeline
-set modelines=6
+let g:secure_modelines_verbose=0
+let g:secure_modelines_modelines=6
 
 " Tabs, whitespace, and folding
 set tabstop=4
