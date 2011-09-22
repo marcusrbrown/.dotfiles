@@ -1,5 +1,5 @@
 " ~/.vimrc
-" vim: set ft=vim et tw=78 sw=2:
+" vim: set ft=vim et tw=120 ts=2 sw=2 sts=2:
 
 set nocompatible
 set viminfo='20,\"50    " read/write a .viminfo file, don't store more than
@@ -24,15 +24,17 @@ set fileencoding=utf-8
 
 set backspace=indent,eol,start " Allow backspacing over indents, line start and end
 set textwidth=0         " Don't wrap words by default
-set nobackup            " Don't keep a backup file
 set history=2000        " keep 2000 lines of command line history
 set ruler               " show the cursor position all the time
 set showcmd             " Show (partial) command in status line.
-set showmatch           " Show matching brackets.
+set showmatch           " Show matching brackets...
+set matchtime=2         " ... for .2 seconds.
 set ignorecase          " Do case insensitive matching
 set incsearch           " Incremental search
 set autowrite           " Automatically save before commands like :next and :make
 set autoread            " Reread files that have changed
+set number              " Show line numbers
+set numberwidth=1       " Use only 1 column for line numbers when possible
 
 " Disable Vim modelines for securemodelines.vim.
 set nomodeline
@@ -42,10 +44,21 @@ set nomodeline
 let g:secure_modelines_verbose=0
 let g:secure_modelines_modelines=6
 
-" Tabs, whitespace, and folding
-set tabstop=4
-set shiftwidth=4
-set softtabstop=4
+
+" Backups
+" Disable all backups and swapfiles.
+set nobackup
+set nowritebackup
+set noswapfile
+set backupcopy=yes                  " Make sure attributes, etc. are preserved.
+set backupdir=$HOME/.vim/backup
+set directory=$HOME/.vim/swap,~/tmp,.
+
+
+" Tabs and whitespace
+set tabstop=2
+set shiftwidth=2
+set softtabstop=2
 " Turn off autoident, smart indent, and C indent (enabled by file type)
 set noautoindent
 set nosmartindent
@@ -55,23 +68,49 @@ set expandtab
 set nowrap
 set list
 set listchars=tab:→\ ,trail:·,nbsp:·
+
+
+" Setup folding. Disable folding initially.
 set foldmethod=indent
-set nofoldenable        " Don't close folds by default
+set nofoldenable
+set foldcolumn=0
+set foldlevelstart=99
+set foldnestmax=3
+set foldtext=MyFoldText()
+
+" Set in foldtext, displays the folded text.
+function! MyFoldText()
+  let nlines = v:foldend - v:foldstart + 1
+  return v:folddashes . getline(v:foldstart)[:winwidth(0)-10]. ' ▼ ' . nlines . ' lines '
+endfunction
+
+" Enable syntax folding for vim files
+let g:vimsyn_folding = 'afmpPrt'
+
+
+" Wildmode
+" First tab completes to the longest common string while displaying the wildmenu.
+" Second tab completes the next full match, cycles through the wildmenu, and wraps to the original string.
+set wildmode=longest:full,full
+set wildmenu
+set wildignore=*.o,*.obj,*~,tags,*.pyo,*.pyc,*.swp
 
 set background=dark
 colorscheme solarized
 
-set tags=tags;
+
+" Insert completion
+
+set completeopt=menuone,longest,preview
+set pumheight=6     " 6 lines in the popup menu
 
 " Suffixes that get lower priority when doing tab completion for filenames.
 " These are files we are not likely to want to edit or read.
 set suffixes=.bak,~,.swp,.o,.info,.aux,.log,.dvi,.bbl,.blg,.brf,.cb,.ind,.idx,.ilg,.inx,.out,.toc
 
-" mrbrown: Fix the Home/End keys in vim (from http://www.mingw.org/wiki/Configure_RXVT)
-map <Esc>[7~ <Home>
-map <Esc>[8~ <End>
-imap <Esc>[7~ <Home>
-imap <Esc>[8~ <End>
+" Search for tags file in parent directories
+set tags=tags;/
+
 
 " TODO: Make this a bit more robust / check terminal types, etc.
 set t_Co=256
@@ -80,39 +119,55 @@ syntax on
 
 filetype plugin indent on
 
-set fileformats=unix,dos,mac	" EOL formats in preferred order
+" EOL formats in preferred order
+set fileformats=unix,dos,mac
 
 augroup filebufcmds
   autocmd!
 
   autocmd FileType text setlocal expandtab shiftwidth=4 tabstop=4 textwidth=78 smarttab
-  autocmd FileType c set formatoptions=croql cindent sw=4 ts=4 smarttab comments=sr:/*,mb:*,el:*/,://
-  autocmd FileType cpp set formatoptions=croql cindent sw=4 ts=4 smarttab comments=sr:/*,mb:*,el:*/,://
-  autocmd FileType d set formatoptions=croql cindent comments=sr:/*,mb:*,el:*/,:// sw=4 ts=4 smarttab
+  autocmd FileType c,cpp setlocal formatoptions=croql cindent sw=4 ts=4 smarttab comments=sr:/*,mb:*,el:*/,://
+  autocmd FileType d setlocal formatoptions=croql cindent comments=sr:/*,mb:*,el:*/,:// sw=4 ts=4 smarttab
 
-  autocmd FileType python set tabstop=4 shiftwidth=4 softtabstop=4 expandtab smarttab
-  autocmd FileType python set textwidth=79
+  autocmd FileType python setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab smarttab textwidth=79
+  autocmd FileType python setlocal keywordprg=pydoc
+  autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
   " auto indent after "def foo():<CR>"
   autocmd BufRead python set smartindent cinwords=if,elif,else,for,while,try,except,finally,def,class,with
   " automatically strip trailing whitespace from Python scripts
   autocmd BufWritePre python normal m`:%s/\s\+$//e ``
 
-  autocmd FileType lua set tabstop=4 shiftwidth=4 smarttab
+  autocmd FileType lua setlocal tabstop=4 shiftwidth=4 smarttab
 
   autocmd FileType sh setlocal tabstop=2 shiftwidth=2 expandtab smarttab
 
   autocmd FileType javascript setlocal tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab
 
-augroup END
+  autocmd FileType vim setlocal autoindent expandtab smarttab tabstop=2 shiftwidth=2 softtabstop=2 keywordprg=:help
+  autocmd FileType vim setlocal foldmethod=syntax
 
-augroup myvimrchooks
-  autocmd!
-  " Source vimrc after saving it
-  autocmd BufWritePost .vimrc,vimrc,.gvimrc,gvimrc source $MYVIMRC | if has('gui_running') | source $MYGVIMRC | endif
+  autocmd FileType help nmap <buffer> <Return> <C-]>
+  autocmd FileType help nmap <buffer> <Backspace> <C-T>
+  autocmd FileType help setlocal statusline=%t%h%=%p%%
+
+  autocmd FileType dosbatch setlocal fileformat=dos expandtab shiftwidth=4 softtabstop=4
+
+  autocmd FileType git,gitcommit setlocal foldmethod=syntax foldlevel=1
+
+  " Defaults for omnifunc and completefunc
+  autocmd FileType * if exists("+omnifunc") && &omnifunc == "" | setlocal omnifunc=syntaxcomplete#Complete | endif
+  autocmd FileType * if exists("+completefunc") && &completefunc == "" | setlocal completefunc=syntaxcomplete#Complete | endif
+
+  " Attempt filetype detection after writing.
+  autocmd BufWritePost * if empty(&ft) | filetype detect | endif
+
 augroup END
 
 augroup vimrcEx
   autocmd!
+
+  " Save all writeable buffers when losing focus
+  autocmd FocusLost * silent! wall
 
   " When editing a file, always jump to the last known cursor position.
   " Don't do it when the position is invalid or when inside an event handler
@@ -136,6 +191,12 @@ augroup vimrcEx
     end
   endfunction
 
+  " Current directory follows the file being edited for local files
+  autocmd BufEnter *
+    \ if bufname("") !~ '^[[:alnum:]]*://' |
+    \   silent! lcd %:p:h |
+    \ endif
+
   " From http://vimcasts.org/episodes/fugitive-vim-browsing-the-git-object-database/
   "
   " Go to the parent directory in a git tree or blob.
@@ -149,6 +210,22 @@ augroup vimrcEx
 
 augroup END
 
+augroup QuickFix
+  autocmd!
+
+  " Open the quickfix window if it has entries
+  autocmd QuickFixCmdPost * botright cwindow 5
+
+  autocmd QuickFixCmdPre *
+    \ let g:old_titlestring=&titlestring |
+    \ let &titlestring="[ " . expand("<amatch>") . " ] " . &titlestring |
+    \ redraw
+  autocmd QuickFixCmdPost *
+    \ let &titlestring=g:old_titlestring
+
+augroup END
+
+
 if has('gui_running')
   set guifont=Consolas:h10
   " Remove the menubar and toolbar.
@@ -159,10 +236,33 @@ if has('gui_running')
   set guioptions-=R
   set guioptions-=l
   set guioptions-=L
+
   " Set default GUI width and height.
   set lines=36
   set columns=122
+
+  " TODO: Create highlights for the n-v-c modes, and for the insert modes.
+  set guicursor=n-v-c:hor15-Cursor
+  set guicursor+=i-ci:hor15-Cursor
+  set guicursor+=r-cr:ver25-Cursor
+  set guicursor+=sm:hor15
 endif
+
+
+" Set the title under a xterm
+if &term =~ "xterm" && has('title')
+  set title
+endif
+
+" Fancy window titles where possible
+if has('title') && (has('gui_running') || &title)
+  set titlestring=
+  set titlestring+=%f
+  set titlestring+=%h%m%r%w
+  " TODO: Fix for gvim on Windows
+  set titlestring+=\ -\ %{substitute(getcwd(),\ $HOME,\ '~',\ '')}
+endif
+
 
 set laststatus=2            " Always show the status bar
 
@@ -193,3 +293,73 @@ set statusline+=%=          " left/right separator
 set statusline+=%c,         " cursor column
 set statusline+=%l/%L       " cursor line/total lines
 set statusline+=\ %P        " percent through file
+
+
+" Key mappings
+
+" Remap the leader key from "\" to ","
+let mapleader = ","
+let g:mapleader = ","
+
+" Edit .vimrc with <leader>v, reload it with <leader>V
+map <Leader>v :split $MYVIMRC<CR><C-W>_
+map <silent> <Leader>V :source $MYVIMRC<CR>:filetype detect<CR>:exe ":echo '.vimrc reloaded'"<CR>
+
+" Make F1 useful and less error-prone
+map  <F1> <Esc>
+map! <F1> <Esc>
+
+" Shift-Insert pastes, like the terminal
+noremap  <S-Insert> <MiddleMouse>
+noremap! <S-Insert> <MiddleMouse>
+
+" Easier split navigation
+map  <C-J> <C-W>j
+map  <C-K> <C-W>k
+map  <C-L> <C-W>l
+map  <C-H> <C-W>h
+" Also map Ctrl+W in insert mode
+imap <C-W> <C-O><C-W>
+
+" Shorten omnicompletion sequence to Ctrl+Space
+if has('gui_running')
+  inoremap <C-Space> <C-X><C-O>
+else
+  inoremap <Nul> <C-X><C-O>
+endif
+
+" Toggle current fold
+nnoremap <Space> za
+
+" mrbrown: Fix the Home/End keys in vim (from http://www.mingw.org/wiki/Configure_RXVT)
+map <Esc>[7~ <Home>
+map <Esc>[8~ <End>
+imap <Esc>[7~ <Home>
+imap <Esc>[8~ <End>
+
+" Run pep8
+let g:pep8_map='<Leader>8'
+
+" Toggle Gundo
+nnoremap <Leader>u <ESC>:GundoToggle<CR>
+
+" NERDCommenter
+" Don't use the default mappings
+let NERDCreateDefaultMappings=0
+
+" Toggle comments across a single line or multiple selected lines
+map <Leader>c <plug>NERDCommenterToggle
+
+" NERDTree
+let NERDTreeIgnore = ['\.pyc$', '\.pyo$']
+map <Leader>t :NERDTree<CR>
+
+" Tagbar
+let g:tagbar_compact = 1
+nmap <silent> <Leader>\\ :TagbarOpenAutoClose<CR>
+nmap <silent> <Leader>\| :TagbarToggle<CR>
+
+" MakeGreen
+" Create a bogus mapping to MakeGreen to prevent it from taking over <Leader>t.
+" I don't invoke MakeGreen directly, it's here for other plugins that use it.
+map <silent> <Leader>\bogusmakegreenmapping :call MakeGreen()<CR>
