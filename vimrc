@@ -29,12 +29,14 @@ set ruler               " show the cursor position all the time
 set showcmd             " Show (partial) command in status line.
 set showmatch           " Show matching brackets...
 set matchtime=2         " ... for .2 seconds.
-set ignorecase          " Do case insensitive matching
+set ignorecase          " Do case insensitive matching...
+set smartcase           " ...if there are no capital letters in the search expression
 set incsearch           " Incremental search
-set autowrite           " Automatically save before commands like :next and :make
+set noautowrite         " Don't automatically save before commands like :next and :make
 set autoread            " Reread files that have changed
 set number              " Show line numbers
 set numberwidth=1       " Use only 1 column for line numbers when possible
+set hidden              " Hide abandoned buffers instead of removing them
 
 " Disable Vim modelines for securemodelines.vim.
 set nomodeline
@@ -136,10 +138,14 @@ augroup filebufcmds
   autocmd BufRead python set smartindent cinwords=if,elif,else,for,while,try,except,finally,def,class,with
   " automatically strip trailing whitespace from Python scripts
   autocmd BufWritePre python normal m`:%s/\s\+$//e ``
+  let python_highlight_all = 1            " Enable full syntax highlighting.
 
   autocmd FileType lua setlocal tabstop=4 shiftwidth=4 smarttab
 
-  autocmd FileType sh setlocal tabstop=2 shiftwidth=2 expandtab smarttab
+  autocmd FileType sh setlocal tabstop=2 shiftwidth=2 expandtab smarttab nosmartindent autoindent
+  autocmd FileType sh setlocal foldmethod=syntax
+  let g:is_bash = 1                   " Assume the shell is bash
+  let g:sh_fold_enabled = 7           " Enable function, heredoc, and if/do/for syntax folding
 
   autocmd FileType javascript setlocal tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab
 
@@ -264,6 +270,7 @@ if has('title') && (has('gui_running') || &title)
 endif
 
 
+set shortmess=atI           " All abbreviations; truncate file message; no intro
 set laststatus=2            " Always show the status bar
 
 set statusline=%<%f\        " file name
@@ -305,6 +312,9 @@ let g:mapleader = ","
 map <Leader>v :split $MYVIMRC<CR><C-W>_
 map <silent> <Leader>V :source $MYVIMRC<CR>:filetype detect<CR>:exe ":echo '.vimrc reloaded'"<CR>
 
+" Save with <Leader>w
+map <Leader>w :w<CR>
+
 " Make F1 useful and less error-prone
 map  <F1> <Esc>
 map! <F1> <Esc>
@@ -331,11 +341,29 @@ endif
 " Toggle current fold
 nnoremap <Space> za
 
+" Shift-Tab inserts a hard tab
+imap <silent> <S-Tab> <C-V><Tab>
+
 " mrbrown: Fix the Home/End keys in vim (from http://www.mingw.org/wiki/Configure_RXVT)
 map <Esc>[7~ <Home>
 map <Esc>[8~ <End>
 imap <Esc>[7~ <Home>
 imap <Esc>[8~ <End>
+
+" Home toggles between the start of the line and the start of text
+imap <kHome> <Home>
+nmap <kHome> <Home>
+inoremap <silent> <Home> <C-O>:call Home()<CR>
+nnoremap <silent> <Home> :call Home()<CR>
+
+function! Home()
+  let curcol = wincol()
+  normal ^
+  let newcol = wincol()
+  if newcol == curcol
+    normal 0
+  endif
+endfunction
 
 " Run pep8
 let g:pep8_map='<Leader>8'
@@ -363,3 +391,11 @@ nmap <silent> <Leader>\| :TagbarToggle<CR>
 " Create a bogus mapping to MakeGreen to prevent it from taking over <Leader>t.
 " I don't invoke MakeGreen directly, it's here for other plugins that use it.
 map <silent> <Leader>\bogusmakegreenmapping :call MakeGreen()<CR>
+
+" TaskList
+map <Leader>T <Plug>TaskList
+let g:tlTokenList = ['FIXME', 'TODO', 'todo', 'XXX']
+
+" Rope-vim
+let g:ropevim_local_prefix = '<Leader>r'
+let g:ropevim_global_prefix = '<Leader>p'
