@@ -40,3 +40,12 @@
 [submodule "vim/bundle/vim-markdown"]
 	path = vim/bundle/vim-markdown
 	url = git://github.com/tpope/vim-markdown.git
+[submodule "vim/bundle/TaskList.vim"]
+	path = vim/bundle/TaskList.vim
+	url = git://github.com/vim-scripts/TaskList.vim.git
+[submodule "vim/bundle/rope-vim"]
+	path = vim/bundle/rope-vim
+	url = git://github.com/mrowl/rope-vim.git
+[submodule "vim/bundle/ZoomWin"]
+	path = vim/bundle/ZoomWin
+	url = git://github.com/vim-scripts/ZoomWin.git
