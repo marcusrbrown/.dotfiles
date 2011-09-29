@@ -548,7 +548,8 @@ let g:ropevim_global_prefix = '<Leader>p'
 " lines that are longer than the specified length (defaulting to 80)
 command! -nargs=? HighlightLongLines call s:HighlightLongLines('<args>')
 function! s:HighlightLongLines(width)
-    let targetWidth = a:width != '' ? a:width : 79
+    let textWidth = &tw ? &tw : 80
+    let targetWidth = a:width != '' ? a:width : textWidth
     if targetWidth > 0
         exec 'match Todo /\%>' . (targetWidth) . 'v/'
     else
