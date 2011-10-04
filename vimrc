@@ -148,7 +148,7 @@ augroup filebufcmds
   let g:is_bash = 1                   " Assume the shell is bash
   let g:sh_fold_enabled = 7           " Enable function, heredoc, and if/do/for syntax folding
 
-  autocmd FileType javascript setlocal tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab
+  autocmd FileType javascript setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
 
   autocmd FileType vim setlocal autoindent expandtab smarttab tabstop=2 shiftwidth=2 softtabstop=2 keywordprg=:help
   autocmd FileType vim setlocal foldmethod=syntax
