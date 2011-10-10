@@ -445,12 +445,18 @@ let g:mapleader = ","
 map <Leader>v :split $MYVIMRC<CR><C-W>_
 map <silent> <Leader>V :source $MYVIMRC<CR>:filetype detect<CR>:exe ":echo '.vimrc reloaded'"<CR>
 
-" Save with <Leader>w
-map <Leader>w :w<CR>
+" Save with <Leader>w and Ctrl+S
+map  <Leader>w :w<CR>
+nmap <C-S> :w<CR>
+vmap <C-S> <ESC><C-S>
+imap <C-S> <ESC><C-S>
 
 " Make F1 useful and less error-prone
 map  <F1> <Esc>
 map! <F1> <Esc>
+
+" Map jj to Escape in insert mode
+inoremap jj <ESC>
 
 " Shift-Insert pastes, like the terminal
 noremap  <S-Insert> <MiddleMouse>
