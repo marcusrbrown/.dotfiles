@@ -165,6 +165,10 @@ augroup filebufcmds
 
   autocmd FileType git,gitcommit setlocal foldmethod=syntax foldlevel=1
 
+  autocmd FileType java setlocal shiftwidth=4 tabstop=4 softtabstop=4 expandtab
+
+  autocmd FileType make setlocal tabstop=8 shiftwidth=8 softtabstop=8 noexpandtab
+
   " Defaults for omnifunc and completefunc
   autocmd FileType * if exists("+omnifunc") && &omnifunc == "" | setlocal omnifunc=syntaxcomplete#Complete | endif
   autocmd FileType * if exists("+completefunc") && &completefunc == "" | setlocal completefunc=syntaxcomplete#Complete | endif
