@@ -130,6 +130,7 @@ augroup filebufcmds
   autocmd FileType text setlocal expandtab shiftwidth=4 tabstop=4 textwidth=78 smarttab
   autocmd FileType c,cpp setlocal formatoptions=croql cindent sw=4 ts=4 smarttab comments=sr:/*,mb:*,el:*/,://
   autocmd FileType d setlocal formatoptions=croql cindent comments=sr:/*,mb:*,el:*/,:// sw=4 ts=4 smarttab
+  autocmd FileType cs setlocal formatoptions=croql cindent sw=4 ts=4 smarttab comments=sr:/*,mb:*,el:*/,://
 
   autocmd FileType python setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab smarttab textwidth=79
   autocmd FileType python setlocal keywordprg=pydoc
