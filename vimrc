@@ -548,6 +548,9 @@ let g:tlRememberPosition = 1        " Reset to last remembered cursor position.
 let g:ropevim_local_prefix = '<Leader>r'
 let g:ropevim_global_prefix = '<Leader>p'
 
+" Syntastic
+let g:syntastic_disabled_filetypes = ['c', 'cpp']
+
 
 " Commands
 
