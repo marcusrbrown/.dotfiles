@@ -3,8 +3,6 @@
 
 # DO NOT EDIT BELOW THIS LINE
 [core]
-	eol = lf
-	autocrlf = false
 	excludesfile = ~/.cvsignore
 [color]
 	ui = always
