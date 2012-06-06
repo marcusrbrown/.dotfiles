@@ -5,7 +5,6 @@
 [core]
 	excludesfile = ~/.cvsignore
 	autocrlf = true
-	safecrlf = true
 [color]
 	ui = always
 	status = always
