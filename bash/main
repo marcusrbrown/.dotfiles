@@ -219,7 +219,9 @@ fi
 # Prompt
 
 # Only set the prompt if the shell is interactive.
-if [ -n "$INTERACTIVE" ]; then
+# The bash-complete function will set BASH_COMPLETE_INVOKE to prevent the prompt from being set;
+# this is so it can detect the output of shell completion.
+if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
   # Colors defined by the Solarized color scheme.
   #__garbage NO_COLOR RED ORANGE GREEN YELLOW BLUE MAGENTA VIOLET CYAN WHITE
   NO_COLOR='\033[00m'
