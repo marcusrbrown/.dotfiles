@@ -29,6 +29,16 @@ if [ ${BASH_VERSINFO[0]} -gt 3 ]; then
   compopt=compopt
 fi
 
+## Turn on extended globbing and programmable completion
+shopt -s extglob progcomp
+
+## This function checks whether a given readline variable is `on'.
+type -t _rl_enabled >/dev/null ||
+_rl_enabled()
+{
+  [[ "$( bind -v )" = *$1+([[:space:]])on* ]]
+}
+
 ## This function quotes the argument in a way so that readline dequoting results in the original argument
 type -t quote_readline >/dev/null ||
 quote_readline()
