@@ -1,0 +1,6 @@
+\e[1;2A back-line
+\e[1;2B forw-line
+\e[5;2~ back-screen
+\e[6;2~ forw-screen
+\eOH goto-line
+\eOF goto-end
