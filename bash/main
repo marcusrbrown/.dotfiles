@@ -187,16 +187,17 @@ EDITOR=vim
 export EDITOR
 
 if [ -n "$(command -v less)" ]; then
-  # Less PAGER opts: Quit if fits on 1 screen, ignore case in searches w/no uppercase, output "raw" control chars,
-  # chop long lines, highlight first new line after forward screen, disable termcap init/deinit
-  PAGER="less -FirSwX"
+  PAGER="less"
+  # Less PAGER opts: Clear screen to repaint, ignore case in searches w/no uppercase, use the long prompt,
+  # output "raw" control chars, chop long lines, set horizonatal scroll amount to 4 characters
+  LESS="-ciMrS -#4"
   # Less MANPAGER opts: Same as above except don't output "raw" control chars and squeeze multiple blank lines
-  MANPAGER="less -FiRswX"
+  MANPAGER="less -ciRs -#4"
 else
   PAGER=more
   MANPAGER=more
 fi
-export PAGER MANPAGER
+export PAGER MANPAGER LESS
 
 alias l=$PAGER
 
