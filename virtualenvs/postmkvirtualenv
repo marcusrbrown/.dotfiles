@@ -1,2 +1,21 @@
 #!/bin/bash
 # This hook is run after a new virtualenv is activated.
+
+# From https://github.com/dcrosta/dotfiles/blob/master/virtualenvs/postmkvirtualenv
+
+parent=$PWD
+envname=$(basename "$VIRTUAL_ENV")
+envdir=$parent/$envname
+
+postactivate=$VIRTUAL_ENV/$VIRTUALENVWRAPPER_ENV_BIN_DIR/postactivate
+
+[ -z "$postactivate" ] && return 0;
+
+echo "cd \"$envdir\"" >> "$postactivate"
+echo                  >> "$postactivate"
+
+if [ ! -e "$envdir" ]; then
+  mkdir -p "$envdir"
+fi
+
+cd "$envdir"
