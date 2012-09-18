@@ -1,4 +1,5 @@
 do_not_install
+touch_to_install
 install.sh
 README.md
 testmklink.sh
