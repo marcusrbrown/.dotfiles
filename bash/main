@@ -402,6 +402,20 @@ fi
 [ -f "$HOME/.bash/os_${HOST_OS}" ] && . "$HOME/.bash/os_${HOST_OS}"
 
 
+##
+# Initialization scripts
+
+__garbage MAIN_BASH_INIT_DIR
+MAIN_BASH_INIT_DIR=~/.bash/init.d
+
+if [[ -d "$MAIN_BASH_INIT_DIR" && -r "$MAIN_BASH_INIT_DIR" \
+      && -x "$MAIN_BASH_INIT_DIR" ]]; then
+  for i in "$MAIN_BASH_INIT_DIR"/*; do
+    [[ -f "$i" && -r "$i" ]] && . "$i"
+  done
+fi
+unset i
+
 # Collect local variables and functions.
 __garbage
 }
