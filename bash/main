@@ -244,7 +244,7 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
     local cwd=${PWD/$HOME/\~}
 
     if [ -z "$1" ]; then
-      echo -e "$(__prompt title)\n$(__prompt host):$(__prompt path)$(__prompt git)"
+      echo -e "$(__prompt title)\n$(__prompt host):$(__prompt path)$(__prompt git)$(__prompt venv)"
     fi
 
     case "$1" in
@@ -308,6 +308,21 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
           fi
 
           echo -ne "${MAGENTA}${git_branch}${NO_COLOR}"
+        fi
+        ;;
+
+      venv)
+        # From mitsuhiko's dotfiles:
+        local ENV_NAME
+        local folder
+        if [ x"$VIRTUAL_ENV" != x ]; then
+          if [[ "$VIRTUAL_ENV" == *.virtualenvs/* || "$VIRTUAL_ENV" == *.virtualenvs\\* ]]; then
+            ENV_NAME=`basename "${VIRTUAL_ENV}"`
+          else
+            folder=`dirname "${VIRTUAL_ENV}"`
+            ENV_NAME=`basename "$folder"`
+          fi
+          echo -ne " ${WHITE}workon ${GREEN}${ENV_NAME}${NO_COLOR}"
         fi
         ;;
 
