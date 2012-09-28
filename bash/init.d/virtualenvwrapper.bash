@@ -16,4 +16,13 @@ if [[ -n "$VENVWRAPPERSH" ]]; then
     export WORKON_HOME="$(cd "$WORKON_HOME" && pwd)"
   fi
   source "$VENVWRAPPERSH"
+
+  # Preserve the directory we were in before mkvirtualenv is called. Use this
+  # to determine whether or not we were in a directory named "Projects". If we
+  # are, supply this directory to mkvirtualenv.
+  # "Copy function" trick taken from http://stackoverflow.com/a/1369211.
+  eval "$(echo "orig_mkvirtualenv()"; declare -f mkvirtualenv | tail -n +2)"
+  function mkvirtualenv {
+    MKVIRTUALENV_PWD="$(pwd)" orig_mkvirtualenv "$@"
+  }
 fi
