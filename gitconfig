@@ -7,10 +7,10 @@
 	autocrlf = true
 	safecrlf = false
 [color]
-	ui = always
+	ui = auto
 	status = always
 	diff = always
-	branch = always
+	branch = auto
 	interactive = always
 	grep = always
 [alias]
