@@ -21,7 +21,7 @@ Configs have been compiled from various sources:
 * [bronson / dotfiles](https://github.com/bronson/dotfiles "bash, vim")
 * [tpope / tpope](https://github.com/tpope/tpope "vim")
 * [JNRowe / vim-configs](https://github.com/JNRowe/vim-configs "vim")
-* [ciaranm / dotfiles-ciaranm](https://github.com/ciaranm/dotfiles-ciaranm "vim")
+* [ciaranm / dotfiles](https://github.com/ciaranm/dotfiles "vim")
 * [Pádraig Brady's .vimrc](http://www.pixelbeat.org/settings/.vimrc "vim")
 
 The [Solarized](https://github.com/altercation/solarized) color scheme is used for the terminal (.Xdefaults and .minttyrc), GNU ls ([.dir_colors](https://github.com/seebi/dircolors-solarized)), and vim.
