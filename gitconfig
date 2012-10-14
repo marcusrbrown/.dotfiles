@@ -22,8 +22,12 @@
 	cinum = !git log --pretty=oneline | wc -l | sed -e \"s/ //g\"
 	up-sub = "!f() { pushd \"$1\" >/dev/null && git checkout master && git pull && popd >/dev/null && git submodule update --init --recursive; }; f"
 	discard = checkout --
+	ctags = !.git/hooks/ctags
 [push]
 	default = current
+
+[init]
+	templatedir = ~/.git_template
 
 [url "git@github.com:"]
 	insteadOf = "gh:"
