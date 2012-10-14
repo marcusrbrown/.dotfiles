@@ -515,8 +515,8 @@ function! Home()
   endif
 endfunction
 
-" Run pep8
-let g:pep8_map='<Leader>8'
+" Run flake8
+autocmd FileType python map <buffer> <Leader>8 :call Flake8()<CR>
 
 " Toggle Gundo
 nnoremap <Leader>u <ESC>:GundoToggle<CR>
