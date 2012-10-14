@@ -136,7 +136,7 @@ augroup filebufcmds
   autocmd FileType python setlocal keywordprg=pydoc
   autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
   " auto indent after "def foo():<CR>"
-  autocmd BufRead python set smartindent cinwords=if,elif,else,for,while,try,except,finally,def,class,with
+  autocmd BufRead python set nosmartindent
   " automatically strip trailing whitespace from Python scripts
   autocmd BufWritePre python normal m`:%s/\s\+$//e ``
   let python_highlight_all = 1            " Enable full syntax highlighting.
