@@ -7,7 +7,7 @@
 
 set -e
 
-[ -x ctags ] || exit 0
+command -v ctags > /dev/null 2>&1 || exit 0
 
 new_tags=.git/tags.$$
 ctags --tag-relative -Rf $new_tags --exclude=.git --languages=-javascript,sql
