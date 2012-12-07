@@ -23,6 +23,15 @@
 	up-sub = "!f() { pushd \"$1\" >/dev/null && git checkout master && git pull && popd >/dev/null && git submodule update --init --recursive; }; f"
 	discard = checkout --
 	ctags = !.git/hooks/ctags
+# Legit
+	branches = !legit branches
+	graft = !legit graft "$@"
+	harvest = !legit harvest "$@"
+	publish = !legit publish "$@"
+	unpublish = !legit unpublish "$@"
+	sprout = !legit sprout "$@"
+	sync = !legit sync "$@"
+	switch = !legit switch "$@"
 [push]
 	default = current
 
