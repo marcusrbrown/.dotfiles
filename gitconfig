@@ -55,3 +55,5 @@
 	insteadOf = "gist:"
 [url "git@heroku.com:"]
 	insteadOf = "heroku:"
+[url "git@c0de4:"]
+	insteadOf = "c0de4:"
