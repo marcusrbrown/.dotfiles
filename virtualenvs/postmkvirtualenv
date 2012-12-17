@@ -7,14 +7,14 @@
 # https://github.com/dcrosta/dotfiles/blob/master/virtualenvs/postmkvirtualenv
 
 if [[ `basename "$MKVIRTUALENV_PWD"` != "Projects" ]]; then
-  exit 0
+  return 0
 fi
 
 projdir=$MKVIRTUALENV_PWD/$(basename "$VIRTUAL_ENV")
 
 postactivate=$VIRTUAL_ENV/$VIRTUALENVWRAPPER_ENV_BIN_DIR/postactivate
 
-[ -z "$postactivate" ] && exit 0;
+[ -z "$postactivate" ] && return 0
 
 echo "cd \"$projdir\"" >> "$postactivate"
 echo                   >> "$postactivate"
