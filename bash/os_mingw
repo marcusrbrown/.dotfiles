@@ -29,3 +29,14 @@ __git=$(type -P git.exe git.cmd | head -1)
 if [ "${__git#*.}" == "cmd" ]; then
   alias git="cmd //c "$(basename "${__git}")""
 fi
+
+
+# Always launch gvim in the background. This is used to avoid typing/forgetting the & at the
+# end of the gvim command.
+gvim()
+{
+  local gvim=$(type -P gvim | head -1)
+  if [ -n "$gvim" ]; then
+    cmd //c start \"-\" "$gvim" $*
+  fi
+}
