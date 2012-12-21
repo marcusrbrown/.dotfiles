@@ -132,7 +132,8 @@ augroup filebufcmds
   autocmd FileType d setlocal formatoptions=croql cindent comments=sr:/*,mb:*,el:*/,:// sw=4 ts=4 smarttab
   autocmd FileType cs setlocal formatoptions=croql cindent sw=4 ts=4 smarttab comments=sr:/*,mb:*,el:*/,://
 
-  autocmd FileType python setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab smarttab textwidth=79
+  " PEP8 requires a max. line length of 79 characters, but we use a max. of 100.
+  autocmd FileType python setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab smarttab textwidth=100
   autocmd FileType python setlocal keywordprg=pydoc
   autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
   " auto indent after "def foo():<CR>"
