@@ -89,7 +89,8 @@ use_venv()
   typeset venv
   venv="$1"
 
-  if [[ "${VIRTUAL_ENV:t}" != "$venv" ]]; then
+  # The original script used ":t"; what we have below is equivalent to basename.
+  if [[ "${VIRTUAL_ENV##*[\\/]}" != "$venv" ]]; then
     if workon | grep -q "$venv"; then
       workon "$venv"
     else
