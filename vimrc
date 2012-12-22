@@ -264,10 +264,14 @@ if has('gui_running')
   set guicursor+=sm:hor15
 
   " These values configure the RestoreScreen script.
-  " Restore the screen size and position.
-  let g:screen_size_restore_pos = 1
-  " Restore screen size and position for every separate VIM instance.
+  " Don't restore the screen position.
+  let g:screen_size_restore_pos = 0
+  " Restore the screen size.
+  let g:screen_size_restore_size = 1
+  " Don't restore screen size and position for every separate VIM instance.
   let g:screen_size_by_vim_instance = 0
+  " Always read/write from .vimsize, not _vimsize on Windows.
+  let g:screen_size_use_dot_vimsize = 1
 endif
 
 
