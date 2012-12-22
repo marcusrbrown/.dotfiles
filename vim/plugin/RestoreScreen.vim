@@ -4,7 +4,7 @@ if has("gui_running")
   function! ScreenFilename()
     if has('amiga')
       return "s:.vimsize"
-    elseif has('win32')
+    elseif has('win32') && !g:screen_size_use_dot_vimsize
       return $HOME.'\_vimsize'
     else
       return $HOME.'/.vimsize'
@@ -53,6 +53,9 @@ if has("gui_running")
   endif
   if !exists('g:screen_size_by_vim_instance')
     let g:screen_size_by_vim_instance = 1
+  endif
+  if !exists('g:screen_size_use_dot_vimsize')
+    let g:screen_size_use_dot_vimsize = 0
   endif
   autocmd VimEnter * if g:screen_size_restore_pos == 1 | call ScreenRestore() | endif
   autocmd VimLeavePre * if g:screen_size_restore_pos == 1 | call ScreenSave() | endif
