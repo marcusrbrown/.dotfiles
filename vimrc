@@ -495,6 +495,9 @@ nnoremap Y y$
 " Instead of Ex mode, Q formats text
 noremap Q gq
 
+" Auto-close markup tags when typing </
+inoremap <lt>/ </<C-X><C-O>
+
 " mrbrown: Fix the Home/End keys in vim (from http://www.mingw.org/wiki/Configure_RXVT)
 map <Esc>[7~ <Home>
 map <Esc>[8~ <End>
