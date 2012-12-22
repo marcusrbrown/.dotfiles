@@ -256,6 +256,8 @@ if has('gui_running')
   set guioptions-=R
   set guioptions-=l
   set guioptions-=L
+  " Enable visual and modeless autoselect (to clipboard and the "* register).
+  set guioptions+=aA
 
   " TODO: Create highlights for the n-v-c modes, and for the insert modes.
   set guicursor=n-v-c:hor15-Cursor
