@@ -257,10 +257,6 @@ if has('gui_running')
   set guioptions-=l
   set guioptions-=L
 
-  " Set default GUI width and height.
-  set lines=36
-  set columns=122
-
   " TODO: Create highlights for the n-v-c modes, and for the insert modes.
   set guicursor=n-v-c:hor15-Cursor
   set guicursor+=i-ci:hor15-Cursor
