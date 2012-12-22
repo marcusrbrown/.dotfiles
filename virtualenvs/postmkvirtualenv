@@ -1,6 +1,13 @@
 #!/bin/bash
 # This hook is run after a new virtualenv is activated.
 
+# On Windows, create a symbolic link from bin/ to Scripts/ so that programs
+# meant to work with virtualenvs actually work.
+
+if [[ "$HOST_OS" == "mingw" && ! -d "${VIRTUAL_ENV}/bin" ]]; then
+  cmd //c mklink //d $(winpath "${VIRTUAL_ENV}/bin") $(winpath "${VIRTUAL_ENV}/Scripts")
+fi
+
 # Automatically create a project directory if the current directory is named
 # "Projects". Set up future calls to workon to change to the project directory.
 # Based on
