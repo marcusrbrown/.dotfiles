@@ -3,9 +3,19 @@
 #
 # vim:filetype=sh:
 
+# Convert the given argument to a windows path. Under mingw, this is accomplished by relying
+# on mingw's path conversion when executing Windows programs. We simply echo the path value
+# using cmd.exe and replace forward slashes with backslashes.
+winpath()
+{
+  cmd //c echo "$1" | sed 's/\//\\/g'
+}
+
+
 # virtualenvwrapper expects a MSYS_HOME environment variable that points to the MSYS root
 # (in Windows path format). Use the root mount point as it always points to MSYS.
-export MSYS_HOME=$(cmd //c echo / | sed 's/\//\\/g')
+export MSYS_HOME=$(winpath /)
+
 
 # Force the terminal type to "xterm" if using mingw vim, which is built
 # without the terminfo support needed for "xterm-256color".
