@@ -49,6 +49,3 @@
 [submodule "autoenv"]
 	path = autoenv
 	url = git://github.com/igetgames/autoenv.git
-[submodule "vim/bundle/vim-python-virtualenv"]
-	path = vim/bundle/vim-python-virtualenv
-	url = git@github.com:lambdalisue/vim-python-virtualenv.git
