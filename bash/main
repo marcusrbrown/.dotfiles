@@ -274,7 +274,7 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
         ;;
 
       git)
-        if [ -d ./.git ]; then
+        if [ -r ./.git ]; then
           # From bronson's dotfiles:
           local STATE_COLOR=$WHITE
           local unclean_state="${STATE_COLOR}*"
