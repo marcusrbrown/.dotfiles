@@ -369,6 +369,10 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETION" ]; then
   fi
 fi
 
+# List of file prefixes and extensions to ignore when doing autocomplete.
+# Separate each extension with ':'.
+export FIGNORE=.pyc
+
 
 ##
 # ssh-agent
