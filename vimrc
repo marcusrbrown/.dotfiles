@@ -256,16 +256,24 @@ if has('gui_running')
   set guioptions-=R
   set guioptions-=l
   set guioptions-=L
-
-  " Set default GUI width and height.
-  set lines=36
-  set columns=122
+  " Enable visual and modeless autoselect (to clipboard and the "* register).
+  set guioptions+=aA
 
   " TODO: Create highlights for the n-v-c modes, and for the insert modes.
   set guicursor=n-v-c:hor15-Cursor
   set guicursor+=i-ci:hor15-Cursor
   set guicursor+=r-cr:ver25-Cursor
   set guicursor+=sm:hor15
+
+  " These values configure the RestoreScreen script.
+  " Don't restore the screen position.
+  let g:screen_size_restore_pos = 0
+  " Restore the screen size.
+  let g:screen_size_restore_size = 1
+  " Don't restore screen size and position for every separate VIM instance.
+  let g:screen_size_by_vim_instance = 0
+  " Always read/write from .vimsize, not _vimsize on Windows.
+  let g:screen_size_use_dot_vimsize = 1
 endif
 
 
