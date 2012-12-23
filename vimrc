@@ -287,8 +287,13 @@ if has('title') && (has('gui_running') || &title)
   set titlestring=
   set titlestring+=%f
   set titlestring+=%h%m%r%w
-  " TODO: Fix for gvim on Windows
-  set titlestring+=\ -\ %{substitute(getcwd(),\ $HOME,\ '~',\ '')}
+
+  if has('win32')
+    let win_home = escape(substitute($HOME,'/','\\','g'),'\\')
+    set titlestring+=\ -\ %{substitute(getcwd(),\ win_home,\ '~',\ '')}
+  else
+    set titlestring+=\ -\ %{substitute(getcwd(),\ $HOME,\ '~',\ '')}
+  endif
 endif
 
 
