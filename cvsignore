@@ -4,3 +4,6 @@ tags
 *~
 *.sw?
 .*.sw?
+
+# vim
+.netrwhist
