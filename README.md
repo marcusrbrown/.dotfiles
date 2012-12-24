@@ -25,3 +25,5 @@ Configs have been compiled from various sources:
 * [Pádraig Brady's .vimrc](http://www.pixelbeat.org/settings/.vimrc "vim")
 
 The [Solarized](https://github.com/altercation/solarized) color scheme is used for the terminal (.Xdefaults and .minttyrc), GNU ls ([.dir_colors](https://github.com/seebi/dircolors-solarized)), and vim.
+
+The vim indent script for Python comes from http://www.vim.org/scripts/script.php?script_id=974.
