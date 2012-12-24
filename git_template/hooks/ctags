@@ -9,6 +9,12 @@ set -e
 
 command -v ctags > /dev/null 2>&1 || exit 0
 
-new_tags=.git/tags.$$
-ctags --tag-relative -Rf $new_tags --exclude=.git --languages=-javascript,sql
-mv $new_tags .git/tags
+# Use the directory above the hooks directory as the location to store tags so that
+# we can tag from submodules (the hooks/ folder is under <submodule name>/, not .git/).
+hook_dir=`dirname $0`
+git_dir=`dirname $hook_dir`
+tags=$git_dir/tags
+temp_tags=$tags.$$
+
+ctags --tag-relative -Rf $temp_tags --exclude=.git --languages=-javascript,sql
+mv $temp_tags $tags
