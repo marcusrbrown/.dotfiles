@@ -460,7 +460,7 @@ endfunction
 " Run the ctags git hook script over the entire git tree if available.
 function! TagGitTree()
   if exists('b:git_dir') && filereadable(b:git_dir.'/hooks/ctags')
-    call system('sh "'.b:git_dir.'/hooks/ctags"')
+    call system('sh "'.b:git_dir.'/hooks/ctags" append')
   endif
 endfunction
 
