@@ -177,6 +177,9 @@ augroup filebufcmds
   " Attempt filetype detection after writing.
   autocmd BufWritePost * if empty(&ft) | filetype detect | endif
 
+  " Tag a git tree after writing a buffer.
+  autocmd BufWritePost * call TagGitTree()
+
 augroup END
 
 augroup vimrcEx
@@ -452,6 +455,13 @@ function! StatuslineCurrentHighlight()
     else
         return '[' . name . ']'
     endif
+endfunction
+
+" Run the ctags git hook script over the entire git tree if available.
+function! TagGitTree()
+  if exists('b:git_dir') && filereadable(b:git_dir.'/hooks/ctags')
+    call system('sh "'.b:git_dir.'/hooks/ctags"')
+  endif
 endfunction
 
 
