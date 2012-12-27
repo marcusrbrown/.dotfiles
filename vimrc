@@ -317,6 +317,7 @@ set statusline+=%h          " help file flag
 set statusline+=%r          " read-only flag
 set statusline+=%m          " modified flag
 
+set statusline+=%{virtualenv#statusline()!=''?'[workon\ '.virtualenv#statusline().']':''}
 set statusline+=%{fugitive#statusline()}
 
 "display a warning if &et is wrong, or we have mixed-indenting
