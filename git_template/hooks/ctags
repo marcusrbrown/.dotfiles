@@ -16,5 +16,10 @@ git_dir=`dirname $hook_dir`
 tags=$git_dir/tags
 temp_tags=$tags.$$
 
-ctags --tag-relative -Rf $temp_tags --exclude=.git --languages=-javascript,sql
-mv $temp_tags $tags
+if [[ "$1" == "append" ]]; then
+  cp "$tags" "$temp_tags"
+  append_opt="-a"
+fi
+
+ctags $append_opt --tag-relative -Rf "$temp_tags" --exclude=.git --languages=-javascript,sql
+mv "$temp_tags" "$tags"
