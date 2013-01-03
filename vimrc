@@ -151,6 +151,11 @@ augroup filebufcmds
 
   autocmd FileType javascript setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
 
+  autocmd FileType json setlocal autoindent tabstop=8 shiftwidth=2 softtabstop=2 textwidth=78 expandtab
+  autocmd FileType json setlocal formatoptions=tcq2l foldmethod=syntax
+  " Don't hide quotation marks (vim-json).
+  autocmd FileType json setlocal conceallevel=0
+
   autocmd FileType vim setlocal autoindent expandtab smarttab tabstop=2 shiftwidth=2 softtabstop=2 keywordprg=:help
   autocmd FileType vim setlocal foldmethod=syntax
   " Reset the formatoptions set by the vim filetype plugin:
