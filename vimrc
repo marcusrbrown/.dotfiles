@@ -150,6 +150,10 @@ augroup filebufcmds
   let g:sh_fold_enabled = 7           " Enable function, heredoc, and if/do/for syntax folding
 
   autocmd FileType javascript setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
+  " Use the suggested vim-javascript configuration for inline Javascript.
+  let g:html_indent_inctags = "html,body,head,tbody"
+  let g:html_indent_script1 = "inc"
+  let g:html_indent_style1 = "inc"
 
   " vim-javascript thinks JSON is Javascript, but it ain't.
   autocmd BufRead,BufNewFile *.json set filetype=json
