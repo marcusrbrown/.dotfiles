@@ -151,6 +151,9 @@ augroup filebufcmds
 
   autocmd FileType javascript setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
 
+  " vim-javascript thinks JSON is Javascript, but it ain't.
+  autocmd BufRead,BufNewFile *.json set filetype=json
+
   autocmd FileType json setlocal autoindent tabstop=8 shiftwidth=2 softtabstop=2 textwidth=78 expandtab
   autocmd FileType json setlocal formatoptions=tcq2l foldmethod=syntax
   " Don't hide quotation marks (vim-json).
