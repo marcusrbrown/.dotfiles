@@ -21,5 +21,5 @@ if [[ "$1" == "append" ]]; then
   append_opt="-a"
 fi
 
-ctags $append_opt --tag-relative -Rf "$temp_tags" --exclude=.git --languages=-sql
+ctags $append_opt --tag-relative -Rf "$temp_tags" --exclude=.git --languages=-javascript,sql
 mv "$temp_tags" "$tags"
