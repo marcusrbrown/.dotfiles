@@ -577,6 +577,34 @@ let g:tagbar_compact = 1
 nmap <silent> <Leader>\\ :TagbarOpenAutoClose<CR>
 nmap <silent> <Leader>\| :TagbarToggle<CR>
 
+" Override Tagbar's JavaScript support to match our ctags setup.
+" We disable the JavaScript languge globally; we instead define a language called 'js'
+" so we have to override the 'ctagstype' key.
+" TODO: Add support for jsctags (DoctorJS) / jshint.
+"let g:tagbar_type_javascript = {
+      "\ 'ctagstype' : 'js',
+      "\ 'kinds' : [
+      "\   'v:variables:0:0',
+      "\   'f:functions:0:1'
+      "\ ],
+      "\ 'sro' : '.',
+      "\ 'kind2scope' : {
+      "\   'v' : 'namespace',
+      "\   'f' : 'namespace',
+      "\ },
+      "\ 'scope2kind' : {
+      "\   'namespace' : 'v'
+      "\ }
+      "\ }
+let g:tagbar_type_javascript = {
+      \ 'ctagstype' : 'js',
+      \ 'kinds' : [
+      \   'v:variables:0:0',
+      \   'f:functions:0:1'
+      \ ],
+      \ 'sro' : '.'
+      \ }
+
 " MakeGreen
 " Create a bogus mapping to MakeGreen to prevent it from taking over <Leader>t.
 " I don't invoke MakeGreen directly, it's here for other plugins that use it.
