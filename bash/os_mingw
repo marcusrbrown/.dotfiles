@@ -8,7 +8,7 @@
 # using cmd.exe and replace forward slashes with backslashes.
 winpath()
 {
-  cmd //c echo "$1" | sed 's/\//\\/g'
+  cmd //c echo "$@" | sed 's/\//\\/g'
 }
 
 
@@ -47,6 +47,6 @@ gvim()
 {
   local gvim=$(type -P gvim | head -1)
   if [ -n "$gvim" ]; then
-    cmd //c start \"-\" "$gvim" $*
+    cmd //c start \"-\" "$gvim" "$@"
   fi
 }
