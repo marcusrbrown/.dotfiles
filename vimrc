@@ -626,7 +626,7 @@ let g:ropevim_global_prefix = '<Leader>p'
 let g:syntastic_disabled_filetypes = ['c', 'cpp']
 
 " jscomplete-vim
-let g:jscomplete_use = ['dom']
+let g:jscomplete_use = ['dom', 'Backbone']
 
 
 " Commands
