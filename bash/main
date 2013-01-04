@@ -163,7 +163,8 @@ test -n "$__dircolors" && {
 }
 
 # Setup the options that are always passed to ls
-LS_COMMON="-hBG"
+# Print sizes in human-readable format; don't list groups.
+LS_COMMON="-hG"
 
 # Does ls support --color?
 if (ls --color) &> /dev/null; then
