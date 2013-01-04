@@ -379,7 +379,7 @@ export FIGNORE=.pyc
 
 # Code for ~/.ssh/environment is originally from http://www.cygwin.com/ml/cygwin/2001-06/msg00537.html.
 
-SSH_ENV="$HOME/.ssh/environment"
+export SSH_ENV="$HOME/.ssh/environment"
 
 __garbage __start_ssh_agent
 __start_ssh_agent()
