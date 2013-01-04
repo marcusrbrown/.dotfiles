@@ -5,8 +5,6 @@
 --regex-js=/["']?(this\.)?([A-Za-z0-9_$]+)["']?((\.prototype)?(\.[A-Za-z0-9_$]+))?[ \t]*[:=][ \t]*function/\2\5/f,function/
 --regex-js=/function[ \t]+([A-Za-z0-9_$]+)/\1/f,function/
 --regex-js=/([A-Za-z0-9._$]+)[ \t]*[:=][ \t]*\[/\1/v,array/
---regex-js=/([^= ]+)[ \t]*=[ \t]*[^"]'[^']*/\1/,string/
---regex-js=/([^= ]+)[ \t]*=[ \t]*[^']"[^"]*/\1/,string/
 --exclude=*-min.js
 --exclude=*.min.js
 --exclude=jquery-min.js
