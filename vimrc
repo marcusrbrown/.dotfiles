@@ -573,6 +573,8 @@ let NERDCreateDefaultMappings=0
 map <Leader>c <plug>NERDCommenterToggle
 
 " NERDTree
+let NERDTreeMinimalUI = 1
+let NERDTreeDirArrows = 1
 let NERDTreeIgnore = ['\.pyc$', '\.pyo$']
 map <Leader>t :NERDTree<CR>
 
@@ -626,6 +628,14 @@ let g:ropevim_global_prefix = '<Leader>p'
 
 " Syntastic
 let g:syntastic_disabled_filetypes = ['c', 'cpp']
+" Mark errors with :signs.
+let g:syntastic_enable_signs = 1
+" Jump to the error when saving the file.
+let g:syntastic_auto_jump = 1
+" Display the error list automatically.
+let g:syntastic_auto_loc_list = 1
+" Don't display warnings unless there are errors.
+let g:syntastic_quiet_warnings = 1
 
 " jscomplete-vim
 let g:jscomplete_use = ['dom', 'Backbone']
