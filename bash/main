@@ -275,41 +275,39 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
         ;;
 
       git)
-        if [ -r ./.git ]; then
-          # From bronson's dotfiles:
-          local STATE_COLOR=$WHITE
-          local unclean_state="${STATE_COLOR}*"
-          local changes_to_push="${STATE_COLOR}↑"
-          local changes_to_pull="${STATE_COLOR}↓"
-          local changes_to_push_and_pull="${STATE_COLOR}↕"
+        # From bronson's dotfiles:
+        local STATE_COLOR=$WHITE
+        local unclean_state="${STATE_COLOR}*"
+        local changes_to_push="${STATE_COLOR}↑"
+        local changes_to_pull="${STATE_COLOR}↓"
+        local changes_to_push_and_pull="${STATE_COLOR}↕"
 
-          local git_status="$(git status 2> /dev/null)"
-          local branch_pattern="^# On branch ([[:graph:]]*)"
-          local remote_pattern="# Your branch is (.*) of"
-          local diverge_pattern="# Your branch and (.*) have diverged"
+        local git_status="$(git status 2> /dev/null)"
+        local branch_pattern="^# On branch ([[:graph:]]*)"
+        local remote_pattern="# Your branch is (.*) of"
+        local diverge_pattern="# Your branch and (.*) have diverged"
 
-          if [[ ! ${git_status} =~ "working directory clean" ]]; then
-            local state="$unclean_state"
-          fi
-
-          # add an else if or two here if you want to get more specific
-          if [[ ${git_status} =~ ${remote_pattern} ]]; then
-            if [[ ${BASH_REMATCH[1]} == "ahead" ]]; then
-              local remote="$changes_to_push"
-            else
-              local remote="$changes_to_pull"
-            fi
-          fi
-          if [[ ${git_status} =~ ${diverge_pattern} ]]; then
-            local remote="$changes_to_push_and_pull"
-          fi
-          if [[ ${git_status} =~ ${branch_pattern} ]]; then
-            local branch=${BASH_REMATCH[1]}
-            local git_branch=" (${branch})${remote}${state}"
-          fi
-
-          echo -ne "${MAGENTA}${git_branch}${NO_COLOR}"
+        if [[ ! ${git_status} =~ "working directory clean" ]]; then
+          local state="$unclean_state"
         fi
+
+        # add an else if or two here if you want to get more specific
+        if [[ ${git_status} =~ ${remote_pattern} ]]; then
+          if [[ ${BASH_REMATCH[1]} == "ahead" ]]; then
+            local remote="$changes_to_push"
+          else
+            local remote="$changes_to_pull"
+          fi
+        fi
+        if [[ ${git_status} =~ ${diverge_pattern} ]]; then
+          local remote="$changes_to_push_and_pull"
+        fi
+        if [[ ${git_status} =~ ${branch_pattern} ]]; then
+          local branch=${BASH_REMATCH[1]}
+          local git_branch=" (${branch})${remote}${state}"
+        fi
+
+        echo -ne "${MAGENTA}${git_branch}${NO_COLOR}"
         ;;
 
       venv)
