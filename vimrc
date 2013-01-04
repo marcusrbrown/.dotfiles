@@ -171,6 +171,8 @@ augroup filebufcmds
   " Don't insert the comment leader after hitting Enter
   " Don't insert the comment leader after hitting o or O
   autocmd FileType vim setlocal formatoptions-=ro
+  " Indent shiftwidth on '\' (default is shiftwidth * 3).
+  let g:vim_indent_cont = &sw
 
   autocmd FileType help nmap <buffer> <Return> <C-]>
   autocmd FileType help nmap <buffer> <Backspace> <C-T>
