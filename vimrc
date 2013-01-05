@@ -640,6 +640,20 @@ let g:syntastic_quiet_warnings = 1
 " jscomplete-vim
 let g:jscomplete_use = ['dom', 'backbone']
 
+" neocomplcache
+let g:neocomplcache_enable_at_startup = 1
+" Disable autocompletion.
+let g:neocomplcache_disable_auto_complete = 1
+" Set the minimum length of a keyword to be completed.
+let g:neocomplcache_min_syntax_length = 3
+let g:neocomplcache_min_keyword_length = 3
+
+" TAB selects the next completion.
+inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
+" S-TAB to selects the previous completion.
+inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+" Enter will close the popup, inserting the selected item.
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 
 " Commands
 
