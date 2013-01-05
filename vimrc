@@ -597,7 +597,7 @@ map <Leader>c <plug>NERDCommenterToggle
 let NERDTreeMinimalUI = 1
 let NERDTreeDirArrows = 1
 let NERDTreeIgnore = ['\.pyc$', '\.pyo$']
-map <Leader>t :NERDTree<CR>
+nmap <Leader>t :NERDTree<CR>
 
 " Tagbar
 let g:tagbar_compact = 1
@@ -690,6 +690,15 @@ endif
 let g:neocomplcache_omni_patterns['c'] = '[^.[:digit:] *\t]\%(\.\|->\)'
 let g:neocomplcache_omni_patterns['cpp'] = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
 let g:neocomplcache_omni_patterns['javascript'] = '[^. \t]\.\%(\h\w*\)\?'
+
+" Tabular
+vnoremap <silent> <leader>t: :Tabularize /:<CR>
+vnoremap <silent> <leader>t= :Tabularize /=<CR>
+vnoremap <silent> <leader>t, :Tabularize /,<CR>
+vnoremap <silent> <leader>t{ :Tabularize /{/l1c0<CR>
+vnoremap <silent> <leader>t" :Tabularize /"<CR>
+vnoremap <silent> <leader>t' :Tabularize /'<CR>
+vnoremap <silent> <leader>t[ :Tabularize /[<CR>
 
 " Commands
 
