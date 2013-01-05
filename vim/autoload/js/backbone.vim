@@ -88,7 +88,7 @@ function s:_GetModelClass(arguments, parent)
   echo "GetModelClass - Parent:"
   call DictView_Print(a:parent)
 
-  return s:GetThis(a:arguments, a:parent)
+  return s:GetFunctionThis(a:arguments, a:parent)
 endfunction
 
 let s:GetModelClass = function(s:SID().'_GetModelClass')
@@ -109,6 +109,54 @@ let s:Model = {
 
 let s:Backbone.props.Model = s:Model
 call extend(s:Model.props.prototype.props, s:Events.props)
+" 2}}}
+
+" extend() helper function {{{2
+function s:_ExtendType(arguments, parent)
+  "echo 'ExtendType - Arguments:'
+  "call DictView_Print(a:arguments)
+  " Argument 0 has the optional prototype properties.
+  " Argument 1 has the optional class properties.
+  let protoProps = get(get(a:arguments, 0, {}), 'props', {})
+  let staticProps = get(get(a:arguments, 1, {}), 'props', {})
+  " Get the type to extend.
+  let parent = s:GetFunctionThis(a:arguments, a:parent)
+
+  "echo 'ExtendType - parent:'
+  "call DictView_Print(parent)
+  "echo 'ExtendType - protoProps:'
+  "call DictView_Print(protoProps)
+  "echo 'ExtendType - staticProps:'
+  "call DictView_Print(staticProps)
+
+  " TODO: Bother with the constructor?
+  " Create the child as a constructor function that calls through the parent's
+  " 'newType' property. The function defined for 'newType' will handle the
+  " rest. Default to the 'type' property if 'newType' isn't available, and to
+  " the global 'Object' type as a last resort.
+  let NewType = get(parent, 'newType', get(parent, 'type', 'Object'))
+  let child = {'kind': 'f', 'newType': NewType, 'props': {}}
+
+  call extend(child.props, parent.props)
+  call extend(child.props, staticProps)
+
+  if !has_key(child.props, 'prototype')
+    child.props.prototype = {}
+  endif
+
+  call extend(child.props.prototype.props, protoProps)
+
+  "echo 'ExtendType - child:'
+  "call DictView_Print(child)
+
+  return child
+endfunction
+
+let s:ExtendType = function(s:SID().'_ExtendType')
+let s:extend = {'kind': 'f', 'type': s:ExtendType}
+
+" Add extend() to all Backbone classes.
+let s:Model.props.extend = s:extend
 " 2}}}
 " 1}}}
 
