@@ -654,4 +654,4 @@ function! s:HighlightLongLines(width)
     else
         echomsg "Usage: HighlightLongLines [natural number]"
     endif
-
+endfunction
