@@ -26,11 +26,13 @@ endfunction
 
 " Return the passed object (in parent). Used as the 'type' value for instance
 " methods that return the 'this' reference.
-function s:GetThis(arguments, parent)
+" NOTE: This can't be used in constructor functions, as they aren't passed a
+" parent parameter.
+function s:_GetFunctionThis(arguments, parent)
   return !empty(a:parent) ? a:parent : {}
 endfunction
 
-let s:this.GetThis = function(s:SID().'GetThis')
+let s:GetFunctionThis = function(s:SID().'_GetFunctionThis')
 
 
 " Backbone {{{2
@@ -52,12 +54,12 @@ let s:Backbone = s:backbone.Backbone
 let s:this.Events = {
   \   'kind': 'v', 'type': 'Object', 'menu': '[Backbone]',
   \   'props': {
-  \     'on': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:this.GetThis},
-  \     'once': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:this.GetThis},
-  \     'off': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:this.GetThis},
-  \     'trigger': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:this.GetThis},
-  \     'listenTo': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:this.GetThis},
-  \     'stopListening': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:this.GetThis},
+  \     'on': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
+  \     'once': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
+  \     'off': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
+  \     'trigger': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
+  \     'listenTo': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
+  \     'stopListening': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
   \   },
   \ }
 
