@@ -638,7 +638,7 @@ let g:syntastic_auto_loc_list = 1
 let g:syntastic_quiet_warnings = 1
 
 " jscomplete-vim
-let g:jscomplete_use = ['dom', 'Backbone']
+let g:jscomplete_use = ['dom', 'backbone']
 
 
 " Commands
@@ -654,4 +654,4 @@ function! s:HighlightLongLines(width)
     else
         echomsg "Usage: HighlightLongLines [natural number]"
     endif
-endfunction
+
