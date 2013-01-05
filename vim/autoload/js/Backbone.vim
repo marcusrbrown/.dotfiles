@@ -38,9 +38,12 @@ call extend(s:Backbone.props, s:Backbone.Events.props)
 
 " Backbone.Model {{{2
 let s:Backbone.Model = {
-  \   'kind': 'f', 'type': 'Object', 'props': {
+  \   'kind': 'f', 'type': 'Model', 'props': {
   \     'prototype': {
-  \       'kind': 'v', 'menu': '[Model]', 'type': 'Object', 'props': {
+  \       'kind': 'v', 'menu': '[Model]', 'type': 'Object', 'class': 'Model', 'props': {
+  \         'changed': {'kind': 'v', 'menu': '[Model]', 'type': 'Object'},
+  \         'idAttribute': {'kind': 'v', 'menu': '[Model]', 'type': 'String'},
+  \         'initialize': {'kind': 'f', 'menu': '[Model]', 'type': ''},
   \       }
   \     }
   \   }
@@ -50,12 +53,16 @@ call extend(s:Backbone.Model.props.prototype.props, s:Backbone.Events.props)
 " 2}}}
 " 1}}}
 
+
 function! js#Backbone#Extend (names)
   if !exists('b:GlobalObject')
     return
   endif
 
   call extend(b:GlobalObject, s:backbone)
+
+  "runtime plugin/dictview.vim
+  call DictView_Print(s:backbone)
 endfunction
 
 
