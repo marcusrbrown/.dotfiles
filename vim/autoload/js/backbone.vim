@@ -4,8 +4,16 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
+" The 'this' dictionary is used to define dictionaries and functions only used
+" in this script. All of the Backbone classes are namespaced; so we need to
+" return 'type' functions that generate class type info.
+let s:this = {}
+
+" Access 'backbone' from 'this'.
+let s:this.backbone = {}
+let s:backbone = s:this.backbone
+
 " Backbone {{{1
-let s:backbone = {}
 let s:backbone.Backbone = {
   \   'kind': 'v', 'type': 'Object', 'props': {
   \     'VERSION': {'kind': 'v', 'menu': '[Backbone]', 'type': 'String'},
@@ -20,7 +28,7 @@ let s:backbone.Backbone = {
 let s:Backbone = s:backbone.Backbone
 
 " Backbone.Events {{{2
-let s:Backbone.Events = {
+let s:Backbone.props.Events = {
   \   'kind': 'v', 'type': 'Object', 'props': {
   \     'on': {'kind': 'f', 'menu': '[Event]', 'type': 'Events'},
   \     'once': {'kind': 'f', 'menu': '[Event]', 'type': 'Events'},
@@ -33,11 +41,11 @@ let s:Backbone.Events = {
   \   }
   \ }
 
-call extend(s:Backbone.props, s:Backbone.Events.props)
+call extend(s:Backbone.props, s:Backbone.props.Events.props)
 " 2}}}
 
 " Backbone.Model {{{2
-let s:Backbone.Model = {
+let s:Backbone.props.Model = {
   \   'kind': 'f', 'type': 'Model', 'props': {
   \     'prototype': {
   \       'kind': 'v', 'menu': '[Model]', 'type': 'Object', 'class': 'Model', 'props': {
@@ -49,7 +57,7 @@ let s:Backbone.Model = {
   \   }
   \ }
 
-call extend(s:Backbone.Model.props.prototype.props, s:Backbone.Events.props)
+call extend(s:Backbone.props.Model.props.prototype.props, s:Backbone.props.Events.props)
 " 2}}}
 " 1}}}
 
