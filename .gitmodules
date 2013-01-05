@@ -61,3 +61,6 @@
 [submodule "vim/bundle/dictview.vim"]
 	path = vim/bundle/dictview.vim
 	url = git://github.com/vim-scripts/dictview.vim.git
+[submodule "vim/bundle/vim-git"]
+	path = vim/bundle/vim-git
+	url = git://github.com/tpope/vim-git.git
