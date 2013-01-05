@@ -54,7 +54,7 @@ call extend(s:Backbone.Model.props.prototype.props, s:Backbone.Events.props)
 " 1}}}
 
 
-function! js#Backbone#Extend (names)
+function! js#backbone#Extend (names)
   if !exists('b:GlobalObject')
     return
   endif
