@@ -103,8 +103,13 @@ colorscheme solarized
 
 " Insert completion
 
-set completeopt=menuone,longest,preview
-set pumheight=6     " 6 lines in the popup menu
+set completeopt=longest,menuone
+set pumheight=12     " 12 lines in the popup menu
+
+" Reset complete to the following:
+" scan current buffer, scan loaded buffers on the buffer list, scan dictionary files, scan current and included files,
+" enable tag completion.
+set complete=.,b,t,k,i
 
 " Suffixes that get lower priority when doing tab completion for filenames.
 " These are files we are not likely to want to edit or read.
@@ -518,7 +523,8 @@ imap <C-W> <C-O><C-W>
 
 " Shorten omnicompletion sequence to Ctrl+Space
 if has('gui_running')
-  inoremap <C-Space> <C-X><C-O>
+  inoremap <expr> <C-Space> pumvisible() ? '<C-n>' :
+    \ &filetype == 'vim' ? "\<C-x><C-u><C-p>" : '<C-X><C-O>'
 else
   inoremap <Nul> <C-X><C-O>
 endif
@@ -558,6 +564,21 @@ function! Home()
     normal 0
   endif
 endfunction
+
+" TAB selects the next completion.
+inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
+" S-TAB to selects the previous completion.
+inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+" Enter will close the popup, inserting the selected item.
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
+" CTRL-H closes the popup and deletes the previous character.
+inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
+inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
+" Other completion mappings.
+inoremap <expr> <C-g> neocomplcache#undo_completion()
+inoremap <expr> <C-l> neocomplcache#complete_common_string()
+inoremap <expr> <C-y> neocomplcache#close_popup()
+inoremap <expr> <C-e> neocomplcache#cancel_popup()
 
 " Run flake8
 autocmd FileType python map <buffer> <Leader>8 :call Flake8()<CR>
@@ -641,19 +662,34 @@ let g:syntastic_quiet_warnings = 1
 let g:jscomplete_use = ['dom', 'backbone']
 
 " neocomplcache
+" Toggle neocomplcache.
+nmap <silent> <Leader>nc :NeoComplCacheToggle<CR>
+" Enable necomplcache.
 let g:neocomplcache_enable_at_startup = 1
 " Disable autocompletion.
 let g:neocomplcache_disable_auto_complete = 1
+" Don't pop up when using arrow keys.
+let g:neocomplcache_enable_insert_char_pre = 1
 " Set the minimum length of a keyword to be completed.
 let g:neocomplcache_min_syntax_length = 3
 let g:neocomplcache_min_keyword_length = 3
-
-" TAB selects the next completion.
-inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
-" S-TAB to selects the previous completion.
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-" Enter will close the popup, inserting the selected item.
-inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
+" Set auto and manual completion word length.
+let g:neocomplcache_auto_completion_start_length = 2
+let g:neocomplcache_manual_completion_start_length = 2
+" Enable smartcase
+let g:neocomplcache_enable_smart_case = 1
+" Keyword completion.
+if !exists('g:neocomplcache_keyword_patterns')
+  let g:neocomplcache_keyword_patterns = {}
+endif
+let g:neocomplcache_keyword_patterns['default'] = '\h\w*'
+" Omnipatterns
+if !exists('g:neocomplcache_omni_patterns')
+  let g:neocomplcache_omni_patterns = {}
+endif
+let g:neocomplcache_omni_patterns['c'] = '[^.[:digit:] *\t]\%(\.\|->\)'
+let g:neocomplcache_omni_patterns['cpp'] = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
+let g:neocomplcache_omni_patterns['javascript'] = '[^. \t]\.\%(\h\w*\)\?'
 
 " Commands
 
