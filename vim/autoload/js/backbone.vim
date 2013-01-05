@@ -49,8 +49,6 @@ let s:Backbone = s:backbone.Backbone
 " 2}}}
 
 " Backbone.Events {{{2
-
-
 let s:this.Events = {
   \   'kind': 'v', 'type': 'Object', 'menu': '[Backbone]',
   \   'props': {
@@ -71,19 +69,51 @@ call extend(s:Backbone.props, s:Backbone.props.Events.props)
 " 2}}}
 
 " Backbone.Model {{{2
-let s:Backbone.props.Model = {
-  \   'kind': 'f', 'type': 'Model', 'props': {
+
+" Construct a Model instance. Mimic the Backbone.js Model constructor as much
+" as possible.
+function s:_CreateModel(arguments, parent)
+  " TODO: Collection, defaults, and all that...
+  let attrs = get(get(a:arguments, 0, {}), 'props', {})
+  let options = get(a:arguments, 1, {})
+  let instance = {'props': {'prototype': deepcopy(s:Model.props.prototype)}}
+
+  call extend(instance.props.prototype.props, attrs)
+  "echo 'CreateModel - Instance:'
+  "call DictView_Print(instance)
+  return instance
+endfunction
+
+let s:CreateModel = function(s:SID().'_CreateModel')
+
+" Return the Model's class.
+function s:_GetModelClass(arguments, parent)
+  echo "GetModelClass - Arguments:"
+  call DictView_Print(a:arguments)
+  echo "GetModelClass - Parent:"
+  call DictView_Print(a:parent)
+
+  return s:GetThis(a:arguments, a:parent)
+endfunction
+
+let s:GetModelClass = function(s:SID().'_GetModelClass')
+
+let s:Model = {
+  \   'kind': 'f', 'type': '', 'newType': s:CreateModel, 'menu': '[Backbone]',
+  \   'props': {
   \     'prototype': {
-  \       'kind': 'v', 'menu': '[Model]', 'type': 'Object', 'class': 'Model', 'props': {
-  \         'changed': {'kind': 'v', 'menu': '[Model]', 'type': 'Object'},
-  \         'idAttribute': {'kind': 'v', 'menu': '[Model]', 'type': 'String'},
-  \         'initialize': {'kind': 'f', 'menu': '[Model]', 'type': ''},
+  \       'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'Object', 'class': s:GetModelClass,
+  \       'props': {
+  \         'changed': {'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'Object'},
+  \         'idAttribute': {'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'String'},
+  \         'initialize': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': ''},
   \       }
   \     }
   \   }
   \ }
 
-call extend(s:Backbone.props.Model.props.prototype.props, s:Backbone.props.Events.props)
+let s:Backbone.props.Model = s:Model
+call extend(s:Model.props.prototype.props, s:this.Events.props)
 " 2}}}
 " 1}}}
 
@@ -95,8 +125,7 @@ function! js#backbone#Extend (names)
 
   call extend(b:GlobalObject, s:backbone)
 
-  "runtime plugin/dictview.vim
-  call DictView_Print(s:backbone)
+  "call DictView_Print(s:backbone)
 endfunction
 
 
