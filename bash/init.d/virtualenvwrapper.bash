@@ -9,6 +9,8 @@ __garbage VENVWRAPPERSH
 VENVWRAPPERSH=$(type -P virtualenvwrapper.sh /usr/local/bin/virtualenvwrapper.sh | head -1)
 
 if [[ -n "$VENVWRAPPERSH" ]]; then
+  export VIRTUALENVWRAPPER_VIRTUALENV_ARGS='--no-site-packages'
+
   if [[ -z "$WORKON_HOME" ]]; then
     export WORKON_HOME="$HOME/.virtualenvs"
   else
@@ -25,4 +27,7 @@ if [[ -n "$VENVWRAPPERSH" ]]; then
   function mkvirtualenv {
     MKVIRTUALENV_PWD="$(pwd)" orig_mkvirtualenv "$@"
   }
+
+  export PIP_VIRTUALENV_BASE=$WORKON_HOME
+  export PIP_RESPECT_VIRTUALENV=true
 fi
