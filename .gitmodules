@@ -58,3 +58,6 @@
 [submodule "vim/bundle/jscomplete-vim"]
 	path = vim/bundle/jscomplete-vim
 	url = git://github.com/teramako/jscomplete-vim.git
+[submodule "vim/bundle/dictview.vim"]
+	path = vim/bundle/dictview.vim
+	url = git://github.com/vim-scripts/dictview.vim.git
