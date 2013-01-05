@@ -524,7 +524,7 @@ imap <C-W> <C-O><C-W>
 " Shorten omnicompletion sequence to Ctrl+Space
 if has('gui_running')
   inoremap <expr> <C-Space> pumvisible() ? '<C-n>' :
-    \ &filetype == 'vim' ? "\<C-x><C-u><C-p>" : '<C-X><C-O>'
+    \ &filetype == 'vim' ? "\<C-x>\<C-v>\<C-p>" : '<C-X><C-O>'
 else
   inoremap <Nul> <C-X><C-O>
 endif
@@ -675,7 +675,7 @@ let g:neocomplcache_min_syntax_length = 3
 let g:neocomplcache_min_keyword_length = 3
 " Set auto and manual completion word length.
 let g:neocomplcache_auto_completion_start_length = 2
-let g:neocomplcache_manual_completion_start_length = 2
+let g:neocomplcache_manual_completion_start_length = 0
 " Enable smartcase
 let g:neocomplcache_enable_smart_case = 1
 " Keyword completion.
