@@ -30,10 +30,11 @@ let s:GetFunctionThis = function(s:SID().'_GetFunctionThis')
 
 " Backbone {{{2
 let s:backbone.Backbone = {
-  \   'kind': 'v', 'type': 'Object', 'props': {
-  \     'VERSION': {'kind': 'v', 'menu': '[Backbone]', 'type': 'String'},
-  \     '$': {'kind': 'f', 'menu': '[Backbone]'},
-  \     'noConflict': {'kind': 'f', 'menu': '[Backbone]', 'type': 'Backbone'},
+  \   'kind': 'v', 'type': 'Object',
+  \   'props': {
+  \     'VERSION':     {'kind': 'v', 'menu': '[Backbone]', 'type': 'String'},
+  \     '$':           {'kind': 'f', 'menu': '[Backbone]'},
+  \     'noConflict':  {'kind': 'f', 'menu': '[Backbone]', 'type': 'Backbone'},
   \     'emulateHTTP': {'kind': 'v', 'menu': '[Backbone]', 'type': 'Boolean'},
   \     'emulateJSON': {'kind': 'v', 'menu': '[Backbone]', 'type': 'Boolean'},
   \   }
@@ -47,11 +48,11 @@ let s:Backbone = s:backbone.Backbone
 let s:Events = {
   \   'kind': 'v', 'type': 'Object', 'menu': '[Backbone]',
   \   'props': {
-  \     'on': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
-  \     'once': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
-  \     'off': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
-  \     'trigger': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
-  \     'listenTo': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
+  \     'on':            {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
+  \     'once':          {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
+  \     'off':           {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
+  \     'trigger':       {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
+  \     'listenTo':      {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
   \     'stopListening': {'kind': 'f', 'menu': '[Backbone.Events]', 'type': s:GetFunctionThis},
   \   },
   \ }
@@ -70,14 +71,12 @@ call extend(s:Backbone.props, s:Backbone.props.Events.props)
 " provides access to the self variable, so that we can create instances of
 " classes that were extended from Model.
 function s:_CreateModel(arguments, parent) dict
-  "echo 'CreateModel - self:'
-  "call DictView_Print(self)
   " TODO: Collection, defaults, and all that...
   let attrs = get(get(a:arguments, 0, {}), 'props', {})
   let options = get(get(a:arguments, 1, {}), 'props', {})
   let instance = {'props': {'prototype': deepcopy(self.props.prototype)}}
   let protoProps = {
-    \   'cid': {'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'Number'},
+    \   'cid':        {'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'Number'},
     \   'attributes': {
     \     'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'Object',
     \     'props': {}
@@ -114,28 +113,28 @@ let s:Model = {
   \     'prototype': {
   \       'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'Object', 'class': s:GetModelClass,
   \       'props': {
-  \         'changed': {'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'Object'},
-  \         'idAttribute': {'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'String'},
-  \         'initialize': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': ''},
-  \         'toJSON': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
-  \         'sync': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
-  \         'get': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
-  \         'escape': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'String'},
-  \         'has': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Boolean'},
-  \         'set': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': s:GetFunctionThis},
-  \         'unset': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': s:GetFunctionThis},
-  \         'clear': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': s:GetFunctionThis},
-  \         'fetch': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
-  \         'save': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
-  \         'destroy': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
-  \         'url': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'String'},
-  \         'parse': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
-  \         'clone': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': s:GetFunctionThis},
-  \         'isNew': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Boolean'},
-  \         'change': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': s:GetFunctionThis},
-  \         'hasChanged': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Boolean'},
-  \         'changedAttributes': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
-  \         'previous': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
+  \         'changed':            {'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'Object'},
+  \         'idAttribute':        {'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'String'},
+  \         'initialize':         {'kind': 'f', 'menu': '[Backbone.Model]', 'type': ''},
+  \         'toJSON':             {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
+  \         'sync':               {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
+  \         'get':                {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
+  \         'escape':             {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'String'},
+  \         'has':                {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Boolean'},
+  \         'set':                {'kind': 'f', 'menu': '[Backbone.Model]', 'type': s:GetFunctionThis},
+  \         'unset':              {'kind': 'f', 'menu': '[Backbone.Model]', 'type': s:GetFunctionThis},
+  \         'clear':              {'kind': 'f', 'menu': '[Backbone.Model]', 'type': s:GetFunctionThis},
+  \         'fetch':              {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
+  \         'save':               {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
+  \         'destroy':            {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
+  \         'url':                {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'String'},
+  \         'parse':              {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
+  \         'clone':              {'kind': 'f', 'menu': '[Backbone.Model]', 'type': s:GetFunctionThis},
+  \         'isNew':              {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Boolean'},
+  \         'change':             {'kind': 'f', 'menu': '[Backbone.Model]', 'type': s:GetFunctionThis},
+  \         'hasChanged':         {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Boolean'},
+  \         'changedAttributes':  {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
+  \         'previous':           {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
   \         'previousAttributes': {'kind': 'f', 'menu': '[Backbone.Model]', 'type': 'Object'},
   \       }
   \     }
@@ -148,21 +147,12 @@ call extend(s:Model.props.prototype.props, s:Events.props)
 
 " extend() helper function {{{2
 function s:_ExtendType(arguments, parent)
-  "echo 'ExtendType - Arguments:'
-  "call DictView_Print(a:arguments)
   " Argument 0 has the optional prototype properties.
   " Argument 1 has the optional class properties.
   let protoProps = get(get(a:arguments, 0, {}), 'props', {})
   let staticProps = get(get(a:arguments, 1, {}), 'props', {})
   " Get the type to extend.
   let parent = s:GetFunctionThis(a:arguments, a:parent)
-
-  "echo 'ExtendType - parent:'
-  "call DictView_Print(parent)
-  "echo 'ExtendType - protoProps:'
-  "call DictView_Print(protoProps)
-  "echo 'ExtendType - staticProps:'
-  "call DictView_Print(staticProps)
 
   " TODO: Bother with the constructor?
   " Create the child as a constructor function that calls through the parent's
@@ -180,10 +170,6 @@ function s:_ExtendType(arguments, parent)
   endif
 
   call extend(child.props.prototype.props, protoProps)
-
-  "echo 'ExtendType - child:'
-  "call DictView_Print(child)
-
   return child
 endfunction
 
