@@ -76,8 +76,19 @@ function s:_CreateModel(arguments, parent) dict
   let attrs = get(get(a:arguments, 0, {}), 'props', {})
   let options = get(get(a:arguments, 1, {}), 'props', {})
   let instance = {'props': {'prototype': deepcopy(self.props.prototype)}}
+  let protoProps = {
+    \   'cid': {'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'Number'},
+    \   'attributes': {
+    \     'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'Object',
+    \     'props': {}
+    \   }
+    \ }
 
-  call extend(instance.props.prototype.props, attrs)
+  " TODO: Get defaults.
+  " Extend the attributes object with the given attributes, simulating
+  " Model.set().
+  call extend(protoProps.attributes.props, attrs)
+  call extend(instance.props.prototype.props, protoProps)
   "echo 'CreateModel - Instance:'
   "call DictView_Print(instance)
   return instance
