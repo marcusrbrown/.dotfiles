@@ -107,6 +107,12 @@ endfunction
 
 let s:GetModelClass = function(s:SID().'_GetModelClass')
 
+function s:_GetModelType(parent)
+  return s:Model
+endfunction
+
+let s:GetModelType = function(s:SID().'_GetModelType')
+
 let s:Model = {
   \   'kind': 'f', 'newType': s:CreateModel, 'menu': '[Backbone]',
   \   'props': {
@@ -145,6 +151,67 @@ let s:Backbone.props.Model = s:Model
 call extend(s:Model.props.prototype.props, s:Events.props)
 " 2}}}
 
+" Backbone.Collection {{{2
+
+" Construct a Collection instance. Simulates the Backbone.js Collection
+" constructor function. Supports Collection classes created with
+" Collection.extend() through the self dictionary variable.
+function s:_CreateCollection(arguments, parent) dict
+  let models = get(get(a:arguments, 0, {}), 'props', {})
+  let options = get(get(a:arguments, 1, {}), 'props', {})
+  let instance = {'props': {'prototype': deepcopy(self.props.prototype)}}
+  let protoProps = {
+    \   'length': {'kind': 'v', 'menu': '[Backbone.Collection]', 'type': 'Number'},
+    \   'models': {
+    \     'kind': 'v', 'menu': '[Backbone.Collection]', 'type': 'Array', 'class': 'Array',
+    \     'props': {}
+    \   }
+    \ }
+  let model = get(options, 'model', {})
+  let comparator = get(options, 'comparator', {})
+
+  if !empty(model)
+    protoProps.model = model
+  endif
+
+  if !empty(comparator)
+    protoProps.comparator = comparator
+  endif
+
+  " TODO: This isn't a good approximation of Collection.reset(), do we need
+  " anything more? Do we care to coerce the models argument to an array?
+  call extend(protoProps.models.props, models)
+
+  call extend(instance.props.prototype.props, protoProps)
+  "echo 'CreateCollection - Instance:'
+  "call DictView_Print(instance)
+  return instance
+endfunction
+
+let s:CreateCollection = function(s:SID().'_CreateCollection')
+
+function s:_GetCollectionType(parent)
+  return s:Collection
+endfunction
+
+let s:GetCollectionType = function(s:SID().'_GetCollectionType')
+
+let s:Collection = {
+  \   'kind': 'f', 'newType': s:CreateCollection, 'menu': '[Backbone]',
+  \   'props': {
+  \     'prototype': {
+  \       'kind': 'v', 'menu': '[Backbone.Collection]', 'type': 'Object', 'class': s:GetCollectionType,
+  \       'props': {
+  \         'model': {'kind': 'v', 'menu': '[Backbone.Collection]', 'type': s:GetModelType},
+  \       }
+  \     }
+  \   }
+  \ }
+
+call extend(s:Collection.props.prototype.props, s:Events.props)
+let s:Backbone.props.Collection = s:Collection
+" 2}}}
+
 " extend() helper function {{{2
 function s:_ExtendType(arguments, parent)
   " Argument 0 has the optional prototype properties.
@@ -178,6 +245,7 @@ let s:extend = {'kind': 'f', 'type': s:ExtendType}
 
 " Add extend() to all Backbone classes.
 let s:Model.props.extend = s:extend
+let s:Collection.props.extend = s:extend
 " 2}}}
 " 1}}}
 
