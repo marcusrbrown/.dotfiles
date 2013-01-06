@@ -66,12 +66,16 @@ call extend(s:Backbone.props, s:Backbone.props.Events.props)
 " Backbone.Model {{{2
 
 " Construct a Model instance. Mimic the Backbone.js Model constructor as much
-" as possible.
-function s:_CreateModel(arguments, parent)
+" as possible. Note that _CreateModel() is a dictionary function which
+" provides access to the self variable, so that we can create instances of
+" classes that were extended from Model.
+function s:_CreateModel(arguments, parent) dict
+  "echo 'CreateModel - self:'
+  "call DictView_Print(self)
   " TODO: Collection, defaults, and all that...
   let attrs = get(get(a:arguments, 0, {}), 'props', {})
-  let options = get(a:arguments, 1, {})
-  let instance = {'props': {'prototype': deepcopy(s:Model.props.prototype)}}
+  let options = get(get(a:arguments, 1, {}), 'props', {})
+  let instance = {'props': {'prototype': deepcopy(self.props.prototype)}}
 
   call extend(instance.props.prototype.props, attrs)
   "echo 'CreateModel - Instance:'
@@ -94,7 +98,7 @@ endfunction
 let s:GetModelClass = function(s:SID().'_GetModelClass')
 
 let s:Model = {
-  \   'kind': 'f', 'type': '', 'newType': s:CreateModel, 'menu': '[Backbone]',
+  \   'kind': 'f', 'newType': s:CreateModel, 'menu': '[Backbone]',
   \   'props': {
   \     'prototype': {
   \       'kind': 'v', 'menu': '[Backbone.Model]', 'type': 'Object', 'class': s:GetModelClass,
@@ -137,7 +141,7 @@ function s:_ExtendType(arguments, parent)
   let NewType = get(parent, 'newType', get(parent, 'type', 'Object'))
   let child = {'kind': 'f', 'newType': NewType, 'props': {}}
 
-  call extend(child.props, parent.props)
+  call extend(child.props, deepcopy(parent.props))
   call extend(child.props, staticProps)
 
   if !has_key(child.props, 'prototype')
