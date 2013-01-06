@@ -67,3 +67,6 @@
 [submodule "vim/bundle/tabular"]
 	path = vim/bundle/tabular
 	url = git://github.com/godlygeek/tabular.git
+[submodule "vim/bundle/jscomplete-vim"]
+	path = vim/bundle/jscomplete-vim
+	url = git://github.com/igetgames/jscomplete-vim.git
