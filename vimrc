@@ -668,6 +668,8 @@ nmap <silent> <Leader>nc :NeoComplCacheToggle<CR>
 let g:neocomplcache_enable_at_startup = 1
 " Disable autocompletion.
 let g:neocomplcache_disable_auto_complete = 1
+" Overwrite the completefunc set by other plugins.
+let g:neocomplcache_force_overwrite_completefunc = 1
 " Don't pop up when using arrow keys.
 let g:neocomplcache_enable_insert_char_pre = 1
 " Set the minimum length of a keyword to be completed.
