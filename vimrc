@@ -667,11 +667,9 @@ nmap <silent> <Leader>nc :NeoComplCacheToggle<CR>
 " Enable necomplcache.
 let g:neocomplcache_enable_at_startup = 1
 " Disable autocompletion.
-let g:neocomplcache_disable_auto_complete = 1
+"let g:neocomplcache_disable_auto_complete = 1
 " Overwrite the completefunc set by other plugins.
 let g:neocomplcache_force_overwrite_completefunc = 1
-" Don't pop up when using arrow keys.
-let g:neocomplcache_enable_insert_char_pre = 1
 " Set the minimum length of a keyword to be completed.
 let g:neocomplcache_min_syntax_length = 3
 let g:neocomplcache_min_keyword_length = 3
@@ -692,6 +690,12 @@ endif
 let g:neocomplcache_omni_patterns['c'] = '[^.[:digit:] *\t]\%(\.\|->\)'
 let g:neocomplcache_omni_patterns['cpp'] = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
 let g:neocomplcache_omni_patterns['javascript'] = '[^. \t]\.\%(\h\w*\)\?'
+" Don't show the neocomplcache popup when using cursor keys in insert mode.
+inoremap <expr><Left>  neocomplcache#close_popup() . "\<Left>"
+inoremap <expr><Right> neocomplcache#close_popup() . "\<Right>"
+inoremap <expr><Up>    neocomplcache#close_popup() . "\<Up>"
+inoremap <expr><Down>  neocomplcache#close_popup() . "\<Down>"
+
 
 " Tabular
 vnoremap <silent> <leader>t: :Tabularize /:<CR>
