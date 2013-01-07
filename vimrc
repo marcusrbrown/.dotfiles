@@ -155,6 +155,7 @@ augroup filebufcmds
   let g:sh_fold_enabled = 7           " Enable function, heredoc, and if/do/for syntax folding
 
   autocmd FileType javascript setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
+  autocmd FileType javascript setlocal formatoptions-=ro
   " Use jscomplete-vim for JavaScript omnicompletion.
   autocmd FileType javascript setlocal omnifunc=jscomplete#CompleteJS
   " Use the suggested vim-javascript configuration for inline Javascript.
