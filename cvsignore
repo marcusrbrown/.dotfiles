@@ -7,3 +7,6 @@ tags
 
 # vim
 .netrwhist
+
+# Environment files, used by autoenv, Foreman, and other utilities.
+.env
