@@ -533,9 +533,6 @@ endif
 " Toggle current fold
 nnoremap <Space> za
 
-" Shift-Tab inserts a hard tab
-imap <silent> <S-Tab> <C-V><Tab>
-
 " Make Y consistent with C and D
 nnoremap Y y$
 
@@ -568,8 +565,9 @@ endfunction
 
 " TAB selects the next completion.
 inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
-" S-TAB to selects the previous completion.
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+" Shift-TAB to selects the previous completion if the popup is visible,
+" otherwise it inserts a hard tab.
+inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-V>\<Tab>"
 " Enter will close the popup, inserting the selected item.
 inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 " CTRL-H closes the popup and deletes the previous character.
