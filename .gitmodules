@@ -91,3 +91,6 @@
 [submodule "vim/bundle/vim-backbone-jscomplete"]
 	path = vim/bundle/vim-backbone-jscomplete
 	url = git://github.com/igetgames/vim-backbone-jscomplete.git
+[submodule "vim/bundle/vim-markdown-extra-preview"]
+	path = vim/bundle/vim-markdown-extra-preview
+	url = https://bitbucket.org/joedicastro/vim-markdown-extra-preview.git
