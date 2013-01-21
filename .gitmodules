@@ -76,3 +76,15 @@
 [submodule "vim/bundle/vim-csharp"]
 	path = vim/bundle/vim-csharp
 	url = git://github.com/OrangeT/vim-csharp.git
+[submodule "vim/bundle/pythoncomplete"]
+	path = vim/bundle/pythoncomplete
+	url = git://github.com/meermanr/pythoncomplete.git
+[submodule "vim/bundle/nose.vim"]
+	path = vim/bundle/nose.vim
+	url = git://github.com/lambdalisue/nose.vim.git
+[submodule "vim/bundle/vim-django-support"]
+	path = vim/bundle/vim-django-support
+	url = git://github.com/lambdalisue/vim-django-support.git
+[submodule "vim/bundle/vim-htmldjango_omnicomplete"]
+	path = vim/bundle/vim-htmldjango_omnicomplete
+	url = git://github.com/mjbrownie/vim-htmldjango_omnicomplete.git
