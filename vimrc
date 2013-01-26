@@ -187,6 +187,7 @@ augroup filebufcmds
   autocmd FileType dosbatch setlocal fileformat=dos expandtab shiftwidth=4 softtabstop=4
 
   autocmd FileType git,gitcommit setlocal foldmethod=syntax foldlevel=1
+  autocmd FileType gitconfig setlocal noexpandtab
 
   autocmd FileType java setlocal shiftwidth=4 tabstop=4 softtabstop=4 expandtab
 
