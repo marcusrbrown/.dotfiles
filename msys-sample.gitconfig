@@ -1,0 +1,26 @@
+# Local configuration goes here:
+[user]
+	name = Marcus R. Brown
+	email = mrossbrown@gmail.com
+[core]
+	editor = command gvim --nofork '%*'
+
+[diff]
+	tool = bc3
+
+[difftool]
+	prompt = false
+
+[difftool "bc3"]
+	path = "C:/Users/mrbrown/AppData/Local/Beyond Compare 3/BCompare.exe"
+
+[merge]
+	tool = bc3
+
+[mergetool "bc3"]
+	path = "C:/Users/mrbrown/AppData/Local/Beyond Compare 3/BCompare.exe"
+	keepTemporaries = false
+	trustExitCode = true
+	keepBackup = false
+
+# DO NOT EDIT BELOW THIS LINE
