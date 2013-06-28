@@ -175,6 +175,11 @@ else
   LS_COMMON="$LS_COMMON -F"
 fi
 
+# Ignore NTUSER.DAT files on Windows
+if [[ "$HOST_OS" == "mingw" ]]; then
+  LS_COMMON="$LS_COMMON -I NTUSER.DAT\*"
+fi
+
 test -n "$LS_COMMON" &&
 alias ls="command ls $LS_COMMON"
 alias ll="ls -l"
