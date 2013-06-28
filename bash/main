@@ -378,6 +378,11 @@ fi
 # Separate each extension with ':'.
 export FIGNORE=.pyc
 
+if [[ "$HOST_OS" == "mingw" ]]; then
+  # Ignore the long and unused NTUSER.DAT{* files on Windows.
+  export FIGNORE="$FIGNORE:.TM.blf:.regtrans-ms"
+fi
+
 
 ##
 # ssh-agent
