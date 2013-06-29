@@ -1,5 +1,4 @@
-dotfiles
-========
+# dotfiles
 
 A place for keeping my configuration files synchronized across machines.
 
@@ -30,6 +29,6 @@ for the terminal (.Xdefaults and .minttyrc), GNU ls
 
 The vim indent script for Python comes from http://www.vim.org/scripts/script.php?script_id=974.
 
-Gittip
-------
+## Gittip
+
 [![Gittip](http://badgr.co/gittip/igetgames.png)](https://www.gittip.com/igetgames/)
