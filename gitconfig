@@ -21,7 +21,7 @@
 	st = status --short
 	dt = difftool --dir-diff
 	cinum = !git log --pretty=oneline | wc -l | sed -e \"s/ //g\"
-	up-sub = "!f() { (cd \"$1\" && git fetch origin --tags && git checkout master && git pull) && git submodule update --init --recursive; }; f"
+	up-sub = "!f() { (cd \"$1\" && git fetch origin --tags && git checkout master && git pull) }; f"
 	discard = checkout --
 	ctags = !.git/hooks/ctags
 	prune-remotes = "!f() { for r in `git remote`; do git remote prune $r; done }; f"
