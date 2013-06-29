@@ -22,6 +22,7 @@
 	dt = difftool --dir-diff
 	cinum = !git log --pretty=oneline | wc -l | sed -e \"s/ //g\"
 	up-sub = "!f() { (cd \"$1\" && git fetch origin --tags && git checkout master && git pull) }; f"
+	rm-sub = "!f() { git rm --cached \"$1\" && rm -r \"$1\" && git config -f .gitmodules --remove-section \"submodule.$1\" && git config -f .git/config --remove-section \"submodule.$1\" && rm -r \".git/modules/$1\"; }; f"
 	discard = checkout --
 	ctags = !.git/hooks/ctags
 	prune-remotes = "!f() { for r in `git remote`; do git remote prune $r; done }; f"
