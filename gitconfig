@@ -6,6 +6,7 @@
 	excludesfile = ~/.cvsignore
 	autocrlf = input
 	safecrlf = false
+	pager = less -x1,5
 [color]
 	ui = auto
 	status = always
