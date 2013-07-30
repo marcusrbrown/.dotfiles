@@ -29,6 +29,10 @@ for the terminal (.Xdefaults and .minttyrc), GNU ls
 
 The vim indent script for Python comes from http://www.vim.org/scripts/script.php?script_id=974.
 
-## Gittip
+## Author
+
+The django-startproject project was created by Marcus R. Brown
+([@igetgames](https://twitter.com/#!/igetgames) on Twitter). Send feedback to
+mrossbrown@gmail.com.
 
 [![Gittip](http://badgr.co/gittip/igetgames.png)](https://www.gittip.com/igetgames/)
