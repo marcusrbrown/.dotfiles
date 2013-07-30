@@ -2,6 +2,10 @@
 
 A place for keeping my configuration files synchronized across machines.
 
+My dotfiles are distributed under the [Unlicense](#unlicense).
+
+## Credits
+
 Configs have been compiled from various sources:
 
 * [isaacs / dotfiles](https://github.com/isaacs/dotfiles "bash")
@@ -28,6 +32,13 @@ for the terminal (.Xdefaults and .minttyrc), GNU ls
 ([.dir_colors](https://github.com/seebi/dircolors-solarized)), and vim.
 
 The vim indent script for Python comes from http://www.vim.org/scripts/script.php?script_id=974.
+
+## Unlicense
+
+With the exception of scripts and code lifted verbatim from other sources (see
+[Credits](#credits)), my dotfiles have been released into the public domain.
+See the file [UNLICENSE](UNLICENSE), or visit
+[unlicense.org](http://unlicense.org) for more information.
 
 ## Author
 
