@@ -132,7 +132,7 @@ export LANG LANGUAGE LC_CTYPE LC_ALL
 export HISTSIZE=10000
 export HISTFILESIZE=1000000000
 export HISTCONTROL=ignoreboth
-export HISTIGNORE="&:cd:ls:ll:la:lal:[bf]g:exit:clear:pwd:* --help"
+export HISTIGNORE="&:cd:ls:ll:la:lal:[bf]g:exit:clear:pwd"
 export HISTTIMEFORMAT='%F %T '
 
 if [ -n "$BASH" ]; then
