@@ -177,7 +177,7 @@ fi
 
 # Ignore NTUSER.DAT files on Windows
 if [[ "$HOST_OS" == "mingw" ]]; then
-  LS_COMMON="$LS_COMMON -I NTUSER.DAT\*"
+  LS_COMMON="$LS_COMMON -I NTUSER.DAT\* -I ntuser.dat\*"
 fi
 
 test -n "$LS_COMMON" &&
