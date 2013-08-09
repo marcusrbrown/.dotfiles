@@ -46,4 +46,4 @@ The django-startproject project was created by Marcus R. Brown
 ([@igetgames](https://twitter.com/#!/igetgames) on Twitter). Send feedback to
 mrossbrown@gmail.com.
 
-[![Gittip](http://badgr.co/gittip/igetgames.png)](https://www.gittip.com/igetgames/)
+[![Support via Gittip](https://raw.github.com/igetgames/gittip-badge/master/dist/gittip.png)](https://www.gittip.com/igetgames/)
