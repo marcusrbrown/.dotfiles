@@ -4,6 +4,10 @@
 
 export VIRTUALENV_DISTRIBUTE=1
 export VIRTUAL_ENV_DISABLE_PROMPT=1
+# MRB Custom: Uncomment this to create project directories if mkvirtualenv is
+# executed under the Projects directory, and to setup postactivate to change
+# into the project directory.
+#export VIRTUALENV_CREATE_PROJECT_DIR=1
 
 __garbage VENVWRAPPERSH
 VENVWRAPPERSH=$(type -P virtualenvwrapper.sh /usr/local/bin/virtualenvwrapper.sh | head -1)

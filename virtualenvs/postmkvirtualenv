@@ -13,7 +13,7 @@ fi
 # Based on
 # https://github.com/dcrosta/dotfiles/blob/master/virtualenvs/postmkvirtualenv
 
-if [[ `basename "$MKVIRTUALENV_PWD"` != "Projects" ]]; then
+if [[ -z $VIRTUALENV_CREATE_PROJECT_DIR || `basename "$MKVIRTUALENV_PWD"` != "Projects" ]]; then
   return 0
 fi
 
