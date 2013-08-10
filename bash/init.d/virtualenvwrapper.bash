@@ -2,7 +2,6 @@
 #
 # virtualenvwrapper initialization.
 
-export VIRTUALENV_DISTRIBUTE=1
 export VIRTUAL_ENV_DISABLE_PROMPT=1
 # MRB Custom: Uncomment this to create project directories if mkvirtualenv is
 # executed under the Projects directory, and to setup postactivate to change
