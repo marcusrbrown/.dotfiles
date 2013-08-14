@@ -42,7 +42,7 @@ See the file [UNLICENSE](UNLICENSE), or visit
 
 ## Author
 
-The django-startproject project was created by Marcus R. Brown
+This repository was created by Marcus R. Brown
 ([@igetgames](https://twitter.com/#!/igetgames) on Twitter). Send feedback to
 mrossbrown@gmail.com.
 
