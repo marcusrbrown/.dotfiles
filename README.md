@@ -47,3 +47,9 @@ This repository was created by Marcus R. Brown
 mrossbrown@gmail.com.
 
 [![Support via Gittip](https://raw.github.com/igetgames/gittip-badge/master/dist/gittip.png)](https://www.gittip.com/igetgames/)
+
+<p align="center">
+  <a href="https://www.github.com/igetgames/">
+    <img style="max-width:25%;" alt="@igetgames" src="https://identicons.github.com/igetgames.png" />
+  </a>
+</p>
