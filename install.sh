@@ -29,13 +29,6 @@ case "$os" in
     ;;
 esac
 
-# Figure out how to reverse a file - used for file updating.
-if (tail -r) &> /dev/null; then
-  tailr="tail -r"
-else
-  tailr="tac"
-fi
-
 wpath() # posix
 {
   # TODO: Use cygpath under Cygwin.
@@ -122,7 +115,7 @@ install() # src, target
         let "cutline = $cutline - 1"
         echo "Updating '$dst'"
         head -n $cutline "$dst" > update_tmp
-        startline=`$tailr "$src" | grep -n -m1 "$cutstring" | sed "s/:.*//"`
+        startline=`tail -r "$src" | grep -n -m1 "$cutstring" | sed "s/:.*//"`
         if [[ -n $startline ]]; then
           tail -n $startline "$src" >> update_tmp
         else
