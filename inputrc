@@ -7,6 +7,11 @@
 "\e[3~": delete-char
 "\e[4~": end-of-line
 "\e[8~": end-of-line
+
+# Control-Left and Control-Right for jumping between words.
+"\e[1;5D": backward-word
+"\e[1;5C": forward-word
+
 # Common to Console & RXVT
 "\C-?": backward-kill-line     		# Ctrl-BackSpace
 "\e[2~": paste-from-clipboard  		# "Ins. Key"
