@@ -6,6 +6,8 @@
 	excludesfile = ~/.cvsignore
 	safecrlf = false
 	pager = less -x1,5
+	autocrlf = input
+	whitespace = cr-at-eol
 [color]
 	ui = auto
 	status = always
