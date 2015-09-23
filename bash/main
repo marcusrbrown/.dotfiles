@@ -289,9 +289,9 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
         local changes_to_push_and_pull="${STATE_COLOR}↕"
 
         local git_status="$(git status 2> /dev/null)"
-        local branch_pattern="^# On branch ([[:graph:]]*)"
-        local remote_pattern="# Your branch is (.*) of"
-        local diverge_pattern="# Your branch and (.*) have diverged"
+        local branch_pattern="^(# )?On branch ([[:graph:]]*)"
+        local remote_pattern="(# )?Your branch is (.*) of"
+        local diverge_pattern="(# )?Your branch and (.*) have diverged"
 
         if [[ ! ${git_status} =~ "working directory clean" ]]; then
           local state="$unclean_state"
@@ -299,7 +299,7 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
 
         # add an else if or two here if you want to get more specific
         if [[ ${git_status} =~ ${remote_pattern} ]]; then
-          if [[ ${BASH_REMATCH[1]} == "ahead" ]]; then
+          if [[ ${BASH_REMATCH[2]} == "ahead" ]]; then
             local remote="$changes_to_push"
           else
             local remote="$changes_to_pull"
@@ -309,7 +309,7 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
           local remote="$changes_to_push_and_pull"
         fi
         if [[ ${git_status} =~ ${branch_pattern} ]]; then
-          local branch=${BASH_REMATCH[1]}
+          local branch=${BASH_REMATCH[2]}
           local git_branch=" (${branch})${remote}${state}"
         fi
 
