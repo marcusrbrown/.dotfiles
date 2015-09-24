@@ -4,3 +4,8 @@
 # vim:set filetype=sh:
 
 alias reload='source ~/.bash/main'
+
+# Alias git to hub if hub is installed.
+if [ -n "$(command -v hub)" ]; then
+  alias git=hub
+fi
