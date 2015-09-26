@@ -3,7 +3,7 @@
 # Command completion
 
 # Only source completion if the shell is interactive.
-if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETION" ]; then
+if [ -n "$INTERACTIVE" ]; then
   bash=${BASH_VERSION%.*}; bmajor=${bash%.*}; bminor=${bash#*.}
   if [ $bmajor -gt 1 ]; then
     # Search for a bash_completion file to source.
