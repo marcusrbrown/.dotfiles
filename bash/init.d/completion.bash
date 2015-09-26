@@ -19,6 +19,12 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETION" ]; then
     done
   fi
   unset bash bmajor bminor
+
+  if [ -z "$BASH_COMPLETION" ]; then
+    # Source the Homebrew bash_completion if a system-wide version wasn't used.
+    [ -f $(brew --prefix)/etc/bash_completion ] && . $(brew --prefix)/etc/bash_completion
+  fi
+
   if [ -z "$BASH_COMPLETION" ]; then
     # If there's no system-wide bash_completion, source the user one ourselves.
     [ -f ~/.bash_completion ] && . ~/.bash_completion
