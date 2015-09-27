@@ -150,66 +150,6 @@ fi
 
 
 ##
-# ls
-
-# if the dircolors utility is available, set that up to
-__garbage __dircolors COLORS
-__dircolors="$(type -P gdircolors dircolors | head -1)"
-test -n "$__dircolors" && {
-  COLORS=/etc/DIR_COLORS
-  test -e "/etc/DIR_COLORS.$TERM"   && COLORS="/etc/DIR_COLORS.$TERM"
-  test -e "$HOME/.dir_colors"       && COLORS="$HOME/.dir_colors"
-  test ! -e "$COLORS"               && COLORS=
-  eval `$__dircolors --sh "$COLORS"`
-}
-
-# Setup the options that are always passed to ls
-# Print sizes in human-readable format; don't list groups.
-LS_COMMON="-hG"
-
-# Does ls support --color?
-if (ls --color) &> /dev/null; then
-  LS_COMMON="$LS_COMMON --color=auto"
-else
-  # No color, so put a slash at the end of directory names, etc. to differentiate.
-  LS_COMMON="$LS_COMMON -F"
-fi
-
-# Ignore NTUSER.DAT files on Windows
-if [[ "$HOST_OS" == "mingw" ]]; then
-  LS_COMMON="$LS_COMMON -I NTUSER.DAT\* -I ntuser.dat\*"
-fi
-
-test -n "$LS_COMMON" &&
-alias ls="command ls $LS_COMMON"
-alias ll="ls -l"
-alias la="ls -a"
-alias lal="ll -a"
-
-
-##
-# EDITOR and PAGER
-
-EDITOR=vim
-export EDITOR
-
-if [ -n "$(command -v less)" ]; then
-  PAGER="less"
-  # Less PAGER opts: Clear screen to repaint, ignore case in searches w/no uppercase, use the long prompt,
-  # output "raw" control chars, chop long lines, set horizonatal scroll amount to 4 characters
-  LESS="-ciMrS -#4"
-  # Less MANPAGER opts: Same as above except don't output "raw" control chars and squeeze multiple blank lines
-  MANPAGER="less -ciRs -#4"
-else
-  PAGER=more
-  MANPAGER=more
-fi
-export PAGER MANPAGER LESS
-
-alias l=$PAGER
-
-
-##
 # Terminal
 
 if [ -n "$REMOTE" ]; then
@@ -348,32 +288,6 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
 fi
 
 
-##
-# Command completion
-
-# Only source completion if the shell is interactive.
-if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETION" ]; then
-  bash=${BASH_VERSION%.*}; bmajor=${bash%.*}; bminor=${bash#*.}
-  if [ $bmajor -gt 1 ]; then
-    # Search for a bash_completion file to source.
-    for f in /usr/local/etc/bash_completion \
-             /usr/pkg/etc/bash_completion \
-             /opt/local/etc/bash_completion \
-             /etc/bash_completion
-    do
-      if [ -f $f ]; then
-        . $f
-        break
-      fi
-    done
-  fi
-  unset bash bmajor bminor
-  if [ -z "$BASH_COMPLETION" ]; then
-    # If there's no system-wide bash_completion, source the user one ourselves.
-    [ -f ~/.bash_completion ] && . ~/.bash_completion
-  fi
-fi
-
 # List of file prefixes and extensions to ignore when doing autocomplete.
 # Separate each extension with ':'.
 export FIGNORE=.pyc
@@ -381,40 +295,6 @@ export FIGNORE=.pyc
 if [[ "$HOST_OS" == "mingw" ]]; then
   # Ignore the long and unused NTUSER.DAT{* files on Windows.
   export FIGNORE="$FIGNORE:.TM.blf:.regtrans-ms"
-fi
-
-
-##
-# ssh-agent
-
-# Code for ~/.ssh/environment is originally from http://www.cygwin.com/ml/cygwin/2001-06/msg00537.html.
-
-export SSH_ENV="$HOME/.ssh/environment"
-
-__garbage __start_ssh_agent
-__start_ssh_agent()
-{
-  ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
-  chmod 600 "${SSH_ENV}"
-  . "${SSH_ENV}" > /dev/null
-  if [ -n "$INTERACTIVE" ]; then
-    # TODO: Not sure how useful this is when ssh-agent isn't already running, and we're not interactive...
-    ssh-add
-  fi
-}
-
-if [ -f "${SSH_ENV}" ]; then
-  . "${SSH_ENV}" > /dev/null
-  # TODO: Move ps detection elsewhere.
-  __garbage __ps_full
-  __ps_full=-x
-  [ -n "$WINDIR" ] && __ps_full=
-  ps $__ps_full | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
-    __start_ssh_agent
-  }
-else
-  [ -d "$HOME/.ssh" ] || mkdir "$HOME/.ssh"
-  __start_ssh_agent
 fi
 
 
