@@ -1,0 +1,9 @@
+##
+# Bash configuration for mingw.
+#
+# vim:filetype=sh:
+
+# Launch Visual Studio Code with an optional file or directory path
+code () {
+    VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $*
+}
