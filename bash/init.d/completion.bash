@@ -22,7 +22,7 @@ if [ -n "$INTERACTIVE" ]; then
 
   if [ -z "$BASH_COMPLETION" ]; then
     # Source the Homebrew bash_completion if a system-wide version wasn't used.
-    [ -f $(brew --prefix)/etc/bash_completion ] && . $(brew --prefix)/etc/bash_completion
+    [ -n "$(command -v brew)" ] && [ -f $(brew --prefix)/etc/bash_completion ] && . $(brew --prefix)/etc/bash_completion
   fi
 
   if [ -z "$BASH_COMPLETION" ]; then
