@@ -50,6 +50,11 @@
 [rerere]
 	enabled = 1
 
+[mergetool]
+	keepBackup = false
+[branch]
+	autosetuprebase = always
+
 [url "git@github.com:"]
 	insteadOf = "gh:"
 	pushInsteadOf = "github:"
