@@ -7,3 +7,23 @@
 code () {
     VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $*
 }
+
+completion_dir=/usr/local/etc/bash_completion.d
+if [[ ! -d $completion_dir && -n "$(command -v brew)" ]]; then
+  completion_dir="$(brew --prefix)/etc/bash_completion.d"
+fi
+
+[[ -z "$completion_dir" ]] && return 0
+
+# Install bash completion for Docker commands.
+docker_completion_dir=/Applications/Docker.app/Contents/Resources/etc
+if [[ -d $docker_completion_dir && -r $docker_completion_dir \
+    && -x $docker_completion_dir ]]; then
+  pushd "$completion_dir" >/dev/null
+  for dc in $docker_completion_dir/*.bash-completion; do
+    ln -sf $dc
+  done
+  popd >/dev/null
+fi
+
+unset completion_dir docker_completion_dir
