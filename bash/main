@@ -323,6 +323,14 @@ if [[ -d "$MAIN_BASH_INIT_DIR" && -r "$MAIN_BASH_INIT_DIR" \
     [[ -f "$i" && -r "$i" ]] && . "$i"
   done
 fi
+
+local local_init_dir=~/.bash/local.d
+if [[ -d "$local_init_dir" && -r "$local_init_dir" && -x "$local_init_dir" ]]; then
+  for i in "$local_init_dir"/*; do
+    [[ -f "$i" && -r "$i" ]] && . "$i"
+  done
+fi
+
 unset i
 
 # Collect local variables and functions.
