@@ -10,6 +10,7 @@ if [ -n "$INTERACTIVE" ]; then
     for f in /usr/local/etc/bash_completion \
              /usr/pkg/etc/bash_completion \
              /opt/local/etc/bash_completion \
+             /usr/share/bash-completion/bash_completion \
              /etc/bash_completion
     do
       if [ -f $f ]; then
