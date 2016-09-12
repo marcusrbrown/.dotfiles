@@ -2,6 +2,14 @@
 #
 # Prompt
 
+# docker-machine prompt support based off of:
+# https://github.com/docker/machine/blob/master/contrib/completion/bash/docker-machine-prompt.bash
+# Configuration:
+#
+# DOCKER_MACHINE_PS1_SHOWSTATUS
+#   When set, the machine status is indicated in the prompt. This can be slow,
+#   so use with care.
+
 # Only set the prompt if the shell is interactive.
 # The bash-complete function will set BASH_COMPLETE_INVOKE to prevent the prompt from being set;
 # this is so it can detect the output of shell completion.
@@ -27,7 +35,9 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
     local cwd=${PWD/$HOME/\~}
 
     if [ -z "$1" ]; then
-      echo -e "$(__prompt title)\n$(__prompt host):$(__prompt path)$(__prompt git)$(__prompt venv)"
+      echo -e -n "$(__prompt title)\n$(__prompt host):$(__prompt path)$(__prompt git)$(__prompt venv)"
+      echo -e -n "$(__prompt docker-machine " $BLUE{%s}$NO_COLOR")"
+      echo
     fi
 
     case "$1" in
@@ -104,6 +114,36 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
             ENV_NAME=`basename "$folder"`
           fi
           echo -ne " ${WHITE}workon ${GREEN}${ENV_NAME}${NO_COLOR}"
+        fi
+        ;;
+
+      docker-machine)
+        shift
+        local format=${1:- [%s]}
+        if test ${DOCKER_MACHINE_NAME}; then
+          local status
+          if test ${DOCKER_MACHINE_PS1_SHOWSTATUS:-false} = true; then
+            status=$(docker-machine status ${DOCKER_MACHINE_NAME})
+            case ${status} in
+              Running)
+                status=' R'
+                ;;
+              Stopping)
+                status=' R->S'
+                ;;
+              Starting)
+                status=' S->R'
+                ;;
+              Error|Timeout)
+                status=' E'
+                ;;
+              *)
+                # Just consider everything elase as 'stopped'
+                status=' S'
+                ;;
+            esac
+          fi
+          printf -- "${format}" "${DOCKER_MACHINE_NAME}${status}"
         fi
         ;;
 
