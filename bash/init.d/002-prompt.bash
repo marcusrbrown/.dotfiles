@@ -78,8 +78,9 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
         local branch_pattern="^(# )?On branch ([[:graph:]]*)"
         local remote_pattern="(# )?Your branch is (.*) of"
         local diverge_pattern="(# )?Your branch and (.*) have diverged"
+        local clean_pattern="working (directory|tree) clean"
 
-        if [[ ! ${git_status} =~ "working directory clean" ]]; then
+        if [[ ! ${git_status} =~ ${clean_pattern} ]]; then
           local state="$unclean_state"
         fi
 
