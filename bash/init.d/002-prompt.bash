@@ -160,6 +160,12 @@ if [ -n "$INTERACTIVE" -a -z "$BASH_COMPLETE_INVOKE" ]; then
     esac
   }
 
-  PROMPT_COMMAND="__prompt_status=\$?; history -a; __prompt"
+  __garbage __set_prompt_command
+  function __set_prompt_command()
+  {
+    PROMPT_COMMAND="__prompt_status=\$?; $1; __prompt"
+  }
+
+  PROMPT_COMMAND="__prompt_status=\$?; __prompt"
   PS1="\[\$(__prompt color)\]\$\[${NO_COLOR}\] "
 fi
