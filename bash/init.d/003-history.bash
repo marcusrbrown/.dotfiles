@@ -13,7 +13,7 @@ if [ -n "$INTERACTIVE" ]; then
   HISTIGNORE="&:cd:ls:ll:la:lal:[bf]g:exit:clear:pwd"
   HISTTIMEFORMAT='%F %T '
 
-  history_command="history -a; history -c; history -r"
+  history_command="history -a"
   if [ -n "$(command -v __set_prompt_command)" ]; then
     __set_prompt_command "$history_command"
   else
