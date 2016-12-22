@@ -55,7 +55,7 @@ symlink() # target, link
   else
     if [ -d "$target" ]; then
       [ ! -d "$link" ] && mkdir -p "$link"
-      cp -dpr "$target"/* "$link"
+      cp -a "$target"/* "$link"
     else
       cp "$target" "$link"
     fi
@@ -94,7 +94,7 @@ backup() # original
   bak=$bdir/$name
   if [ ! -f "$bak" ]; then
     echo "Backing up '$orig'"
-    cp -dpr "$orig" "$bak"
+    cp -a "$orig" "$bak"
     [ ! -d "$orig" ] && rm "$orig"
     return 0
   fi
