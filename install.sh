@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#set -x
+set -e
 
 # make sure we're installing from the right directory
 cd `dirname $0`
