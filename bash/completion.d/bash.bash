@@ -3,7 +3,7 @@
 # Completions that can be handled within bash.
 
 ## Make directory commands see only directories
-complete -d pushd
+#complete -d pushd
 
 # User commands
 complete -u write chfn groups slay w sux runuser
