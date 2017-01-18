@@ -78,6 +78,22 @@ __form_paths () {
   echo ${paths/:/} # remove the first :
 }
 
+##
+# Completion utilities.
+
+__garbage __cdpath_completions __add_cdpath_completion
+__cdpath_completions="cd"
+__add_cdpath_completion () {
+  local i
+  for i in "$@"; do
+    __cdpath_completions="${__cdpath_completions} $i"
+  done
+}
+
+
+##
+# Paths.
+
 __set_path PATH ".:$(__form_paths bin sbin)"
 __set_path LD_LIBRARY_PATH "$(__form_paths lib)"
 # TODO: Needs mingw path fixup

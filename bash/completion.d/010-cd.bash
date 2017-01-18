@@ -53,7 +53,7 @@ _cd()
   return 0
 }
 if shopt -q cdable_vars; then
-  complete -v -F _cd $nospace cd
+  complete -v -F _cd $nospace ${__cdpath_completions}
 else
-  complete -F _cd $nospace cd
+  complete -F _cd $nospace ${__cdpath_completions}
 fi
