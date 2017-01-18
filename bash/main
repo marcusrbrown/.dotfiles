@@ -82,7 +82,7 @@ __form_paths () {
 # Completion utilities.
 
 __garbage __cdpath_completions __add_cdpath_completion
-__cdpath_completions="cd"
+__cdpath_completions="cd pushd"
 __add_cdpath_completion () {
   local i
   for i in "$@"; do
