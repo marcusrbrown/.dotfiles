@@ -8,6 +8,15 @@
 	pager = less -x1,5
 	autocrlf = input
 	whitespace = cr-at-eol
+
+  # Make `git rebase` safe on OSX
+  # http://www.git-tower.com/blog/make-git-rebase-safe-on-osx/
+  trustctime = false
+
+  # Speed up commands that involve determining untracked files such as `git status`.
+  # https://git-scm.com/docs/git-update-index#_untracked_cache
+  untrackedCache = true
+
 [color]
 	ui = auto
 	status = always
