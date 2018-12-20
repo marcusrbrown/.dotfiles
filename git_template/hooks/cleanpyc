@@ -1,6 +1,0 @@
-#!/bin/sh
-#
-# Removes all .pyc files. Call from the post-checkout hook so that it's used when switching branches.
-# Originally from: http://blog.daniel-watkins.co.uk/2013/01/git-tip-remove-pyc-files-automatically.html.
-
-find $(git rev-parse --show-cdup) -name "*.pyc" -delete
