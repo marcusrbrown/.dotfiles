@@ -98,7 +98,6 @@ set wildmenu
 set wildignore=*.o,*.obj,*~,tags,*.pyo,*.pyc,*.swp
 
 set background=dark
-colorscheme solarized
 
 
 " Insert completion
@@ -156,8 +155,6 @@ augroup filebufcmds
 
   autocmd FileType javascript setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab textwidth=100
   autocmd FileType javascript setlocal formatoptions-=ro
-  " Use jscomplete-vim for JavaScript omnicompletion.
-  autocmd FileType javascript setlocal omnifunc=jscomplete#CompleteJS
   " Use the suggested vim-javascript configuration for inline Javascript.
   let g:html_indent_inctags = "html,body,head,tbody"
   let g:html_indent_script1 = "inc"
@@ -343,9 +340,6 @@ set statusline+=%h          " help file flag
 set statusline+=%r          " read-only flag
 set statusline+=%m          " modified flag
 
-set statusline+=%{virtualenv#statusline()!=''?'[workon\ '.virtualenv#statusline().']':''}
-set statusline+=%{fugitive#statusline()}
-
 "display a warning if &et is wrong, or we have mixed-indenting
 set statusline+=%#error#
 set statusline+=%{StatuslineTabWarning()}
@@ -354,10 +348,6 @@ set statusline+=%*
 set statusline+=%{StatuslineTrailingSpaceWarning()}
 
 set statusline+=%{StatuslineLongLineWarning()}
-
-set statusline+=%#warningmsg#
-set statusline+=%{SyntasticStatuslineFlag()}
-set statusline+=%*
 
 "display a warning if &paste is set
 set statusline+=%#error#
@@ -571,140 +561,6 @@ inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-V>\<Tab>"
 " Enter will close the popup, inserting the selected item.
 inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
-" CTRL-H closes the popup and deletes the previous character.
-inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
-inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
-" Other completion mappings.
-inoremap <expr> <C-g> neocomplcache#undo_completion()
-inoremap <expr> <C-l> neocomplcache#complete_common_string()
-inoremap <expr> <C-y> neocomplcache#close_popup()
-inoremap <expr> <C-e> neocomplcache#cancel_popup()
-
-" Run flake8
-autocmd FileType python map <buffer> <Leader>8 :call Flake8()<CR>
-
-" Toggle Gundo
-nnoremap <Leader>u <ESC>:GundoToggle<CR>
-
-" NERDCommenter
-" Don't use the default mappings
-let NERDCreateDefaultMappings=0
-
-" Toggle comments across a single line or multiple selected lines
-map <Leader>c <plug>NERDCommenterToggle
-
-" NERDTree
-let NERDTreeMinimalUI = 1
-let NERDTreeDirArrows = 1
-let NERDTreeIgnore = ['\.pyc$', '\.pyo$']
-nmap <Leader>t :NERDTree<CR>
-
-" Tagbar
-let g:tagbar_compact = 1
-nmap <silent> <Leader>\\ :TagbarOpenAutoClose<CR>
-nmap <silent> <Leader>\| :TagbarToggle<CR>
-
-" Override Tagbar's JavaScript support to match our ctags setup.
-" We disable the JavaScript languge globally; we instead define a language called 'js'
-" so we have to override the 'ctagstype' key.
-" TODO: Add support for jsctags (DoctorJS) / jshint.
-"let g:tagbar_type_javascript = {
-      "\ 'ctagstype' : 'js',
-      "\ 'kinds' : [
-      "\   'v:variables:0:0',
-      "\   'f:functions:0:1'
-      "\ ],
-      "\ 'sro' : '.',
-      "\ 'kind2scope' : {
-      "\   'v' : 'namespace',
-      "\   'f' : 'namespace',
-      "\ },
-      "\ 'scope2kind' : {
-      "\   'namespace' : 'v'
-      "\ }
-      "\ }
-let g:tagbar_type_javascript = {
-      \ 'ctagstype' : 'js',
-      \ 'kinds' : [
-      \   'v:variables:0:0',
-      \   'f:functions:0:1'
-      \ ],
-      \ 'sro' : '.'
-      \ }
-
-" MakeGreen
-" Create a bogus mapping to MakeGreen to prevent it from taking over <Leader>t.
-" I don't invoke MakeGreen directly, it's here for other plugins that use it.
-map <silent> <Leader>\bogusmakegreenmapping :call MakeGreen()<CR>
-
-" TaskList
-map <Leader>T <Plug>TaskList
-let g:tlTokenList = ['FIXME', 'TODO', 'todo', 'XXX']
-let g:tlWindowPosition = 1          " Open the TaskList window at the bottom
-let g:tlRememberPosition = 1        " Reset to last remembered cursor position.
-
-" Rope-vim
-let g:ropevim_local_prefix = '<Leader>r'
-let g:ropevim_global_prefix = '<Leader>p'
-
-" Syntastic
-let g:syntastic_disabled_filetypes = ['c', 'cpp']
-" Mark errors with :signs.
-let g:syntastic_enable_signs = 1
-" Don't automatically jump to the error when saving the file.
-let g:syntastic_auto_jump = 0
-" Close the error list with no errors, but don't open it automatically.
-let g:syntastic_auto_loc_list = 2
-" Don't display warnings unless there are errors.
-let g:syntastic_quiet_warnings = 1
-
-" jscomplete-vim
-let g:jscomplete_use = ['dom', 'backbone']
-
-" neocomplcache
-" Toggle neocomplcache.
-nmap <silent> <Leader>nc :NeoComplCacheToggle<CR>
-" Enable necomplcache.
-let g:neocomplcache_enable_at_startup = 1
-" Disable autocompletion.
-"let g:neocomplcache_disable_auto_complete = 1
-" Overwrite the completefunc set by other plugins.
-let g:neocomplcache_force_overwrite_completefunc = 1
-" Set the minimum length of a keyword to be completed.
-let g:neocomplcache_min_syntax_length = 3
-let g:neocomplcache_min_keyword_length = 3
-" Set auto and manual completion word length.
-let g:neocomplcache_auto_completion_start_length = 2
-let g:neocomplcache_manual_completion_start_length = 0
-" Enable smartcase
-let g:neocomplcache_enable_smart_case = 1
-" Keyword completion.
-if !exists('g:neocomplcache_keyword_patterns')
-  let g:neocomplcache_keyword_patterns = {}
-endif
-let g:neocomplcache_keyword_patterns['default'] = '\h\w*'
-" Omnipatterns
-if !exists('g:neocomplcache_omni_patterns')
-  let g:neocomplcache_omni_patterns = {}
-endif
-let g:neocomplcache_omni_patterns['c'] = '[^.[:digit:] *\t]\%(\.\|->\)'
-let g:neocomplcache_omni_patterns['cpp'] = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
-let g:neocomplcache_omni_patterns['javascript'] = '[^. \t]\.\%(\h\w*\)\?'
-" Don't show the neocomplcache popup when using cursor keys in insert mode.
-inoremap <expr><Left>  neocomplcache#close_popup() . "\<Left>"
-inoremap <expr><Right> neocomplcache#close_popup() . "\<Right>"
-inoremap <expr><Up>    neocomplcache#close_popup() . "\<Up>"
-inoremap <expr><Down>  neocomplcache#close_popup() . "\<Down>"
-
-
-" Tabular
-vnoremap <silent> <leader>t: :Tabularize /:<CR>
-vnoremap <silent> <leader>t= :Tabularize /=<CR>
-vnoremap <silent> <leader>t, :Tabularize /,<CR>
-vnoremap <silent> <leader>t{ :Tabularize /{/l1c0<CR>
-vnoremap <silent> <leader>t" :Tabularize /"<CR>
-vnoremap <silent> <leader>t' :Tabularize /'<CR>
-vnoremap <silent> <leader>t[ :Tabularize /[<CR>
 
 " Commands
 
