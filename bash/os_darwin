@@ -3,11 +3,6 @@
 #
 # vim:filetype=sh:
 
-# Launch Visual Studio Code with an optional file or directory path
-code () {
-    VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $*
-}
-
 completion_dir=/usr/local/etc/bash_completion.d
 if [[ ! -d $completion_dir && -n "$(command -v brew)" ]]; then
   completion_dir="$(brew --prefix)/etc/bash_completion.d"
