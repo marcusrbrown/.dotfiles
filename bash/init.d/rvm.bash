@@ -2,9 +2,11 @@
 #
 # rvm setup
 
-[[ -d "$HOME/.rvm/bin" ]] && export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
+RVM_HOME="$HOME/.rvm"
 
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+__set_path PATH "$RVM_HOME" # Add RVM to PATH for scripting
 
-# Enable completion. 
+[[ -s "$RVM_HOME/scripts/rvm" ]] && source "$RVM_HOME/scripts/rvm" # Load RVM into a shell session *as a function*
+
+# Enable completion.
 [[ -r $rvm_path/scripts/completion ]] && . $rvm_path/scripts/completion
