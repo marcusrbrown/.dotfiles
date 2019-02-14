@@ -70,8 +70,8 @@ local path_roots=( "$HOME/" "$HOME/.local/" /usr/local/ /opt/local/ /usr/ /opt/ 
 __form_paths () {
   local r p paths
   paths=""
-  for r in "${path_roots[@]}"; do
-    for p in "$@"; do
+  for p in "$@"; do
+    for r in "${path_roots[@]}"; do
       paths="$paths:$r$p"
     done
   done
