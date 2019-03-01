@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -e
-set -x
 
 # make sure we're installing from the right directory
 cd `dirname $0`
@@ -143,7 +142,7 @@ install() # src, target
 for name in *; do
   target=$HOME/.$name
 
-  if [[ `grep "^$name$" "$PWD/touch_to_install"` ]]; then
+  if [[ `grep "^$name" "$PWD/touch_to_install"` ]]; then
     if [[ -d "$name" && ! -d "$target" ]]; then
       mkdir "$target"
     else
@@ -151,7 +150,7 @@ for name in *; do
     fi
   fi
 
-  if [[ ! `grep "^$name$" "$PWD/do_not_install"` ]]; then
+  if [[ ! `grep "^$name" "$PWD/do_not_install"` ]]; then
     if [ -d "$target" ] && ! issymlink "$target"; then
       for subname in "$name"/*; do
         subtarget=$HOME/.$subname
