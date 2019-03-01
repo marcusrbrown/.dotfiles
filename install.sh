@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+set -x
 
 # make sure we're installing from the right directory
 cd `dirname $0`
@@ -43,10 +44,10 @@ symlink() # target, link
   if [ $no_symlink -eq 0 ]; then
     if [ -n "$mklink" ]; then
       if [ -d "$target" ]; then
-        cmd ${cmdslash}c rd "`wpath $link`" > /dev/null 2>&1
+        cmd ${cmdslash}c rd "`wpath $link`" > /dev/null 2>&1 || true
         $mklink ${cmdslash}d "`wpath $link`" "`wpath $target`"
       else
-        cmd ${cmdslash}c del "`wpath $link`" > /dev/null 2>&1
+        cmd ${cmdslash}c del "`wpath $link`" > /dev/null 2>&1 || true
         $mklink "`wpath $link`" "`wpath $target`"
       fi
     else
