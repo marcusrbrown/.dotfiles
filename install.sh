@@ -115,7 +115,7 @@ install() # src, target
         let "cutline = $cutline - 1"
         echo "Updating '$dst'"
         head -n $cutline "$dst" > update_tmp
-        startline=`tail -r "$src" | grep -n -m1 "$cutstring" | sed "s/:.*//"`
+        startline=`if hash tac 2>/dev/null; then tail "$src" | tac; else tail -r "$src"; fi | grep -n -m1 "$cutstring" | sed "s/:.*//"`
         if [[ -n $startline ]]; then
           tail -n $startline "$src" >> update_tmp
         else
