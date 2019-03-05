@@ -1,6 +1,3 @@
-# Local configuration goes here:
-
-
 # DO NOT EDIT BELOW THIS LINE
 [core]
 	excludesfile = ~/.cvsignore
@@ -9,13 +6,13 @@
 	autocrlf = input
 	whitespace = cr-at-eol
 
-  # Make `git rebase` safe on OSX
-  # http://www.git-tower.com/blog/make-git-rebase-safe-on-osx/
-  trustctime = false
+	# Make `git rebase` safe on OSX
+	# http://www.git-tower.com/blog/make-git-rebase-safe-on-osx/
+	trustctime = false
 
-  # Speed up commands that involve determining untracked files such as `git status`.
-  # https://git-scm.com/docs/git-update-index#_untracked_cache
-  untrackedCache = true
+	# Speed up commands that involve determining untracked files such as `git status`.
+	# https://git-scm.com/docs/git-update-index#_untracked_cache
+	untrackedCache = true
 
 [color]
 	ui = auto
@@ -37,19 +34,9 @@
 	up-sub = "!f() { (cd \"$1\" && git fetch origin --tags && git checkout master && git pull) }; f"
 	rm-sub = "!f() { git rm --cached \"$1\"; rm -r \"$1\"; git config -f .gitmodules --remove-section \"submodule.$1\"; git config -f .git/config --remove-section \"submodule.$1\"; rm -r \".git/modules/$1\"; }; f"
 	discard = checkout --
-	ctags = !.git/hooks/ctags
 	prune-remotes = "!f() { for r in `git remote`; do git remote prune $r; done }; f"
 	prune-merged = !git branch -d `git branch --merged | cut -c3- | grep -v ${*:-master}`
 	pushall = "!f() { for i in `git remote`; do git push $i; done; }; f"
-# Legit
-	branches = !legit branches
-	graft = !legit graft "$@"
-	harvest = !legit harvest "$@"
-	publish = !legit publish "$@"
-	unpublish = !legit unpublish "$@"
-	sprout = !legit sprout "$@"
-	sync = !legit sync "$@"
-	switch = !legit switch "$@"
 [push]
 	default = current
 
