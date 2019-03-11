@@ -3,7 +3,7 @@
 	excludesfile = ~/.cvsignore
 	safecrlf = false
 	pager = less -x1,5
-	autocrlf = input
+	autocrlf = false
 	whitespace = cr-at-eol
 
 	# Make `git rebase` safe on OSX
@@ -39,9 +39,6 @@
 	pushall = "!f() { for i in `git remote`; do git push $i; done; }; f"
 [push]
 	default = current
-
-[init]
-	templatedir = ~/.git_template
 
 [rerere]
 	enabled = 1
