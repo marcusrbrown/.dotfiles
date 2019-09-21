@@ -5,7 +5,7 @@
 # Only source completion if the shell is interactive.
 if [ -n "$INTERACTIVE" ]; then
   bash=${BASH_VERSION%.*}; bmajor=${bash%.*}; bminor=${bash#*.}
-  if [ $bmajor -gt 1 ]; then
+  if [ $bmajor -gt 1 -a -z "${BASH_COMPLETION_VERSINFO-}" ]; then
     # Search for a bash_completion file to source.
     for f in /usr/local/etc/bash_completion \
              /usr/pkg/etc/bash_completion \
@@ -13,7 +13,7 @@ if [ -n "$INTERACTIVE" ]; then
              /usr/share/bash-completion/bash_completion \
              /etc/bash_completion
     do
-      if [ -f $f ]; then
+      if [ -r $f ]; then
         . $f
         break
       fi
@@ -21,12 +21,12 @@ if [ -n "$INTERACTIVE" ]; then
   fi
   unset bash bmajor bminor
 
-  if [ -z "$BASH_COMPLETION" ]; then
+  if [ -z "${BASH_COMPLETION_VERSINFO-}" -a -z "${BASH_COMPLETION}" ]; then
     # Source the Homebrew bash_completion if a system-wide version wasn't used.
     [ -n "$(command -v brew)" ] && [ -f $(brew --prefix)/etc/bash_completion ] && . $(brew --prefix)/etc/bash_completion
   fi
 
-  if [ -z "$BASH_COMPLETION" ]; then
+  if [ -z "${BASH_COMPLETION_VERSINFO-}" -a -z "${BASH_COMPLETION}" ]; then
     # If there's no system-wide bash_completion, source the user one ourselves.
     [ -f ~/.bash_completion ] && . ~/.bash_completion
   fi
