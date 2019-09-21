@@ -1,13 +1,14 @@
-#!bash
+#!/usr/bin/env bash
 #
 # Completion for cd.
 
 # This is based off of the _cd() provided in the bash-completion 1.1 package,
 # but is written so that if _cd() is already defined, it is used instead.
+type -t _cd >/dev/null && return
 
 ## This meta-cd function observes the CDPATH variable so that cd additionally
 ## completes on directories under those specified in CDPATH.
-test -t _cd >/dev/null ||
+
 _cd()
 {
   local IFS=$'\n' cur=`_get_cword` i j k
@@ -53,7 +54,7 @@ _cd()
   return 0
 }
 if shopt -q cdable_vars; then
-  complete -v -F _cd $nospace ${__cdpath_completions}
+  complete -v -F _cd $nospace cd pushd
 else
-  complete -F _cd $nospace ${__cdpath_completions}
+  complete -F _cd $nospace cd pushd
 fi
