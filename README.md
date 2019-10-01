@@ -43,7 +43,4 @@ See the file [UNLICENSE](UNLICENSE), or visit
 ## Author
 
 This repository was created by Marcus R. Brown
-([@igetgames](https://twitter.com/#!/igetgames) on Twitter). Send feedback to
-mrossbrown@gmail.com.
-
-[![Support via Gittip](https://raw.github.com/igetgames/gittip-badge/master/dist/gittip.png)](https://www.gittip.com/igetgames/)
+([@igetgames](https://twitter.com/#!/igetgames) on Twitter).
