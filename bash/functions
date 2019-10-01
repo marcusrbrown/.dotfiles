@@ -102,3 +102,13 @@ use_venv()
     fi
   fi
 }
+
+# Previous versions defined reload() as an alias
+unalias reload 2> /dev/null || true
+
+reload()
+{
+  # Pretend bash-completion was never sourced so that all completions reload.
+  unset BASH_COMPLETION_VERSINFO
+  source ~/.bash/main
+}
