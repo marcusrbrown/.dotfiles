@@ -1,9 +1,0 @@
-#!/bin/bash
-# This hook is run after a new virtualenv is created and before it is activated.
-
-envname=$1
-
-# On Windows, we need to import PyWin32 into the new virtualenv, otherwise packages that depend on it will break.
-if [[ "$OS" == "Windows_NT" && -f "$HOME/bin/fix-windows-virtualenv.py" ]]; then
-  python "$HOME/bin/fix-windows-virtualenv.py" "$WORKON_HOME/$envname"
-fi

@@ -12,11 +12,6 @@ winpath()
 }
 
 
-# virtualenvwrapper expects a MSYS_HOME environment variable that points to the MSYS root
-# (in Windows path format). Use the root mount point as it always points to MSYS.
-export MSYS_HOME=$(winpath /)
-
-
 # Force the terminal type to "xterm" if using mingw vim, which is built
 # without the terminfo support needed for "xterm-256color".
 __garbage __vim
