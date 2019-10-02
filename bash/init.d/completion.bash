@@ -9,7 +9,7 @@ fi
 # Only source completion if the shell is interactive.
 if [ -n "$INTERACTIVE" ]; then
   bash=${BASH_VERSION%.*}; bmajor=${bash%.*}; bminor=${bash#*.}
-  if [ $bmajor -gt 1 ]; then
+  if [ $bmajor -gt 1 -a -z "${BASH_COMPLETION_VERSINFO-}" ]; then
     # Search for a bash_completion file to source.
     for f in /usr/local/etc/profile.d/bash_completion.sh \
              /usr/local/etc/bash_completion \
