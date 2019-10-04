@@ -101,6 +101,19 @@ backup() # original
   return 1
 }
 
+create_path()
+{
+  name=$1
+  target=$2
+
+  if [[ -d "$name" && ! -d "$target" ]]; then
+    echo "Creating '$target'"
+    mkdir "$target"
+  else
+    touch "$target"
+  fi
+}
+
 cutstring="DO NOT EDIT BELOW THIS LINE"
 
 install() # src, target
@@ -108,33 +121,45 @@ install() # src, target
   src=$1
   dst=$2
 
-  if [ -e "$dst" ]; then
-    if ! issymlink "$dst"; then
-      cutline=`grep -n -m1 "$cutstring" "$dst" | sed "s/:.*//"`
-      if [[ -n $cutline ]]; then
-        let "cutline = $cutline - 1"
-        echo "Updating '$dst'"
-        head -n $cutline "$dst" > update_tmp
-        startline=`if hash tac 2>/dev/null; then tail "$src" | tac; else tail -r "$src"; fi | grep -n -m1 "$cutstring" | sed "s/:.*//"`
-        if [[ -n $startline ]]; then
-          tail -n $startline "$src" >> update_tmp
-        else
-          cat "$src" >> update_tmp
-        fi
-        mv update_tmp "$dst"
+  if [[ `grep "^$src" "$PWD/touch_to_install"` ]]; then
+    create_path "$src" "$dst"
+    if [ -d "$dst" ] && ! issymlink "$dst"; then
+      for item in "$src"/*; do
+        dst=$HOME/.$item
+        # echo "install '$item' '$dst'"
+        install "$item" "$dst"
+      done
+    fi
+    return
+  fi
+
+  if [ -f "$dst" ] && ! issymlink "$dst"; then
+    cutline=`grep -n -m1 "$cutstring" "$dst" | sed "s/:.*//"`
+    if [[ -n $cutline ]]; then
+      let "cutline = $cutline - 1"
+      echo "Updating '$dst'"
+      head -n $cutline "$dst" > update_tmp
+      startline=`if hash tac 2>/dev/null; then tail "$src" | tac; else tail -r "$src"; fi | grep -n -m1 "$cutstring" | sed "s/:.*//"`
+      if [[ -n $startline ]]; then
+        tail -n $startline "$src" >> update_tmp
       else
-        if backup "$dst" || [ $no_symlink -ne 0 ]; then
-          echo "Overwriting '$dst'"
-          symlink "$PWD/$src" "$dst"
-        fi
+        cat "$src" >> update_tmp
+      fi
+      mv update_tmp "$dst"
+    else
+      if backup "$dst" || [ $no_symlink -ne 0 ]; then
+        echo "Overwriting '$dst'"
+        symlink "$PWD/$src" "$dst"
       fi
     fi
   else
-    echo "Creating '$dst'"
-    if [ ! -d "$src" ] && [[ -n `grep "$cutstring" "$src"` ]]; then
-      cp "$PWD/$src" "$dst"
-    else
-      symlink "$PWD/$src" "$dst"
+    if [ ! -e "$dst" ]; then
+      echo "Creating '$dst'"
+      if [ ! -d "$src" ] && [[ -n `grep "$cutstring" "$src"` ]]; then
+        cp "$PWD/$src" "$dst"
+      else
+        symlink "$PWD/$src" "$dst"
+      fi
     fi
   fi
 }
@@ -143,11 +168,7 @@ for name in *; do
   target=$HOME/.$name
 
   if [[ `grep "^$name" "$PWD/touch_to_install"` ]]; then
-    if [[ -d "$name" && ! -d "$target" ]]; then
-      mkdir "$target"
-    else
-      touch "$target"
-    fi
+    create_path "$name" "$target"
   fi
 
   if [[ ! `grep "^$name" "$PWD/do_not_install"` ]]; then
