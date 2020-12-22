@@ -1,0 +1,16 @@
+{
+  "files.associations": {
+    ".gitconfig.local": "properties"
+  },
+  "files.exclude": {
+    "/*": true
+  },
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.watcherExclude": {
+    "/*": true
+  },
+  "search.exclude": {
+    "/*": true
+  }
+}
