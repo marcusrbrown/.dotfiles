@@ -7,6 +7,7 @@
 /.config/*
 !/.config/flake8
 !/.config/pep8
+!/.config/starship.toml
 !/.dotfiles/
 /.dotfiles/*
 !/.vim/
