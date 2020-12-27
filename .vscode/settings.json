@@ -1,8 +1,28 @@
-// Place your settings in this file to overwrite default and user settings.
 {
-    // Configure file associations to languages (e.g. "*.extension": "html"). These have precedence over the default associations of the languages installed.
-    "files.associations": {
-        "bash*": "shellscript",
-        "**/bash/**/*": "shellscript"
-    }
+  "files.associations": {
+    ".gitconfig.local": "properties",
+    ".bash*": "shellscript",
+    "**/.bash/*": "shellscript",
+    ".zcompdump*": "shellscript",
+    ".zsh*": "shellscript"
+  },
+  "files.exclude": {
+    "**/*.zwc": { "when": "$(basename)" },
+    ".dotfiles/{hooks,info,logs,refs,rr-cache,subtree-cache,objects}/**": true,
+    ".dotfiles/{COMMIT*,config,description,*HEAD,index,MERGE*,packed-refs}": true
+  },
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.watcherExclude": {
+    "**/[^.]*": true,
+    ".dotfiles/objects/**": true,
+    ".dotfiles/subtree-cache/**": true
+  },
+
+  "search.exclude": {
+    "**/[^.]*": true,
+    "**/.*_history": true
+  },
+  "search.useGlobalIgnoreFiles": true,
+  "search.useIgnoreFiles": true
 }

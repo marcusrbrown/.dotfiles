@@ -1,0 +1,26 @@
+# Ignore everything
+/*
+
+# Include the contents of the repository
+!/.bash/
+!/.config/
+/.config/*
+!/.config/flake8
+!/.config/pep8
+!/.config/starship.toml
+!/.dotfiles/
+/.dotfiles/*
+!/.vim/
+!/.vscode/
+/.vscode/*
+!/.vscode/settings.json
+!/.editorconfig
+!/.gitattributes
+!/.gitconfig
+!/.gitignore
+!/.inputrc
+!/.lesskey
+!/.profile
+!/.vimrc
+!/README.md
+!/UNLICENSE

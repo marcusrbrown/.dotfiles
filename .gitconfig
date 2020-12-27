@@ -1,6 +1,10 @@
-# DO NOT EDIT BELOW THIS LINE
+# Local configuration goes here:
+[user]
+	name = "Marcus R. Brown"
+	email = "contact@marcusrbrown.com"
+
 [core]
-	excludesfile = ~/.cvsignore
+excludesFile = ~/.gitignore
 	safecrlf = false
 	pager = less -x1,5
 	autocrlf = false
@@ -64,3 +68,11 @@
 	insteadOf = "heroku:"
 [url "git@c0de4:"]
 	insteadOf = "c0de4:"
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+
+[include]
+path = .gitconfig.local
