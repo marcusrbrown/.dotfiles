@@ -4,6 +4,7 @@
 	email = "contact@marcusrbrown.com"
 
 [core]
+excludesFile = ~/.gitignore
 	safecrlf = false
 	pager = less -x1,5
 	autocrlf = false
