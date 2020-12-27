@@ -1,6 +1,10 @@
 {
   "files.associations": {
-    ".gitconfig.local": "properties"
+    ".gitconfig.local": "properties",
+    ".bash*": "shellscript",
+    "**/.bash/*": "shellscript",
+    ".zcompdump*": "shellscript",
+    ".zsh*": "shellscript"
   },
   "files.exclude": {
     "**/*.zwc": { "when": "$(basename)" },
