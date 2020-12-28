@@ -74,5 +74,9 @@ excludesFile = ~/.gitignore
 	process = git-lfs filter-process
 	required = true
 
+[ghq]
+root = go/src
+root = Source
+
 [include]
 path = .gitconfig.local
