@@ -1,78 +1,66 @@
-# Local configuration goes here:
 [user]
-	name = "Marcus R. Brown"
-	email = "contact@marcusrbrown.com"
+name = "Marcus R. Brown"
+email = "contact@marcusrbrown.com"
 
 [core]
 excludesFile = ~/.gitignore
-	safecrlf = false
-	pager = less -x1,5
-	autocrlf = false
-	whitespace = cr-at-eol
+pager = less -F -S -R -i -x1,5
 
-	# Make `git rebase` safe on OSX
-	# http://www.git-tower.com/blog/make-git-rebase-safe-on-osx/
-	trustctime = false
+# Make `git rebase` safe on OSX
+# http://www.git-tower.com/blog/make-git-rebase-safe-on-osx/
+trustctime = false
 
-	# Speed up commands that involve determining untracked files such as `git status`.
-	# https://git-scm.com/docs/git-update-index#_untracked_cache
-	untrackedCache = true
+# Speed up commands that involve determining untracked files such as `git status`.
+# https://git-scm.com/docs/git-update-index#_untracked_cache
+untrackedCache = true
 
-[color]
-	ui = auto
-	status = always
-	diff = always
-	branch = auto
-	interactive = always
-	grep = always
 [alias]
-	ci = commit
-	cia = commit -a
-	co = checkout
-	stat = status
-	st = status --short
-	dt = difftool --dir-diff
-	push = push -v
-	pull = pull -v
-	cinum = !git log --pretty=oneline | wc -l | sed -e \"s/ //g\"
-	up-sub = "!f() { (cd \"$1\" && git fetch origin --tags && git checkout master && git pull) }; f"
-	rm-sub = "!f() { git rm --cached \"$1\"; rm -r \"$1\"; git config -f .gitmodules --remove-section \"submodule.$1\"; git config -f .git/config --remove-section \"submodule.$1\"; rm -r \".git/modules/$1\"; }; f"
-	discard = checkout --
-	prune-remotes = "!f() { for r in `git remote`; do git remote prune $r; done }; f"
-	prune-merged = !git branch -d `git branch --merged | cut -c3- | grep -v ${*:-master}`
-	pushall = "!f() { for i in `git remote`; do git push $i; done; }; f"
-[push]
-	default = current
+ci = commit
+cia = commit -a
+co = checkout
+stat = status
+st = status --short
+push = push -v
+pull = pull -v
+cinum = !git log --pretty=oneline | wc -l | sed -e \"s/ //g\"
+discard = checkout --
+# TODO: Revisit
+#prune-merged = !git branch -d `git branch --merged | cut -c3- | grep -v ${*:-master}`
 
 [rerere]
-	enabled = 1
+enabled = 1
 
 [mergetool]
-	keepBackup = false
+keepBackup = false
+
 [branch]
-	autosetuprebase = always
+autoSetupRebase = always
 
 [url "git@github.com:"]
-	insteadOf = "gh:"
-	pushInsteadOf = "github:"
-	pushInsteadOf = "git://github.com/"
+insteadOf = "gh:"
+pushInsteadOf = "github:"
+pushInsteadOf = "git://github.com/"
+
 [url "git://github.com/"]
-	insteadOf = "github:"
+insteadOf = "github:"
+
 [url "git@gist.github.com:"]
-	insteadOf = "gst:"
-	pushInsteadOf = "gist:"
-	pushInsteadOf = "git://gist.github.com/"
+insteadOf = "gst:"
+pushInsteadOf = "gist:"
+pushInsteadOf = "git://gist.github.com/"
+
 [url "git://gist.github.com/"]
-	insteadOf = "gist:"
-[url "git@heroku.com:"]
-	insteadOf = "heroku:"
-[url "git@c0de4:"]
-	insteadOf = "c0de4:"
+insteadOf = "gist:"
+
 [filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
+clean = git-lfs clean -- %f
+smudge = git-lfs smudge -- %f
+process = git-lfs filter-process
+required = true
+
+[ghq]
+root = go/src
+root = Source
 
 [include]
 path = .gitconfig.local
