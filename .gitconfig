@@ -27,6 +27,12 @@ discard = checkout --
 # TODO: Revisit
 #prune-merged = !git branch -d `git branch --merged | cut -c3- | grep -v ${*:-master}`
 
+[init]
+defaultBranch = main
+
+[push]
+default = current
+
 [rerere]
 enabled = 1
 
@@ -59,8 +65,8 @@ process = git-lfs filter-process
 required = true
 
 [ghq]
-root = go/src
-root = Source
+root = ~/go/src
+root = ~/Source
 
 [include]
 path = .gitconfig.local
