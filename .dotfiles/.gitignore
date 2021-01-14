@@ -22,5 +22,7 @@
 !/.lesskey
 !/.profile
 !/.vimrc
+!/.zshenv
+!/.zshrc
 !/README.md
 !/UNLICENSE
