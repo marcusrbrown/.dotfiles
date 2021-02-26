@@ -3,6 +3,8 @@
 
 # Include the contents of the repository
 !/.bash/
+/.bash/local.d/
+!/.bash/local.d/.gitkeep
 !/.config/
 /.config/*
 !/.config/flake8
