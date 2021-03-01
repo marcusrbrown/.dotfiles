@@ -41,7 +41,7 @@ function .execute-post-zsh-defer() {
 }
 
 if [[ ! -r "${zpm_dir}/zpm.zsh" ]]; then
-  local zpm_git_url="https://github.com/igetgames/zpm"
+  local zpm_git_url="https://github.com/zpm-zsh/zpm"
   git clone --depth 1 "$zpm_git_url" "$zpm_dir"
 fi
 
@@ -49,23 +49,23 @@ source "${zpm_dir}/zpm.zsh"
 
 # Load plugins that are used by everything else
 zpm load \
-  @link/zlugger \
-  ohmyzsh/ohmyzsh,gen-plugin:'<<<"export ZSH=${(q)Plugin_path}"; cat oh-my-zsh.sh'
+  marcusrbrown/zlugger \
+  @omz,gen-plugin:'<<<"export ZSH=${(q)Plugin_path}"; cat oh-my-zsh.sh'
 
 zpm load \
-  chr-fritz/docker-completion.zshplugin,source:docker-completion.plugin.zsh \
+  chr-fritz/docker-completion.zshplugin,source:docker-completion.plugin.zsh,async \
   zpm-zsh/ssh,async \
   zpm-zsh/zpm-link,async \
   zsh-users/zsh-completions,apply:fpath,fpath:src,async \
   @omz/git,async \
   lukechilds/zsh-better-npm-completion,async \
   romkatv/zsh-defer,async \
-  zsh-users/zsh-autosuggestions,gen-plugin:"@zlug-from-zsh-defer-source zsh-autosuggestions.zsh",async \
-  zsh-users/zsh-history-substring-search,gen-plugin:"@zlug-from-zsh-defer-source zsh-history-substring-search.zsh",async \
+  lukechilds/zsh-nvm,async \
   zdharma/history-search-multi-word,fpath:/,async \
   zdharma/fast-syntax-highlighting,async \
-  .execute-post-zsh-defer,type:empty,gen-plugin:'<<<"zsh-defer -c .execute-post-zsh-defer"',async \
-  lukechilds/zsh-nvm,async
+  zsh-users/zsh-autosuggestions,gen-plugin:"@zlug-from-zsh-defer-source zsh-autosuggestions.zsh",async \
+  zsh-users/zsh-history-substring-search,gen-plugin:"@zlug-from-zsh-defer-source zsh-history-substring-search.zsh",async \
+  @empty/.execute-post-zsh-defer,type:empty,gen-plugin:'<<<"zsh-defer -c .execute-post-zsh-defer"',async
 
 # Key bindings
 
