@@ -31,3 +31,5 @@ export HOMEBREW_NO_INSECURE_REDIRECT=1
 
 # Long options: --quit-if-one-screen --LONG-PROMPT --RAW-CONTROL-CHARS --chop-long-lines --ignore-case
 export LESS="-F -M -R -S -i"
+
+[[ -r ~/.zshenv.local ]] && source ~/.zshenv.local || true
