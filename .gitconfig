@@ -45,6 +45,9 @@ keepBackup = false
 [branch]
 autoSetupRebase = always
 
+[commit]
+gpgSign = true
+
 [url "git@github.com:"]
 insteadOf = "gh:"
 pushInsteadOf = "github:"
