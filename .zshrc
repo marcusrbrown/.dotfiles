@@ -1,4 +1,4 @@
-export DEBUG=zpm
+#export DEBUG=zpm
 
 local cache_dir="${XDG_CACHE_HOME:-${HOME}/.cache}"
 local config_dir="${XDG_CONFIG_HOME:-${HOME}/.config}"
