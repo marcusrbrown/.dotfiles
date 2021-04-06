@@ -58,6 +58,7 @@ zpm load \
   zpm-zsh/zpm-link,async \
   zsh-users/zsh-completions,apply:fpath,fpath:src,async \
   @omz/git,async \
+  @omz/ssh-agent,async \
   lukechilds/zsh-better-npm-completion,async \
   romkatv/zsh-defer,async \
   lukechilds/zsh-nvm,async \
