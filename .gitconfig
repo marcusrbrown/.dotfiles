@@ -75,7 +75,7 @@ required = true
 
 [ghq]
 root = ~/go/src
-root = ~/Source
+root = ~/src
 
 [include]
 path = .gitconfig.local
