@@ -34,10 +34,8 @@ function .bind-history-substring-search-keys() {
 }
 
 function .execute-post-zsh-defer() {
-  echo start
   .bind-history-substring-search-keys
   _zsh_autosuggest_bind_widgets
-  echo finish
 }
 
 if [[ ! -r "${zpm_dir}/zpm.zsh" ]]; then
@@ -50,7 +48,7 @@ source "${zpm_dir}/zpm.zsh"
 # Load plugins that are used by everything else
 zpm load \
   marcusrbrown/zlugger \
-  @omz,gen-plugin:'<<<"export ZSH=${(q)Plugin_path}"; cat oh-my-zsh.sh'
+  @omz
 
 zpm load \
   chr-fritz/docker-completion.zshplugin,source:docker-completion.plugin.zsh,async \
