@@ -51,6 +51,17 @@ zpm load \
   @omz
 
 zpm load \
+  @omz-lib/clipboard \
+  @omz-lib/completion \
+  @omz-lib/correction \
+  @omz-lib/directories \
+  @omz-lib/history \
+  @omz-lib/nvm \
+  @omz-lib/termsupport \
+  @omz-lib/key-bindings \
+  @omz-lib/theme-and-appearance
+
+zpm load \
   chr-fritz/docker-completion.zshplugin,source:docker-completion.plugin.zsh,async \
   zpm-zsh/ssh,async \
   zpm-zsh/zpm-link,async \
