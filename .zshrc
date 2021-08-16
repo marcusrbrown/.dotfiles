@@ -1,10 +1,8 @@
-#export DEBUG=zpm
+export DEBUG=zpm
 
 local cache_dir="${XDG_CACHE_HOME:-${HOME}/.cache}"
 local config_dir="${XDG_CONFIG_HOME:-${HOME}/.config}"
-
-local zpm_cache_dir="${cache_dir}/zpm"
-local zpm_dir="${zpm_cache_dir}/zpm"
+local zpm_dir="${cache_dir}/zpm"
 : ${_ZPM_CACHE_DIR:="${TMPDIR:-/tmp}/zsh-${UID:-user}"}
 
 # Oh My Zsh
@@ -38,12 +36,11 @@ function .execute-post-zsh-defer() {
   _zsh_autosuggest_bind_widgets
 }
 
-if [[ ! -r "${zpm_dir}/zpm.zsh" ]]; then
+source "${zpm_dir}/zpm.zsh" 2>/dev/null || {
   local zpm_git_url="https://github.com/zpm-zsh/zpm"
   git clone --depth 1 "$zpm_git_url" "$zpm_dir"
-fi
-
-source "${zpm_dir}/zpm.zsh"
+  source "${zpm_dir}/zpm.zsh"
+}
 
 # Load plugins that are used by everything else
 zpm load \
@@ -52,22 +49,28 @@ zpm load \
 
 zpm load \
   @omz-lib/clipboard \
+  @omz-lib/compfix \
   @omz-lib/completion \
   @omz-lib/correction \
   @omz-lib/directories \
+  @omz-lib/functions \
+  @omz-lib/git \
   @omz-lib/history \
+  @omz-lib/key-bindings \
+  @omz-lib/misc \
   @omz-lib/nvm \
   @omz-lib/termsupport \
-  @omz-lib/key-bindings \
   @omz-lib/theme-and-appearance
+
+zpm load \
+  @omz/git \
+  @omz/ssh-agent \
 
 zpm load \
   chr-fritz/docker-completion.zshplugin,source:docker-completion.plugin.zsh,async \
   zpm-zsh/ssh,async \
   zpm-zsh/zpm-link,async \
   zsh-users/zsh-completions,apply:fpath,fpath:src,async \
-  @omz/git,async \
-  @omz/ssh-agent,async \
   lukechilds/zsh-better-npm-completion,async \
   romkatv/zsh-defer,async \
   lukechilds/zsh-nvm,async \
@@ -98,4 +101,4 @@ alias la='ls -lAh'
 # starship 🚀
 eval "$(starship init zsh)"
 
-[[ -r ~/.zshrc.local ]] && source ~/.zshrc.local || true
+source ~/.zshrc.local 2>/dev/null
