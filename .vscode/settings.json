@@ -1,5 +1,6 @@
 {
   "files.associations": {
+    "*.yaml": "home-assistant",
     ".gitconfig.local": "properties",
     ".bash*": "shellscript",
     "**/.bash/*": "shellscript",
