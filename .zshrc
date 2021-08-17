@@ -69,7 +69,6 @@ zpm load \
 zpm load \
   chr-fritz/docker-completion.zshplugin,source:docker-completion.plugin.zsh,async \
   zpm-zsh/ssh,async \
-  zpm-zsh/zpm-link,async \
   zsh-users/zsh-completions,apply:fpath,fpath:src,async \
   lukechilds/zsh-better-npm-completion,async \
   romkatv/zsh-defer,async \
