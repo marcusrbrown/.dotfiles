@@ -96,6 +96,9 @@ zpm load \
 bindkey '^[[1;9D' backward-word
 bindkey '^[[1;9C' forward-word
 
+bindkey '^[OD' beginning-of-line
+bindkey '^[OC' end-of-line
+
 # Aliases
 
 # ~/.dotfiles is a bare Git repo with the work directory set to ~
