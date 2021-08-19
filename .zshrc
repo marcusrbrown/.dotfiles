@@ -1,4 +1,7 @@
-export DEBUG=zpm
+#!/usr/bin/env zsh
+
+# Uncomment to enable debug logging
+#export DEBUG=zpm
 
 local cache_dir="${XDG_CACHE_HOME:-${HOME}/.cache}"
 local config_dir="${XDG_CONFIG_HOME:-${HOME}/.config}"
@@ -83,9 +86,6 @@ zpm load \
 
 bindkey '^[[1;9D' backward-word
 bindkey '^[[1;9C' forward-word
-
-bindkey '^[OD' beginning-of-line
-bindkey '^[OC' end-of-line
 
 # Aliases
 
