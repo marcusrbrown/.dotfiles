@@ -27,6 +27,16 @@ ZSH_AUTOSUGGEST_USE_ASYNC=true
 NVM_COMPLETION=true
 NVM_AUTO_USE=true
 
+# History
+
+HISTSIZE=100000
+SAVEHIST=$HISTSIZE
+# Comes from OMZ/lib/history.zsh
+HIST_STAMPS="%F %T "
+
+setopt append_history         # apppend to the history file across all shells
+setopt inc_append_history     # write to the history file immediately, not when the shell exits
+
 function .bind-history-substring-search-keys() {
   bindkey "$terminfo[kcuu1]" history-substring-search-up
   bindkey "$terminfo[kcud1]" history-substring-search-down
@@ -61,7 +71,6 @@ zpm load \
   @omz-lib/history \
   @omz-lib/key-bindings \
   @omz-lib/misc \
-  @omz-lib/nvm \
   @omz-lib/termsupport \
   @omz-lib/theme-and-appearance
 
