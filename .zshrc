@@ -50,7 +50,7 @@ function .execute-post-zsh-defer() {
 }
 
 source "${zpm_dir}/zpm.zsh" 2>/dev/null || {
-  local zpm_git_url="https://github.com/zpm-zsh/zpm"
+  local zpm_git_url="https://github.com/marcusrbrown/zpm"
   git clone --depth 1 "$zpm_git_url" "$zpm_dir"
   source "${zpm_dir}/zpm.zsh"
 }
