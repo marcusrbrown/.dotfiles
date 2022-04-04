@@ -115,4 +115,4 @@ alias la='ls -lAh'
 # starship 🚀
 eval "$(starship init zsh)"
 
-source ~/.zshrc.local 2>/dev/null
+source ~/.zshrc.local 2>/dev/null || true
