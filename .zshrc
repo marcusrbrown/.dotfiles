@@ -8,6 +8,9 @@ local config_dir="${XDG_CONFIG_HOME:-${HOME}/.config}"
 local zpm_dir="${cache_dir}/zpm"
 : ${_ZPM_CACHE_DIR:="${TMPDIR:-/tmp}/zsh-${UID:-user}"}
 
+# The name of generated plugin scripts
+local generated="zpm-generated.zsh"
+
 # Oh My Zsh
 ZSH_CUSTOM="${config_dir}/zsh"
 [[ ! -d "${ZSH_CUSTOM}" ]] && mkdir -p "${ZSH_CUSTOM}"
@@ -61,18 +64,18 @@ zpm load \
   @omz
 
 zpm load \
-  @omz-lib/clipboard \
-  @omz-lib/compfix \
-  @omz-lib/completion \
-  @omz-lib/correction \
-  @omz-lib/directories \
-  @omz-lib/functions \
-  @omz-lib/git \
-  @omz-lib/history \
-  @omz-lib/key-bindings \
-  @omz-lib/misc \
-  @omz-lib/termsupport \
-  @omz-lib/theme-and-appearance
+  @omz/lib/clipboard \
+  @omz/lib/compfix \
+  @omz/lib/completion \
+  @omz/lib/correction \
+  @omz/lib/directories \
+  @omz/lib/functions \
+  @omz/lib/git \
+  @omz/lib/history \
+  @omz/lib/key-bindings \
+  @omz/lib/misc \
+  @omz/lib/termsupport \
+  @omz/lib/theme-and-appearance
 
 zpm load \
   @omz/git \
@@ -87,9 +90,9 @@ zpm load \
   lukechilds/zsh-nvm,async \
   zdharma/history-search-multi-word,fpath:/,async \
   zdharma/fast-syntax-highlighting,async \
-  zsh-users/zsh-autosuggestions,gen-plugin:"@zlug-from-zsh-defer-source zsh-autosuggestions.zsh",async \
-  zsh-users/zsh-history-substring-search,gen-plugin:"@zlug-from-zsh-defer-source zsh-history-substring-search.zsh",async \
-  @empty/.execute-post-zsh-defer,type:empty,gen-plugin:'<<<"zsh-defer -c .execute-post-zsh-defer"',async
+  zsh-users/zsh-autosuggestions,source:$generated,hook:"@zlug-from-zsh-defer-source zsh-autosuggestions.zsh > $generated",async \
+  zsh-users/zsh-history-substring-search,source:$generated,hook:"@zlug-from-zsh-defer-source zsh-history-substring-search.zsh > $generated",async \
+  @exec/.execute-post-zsh-defer,origin:'<<<"zsh-defer -c .execute-post-zsh-defer"',async
 
 # Key bindings
 
