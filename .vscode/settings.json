@@ -25,5 +25,9 @@
     "**/.*_history": true
   },
   "search.useGlobalIgnoreFiles": true,
-  "search.useIgnoreFiles": true
+  "search.useIgnoreFiles": true,
+
+  "evenBetterToml.schema.associations": {
+    "**/starship.toml": "https://starship.rs/config-schema.json"
+  }
 }
