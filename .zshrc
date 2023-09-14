@@ -16,6 +16,9 @@ ZSH_CUSTOM="${config_dir}/zsh"
 [[ ! -d "${ZSH_CUSTOM}" ]] && mkdir -p "${ZSH_CUSTOM}"
 ZSH_COMPDUMP="${_ZPM_CACHE_DIR}/zcompdump"
 
+zstyle :omz:plugins:ssh-agent quiet yes
+zstyle :omz:plugins:ssh-agent lazy yes
+
 # Fast Syntax Highlighting
 FAST_WORK_DIR="${config_dir}/fsh"
 [[ ! -w "${FAST_WORK_DIR}" ]] && command mkdir -p "${FAST_WORK_DIR}"
@@ -32,7 +35,7 @@ NVM_AUTO_USE=true
 
 # History
 
-HISTSIZE=100000
+HISTSIZE=1000000
 SAVEHIST=$HISTSIZE
 # Comes from OMZ/lib/history.zsh
 HIST_STAMPS="%F %T "
@@ -46,6 +49,9 @@ function .bind-history-substring-search-keys() {
   bindkey '^[[A' history-substring-search-up
   bindkey '^[[B' history-substring-search-down
 }
+
+# If unset, then ZLE_REMOVE_SUFFIX_CHARS is ' \t\n;&|'; I don't want | included
+ZLE_REMOVE_SUFFIX_CHARS=$' \t\n;&'
 
 function .execute-post-zsh-defer() {
   .bind-history-substring-search-keys
@@ -78,8 +84,13 @@ zpm load \
   @omz/lib/theme-and-appearance
 
 zpm load \
+  @omz/asdf \
   @omz/git \
+  @omz/gh \
+  @omz/docker \
+  @omz/pip \
   @omz/ssh-agent \
+  @omz/gpg-agent
 
 zpm load \
   chr-fritz/docker-completion.zshplugin,source:docker-completion.plugin.zsh,async \
@@ -113,6 +124,9 @@ alias ll='ls -lh'
 alias la='ls -lAh'
 
 # starship 🚀
-eval "$(starship init zsh)"
+(( $+commands[starship] )) && eval "$(starship init zsh)"
+
+# Secure Shellfish
+test -e "${HOME}/.shellfishrc" && source "${HOME}/.shellfishrc"
 
 source ~/.zshrc.local 2>/dev/null || true
