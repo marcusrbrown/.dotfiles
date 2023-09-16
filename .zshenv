@@ -2,6 +2,12 @@
 
 # Homebrew
 
+export HOMEBREW_AUTOREMOVE=1
+export HOMEBREW_BOOTSNAP=1
+export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
+export HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=1
+# Enable Homebrew developer mode
+export HOMEBREW_DEVELOPER=1
 # Disable 'anonymous' analytics
 export HOMEBREW_NO_ANALYTICS=1
 # Remove previously installed versions of insalled/upgraded formulae
@@ -10,6 +16,7 @@ export HOMEBREW_INSTALL_CLEANUP=1
 export HOMEBREW_NO_INSECURE_REDIRECT=1
 # Do not show environment variable hints
 export HOMEBREW_NO_ENV_HINTS=1
+export HOMEBREW_SORBET_RUNTIME=1
 
 (( $+commands[brew] )) && eval "$(brew shellenv)"
 
@@ -38,7 +45,7 @@ fi
 # Pagers
 
 if (( $+commands[bat] )); then
-  MANPAGER="sh -c 'col -bx | bat -l man --style=grid --pager \"less -R -M -i +Gg\"'" \
+  MANPAGER="sh -c 'col -bx | bat -l man --style=grid --pager \"less -R -M -i +Gg\"'"
   MANROFFOPT='-c'
   export MANPAGER MANROFFOPT
 fi
