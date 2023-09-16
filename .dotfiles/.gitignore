@@ -7,6 +7,9 @@
 !/.bash/local.d/.gitkeep
 !/.config/
 /.config/*
+!/.config/bat/
+/.config/bat/*
+!/.config/bat/config
 !/.config/flake8
 !/.config/pep8
 !/.config/starship.toml
@@ -15,6 +18,7 @@
 !/.vim/
 !/.vscode/
 /.vscode/*
+!/.vscode/argv.json
 !/.vscode/settings.json
 !/.editorconfig
 !/.gitattributes
