@@ -120,7 +120,7 @@ bindkey '^[[1;9C' forward-word
 # Aliases
 
 # ~/.dotfiles is a bare Git repo with the work directory set to ~
-alias .dotfiles='GIT_DIR=$HOME/.dotfiles'
+alias .dotfiles='GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME'
 
 alias ls='lsd -F'
 
