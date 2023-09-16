@@ -77,13 +77,18 @@ zpm load \
   @omz/lib/directories \
   @omz/lib/functions \
   @omz/lib/git \
+  @omz/lib/grep \
   @omz/lib/history \
   @omz/lib/key-bindings \
   @omz/lib/misc \
   @omz/lib/termsupport \
   @omz/lib/theme-and-appearance
 
+zpm if macos load \
+  @omz/macos
+
 zpm load \
+  @omz/brew \
   @omz/asdf \
   @omz/git \
   @omz/gh \
@@ -91,6 +96,8 @@ zpm load \
   @omz/pip \
   @omz/ssh-agent \
   @omz/gpg-agent
+
+zpm if vscode load zpm-zsh/vscode
 
 zpm load \
   chr-fritz/docker-completion.zshplugin,source:docker-completion.plugin.zsh,async \
