@@ -27,7 +27,9 @@
 !/.inputrc
 !/.lesskey
 !/.profile
+!/.shrc
 !/.vimrc
+!/.zprofile
 !/.zshenv
 !/.zshrc
 !/Brewfile

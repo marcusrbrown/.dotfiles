@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Remove path from PATH
+remove_path() {
+  new_path="$(echo "$PATH" | sed -e "s@:$1@@g" -e "s@$1:@@g" -e "s@$1@@g")"
+  export PATH="$new_path"
+}
+
+# Add path to the start of PATH
+prepend_path() {
+  [ -d "$1" ] || return 1
+  remove_path "$1"
+  export PATH="$1:${PATH}"
+}
+
+# Add path to the end of PATH
+append_path() {
+  [ -d "$1" ] || return 1
+  remove_path "$1"
+  export PATH="${PATH}:$1"
+}
+
+# Check if a command exists
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
