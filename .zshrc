@@ -1,4 +1,9 @@
-#!/usr/bin/env zsh
+# Fig pre block. Keep at the top of this file.
+[[ -f "$HOME/.fig/shell/zshrc.pre.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.pre.zsh"
+
+source ~/.zprofile
+
+source ~/.shrc
 
 # Uncomment to enable debug logging
 #export DEBUG=zpm
@@ -137,3 +142,6 @@ alias la='ls -lAh'
 test -e "${HOME}/.shellfishrc" && source "${HOME}/.shellfishrc"
 
 source ~/.zshrc.local 2>/dev/null || true
+
+# Fig post block. Keep at the bottom of this file.
+[[ -f "$HOME/.fig/shell/zshrc.post.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.post.zsh"

@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# detect remote shell
+if [ -n "$SSH_CONNECTION" ]; then
+  REMOTE=1
+else
+  unset REMOTE
+fi
+
+# Kernel and system identification.
+# Don't set any variables named OS, OS_TYPE, or HOSTTYPE, these may already exist.
+# Strip any numbers trailing the kernel, i.e. remove "32..." from "mingw32..."
+HOST_OS=$(uname -s | sed -e 's/  */-/g;y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/;s/[0-9].*//')
+HOST_MACHINE=$(uname -m | sed -e 's/  */-/g;y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')
+HOST_VERSION=$(expr "$(uname -r)" : '[^0-9]*\([0-9]*\.[0-9]*\)')
+HOST_PLATFORM="${HOST_MACHINE}-${HOST_OS}-${HOST_VERSION}"
+
+export SHPROFILE_LOADED=1
