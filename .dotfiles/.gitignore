@@ -30,5 +30,6 @@
 !/.vimrc
 !/.zshenv
 !/.zshrc
+!/Brewfile
 !/README.md
 !/UNLICENSE
