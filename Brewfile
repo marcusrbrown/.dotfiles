@@ -1,5 +1,6 @@
 tap "blacktop/tap"
 tap "homebrew/bundle"
+tap "homebrew/cask-fonts"
 tap "homebrew/command-not-found"
 tap "homebrew/services"
 tap "sourcegraph/app"
@@ -138,6 +139,16 @@ cask "db-browser-for-sqlite"
 cask "fig"
 # Web browser
 cask "firefox"
+# Developer targeted fonts with a high number of glyphs
+cask "font-fira-code-nerd-font"
+# Developer targeted fonts with a high number of glyphs
+cask "font-fira-mono-nerd-font"
+# Developer targeted fonts with a high number of glyphs
+cask "font-jetbrains-mono-nerd-font"
+# Developer targeted fonts with a high number of glyphs
+cask "font-meslo-lg-nerd-font"
+# Developer targeted fonts with a high number of glyphs
+cask "font-sauce-code-pro-nerd-font"
 # Software reverse engineering (SRE) suite of tools
 cask "ghidra"
 # Utility to hide menu bar items
