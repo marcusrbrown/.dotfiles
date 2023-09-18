@@ -1,33 +1,37 @@
 {
-  "files.associations": {
-    "*.yaml": "home-assistant",
-    ".gitconfig.local": "properties",
-    ".bash*": "shellscript",
-    "**/.bash/*": "shellscript",
-    ".zcompdump*": "shellscript",
-    ".zsh*": "shellscript"
-  },
-  "files.exclude": {
-    "**/*.zwc": { "when": "$(basename)" },
-    ".dotfiles/{hooks,info,logs,refs,rr-cache,subtree-cache,objects}/**": true,
-    ".dotfiles/{COMMIT*,config,description,*HEAD,index,MERGE*,packed-refs}": true
-  },
-  "files.insertFinalNewline": true,
-  "files.trimTrailingWhitespace": true,
-  "files.watcherExclude": {
-    "**/[^.]*": true,
-    ".dotfiles/objects/**": true,
-    ".dotfiles/subtree-cache/**": true
-  },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
 
-  "search.exclude": {
-    "**/[^.]*": true,
-    "**/.*_history": true
-  },
-  "search.useGlobalIgnoreFiles": true,
-  "search.useIgnoreFiles": true,
+    "files.associations": {
+        "*.yaml": "home-assistant",
+        ".gitconfig.local": "properties",
+        ".bash*": "shellscript",
+        "**/.bash/*": "shellscript",
+        ".zcompdump*": "shellscript",
+        ".zsh*": "shellscript",
+        "**/.ssh/config.d/*.conf": "ssh_config"
+    },
+    "files.exclude": {
+        "**/*.zwc": { "when": "$(basename)" },
+        ".dotfiles/{hooks,info,logs,refs,rr-cache,subtree-cache,objects}/**": true,
+        ".dotfiles/{COMMIT*,config,description,*HEAD,index,MERGE*,packed-refs}": true
+    },
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "files.watcherExclude": {
+        "**/[^.]*": true,
+        ".dotfiles/objects/**": true,
+        ".dotfiles/subtree-cache/**": true
+    },
 
-  "evenBetterToml.schema.associations": {
-    "**/starship.toml": "https://starship.rs/config-schema.json"
-  }
+    "search.exclude": {
+        "**/[^.]*": true,
+        "**/.*_history": true
+    },
+    "search.useGlobalIgnoreFiles": true,
+    "search.useIgnoreFiles": true,
+
+    "evenBetterToml.schema.associations": {
+        "**/starship.toml": "https://starship.rs/config-schema.json"
+    }
 }

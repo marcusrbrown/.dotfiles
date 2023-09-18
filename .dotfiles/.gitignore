@@ -13,6 +13,7 @@
 !/.config/flake8
 !/.config/pep8
 !/.config/starship.toml
+!/.devcontainer/
 !/.dotfiles/
 /.dotfiles/*
 !/.ssh/
