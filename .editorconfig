@@ -1,9 +1,52 @@
+# EditorConfig helps developers define and maintain consistent coding styles
+# between different editors and IDEs.
+# http://EditorConfig.org
+
 root = true
 
 [*]
 charset = utf-8
 end_of_line = lf
 insert_final_newline = true
+max_line_length = 120
+trim_trailing_whitespace = true
+
+[*.{css,less,sass,scss}]
 indent_size = 2
 indent_style = space
-trim_trailing_whitespace = true
+
+[*.{graphql,hcl,html,js,json,jsx,md,sh,yaml,yml,toml,ts,tsx,tf}]
+indent_size = 2
+indent_style = space
+
+[*.{markdown,md,rst}]
+indent_size = 2
+indent_style = space
+
+[Makefile]
+indent_style = tab
+
+[*.{c,c++,cc,cpp,cxx,h,hh,hpp,hxx,inl,inc,m,mm,x,xm}]
+indent_size = 4
+
+[*.{cmake,make,mk}]
+indent_size  = 4
+indent_style = tab
+
+[*.{sh,bash,csh,tcsh,zsh}]
+indent_size = 4
+indent_style = space
+
+[*.{go,rb,rs,sql,swift}]
+indent_size = 4
+indent_style = space
+
+[*.{py}]
+indent_size = 4
+indent_style = space
+
+[.vscode/*.json]
+indent_size = 4
+
+[.devcontainer/*.json]
+indent_size = 4
