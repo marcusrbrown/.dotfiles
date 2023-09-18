@@ -230,4 +230,4 @@ format = '[](fg:#2c324a $style)[  $time ](fg:#94e2d5 $style)'
 show_always = true
 style_user = "fg:#f38ba8 bg:#161925"
 style_root = "fg:#f38ba8 bg:#161925"
-format = '[⚛️ ]($style)' # $user
+format = '[⚛]($style)' # $user
