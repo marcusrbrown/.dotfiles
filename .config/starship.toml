@@ -87,7 +87,7 @@ truncation_symbol = "…/"
 [docker_context]
 symbol = ""
 style = "fg:#cba6f7 bg:#2c324a"
-format = '[ $symbol $context]($style) $path '
+format = '[ $symbol $context $path ]($style)'
 
 [elixir]
 symbol = ""
@@ -211,7 +211,6 @@ style = "fg:#cba6f7 bg:#2c324a"
 format = '[ $symbol ($version )]($style)'
 
 [status]
-disabled = false
 style = "bold fg:#f38ba8 bg:#161925"
 format = '[](fg:#161925 bg:#333a56)[\[$symbol$status\]]($style)[](fg:#161925 bg:#2c324a)'
 symbol = ""
