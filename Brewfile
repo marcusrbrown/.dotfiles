@@ -29,8 +29,6 @@ brew "deno"
 brew "doctl"
 # Modern replacement for 'ls'
 brew "exa"
-# Easiest way to build and release mobile apps
-brew "fastlane"
 # Simple, fast and user-friendly alternative to find
 brew "fd"
 # Command-line fuzzy finder written in Go
@@ -163,31 +161,18 @@ cask "raycast"
 cask "slack"
 # JDK from the Eclipse Foundation (Adoptium)
 cask "temurin"
-mas "Actions", id: 1586435171
-mas "Anybuffer", id: 1330815414
 mas "Apple Configurator", id: 1037126344
-mas "Bear", id: 1091189122
 mas "Bluetooth Inspector", id: 1509085044
 mas "Data Jar", id: 1453273600
 mas "Developer", id: 640199958
 mas "Draw Things", id: 6444050820
-mas "Esse", id: 1438921989
 mas "Flame", id: 325206381
 mas "Grammarly for Safari", id: 1462114288
 mas "Home Assistant", id: 1099568401
-mas "LightBlue", id: 557428110
-mas "Microsoft Excel", id: 462058435
-mas "Microsoft PowerPoint", id: 462062816
 mas "Microsoft Remote Desktop", id: 1295203466
-mas "Microsoft Remote Desktop", id: 715768417
-mas "Microsoft Word", id: 462054704
 mas "MQTTAnalyzer", id: 1493015317
 mas "nRF Edge Impulse", id: 1557234087
-mas "OctoLinker", id: 1549308269
 mas "Pi-hole Remote", id: 1515445551
-mas "Pixelmator", id: 407963104
-mas "Refined GitHub", id: 1519867270
-mas "Sourcegraph for Safari", id: 1543262193
 mas "Xcode", id: 497799835
 vscode "ahmadawais.shades-of-purple"
 vscode "arcanis.vscode-zipfs"
