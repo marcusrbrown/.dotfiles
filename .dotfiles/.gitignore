@@ -16,6 +16,11 @@
 !/.devcontainer/
 !/.dotfiles/
 /.dotfiles/*
+!/.gnupg/
+/.gnupg/*
+!/.gnupg/dirmngr.conf
+!/.gnupg/gpg-agent.conf
+!/.gnupg/gpg.conf
 !/.ssh/
 /.ssh/*
 !/.ssh/config.d/
