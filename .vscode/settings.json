@@ -33,5 +33,12 @@
 
     "evenBetterToml.schema.associations": {
         "**/starship.toml": "https://starship.rs/config-schema.json"
+    },
+
+    "[properties]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
+    "[ignore]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
     }
 }
