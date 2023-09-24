@@ -171,7 +171,7 @@ format = '[ $symbol ($version )]($style)'
 
 [nodejs]
 symbol = ""
-style = "fg:#cba6f7 bg:#f00"
+style = "fg:#cba6f7 bg:#2c324a"
 format = '[ $symbol ($version )]($style)'
 
 [package]
