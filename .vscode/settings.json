@@ -35,10 +35,13 @@
         "**/starship.toml": "https://starship.rs/config-schema.json"
     },
 
+    "[ignore]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
     "[properties]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
     },
-    "[ignore]": {
+    "[shellscript]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
     }
 }
