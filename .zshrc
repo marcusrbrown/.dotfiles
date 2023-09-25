@@ -21,8 +21,8 @@ ZSH_CUSTOM="${config_dir}/zsh"
 [[ ! -d "${ZSH_CUSTOM}" ]] && mkdir -p "${ZSH_CUSTOM}"
 ZSH_COMPDUMP="${_ZPM_CACHE_DIR}/zcompdump"
 
-zstyle :omz:plugins:ssh-agent quiet yes
-zstyle :omz:plugins:ssh-agent lazy yes
+zstyle :omz:plugins:keychain agents gpg
+zstyle :omz:plugins:keychain identities id_rsa 273811323AC30470
 
 # Fast Syntax Highlighting
 FAST_WORK_DIR="${config_dir}/fsh"
@@ -99,8 +99,8 @@ zpm load \
   @omz/gh \
   @omz/docker \
   @omz/pip \
-  @omz/ssh-agent \
-  @omz/gpg-agent
+  @omz/gpg-agent \
+  @omz/keychain
 
 zpm if vscode load zpm-zsh/vscode
 
