@@ -23,6 +23,7 @@ ZSH_COMPDUMP="${_ZPM_CACHE_DIR}/zcompdump"
 
 zstyle :omz:plugins:keychain agents gpg
 zstyle :omz:plugins:keychain identities id_rsa 273811323AC30470
+zstyle :omz:plugins:keychain options --ignore-missing --quiet --attempts 2
 
 # Fast Syntax Highlighting
 FAST_WORK_DIR="${config_dir}/fsh"
