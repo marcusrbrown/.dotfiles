@@ -10,6 +10,7 @@
 !/.config/bat/
 /.config/bat/*
 !/.config/bat/config
+!/.config/bat/themes/
 !/.config/flake8
 !/.config/pep8
 !/.config/starship.toml
