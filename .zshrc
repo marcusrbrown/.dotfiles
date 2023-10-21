@@ -59,10 +59,27 @@ function .bind-history-substring-search-keys() {
 # If unset, then ZLE_REMOVE_SUFFIX_CHARS is ' \t\n;&|'; I don't want | included
 ZLE_REMOVE_SUFFIX_CHARS=$' \t\n;&'
 
+# Bind keys for the history substring search and autosuggestions, after zsh-defer has loaded them
 function .execute-post-zsh-defer() {
   .bind-history-substring-search-keys
   _zsh_autosuggest_bind_widgets
 }
+
+# Ensure the passphrase prompt is shown in the correct tty
+function _gpg-agent_update-tty_preexec {
+  gpg-connect-agent updatestartuptty /bye &>/dev/null
+}
+autoload -U add-zsh-hook
+add-zsh-hook preexec _gpg-agent_update-tty_preexec
+
+# Set up gpg-agent to work with ssh
+export GPG_TTY=$(tty)
+if [[ $(gpgconf --list-options gpg-agent 2>/dev/null | awk -F: '$1=="enable-ssh-support" {print $10}') = 1 ]]; then
+  unset SSH_AGENT_PID
+  if [[ "${gnupg_SSH_AUTH_SOCK_by:-0}" -ne $$ ]]; then
+    export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+  fi
+fi
 
 source "${zpm_dir}/zpm.zsh" 2>/dev/null || {
   local zpm_git_url="https://github.com/marcusrbrown/zpm-zsh_zpm"
@@ -95,13 +112,7 @@ zpm if macos load \
 
 zpm load \
   @omz/brew \
-  @omz/asdf \
-  @omz/git \
-  @omz/gh \
-  @omz/docker \
-  @omz/pip \
-  @omz/gpg-agent \
-  @omz/keychain
+  @omz/git
 
 zpm if vscode load zpm-zsh/vscode
 
