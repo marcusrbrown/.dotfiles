@@ -26,6 +26,8 @@ cinum = !git log --pretty=oneline | wc -l | sed -e \"s/ //g\"
 discard = checkout --
 # TODO: Revisit
 #prune-merged = !git branch -d `git branch --merged | cut -c3- | grep -v ${*:-master}`
+ignored = !"bash -c 'diff --unified=999999999 --color=always <(echo a; git check-ignore --verbose --non-matching --no-index . \"$@\") <(echo b; git check-ignore --verbose --non-matching . \"$@\")' - \"$@\" | tail -n+7; git hidden \"$@\" # Show ignore status of arguments. Files included by index are tagged with prepended '+'."
+hidden = !"git ls-files -v -- \"$@\"| grep -E '^(S|[[:lower:]])' # S means update-index --skip-worktree, and lower first letter means --assume-unchanged."
 
 [fetch]
 prune = true
