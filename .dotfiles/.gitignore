@@ -17,6 +17,8 @@
 !/.devcontainer/
 !/.dotfiles/
 /.dotfiles/*
+!/.dotfiles/docs/
+!/.dotfiles/docs/*.md
 !/.gnupg/
 /.gnupg/*
 !/.gnupg/dirmngr.conf
