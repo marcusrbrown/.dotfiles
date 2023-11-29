@@ -117,16 +117,15 @@ zpm load \
 zpm if vscode load zpm-zsh/vscode
 
 zpm load \
-  chr-fritz/docker-completion.zshplugin,source:docker-completion.plugin.zsh,async \
   zpm-zsh/ssh,async \
   zsh-users/zsh-completions,apply:fpath,fpath:src,async \
   lukechilds/zsh-better-npm-completion,async \
   romkatv/zsh-defer,async \
   lukechilds/zsh-nvm,async \
-  zdharma/history-search-multi-word,fpath:/,async \
-  zdharma/fast-syntax-highlighting,async \
-  zsh-users/zsh-autosuggestions,source:$generated,hook:"@zlug-from-zsh-defer-source zsh-autosuggestions.zsh > $generated",async \
   zsh-users/zsh-history-substring-search,source:$generated,hook:"@zlug-from-zsh-defer-source zsh-history-substring-search.zsh > $generated",async \
+  zsh-users/zsh-autosuggestions,source:$generated,hook:"@zlug-from-zsh-defer-source zsh-autosuggestions.zsh > $generated",async \
+  zdharma/fast-syntax-highlighting,async \
+  zdharma/history-search-multi-word,fpath:/,async \
   @exec/.execute-post-zsh-defer,origin:'<<<"zsh-defer -c .execute-post-zsh-defer"',async
 
 # Key bindings
