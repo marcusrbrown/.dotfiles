@@ -38,6 +38,9 @@
     "[ignore]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
     },
+    "[markdown]": {
+        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+    },
     "[properties]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
     },
