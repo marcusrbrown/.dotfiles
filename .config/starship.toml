@@ -195,7 +195,7 @@ format = '[ $symbol ($version )]($style)'
 [python]
 symbol = ""
 style = "fg:#cba6f7 bg:#2c324a"
-format = '[ $symbol ($version )]($style)'
+format = '[ $symbol ($version )(\($virtualenv\) )]($style)'
 
 [ruby]
 symbol = ""
