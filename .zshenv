@@ -33,6 +33,11 @@ fi
 # Long options: --quit-if-one-screen --LONG-PROMPT --RAW-CONTROL-CHARS --chop-long-lines --ignore-case
 export LESS="-F -M -R -S -i"
 
+# RTX
+if (( $+commands[rtx] )); then
+  eval "$(rtx activate zsh)"
+fi
+
 # Local tools and utilities
 PATH="${HOME}/.local/bin:$PATH"
 
