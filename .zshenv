@@ -34,8 +34,8 @@ fi
 export LESS="-F -M -R -S -i"
 
 # RTX
-if (( $+commands[rtx] )); then
-  eval "$(rtx activate zsh)"
+if (( $+commands[mise] )); then
+  eval "$(mise activate zsh)"
 fi
 
 # Local tools and utilities
