@@ -2,11 +2,11 @@
 /*
 
 # Include the contents of the repository
-!/.bash/
-/.bash/local.d/
-!/.bash/local.d/.gitkeep
 !/.config/
 /.config/*
+!/.config/bash/
+/.config/bash/local.d/
+!/.config/bash/local.d/.gitkeep
 !/.config/bat/
 /.config/bat/*
 !/.config/bat/config
@@ -35,6 +35,7 @@
 /.vscode/*
 !/.vscode/argv.json
 !/.vscode/settings.json
+!/.bashrc
 !/.editorconfig
 !/.gitattributes
 !/.gitconfig
@@ -42,11 +43,7 @@
 !/.inputrc
 !/.lesskey
 !/.profile
-!/.shprofile
-!/.shrc
 !/.vimrc
-!/.zprofile
-!/.zshenv
 !/.zshrc
 !/Brewfile
 !/README.md

@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+# XDG directories
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_STATE_HOME="$HOME/.local/state"
+
+# Path utilities
+
+# Remove path from PATH
+remove_from_path() {
+  new_path="$(echo "$PATH" | sed -e "s@:$1@@g" -e "s@$1:@@g" -e "s@$1@@g")"
+  export PATH="$new_path"
+}
+
+# Add path to the start of PATH
+prepend_to_path() {
+  [ -d "$1" ] || return
+  remove_from_path "$1"
+  export PATH="$1:${PATH}"
+}
+
+# Add path to the end of PATH
+append_to_path() {
+  [ -d "$1" ] || return
+  remove_from_path "$1"
+  export PATH="${PATH}:$1"
+}
+
+# Check if a command exists
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+# detect remote shell
+if [ -n "$SSH_CONNECTION" ]; then
+  export REMOTE=1
+else
+  unset REMOTE
+fi
+
+# Kernel and system identification.
+# Don't set any variables named OS, OS_TYPE, or HOSTTYPE, these may already exist.
+# Strip any numbers trailing the kernel, i.e. remove "32..." from "mingw32..."
+HOST_OS=$(uname -s | sed -e 's/  */-/g;y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/;s/[0-9].*//')
+HOST_MACHINE=$(uname -m | sed -e 's/  */-/g;y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')
+HOST_VERSION=$(expr "$(uname -r)" : '[^0-9]*\([0-9]*\.[0-9]*\)')
+export HOST_PLATFORM="${HOST_MACHINE}-${HOST_OS}-${HOST_VERSION}"
+
+# Add the path to `mise` shims
+if [ -d "$HOME/.local/share/mise/shims" ]; then
+  PATH="$HOME/.local/share/mise/shims:$PATH"
+fi
+
+# Go
+
+export GOPATH="${HOME}/go"
+export GOROOT
+if command_exists go; then
+  : ${GOROOT:=$(go env GOROOT)}
+elif command_exists brew && [[ -d "$(brew --prefix golang)/libexec" ]]; then
+  : ${GOROOT:=$(brew --prefix golang)/libexec}
+elif [[ -d /usr/local/go ]]; then
+  : ${GOROOT:=/usr/local/go}
+fi
+test -d "$GOPATH" || mkdir -p "$GOPATH"
+test -d "$GOPATH/src/github.com" || mkdir -p "$GOPATH/src/github.com"
+
+PATH="${PATH}:${GOPATH}/bin:${GOROOT}/bin"
+
+# Ruby
+
+if command_exists brew && [[ -d "$(brew --prefix ruby)/bin" ]]; then
+  PATH="$(brew --prefix ruby)/bin:${PATH}"
+fi
+
+# Pagers
+
+if command_exists bat; then
+  MANPAGER="sh -c 'col -bx | bat -l man --style=grid --pager \"less -R -M -i +Gg\"'"
+  MANROFFOPT='-c'
+  export MANPAGER MANROFFOPT
+fi
+
+# Long options: --quit-if-one-screen --LONG-PROMPT --RAW-CONTROL-CHARS --chop-long-lines --ignore-case
+export LESS="-F -M -R -S -i"
+
+# RTX
+if command_exists mise; then
+  eval "$(mise activate zsh)"
+fi
+
+# Local tools and utilities
+PATH="$HOME/.local/bin:$PATH:bin"
+
+export PATH

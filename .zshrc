@@ -1,9 +1,17 @@
 # Fig pre block. Keep at the top of this file.
 [[ -f "$HOME/.fig/shell/zshrc.pre.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.pre.zsh"
 
-source ~/.zprofile
+# zshrc
+# ---
 
-source ~/.shrc
+zcompare() {
+	if [[ -s ${1} && ( ! -s ${1}.zwc || ${1} -nt ${1}.zwc) ]]; then
+		zcompile "${1}"
+	fi
+}
+
+source "$HOME/.config/bash/exports"
+zcompare "${ZDOTDIR:-${HOME}}/.zshrc"
 
 # Uncomment to enable debug logging
 #export DEBUG=zpm
