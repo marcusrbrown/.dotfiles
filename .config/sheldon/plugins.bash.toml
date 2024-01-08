@@ -1,0 +1,11 @@
+# sheldon: bash
+# See the documentation for more https://github.com/rossmacarthur/sheldon#readme
+
+shell = "bash"
+
+[plugins.mise]
+inline = 'eval "$(mise activate bash)"'
+
+# starship 🚀
+[plugins.starship]
+inline = 'eval "$(starship init bash)"'

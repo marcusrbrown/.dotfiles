@@ -1,17 +1,17 @@
-# Fig pre block. Keep at the top of this file.
-[[ -f "$HOME/.fig/shell/zshrc.pre.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.pre.zsh"
-
+#!/usr/bin/env zsh
 # zshrc
 # ---
 
 zcompare() {
-	if [[ -s ${1} && ( ! -s ${1}.zwc || ${1} -nt ${1}.zwc) ]]; then
-		zcompile "${1}"
-	fi
+  if [[ -s ${1} && ( ! -s ${1}.zwc || ${1} -nt ${1}.zwc) ]]; then
+    zcompile "${1}"
+  fi
 }
 
 source "$HOME/.config/bash/exports"
 zcompare "${ZDOTDIR:-${HOME}}/.zshrc"
+
+eval "$(sheldon source)"
 
 # Uncomment to enable debug logging
 #export DEBUG=zpm
@@ -154,13 +154,7 @@ alias l='ls -lah'
 alias ll='ls -lh'
 alias la='ls -lAh'
 
-# starship 🚀
-(( $+commands[starship] )) && eval "$(starship init zsh)"
-
 # Secure Shellfish
 test -e "${HOME}/.shellfishrc" && source "${HOME}/.shellfishrc"
 
 source ~/.zshrc.local 2>/dev/null || true
-
-# Fig post block. Keep at the bottom of this file.
-[[ -f "$HOME/.fig/shell/zshrc.post.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.post.zsh"

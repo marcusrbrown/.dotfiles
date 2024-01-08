@@ -13,6 +13,7 @@
 !/.config/bat/themes/
 !/.config/flake8
 !/.config/pep8
+!/.config/sheldon/
 !/.config/starship.toml
 !/.devcontainer/
 !/.dotfiles/

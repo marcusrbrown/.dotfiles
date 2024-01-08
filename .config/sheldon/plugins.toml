@@ -1,0 +1,11 @@
+# sheldon: zsh
+# See the documentation for more https://github.com/rossmacarthur/sheldon#readme
+
+shell = "zsh"
+
+[plugins.mise]
+inline = 'eval "$(mise activate zsh)"'
+
+# starship 🚀
+[plugins.starship]
+inline = 'eval "$(starship init zsh)"'
