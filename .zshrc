@@ -21,9 +21,6 @@ local config_dir="${XDG_CONFIG_HOME:-${HOME}/.config}"
 local zpm_dir="${cache_dir}/zpm"
 : ${_ZPM_CACHE_DIR:="${TMPDIR:-/tmp}/zsh-${UID:-user}"}
 
-# The name of generated plugin scripts
-local generated="zpm-generated.zsh"
-
 # Oh My Zsh
 ZSH_CUSTOM="${config_dir}/zsh"
 [[ ! -d "${ZSH_CUSTOM}" ]] && mkdir -p "${ZSH_CUSTOM}"
@@ -33,20 +30,6 @@ zstyle :omz:plugins:keychain agents gpg
 zstyle :omz:plugins:keychain identities id_rsa 273811323AC30470
 zstyle :omz:plugins:keychain options --ignore-missing --quiet --attempts 2
 
-# Fast Syntax Highlighting
-FAST_WORK_DIR="${config_dir}/fsh"
-[[ ! -w "${FAST_WORK_DIR}" ]] && command mkdir -p "${FAST_WORK_DIR}"
-
-# zsh-autosuggestions
-ZSH_AUTOSUGGEST_MANUAL_REBIND=true
-typeset -ga ZSH_AUTOSUGGEST_STRATEGY
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-ZSH_AUTOSUGGEST_USE_ASYNC=true
-
-# zsh-nvm
-NVM_COMPLETION=true
-NVM_AUTO_USE=true
-
 # History
 
 HISTSIZE=1000000
@@ -54,107 +37,42 @@ SAVEHIST=$HISTSIZE
 # Comes from OMZ/lib/history.zsh
 HIST_STAMPS="%F %T "
 
-setopt append_history         # apppend to the history file across all shells
-setopt inc_append_history     # write to the history file immediately, not when the shell exits
-
-function .bind-history-substring-search-keys() {
-  bindkey "$terminfo[kcuu1]" history-substring-search-up
-  bindkey "$terminfo[kcud1]" history-substring-search-down
-  bindkey '^[[A' history-substring-search-up
-  bindkey '^[[B' history-substring-search-down
-}
-
 # If unset, then ZLE_REMOVE_SUFFIX_CHARS is ' \t\n;&|'; I don't want | included
 ZLE_REMOVE_SUFFIX_CHARS=$' \t\n;&'
 
-# Bind keys for the history substring search and autosuggestions, after zsh-defer has loaded them
-function .execute-post-zsh-defer() {
-  .bind-history-substring-search-keys
-  _zsh_autosuggest_bind_widgets
-}
+# source "${zpm_dir}/zpm.zsh" 2>/dev/null || {
+#   local zpm_git_url="https://github.com/marcusrbrown/zpm-zsh_zpm"
+#   git clone --depth 1 "$zpm_git_url" "$zpm_dir"
+#   source "${zpm_dir}/zpm.zsh"
+# }
 
-# Ensure the passphrase prompt is shown in the correct tty
-function _gpg-agent_update-tty_preexec {
-  gpg-connect-agent updatestartuptty /bye &>/dev/null
-}
-autoload -U add-zsh-hook
-add-zsh-hook preexec _gpg-agent_update-tty_preexec
+# # Load plugins that are used by everything else
+# zpm load \
+#   marcusrbrown/zlugger \
+#   @omz
 
-# Set up gpg-agent to work with ssh
-export GPG_TTY=$(tty)
-if [[ $(gpgconf --list-options gpg-agent 2>/dev/null | awk -F: '$1=="enable-ssh-support" {print $10}') = 1 ]]; then
-  unset SSH_AGENT_PID
-  if [[ "${gnupg_SSH_AUTH_SOCK_by:-0}" -ne $$ ]]; then
-    export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
-  fi
-fi
+# zpm load \
+#   @omz/lib/clipboard \
+#   @omz/lib/compfix \
+#   @omz/lib/completion \
+#   @omz/lib/correction \
+#   @omz/lib/directories \
+#   @omz/lib/functions \
+#   @omz/lib/git \
+#   @omz/lib/grep \
+#   @omz/lib/history \
+#   @omz/lib/key-bindings \
+#   @omz/lib/misc \
+#   @omz/lib/termsupport \
+#   @omz/lib/theme-and-appearance
 
-source "${zpm_dir}/zpm.zsh" 2>/dev/null || {
-  local zpm_git_url="https://github.com/marcusrbrown/zpm-zsh_zpm"
-  git clone --depth 1 "$zpm_git_url" "$zpm_dir"
-  source "${zpm_dir}/zpm.zsh"
-}
+# zpm if macos load \
+#   @omz/macos
 
-# Load plugins that are used by everything else
-zpm load \
-  marcusrbrown/zlugger \
-  @omz
+# zpm load \
+#   @omz/brew \
+#   @omz/git
 
-zpm load \
-  @omz/lib/clipboard \
-  @omz/lib/compfix \
-  @omz/lib/completion \
-  @omz/lib/correction \
-  @omz/lib/directories \
-  @omz/lib/functions \
-  @omz/lib/git \
-  @omz/lib/grep \
-  @omz/lib/history \
-  @omz/lib/key-bindings \
-  @omz/lib/misc \
-  @omz/lib/termsupport \
-  @omz/lib/theme-and-appearance
-
-zpm if macos load \
-  @omz/macos
-
-zpm load \
-  @omz/brew \
-  @omz/git
-
-zpm if vscode load zpm-zsh/vscode
-
-zpm load \
-  zpm-zsh/ssh,async \
-  zsh-users/zsh-completions,apply:fpath,fpath:src,async \
-  lukechilds/zsh-better-npm-completion,async \
-  romkatv/zsh-defer,async \
-  lukechilds/zsh-nvm,async \
-  zsh-users/zsh-history-substring-search,source:$generated,hook:"@zlug-from-zsh-defer-source zsh-history-substring-search.zsh > $generated",async \
-  zsh-users/zsh-autosuggestions,source:$generated,hook:"@zlug-from-zsh-defer-source zsh-autosuggestions.zsh > $generated",async \
-  zdharma/fast-syntax-highlighting,async \
-  zdharma/history-search-multi-word,fpath:/,async \
-  @exec/.execute-post-zsh-defer,origin:'<<<"zsh-defer -c .execute-post-zsh-defer"',async
-
-# Key bindings
-
-bindkey '^[[1;9D' backward-word
-bindkey '^[[1;9C' forward-word
-
-# Aliases
-
-# ~/.dotfiles is a bare Git repo with the work directory set to ~
-alias .dotfiles='GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME'
-
-alias ls='lsd -F'
-
-# From OMZ
-alias lsa='ls -lah'
-alias l='ls -lah'
-alias ll='ls -lh'
-alias la='ls -lAh'
-
-# Secure Shellfish
-test -e "${HOME}/.shellfishrc" && source "${HOME}/.shellfishrc"
+# zpm if vscode load zpm-zsh/vscode
 
 source ~/.zshrc.local 2>/dev/null || true

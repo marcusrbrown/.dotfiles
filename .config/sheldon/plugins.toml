@@ -3,9 +3,112 @@
 
 shell = "zsh"
 
+[plugins.zsh-defer]
+github = "romkatv/zsh-defer"
+
+[templates]
+defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
+
+[plugins.zsh-settings]
+inline = '''
+setopt append_history         # apppend to the history file across all shells
+setopt inc_append_history     # write to the history file immediately, not when the shell exits
+
+# Key bindings
+
+export KEYTIMEOUT=1
+bindkey '^[[1;9D' backward-word
+bindkey '^[[1;9C' forward-word
+'''
+
+[plugins.aliases]
+local = "~/.config/bash"
+use = ["aliases"]
+
+[plugins.gpg]
+inline = '''
+# Ensure the passphrase prompt is shown in the correct tty
+function _gpg-agent_update-tty_preexec {
+  gpg-connect-agent updatestartuptty /bye &>/dev/null
+}
+autoload -U add-zsh-hook
+add-zsh-hook preexec _gpg-agent_update-tty_preexec
+
+# Set up gpg-agent to work with ssh
+export GPG_TTY=$(tty)
+if [[ $(gpgconf --list-options gpg-agent 2>/dev/null | awk -F: '$1=="enable-ssh-support" {print $10}') = 1 ]]; then
+  unset SSH_AGENT_PID
+  if [[ "${gnupg_SSH_AUTH_SOCK_by:-0}" -ne $$ ]]; then
+    export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+  fi
+fi
+'''
+
+[plugins.ssh]
+github = "zpm-zsh/ssh"
+
+[plugins.zsh-completions]
+github = "zsh-users/zsh-completions"
+
+[plugins.zsh-better-npm-completion]
+github = "lukechilds/zsh-better-npm-completion"
+
+[plugins.zsh-nvm]
+github = "lukechilds/zsh-nvm"
+[plugins.zsh-nvm.hooks]
+pre = '''
+NVM_AUTO_USE=true
+NVM_COMPLETION=true
+'''
+
+[plugins.zsh-history-substring-search]
+github = "zsh-users/zsh-history-substring-search"
+use = ["{{ name }}.zsh"]
+apply = ["defer"]
+[plugins.zsh-history-substring-search.hooks]
+post = '''
+bindkey "$terminfo[kcuu1]" history-substring-search-up
+bindkey "$terminfo[kcud1]" history-substring-search-down
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+'''
+
+[plugins.zsh-autosuggestions]
+github = "zsh-users/zsh-autosuggestions"
+use = ["{{ name }}.zsh"]
+apply = ["defer"]
+[plugins.zsh-autosuggestions.hooks]
+pre = '''
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=242,bg=235,bold"
+ZSH_AUTOSUGGEST_MANUAL_REBIND=1
+typeset -ga ZSH_AUTOSUGGEST_STRATEGY
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_USE_ASYNC=1
+'''
+post = "_zsh_autosuggest_bind_widgets"
+
+[plugins.fast-syntax-highlighting]
+github = "zdharma-continuum/fast-syntax-highlighting"
+apply = ["defer"]
+[plugins.fast-syntax-highlighting.hooks]
+pre = '''
+export FAST_WORK_DIR="$XDG_CACHE_HOME/zsh/fast-syntax-highlighting"
+[[ ! -w "${FAST_WORK_DIR}" ]] && mkdir -p "${FAST_WORK_DIR}"
+'''
+
+[plugins.history-search-multi-word]
+github = "zdharma/history-search-multi-word"
+
 [plugins.mise]
 inline = 'eval "$(mise activate zsh)"'
 
 # starship 🚀
 [plugins.starship]
 inline = 'eval "$(starship init zsh)"'
+
+# Secure Shellfish
+[plugins.shellfish]
+inline = 'source "$HOME/.shellfishrc" 2>/dev/null || true'
+
+[plugins.compinit]
+inline = 'autoload -Uz compinit && compinit'

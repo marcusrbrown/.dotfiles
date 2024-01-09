@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ##
 # Bash aliases
 #
@@ -7,3 +8,14 @@
 if [ -n "$(command -v hub)" ]; then
   alias git=hub
 fi
+
+# ~/.dotfiles is a bare Git repo with the work directory set to ~
+alias .dotfiles='GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME'
+
+alias ls='lsd -F'
+
+# From OMZ
+alias lsa='ls -lah'
+alias l='ls -lah'
+alias ll='ls -lh'
+alias la='ls -lAh'

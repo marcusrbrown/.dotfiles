@@ -123,12 +123,13 @@ fi
 # Pagers
 
 if command_exists bat; then
-  MANPAGER="sh -c 'col -bx | bat -l man --style=grid --pager \"less -R -M -i +Gg\"'"
-  MANROFFOPT='-c'
-  export MANPAGER MANROFFOPT
+  export MANPAGER="sh -c 'col -bx | bat -l man --style=grid --pager \"less -R -M -i +Gg\"'"
+  export MANROFFOPT='-c'
 fi
 
 # Long options: --quit-if-one-screen --LONG-PROMPT --RAW-CONTROL-CHARS --chop-long-lines --ignore-case
 export LESS="-F -M -R -S -i"
+
+unset PREFIX
 
 export PATH
