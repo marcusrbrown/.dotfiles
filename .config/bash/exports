@@ -86,22 +86,61 @@ fi
 # Local tools and utilities
 prepend_to_path "$HOME/.local/bin"
 
+# History
+
+HISTSIZE=100000
+if [ "$BASH" ]; then
+  export HISTFILE="$XDG_CACHE_HOME/bash_history"
+  export HISTFILESIZE=1000000000
+  export HISTCONTROL=ignoreboth
+  export HISTIGNORE="&:cd:ls:ll:la:lal:l:[bf]g:exit:clear:pwd"
+  export HISTTIMEFORMAT='[%F %T] '
+elif [ "$ZSH_VERSION" ]; then
+  export HISTFILE="$XDG_CACHE_HOME/zsh_history"
+  export SAVEHIST=$HISTSIZE
+  # Comes from OMZ/lib/history.zsh
+  export HIST_STAMPS="%F %T "
+fi
+
+# https://www.gnu.org/software/bash/manual/html_node/Readline-Init-File.html
+export INPUTRC="$XDG_CONFIG_HOME/bash/inputrc"
+
 # Go
 
-export GOPATH="${HOME}/go"
-export GOROOT
 if command_exists go; then
-  : ${GOROOT:=$(go env GOROOT)}
-elif command_exists brew && [[ -d "$(brew --prefix golang)/libexec" ]]; then
-  : ${GOROOT:=$(brew --prefix golang)/libexec}
-elif [[ -d /usr/local/go ]]; then
-  : ${GOROOT:=/usr/local/go}
+  export GOPATH="$XDG_DATA_HOME/go"
+  export GOROOT
+  if command_exists go; then
+    : "${GOROOT:=$(go env GOROOT)}"
+  elif command_exists brew && [[ -d "$(brew --prefix golang)/libexec" ]]; then
+    : "${GOROOT:=$(brew --prefix golang)/libexec}"
+  elif [[ -d /usr/local/go ]]; then
+    : "${GOROOT:=/usr/local/go}"
+  fi
+  test -d "$GOPATH" || mkdir -p "$GOPATH"
+  test -d "$GOPATH/src/github.com" || mkdir -p "$GOPATH/src/github.com"
+  append_to_path "$GOPATH/bin"
+  append_to_path "$GOROOT/bin"
 fi
-test -d "$GOPATH" || mkdir -p "$GOPATH"
-test -d "$GOPATH/src/github.com" || mkdir -p "$GOPATH/src/github.com"
 
-append_to_path "$GOPATH/bin"
-append_to_path "$GOROOT/bin"
+# Python
+
+if command_exists pipx; then
+  export PIPX_BIN_DIR="$XDG_DATA_HOME/pipx/bin"
+  export PIPX_HOME="$XDG_DATA_HOME/pipx"
+  prepend_to_path "$PIPX_BIN_DIR"
+fi
+
+export PYLINTHOME="$XDG_CACHE_HOME/pylint"
+export PYTHONHISTORY="$XDG_CACHE_HOME/python_history"
+
+# Rust
+
+if command_exists cargo; then
+  export CARGO_HOME="$XDG_DATA_HOME/cargo"
+  export RUSTUP_HOME="$XDG_DATA_HOME/rustup"
+  prepend_to_path "$CARGO_HOME/bin"
+fi
 
 # cURL
 
@@ -133,3 +172,5 @@ export LESS="-F -M -R -S -i"
 unset PREFIX
 
 export PATH
+
+# vim: set ft=sh ts=2 sw=2 tw=80 et :

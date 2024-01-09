@@ -32,10 +32,6 @@ zstyle :omz:plugins:keychain options --ignore-missing --quiet --attempts 2
 
 # History
 
-HISTSIZE=1000000
-SAVEHIST=$HISTSIZE
-# Comes from OMZ/lib/history.zsh
-HIST_STAMPS="%F %T "
 
 # If unset, then ZLE_REMOVE_SUFFIX_CHARS is ' \t\n;&|'; I don't want | included
 ZLE_REMOVE_SUFFIX_CHARS=$' \t\n;&'

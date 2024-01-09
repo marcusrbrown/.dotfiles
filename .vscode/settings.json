@@ -4,6 +4,7 @@
 
     "files.associations": {
         "**/.config/bash/*": "shellscript",
+        "**/.config/bash/inputrc": "properties",
         "**/.ssh/config.d/*.conf": "ssh_config",
         "**/.config/git/config": "git-config",
         "**/.config/git/ignore": "ignore",
