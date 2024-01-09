@@ -21,6 +21,9 @@ bindkey '^[[1;9D' backward-word
 bindkey '^[[1;9C' forward-word
 '''
 
+[plugins.compinit]
+inline = 'autoload -Uz compinit && compinit'
+
 [plugins.aliases]
 local = "~/.config/bash"
 use = ["aliases"]
@@ -109,6 +112,3 @@ inline = 'eval "$(starship init zsh)"'
 # Secure Shellfish
 [plugins.shellfish]
 inline = 'source "$HOME/.shellfishrc" 2>/dev/null || true'
-
-[plugins.compinit]
-inline = 'autoload -Uz compinit && compinit'

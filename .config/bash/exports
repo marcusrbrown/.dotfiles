@@ -61,26 +61,26 @@ if [[ "$HOST_OS" == "darwin" ]]; then
   # Add Homebrew bin directories to PATH in front of system directories.
   prepend_to_path "$PREFIX/sbin"
   prepend_to_path "$PREFIX/bin"
+fi
 
-  if command_exists brew; then
-    export HOMEBREW_AUTOREMOVE=1
-    export HOMEBREW_BOOTSNAP=1
-    export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
-    export HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=1
-    # Enable Homebrew developer mode
-    export HOMEBREW_DEVELOPER=1
-    # Disable 'anonymous' analytics
-    export HOMEBREW_NO_ANALYTICS=1
-    # Remove previously installed versions of insalled/upgraded formulae
-    export HOMEBREW_INSTALL_CLEANUP=1
-    # Do not permit redirects from HTTPS to HTTP
-    export HOMEBREW_NO_INSECURE_REDIRECT=1
-    # Do not show environment variable hints
-    export HOMEBREW_NO_ENV_HINTS=1
-    export HOMEBREW_SORBET_RUNTIME=1
+if command_exists brew; then
+  export HOMEBREW_AUTOREMOVE=1
+  export HOMEBREW_BOOTSNAP=1
+  export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
+  export HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=1
+  # Enable Homebrew developer mode
+  export HOMEBREW_DEVELOPER=1
+  # Disable 'anonymous' analytics
+  export HOMEBREW_NO_ANALYTICS=1
+  # Remove previously installed versions of insalled/upgraded formulae
+  export HOMEBREW_INSTALL_CLEANUP=1
+  # Do not permit redirects from HTTPS to HTTP
+  export HOMEBREW_NO_INSECURE_REDIRECT=1
+  # Do not show environment variable hints
+  export HOMEBREW_NO_ENV_HINTS=1
+  export HOMEBREW_SORBET_RUNTIME=1
 
-    eval "$(brew shellenv)"
-  fi
+  eval "$(brew shellenv)"
 fi
 
 # Local tools and utilities
@@ -105,6 +105,9 @@ fi
 # https://www.gnu.org/software/bash/manual/html_node/Readline-Init-File.html
 export INPUTRC="$XDG_CONFIG_HOME/bash/inputrc"
 
+# https://www.gnupg.org/documentation/manuals/gnupg/GPG-Configuration.html
+export GNUPGHOME="$XDG_CONFIG_HOME/gnupg"
+
 # Go
 
 if command_exists go; then
@@ -125,14 +128,23 @@ fi
 
 # Python
 
+export IPYTHONDIR="$XDG_CONFIG_HOME/ipython"
+
 if command_exists pipx; then
   export PIPX_BIN_DIR="$XDG_DATA_HOME/pipx/bin"
   export PIPX_HOME="$XDG_DATA_HOME/pipx"
   prepend_to_path "$PIPX_BIN_DIR"
 fi
 
+export POETRY_CACHE_DIR="$XDG_CACHE_HOME/pypoetry"
+export POETRY_CONFIG_DIR="$XDG_CONFIG_HOME/pypoetry"
+export POETRY_DATA_DIR="$XDG_DATA_HOME/pypoetry"
+export POETRY_VIRTUALENVS_PATH="$XDG_DATA_HOME/python/poetry"
+
 export PYLINTHOME="$XDG_CACHE_HOME/pylint"
 export PYTHONHISTORY="$XDG_CACHE_HOME/python_history"
+
+export WORKON_HOME="$XDG_DATA_HOME/python/envs"
 
 # Rust
 
@@ -168,6 +180,11 @@ fi
 
 # Long options: --quit-if-one-screen --LONG-PROMPT --RAW-CONTROL-CHARS --chop-long-lines --ignore-case
 export LESS="-F -M -R -S -i"
+export LESSHISTFILE="$XDG_CACHE_HOME/less_history"
+export LESSKEY="$XDG_CONFIG_HOME/lesskey/output"
+
+# SQLite
+export SQLITE_HISTORY="$XDG_CACHE_HOME/sqlite_history"
 
 unset PREFIX
 
