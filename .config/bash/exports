@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+# Locale
+
+: "${LANG:=en_US.UTF-8}"
+: "${LANGUAGE:=en}"
+LC_CTYPE="$LANG"
+LC_ALL="$LANG"
+export LANG LANGUAGE LC_CTYPE LC_ALL
+
 # XDG directories
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_CONFIG_HOME="$HOME/.config"
@@ -126,6 +134,21 @@ if command_exists go; then
   append_to_path "$GOROOT/bin"
 fi
 
+# npm
+
+if command_exists node; then
+  if [[ "$HOST_OS" == "darwin" ]]; then
+    export NODE_EXTRA_CA_CERTS="$PREFIX/etc/ca-certificates/cert.pem"
+  fi
+  export NODE_REPL_HISTORY="$XDG_CACHE_HOME/node_repl_history"
+fi
+
+if command_exists npm; then
+  export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+fi
+
+export NVM_DIR="$XDG_DATA_HOME/nvm"
+
 # Python
 
 export IPYTHONDIR="$XDG_CONFIG_HOME/ipython"
@@ -140,6 +163,12 @@ export POETRY_CACHE_DIR="$XDG_CACHE_HOME/pypoetry"
 export POETRY_CONFIG_DIR="$XDG_CONFIG_HOME/pypoetry"
 export POETRY_DATA_DIR="$XDG_DATA_HOME/pypoetry"
 export POETRY_VIRTUALENVS_PATH="$XDG_DATA_HOME/python/poetry"
+
+if [ -z "$VIRTUAL_ENV" ] && command_exists pyenv; then
+  export PYENV_ROOT="$XDG_DATA_HOME/python/pyenv"
+  export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+  eval "$(pyenv init --no-push-path -)"
+fi
 
 export PYLINTHOME="$XDG_CACHE_HOME/pylint"
 export PYTHONHISTORY="$XDG_CACHE_HOME/python_history"

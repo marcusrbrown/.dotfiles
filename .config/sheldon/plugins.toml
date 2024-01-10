@@ -79,7 +79,6 @@ bindkey '^[[B' history-substring-search-down
 [plugins.zsh-autosuggestions]
 github = "zsh-users/zsh-autosuggestions"
 use = ["{{ name }}.zsh"]
-apply = ["defer"]
 [plugins.zsh-autosuggestions.hooks]
 pre = '''
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=242,bg=235,bold"
@@ -103,11 +102,11 @@ export FAST_WORK_DIR="$XDG_CACHE_HOME/zsh/fast-syntax-highlighting"
 github = "zdharma/history-search-multi-word"
 
 [plugins.mise]
-inline = 'eval "$(mise activate zsh)"'
+inline = 'command_exists mise && eval "$(mise activate zsh)"'
 
 # starship 🚀
 [plugins.starship]
-inline = 'eval "$(starship init zsh)"'
+inline = 'command_exists starship && eval "$(starship init zsh)"'
 
 # Secure Shellfish
 [plugins.shellfish]

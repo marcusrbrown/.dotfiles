@@ -68,4 +68,4 @@ $if Bash
     Space: magic-space
 $endif
 
-# vim: set ft=sh ts=2 sw=2 tw=80 et :
+# vim: set ft=readline ts=2 sw=2 tw=80 et :

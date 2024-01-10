@@ -1,0 +1,10 @@
+prefix=${XDG_DATA_HOME}/npm
+cache=${XDG_CACHE_HOME}/npm
+
+sign-git-tag=true
+
+init-author-name=Marcus R. Brown
+init-author-email=contact@marcusrbrown.com
+init-author-url=https://marcusrbrown.com/
+init-license=MIT
+init-version=0.1.0
