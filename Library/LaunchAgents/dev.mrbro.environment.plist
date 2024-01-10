@@ -15,9 +15,10 @@
             launchctl setenv XDG_DATA_HOME $HOME/.local/share
             launchctl setenv XDG_STATE_HOME $HOME/.local/state
             launchctl setenv GNUPGHOME $HOME/.config/gnupg
-            launchctl setenv NPM_CONFIG_USERCONFIG $XDG_CONFIG_HOME/npm/npmrc
-            launchctl setenv TERMINFO $XDG_DATA_HOME/terminfo
+            launchctl setenv NPM_CONFIG_USERCONFIG $HOME/.config/npm/npmrc
+            launchctl setenv TERMINFO $HOME/.local/share/terminfo
             launchctl setenv RANDFILE $HOME/.cache/randfile
+            launchctl setenv ZDOTDIR $HOME/.config/zsh
         </string>
     </array>
     <key>RunAtLoad</key>

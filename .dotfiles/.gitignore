@@ -4,6 +4,7 @@
 # Include the contents of the repository
 !/.config/
 /.config/*
+!/.config/.gitignore
 !/.config/bash/
 /.config/bash/local.d/
 !/.config/bash/local.d/.gitkeep
@@ -12,6 +13,7 @@
 !/.config/bat/config
 !/.config/bat/themes/
 !/.config/flake8
+!/.config/fsh/
 !/.config/gnupg/
 /.config/gnupg/*
 !/.config/gnupg/dirmngr.conf
@@ -22,6 +24,7 @@
 !/.config/pep8
 !/.config/sheldon/
 !/.config/starship.toml
+!/.config/zsh/
 !/.devcontainer/
 !/.dotfiles/
 /.dotfiles/*
