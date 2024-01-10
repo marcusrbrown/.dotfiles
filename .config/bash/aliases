@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+##
+# Bash aliases
+#
+# vim:set filetype=sh:
+
+# Alias git to hub if hub is installed.
+if [ -n "$(command -v hub)" ]; then
+  alias git=hub
+fi
+
+# ~/.dotfiles is a bare Git repo with the work directory set to ~
+alias .dotfiles='GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME'
+
+LSCMD='ls'
+if [[ "$HOST_OS" == "darwin" ]]; then
+  # https://www.gnu.org/software/coreutils/
+  command_exists gdircolors && alias dircolors='gdircolors'
+  command_exists gfind && alias find='gfind'
+  command_exists gsort && alias sort='gsort'
+  command_exists gstat && alias stat='gstat'
+  command_exists gls && LSCMD='gls'
+fi
+
+if command_exists lsd; then
+  LSCMD='lsd' # See https://github.com/Peltoche/lsd
+elif command_exists exa; then
+  LSCMD='exa' # See https://github.com/ogham/exa
+fi
+
+# shellcheck disable=SC2139
+alias ls="LC_COLLATE=C ${LSCMD} --color=auto --group-directories-first"
+unset LSCMD
+
+# From OMZ
+alias lsa='ls -lah'
+alias l='ls -lah'
+alias ll='ls -lh'
+alias la='ls -lAh'

@@ -13,10 +13,10 @@
 "\e[1;5C": forward-word
 
 # Common to Console & RXVT
-"\C-?": backward-kill-line     		# Ctrl-BackSpace
-"\e[2~": paste-from-clipboard  		# "Ins. Key"
-"\e[5~": beginning-of-history  		# Page up
-"\e[6~": end-of-history        		# Page down
+"\C-?": backward-kill-line       # Ctrl-BackSpace
+"\e[2~": paste-from-clipboard    # "Ins. Key"
+"\e[5~": beginning-of-history    # Page up
+"\e[6~": end-of-history          # Page down
 "\e[11~": display-shell-version # F1
 "\e[15~": re-read-init-file     # F5
 
@@ -67,3 +67,5 @@ $if Bash
     # Typing space on the command line will perform history expansion.
     Space: magic-space
 $endif
+
+# vim: set ft=readline ts=2 sw=2 tw=80 et :

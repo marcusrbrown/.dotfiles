@@ -3,13 +3,15 @@
     "editor.formatOnSave": true,
 
     "files.associations": {
-        "*.yaml": "home-assistant",
+        "**/.config/bash/*": "shellscript",
+        "**/.config/bash/inputrc": "properties",
+        "**/.ssh/config.d/*.conf": "ssh_config",
+        "**/.config/git/config": "git-config",
+        "**/.config/git/ignore": "ignore",
         ".gitconfig.local": "properties",
         ".bash*": "shellscript",
-        "**/.bash/*": "shellscript",
         ".zcompdump*": "shellscript",
-        ".zsh*": "shellscript",
-        "**/.ssh/config.d/*.conf": "ssh_config"
+        ".zsh*": "shellscript"
     },
     "files.exclude": {
         "**/*.zwc": { "when": "$(basename)" },
