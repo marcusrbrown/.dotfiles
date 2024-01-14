@@ -3,7 +3,8 @@ name = "Marcus R. Brown"
 email = "contact@marcusrbrown.com"
 
 [core]
-excludesFile = ~/.gitignore
+attributesfile = ~/.config/git/attributes
+excludesFile = ~/.config/git/ignore
 pager = less -F -S -R -i -x1,5
 
 # Make `git rebase` safe on OSX
