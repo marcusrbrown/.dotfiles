@@ -1,9 +1,14 @@
 /configstore/
+/fish/fishd.*
+/fish/fish_variables
 /gcloud/
 /gh/hosts.yml
 /gnupg/*
 !/gnupg/gpg*.conf
 /grammarly-languageserver/
+/ipython/profile_default/history.sqlite
+/ipython/profile_default/log
+/ipython/profile_default/pid
 /iterm2/AppSupport
 /NuGet/
 /pipedream/

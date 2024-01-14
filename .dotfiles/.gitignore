@@ -1,6 +1,11 @@
 # Ignore everything
 /*
 
+.DS_Store
+.netrwhist
+*.local
+*.zwc
+
 # Include the contents of the repository
 !/.config/
 !/.devcontainer/
@@ -22,8 +27,6 @@
 !/.bashrc
 !/.editorconfig
 !/.gitattributes
-!/.gitconfig
-!/.gitignore
 !/.profile
 !/.vimrc
 !/.zshrc
