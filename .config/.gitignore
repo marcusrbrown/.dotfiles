@@ -1,1 +1,17 @@
+/configstore/
+/gcloud/
+/gh/hosts.yml
+/gnupg/*
+!/gnupg/gpg*.conf
+/grammarly-languageserver/
+/iterm2/AppSupport
+/NuGet/
+/pipedream/
+/raycast/
+/robomongo/
+/stetic/
+/truffle/
+/Unreal Engine/
+/xbuild/
+/yarn/
 /zsh/.zcompdump
