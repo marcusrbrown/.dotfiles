@@ -3,28 +3,6 @@
 
 # Include the contents of the repository
 !/.config/
-/.config/*
-!/.config/.gitignore
-!/.config/bash/
-/.config/bash/local.d/
-!/.config/bash/local.d/.gitkeep
-!/.config/bat/
-/.config/bat/*
-!/.config/bat/config
-!/.config/bat/themes/
-!/.config/flake8
-!/.config/fsh/
-!/.config/gnupg/
-/.config/gnupg/*
-!/.config/gnupg/dirmngr.conf
-!/.config/gnupg/gpg-agent.conf
-!/.config/gnupg/gpg.conf
-!/.config/lesskey/
-!/.config/npm/
-!/.config/pep8
-!/.config/sheldon/
-!/.config/starship.toml
-!/.config/zsh/
 !/.devcontainer/
 !/.dotfiles/
 /.dotfiles/*
