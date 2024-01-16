@@ -73,7 +73,6 @@ fi
 
 if command_exists brew; then
   export HOMEBREW_AUTOREMOVE=1
-  export HOMEBREW_BOOTSNAP=1
   export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
   export HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=1
   # Enable Homebrew developer mode
@@ -86,7 +85,6 @@ if command_exists brew; then
   export HOMEBREW_NO_INSECURE_REDIRECT=1
   # Do not show environment variable hints
   export HOMEBREW_NO_ENV_HINTS=1
-  export HOMEBREW_SORBET_RUNTIME=1
 
   eval "$(brew shellenv)"
 fi
@@ -207,6 +205,11 @@ fi
 
 if command_exists brew && [[ -d "$(brew --prefix ruby)/bin" ]]; then
   prepend_to_path "$(brew --prefix ruby)/bin"
+fi
+
+if command_exists gem; then
+  export GEMRC="$XDG_CONFIG_HOME/gemrc/config"
+  export GEM_SPEC_CACHE="$XDG_CACHE_HOME/gem/specs"
 fi
 
 # Add the path to `mise` shims

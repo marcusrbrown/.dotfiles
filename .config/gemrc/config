@@ -1,0 +1,3 @@
+---
+# Disable user-installed gems and the installation of rdoc and ri data.
+gem: --no-user-install --no-rdoc --no-ri
