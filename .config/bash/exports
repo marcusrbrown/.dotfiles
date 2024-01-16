@@ -112,7 +112,7 @@ fi
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
 
 # https://www.gnu.org/software/bash/manual/html_node/Readline-Init-File.html
-export INPUTRC="$XDG_CONFIG_HOME/bash/inputrc"
+export INPUTRC="$XDG_CONFIG_HOME/readline/inputrc"
 
 # https://www.gnupg.org/documentation/manuals/gnupg/GPG-Configuration.html
 export GNUPGHOME="$XDG_CONFIG_HOME/gnupg"
@@ -171,13 +171,13 @@ if command_exists pipx; then
   prepend_to_path "$PIPX_BIN_DIR"
 fi
 
-export POETRY_CACHE_DIR="$XDG_CACHE_HOME/pypoetry"
-export POETRY_CONFIG_DIR="$XDG_CONFIG_HOME/pypoetry"
-export POETRY_DATA_DIR="$XDG_DATA_HOME/pypoetry"
+export POETRY_CACHE_DIR="$XDG_CACHE_HOME/poetry"
+export POETRY_CONFIG_DIR="$XDG_CONFIG_HOME/poetry"
+export POETRY_DATA_DIR="$XDG_DATA_HOME/poetry"
 export POETRY_VIRTUALENVS_PATH="$XDG_DATA_HOME/python/poetry"
 
 if [ -z "$VIRTUAL_ENV" ] && command_exists pyenv; then
-  export PYENV_ROOT="$XDG_DATA_HOME/python/pyenv"
+  export PYENV_ROOT="$XDG_DATA_HOME/pyenv"
   export PYENV_VIRTUALENV_DISABLE_PROMPT=1
   eval "$(pyenv init --no-push-path -)"
 fi
@@ -209,7 +209,10 @@ fi
 
 if command_exists gem; then
   export GEMRC="$XDG_CONFIG_HOME/gemrc/config"
+  # shellcheck disable=SC2155
+  export GEM_HOME="$HOME/.local/lib/ruby/gems/$(ruby -e 'puts RbConfig::CONFIG["ruby_version"]')"
   export GEM_SPEC_CACHE="$XDG_CACHE_HOME/gem/specs"
+  append_to_path "$GEM_HOME/bin"
 fi
 
 # Add the path to `mise` shims
