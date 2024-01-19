@@ -131,8 +131,7 @@ fi
 # Go
 
 if command_exists go; then
-  export GOPATH="$XDG_DATA_HOME/go"
-  export GOROOT
+  export GOPATH="$XDG_DATA_HOME"/go
   if command_exists go; then
     : "${GOROOT:=$(go env GOROOT)}"
   elif command_exists brew && [[ -d "$(brew --prefix golang)/libexec" ]]; then
@@ -140,6 +139,7 @@ if command_exists go; then
   elif [[ -d /usr/local/go ]]; then
     : "${GOROOT:=/usr/local/go}"
   fi
+  export GOROOT
   test -d "$GOPATH" || mkdir -p "$GOPATH"
   test -d "$GOPATH/src/github.com" || mkdir -p "$GOPATH/src/github.com"
   append_to_path "$GOPATH/bin"
@@ -208,10 +208,10 @@ if command_exists brew && [[ -d "$(brew --prefix ruby)/bin" ]]; then
 fi
 
 if command_exists gem; then
-  export GEMRC="$XDG_CONFIG_HOME/gemrc/config"
+  export GEMRC="$XDG_CONFIG_HOME"/gem/config
   # shellcheck disable=SC2155
-  export GEM_HOME="$HOME/.local/lib/ruby/gems/$(ruby -e 'puts RbConfig::CONFIG["ruby_version"]')"
-  export GEM_SPEC_CACHE="$XDG_CACHE_HOME/gem/specs"
+  export GEM_HOME="$XDG_DATA_HOME"/gem
+  export GEM_SPEC_CACHE="$XDG_CACHE_HOME"/gem
   append_to_path "$GEM_HOME/bin"
 fi
 
