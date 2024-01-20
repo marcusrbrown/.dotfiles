@@ -152,7 +152,7 @@ if command_exists node; then
   if [[ "$HOST_OS" == "darwin" ]]; then
     export NODE_EXTRA_CA_CERTS="$PREFIX/etc/ca-certificates/cert.pem"
   fi
-  export NODE_REPL_HISTORY="$XDG_CACHE_HOME/node_repl_history"
+  export NODE_REPL_HISTORY="$XDG_DATA_HOME"/node_repl_history
 fi
 
 if command_exists npm; then
@@ -185,7 +185,7 @@ fi
 export PYLINTHOME="$XDG_CACHE_HOME/pylint"
 export PYTHONHISTORY="$XDG_CACHE_HOME/python_history"
 
-export WORKON_HOME="$XDG_DATA_HOME/python/envs"
+export WORKON_HOME="$XDG_DATA_HOME/virtualenvs"
 
 # Rust
 
@@ -213,6 +213,22 @@ if command_exists gem; then
   export GEM_HOME="$XDG_DATA_HOME"/gem
   export GEM_SPEC_CACHE="$XDG_CACHE_HOME"/gem
   append_to_path "$GEM_HOME/bin"
+fi
+
+# Platformio
+
+export PLATFORMIO_CACHE_DIR="$XDG_CACHE_HOME"/platformio
+export PLATFORMIO_CORE_DIR="$XDG_DATA_HOME"/platformio
+
+export PLATFORMIO_SETTING_ENABLE_TELEMETRY=No
+
+# Android
+
+if [ -d "$HOME/Library/Android/sdk" ]; then
+  export ANDROID_SDK_HOME="$XDG_DATA_HOME"/android
+  export ANDROID_HOME="$HOME"/Library/Android/sdk
+  append_to_path "$ANDROID_HOME/tools"
+  append_to_path "$ANDROID_HOME/platform-tools"
 fi
 
 # Add the path to `mise` shims
