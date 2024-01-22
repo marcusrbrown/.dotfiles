@@ -2,6 +2,7 @@
 /fish/fishd.*
 /fish/fish_variables
 /gcloud/
+/gem/ruby/*/
 /gh/hosts.yml
 /gnupg/*
 !/gnupg/gpg*.conf

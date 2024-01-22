@@ -2,11 +2,15 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
 
+    "evenBetterToml.schema.associations": {
+        "**/starship.toml": "https://starship.rs/config-schema.json"
+    },
+
     "files.associations": {
         "**/.config/bash/*": "shellscript",
         "**/.config/bash/inputrc": "properties",
         "**/.ssh/config.d/*.conf": "ssh_config",
-        "**/.config/git/config": "git-config",
+        "**/.config/git/config": "properties",
         "**/.config/git/ignore": "ignore",
         ".gitconfig.local": "properties",
         ".bash*": "shellscript",
@@ -33,8 +37,21 @@
     "search.useGlobalIgnoreFiles": true,
     "search.useIgnoreFiles": true,
 
-    "evenBetterToml.schema.associations": {
-        "**/starship.toml": "https://starship.rs/config-schema.json"
+    "shellcheck.ignorePatterns": {
+        "**/*.xonshrc": true,
+        "**/*.xsh": true,
+        "**/*.zsh": true,
+        "**/*.zshrc": true,
+        "**/zshrc": true,
+        "**/*.zprofile": true,
+        "**/zprofile": true,
+        "**/*.zlogin": true,
+        "**/zlogin": true,
+        "**/*.zlogout": true,
+        "**/zlogout": true,
+        "**/*.zshenv": true,
+        "**/zshenv": true,
+        "**/*.zsh-theme": true
     },
 
     "[ignore]": {
