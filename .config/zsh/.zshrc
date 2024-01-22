@@ -1,74 +1,41 @@
 #!/usr/bin/env zsh
 # zshrc
 # ---
+# Sheldon cache adapted from:
+# https://zenn.dev/fuzmare/articles/zsh-plugin-manager-cache
+# https://github.com/fuzmare/dotfiles/blob/c44d32f54944e425399a2fa2f7ef50fe4870f3a6/.config/zsh/.zshrc
 
-zcompare() {
+function zcompare {
   if [[ -s ${1} && ( ! -s ${1}.zwc || ${1} -nt ${1}.zwc) ]]; then
+    echo "\033[1;36mCompiling\033[m ${1}"
     zcompile "${1}"
   fi
+}
+
+function source {
+  zcompare "$1"
+  builtin source "$1"
 }
 
 source "$HOME/.config/bash/exports"
 zcompare "${ZDOTDIR:-${HOME}}/.zshrc"
 
-eval "$(sheldon source)"
+sheldon_plugins_toml="${SHELDON_CONFIG_FILE:-${SHELDON_CONFIG_DIR:-${XDG_CONFIG_HOME}/sheldon}/plugins.toml}"
+sheldon_source_cache="${XDG_CACHE_HOME}/zsh/sheldon.$(basename "${sheldon_plugins_toml}" .toml).zsh"
+if [[ ! -r "$sheldon_source_cache" || "$sheldon_plugins_toml" -nt "$sheldon_source_cache" ]]; then
+  echo "\033[1;36mRefreshing Sheldon cache\033[m"
+  sheldon source > "$sheldon_source_cache"
+fi
+source "$sheldon_source_cache"
+unset sheldon_source_cache sheldon_plugins_toml
 
-# Uncomment to enable debug logging
-#export DEBUG=zpm
-
-local cache_dir="${XDG_CACHE_HOME:-${HOME}/.cache}"
-local config_dir="${XDG_CONFIG_HOME:-${HOME}/.config}"
-local zpm_dir="${cache_dir}/zpm"
-: ${_ZPM_CACHE_DIR:="${TMPDIR:-/tmp}/zsh-${UID:-user}"}
-
-# Oh My Zsh
-ZSH_CUSTOM="${config_dir}/zsh"
-[[ ! -d "${ZSH_CUSTOM}" ]] && mkdir -p "${ZSH_CUSTOM}"
-ZSH_COMPDUMP="${_ZPM_CACHE_DIR}/zcompdump"
+zsh-defer unfunction source
 
 zstyle :omz:plugins:keychain agents gpg
 zstyle :omz:plugins:keychain identities id_rsa 273811323AC30470
 zstyle :omz:plugins:keychain options --ignore-missing --quiet --attempts 2
 
-# History
-
-
 # If unset, then ZLE_REMOVE_SUFFIX_CHARS is ' \t\n;&|'; I don't want | included
 ZLE_REMOVE_SUFFIX_CHARS=$' \t\n;&'
-
-# source "${zpm_dir}/zpm.zsh" 2>/dev/null || {
-#   local zpm_git_url="https://github.com/marcusrbrown/zpm-zsh_zpm"
-#   git clone --depth 1 "$zpm_git_url" "$zpm_dir"
-#   source "${zpm_dir}/zpm.zsh"
-# }
-
-# # Load plugins that are used by everything else
-# zpm load \
-#   marcusrbrown/zlugger \
-#   @omz
-
-# zpm load \
-#   @omz/lib/clipboard \
-#   @omz/lib/compfix \
-#   @omz/lib/completion \
-#   @omz/lib/correction \
-#   @omz/lib/directories \
-#   @omz/lib/functions \
-#   @omz/lib/git \
-#   @omz/lib/grep \
-#   @omz/lib/history \
-#   @omz/lib/key-bindings \
-#   @omz/lib/misc \
-#   @omz/lib/termsupport \
-#   @omz/lib/theme-and-appearance
-
-# zpm if macos load \
-#   @omz/macos
-
-# zpm load \
-#   @omz/brew \
-#   @omz/git
-
-# zpm if vscode load zpm-zsh/vscode
 
 source ~/.zshrc.local 2>/dev/null || true
