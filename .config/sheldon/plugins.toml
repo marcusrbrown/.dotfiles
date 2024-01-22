@@ -75,7 +75,12 @@ bindkey ' ' magic-space                             # [Space] - do history expan
 '''
 
 [plugins.compinit]
-inline = 'autoload -Uz compinit && compinit'
+inline = '''
+zstyle ':completion:*' cache-path "$XDG_CACHE_HOME"/zsh/zcompcache
+
+autoload -Uz compinit
+compinit -d "$XDG_CACHE_HOME"/zsh/zcompdump-"$ZSH_VERSION"
+'''
 
 [plugins.aliases]
 local = "~/.config/bash"
