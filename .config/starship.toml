@@ -1,6 +1,6 @@
 add_newline = true
 
-command_timeout = 1000
+command_timeout = 1500
 
 format = """\
 [](fg:#161925)\
