@@ -36,12 +36,18 @@ prune = true
 [init]
 defaultBranch = main
 
+[merge]
+autoStash = true
+
 [push]
 default = current
 autoSetupRemote = true
 
 [pull]
 rebase = false
+
+[rebase]
+autoStash = true
 
 [rerere]
 enabled = 1
