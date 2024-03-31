@@ -86,6 +86,19 @@ fi
 # Local tools and utilities
 prepend_to_path "$HOME/.local/bin"
 
+# ASDF
+
+export ASDF_CONFIG_FILE="$XDG_CONFIG_HOME"/asdf/asdfrc
+export ASDF_DATA_DIR="$XDG_DATA_HOME"/asdf
+if [ -d "$ASDF_DATA_DIR" ]; then
+  prepend_to_path "$ASDF_DATA_DIR/bin"
+fi
+
+# Add the path to `mise` shims
+if [ -d "$XDG_DATA_HOME/mise/shims" ]; then
+  prepend_to_path "$XDG_DATA_HOME/mise/shims"
+fi
+
 # History
 
 HISTSIZE=100000
@@ -227,19 +240,6 @@ if [ -d "$HOME/Library/Android/sdk" ]; then
   export ANDROID_HOME="$HOME"/Library/Android/sdk
   append_to_path "$ANDROID_HOME/tools"
   append_to_path "$ANDROID_HOME/platform-tools"
-fi
-
-# ASDF
-
-export ASDF_CONFIG_FILE="$XDG_CONFIG_HOME"/asdf/asdfrc
-export ASDF_DATA_DIR="$XDG_DATA_HOME"/asdf
-if [ -d "$ASDF_DATA_DIR" ]; then
-  prepend_to_path "$ASDF_DATA_DIR/bin"
-fi
-
-# Add the path to `mise` shims
-if [ -d "$XDG_DATA_HOME/mise/shims" ]; then
-  prepend_to_path "$XDG_DATA_HOME/mise/shims"
 fi
 
 # Pagers
