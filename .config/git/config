@@ -48,9 +48,6 @@ required = true
 root = ~/go/src
 root = ~/src
 
-[include]
-path = .gitconfig.local
-
 [init]
 defaultBranch = main
 
@@ -95,5 +92,7 @@ pushInsteadOf = "git://gist.github.com/"
 insteadOf = "gist:"
 
 [user]
-email = "contact@marcusrbrown.com"
-name = "Marcus R. Brown"
+useConfigOnly = true
+
+[include]
+path = .gitconfig.local
