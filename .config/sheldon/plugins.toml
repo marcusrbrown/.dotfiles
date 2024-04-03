@@ -3,9 +3,6 @@
 
 shell = "zsh"
 
-[plugins.zsh-defer]
-github = "romkatv/zsh-defer"
-
 [templates]
 defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
 
@@ -74,14 +71,6 @@ bindkey '^r' history-incremental-search-backwards   # [Ctrl-r] - search history 
 bindkey ' ' magic-space                             # [Space] - do history expansion
 '''
 
-[plugins.compinit]
-inline = '''
-zstyle ':completion:*' cache-path "$XDG_CACHE_HOME"/zsh/zcompcache
-
-autoload -Uz compinit
-compinit -d "$XDG_CACHE_HOME"/zsh/zcompdump-"$ZSH_VERSION"
-'''
-
 [plugins.aliases]
 local = "~/.config/bash"
 use = ["aliases"]
@@ -102,6 +91,10 @@ github = "zpm-zsh/ssh"
 [plugins.zsh-completions]
 github = "zsh-users/zsh-completions"
 
+[plugins.zsh-utils]
+github = "belak/zsh-utils"
+use = ["{editor,completion}/*.plugin.zsh"]
+
 [plugins.zsh-better-npm-completion]
 github = "lukechilds/zsh-better-npm-completion"
 
@@ -112,6 +105,9 @@ pre = '''
 NVM_AUTO_USE=true
 NVM_COMPLETION=true
 '''
+
+[plugins.zsh-defer]
+github = "romkatv/zsh-defer"
 
 [plugins.zsh-history-substring-search]
 github = "zsh-users/zsh-history-substring-search"
