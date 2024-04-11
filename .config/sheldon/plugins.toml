@@ -4,8 +4,8 @@
 shell = "zsh"
 
 [templates]
-autoload = "{{ hooks?.pre | nl }}autoload -Uz \"{{ dir }}/{{ name }}\"\n{{ hooks?.post | nl }}"
-defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
+autoload = """{{ hooks?.pre | nl }}autoload -Uz "{{ dir }}/{{ name }}"\n{{ hooks?.post | nl }}"""
+defer = """{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source "{{ file }}"\n{% endfor %}{{ hooks?.post | nl }}"""
 
 [plugins.zsh-settings]
 inline = '''
@@ -111,6 +111,20 @@ NVM_COMPLETION=true
 github = "romkatv/zsh-defer"
 apply = ["autoload"]
 
+[plugins.history-search-multi-word]
+github = "zdharma/history-search-multi-word"
+
+[plugins.mise]
+inline = 'command_exists mise && eval "$(mise activate zsh)"'
+
+# starship 🚀
+[plugins.starship]
+inline = 'command_exists starship && eval "$(starship init zsh)"'
+
+# Secure Shellfish
+[plugins.shellfish]
+inline = 'source "$HOME/.shellfishrc" 2>/dev/null || true'
+
 [plugins.zsh-history-substring-search]
 github = "zsh-users/zsh-history-substring-search"
 use = ["{{ name }}.zsh"]
@@ -142,17 +156,3 @@ pre = '''
 export FAST_WORK_DIR="$XDG_CONFIG_HOME/fsh"
 [[ ! -d "${FAST_WORK_DIR}" ]] && mkdir -p "${FAST_WORK_DIR}"
 '''
-
-[plugins.history-search-multi-word]
-github = "zdharma/history-search-multi-word"
-
-[plugins.mise]
-inline = 'command_exists mise && eval "$(mise activate zsh)"'
-
-# starship 🚀
-[plugins.starship]
-inline = 'command_exists starship && eval "$(starship init zsh)"'
-
-# Secure Shellfish
-[plugins.shellfish]
-inline = 'source "$HOME/.shellfishrc" 2>/dev/null || true'
