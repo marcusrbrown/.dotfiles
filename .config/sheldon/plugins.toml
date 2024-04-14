@@ -14,7 +14,7 @@ defer = '''
 '''
 
 [plugins.header]
-inline = "#!/usr/bin/env zsh\n"
+inline = '{{ "#!/usr/bin/env zsh\n# shellcheck disable=SC1071\n\n" | nl }}'
 
 [plugins.zsh-settings]
 inline = '''
