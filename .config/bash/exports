@@ -63,6 +63,7 @@ export HOST_PLATFORM="${HOST_MACHINE}-${HOST_OS}-${HOST_VERSION}"
 
 if [[ "$HOST_OS" == "darwin" ]]; then
   export HOMEBREW_AUTOREMOVE=1
+  export HOMEBREW_CASK_OPTS="--no-quarantine"
   export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
   export HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=1
   # Enable Homebrew developer mode
