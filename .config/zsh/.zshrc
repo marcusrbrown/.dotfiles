@@ -35,7 +35,4 @@ zstyle :omz:plugins:keychain agents gpg
 zstyle :omz:plugins:keychain identities id_rsa 273811323AC30470
 zstyle :omz:plugins:keychain options --ignore-missing --quiet --attempts 2
 
-# If unset, then ZLE_REMOVE_SUFFIX_CHARS is ' \t\n;&|'; I don't want | included
-ZLE_REMOVE_SUFFIX_CHARS=$' \t\n;&'
-
 source ~/.zshrc.local 2>/dev/null || true
