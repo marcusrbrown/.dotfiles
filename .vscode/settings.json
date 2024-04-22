@@ -8,10 +8,13 @@
         "**/.ssh/config.d/*.conf": "ssh_config",
         "**/.config/git/config": "properties",
         "**/.config/git/ignore": "ignore",
+        "**/.config/git/attributes": "properties",
+        "**/sheldon/plugins.lock": "toml",
         ".gitconfig.local": "properties",
         ".bash*": "shellscript",
         ".zcompdump*": "shellscript",
-        ".zsh*": "shellscript"
+        ".zsh*": "shellscript",
+        ".zpretzorc": "shellscript"
     },
     "files.exclude": {
         "**/*.zwc": { "when": "$(basename)" },
