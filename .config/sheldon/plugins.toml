@@ -86,6 +86,10 @@ bindkey '^r' history-incremental-search-backwards   # [Ctrl-r] - search history 
 bindkey ' ' magic-space                             # [Space] - do history expansion
 '''
 
+[plugins.znap]
+github = 'marlonrichert/zsh-snap'
+use = ['{{ name }}.zsh]']
+
 [plugins.aliases]
 local = "~/.config/bash"
 use = ["aliases"]
