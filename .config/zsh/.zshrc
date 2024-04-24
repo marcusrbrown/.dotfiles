@@ -20,6 +20,13 @@ function source {
 source "$HOME/.config/bash/exports"
 zcompare "${ZDOTDIR:-${HOME}}/.zshrc"
 
+
+# If unset, then ZLE_REMOVE_SUFFIX_CHARS is ' \t\n;&|'; I don't want | included
+ZLE_REMOVE_SUFFIX_CHARS=$' \t\n;&'
+
+# Set path to repositories for Znap to manage to the Sheldon plugin path
+zstyle ':znap:*' repos-dir "$XDG_DATA_HOME/sheldon/repos/github.com"
+
 sheldon_plugins_toml="${SHELDON_CONFIG_FILE:-${SHELDON_CONFIG_DIR:-${XDG_CONFIG_HOME}/sheldon}/plugins.toml}"
 sheldon_source_cache="${XDG_CACHE_HOME}/zsh/sheldon.$(basename "${sheldon_plugins_toml}" .toml).zsh"
 if [[ ! -r "$sheldon_source_cache" || "$sheldon_plugins_toml" -nt "$sheldon_source_cache" ]]; then
