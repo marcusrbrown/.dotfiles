@@ -88,7 +88,7 @@ bindkey ' ' magic-space                             # [Space] - do history expan
 
 [plugins.znap]
 github = 'marlonrichert/zsh-snap'
-use = ['{{ name }}.zsh]']
+use = ['{{ name }}.zsh']
 
 [plugins.aliases]
 local = "~/.config/bash"
