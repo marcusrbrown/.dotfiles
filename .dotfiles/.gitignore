@@ -29,7 +29,7 @@
 !/.gitattributes
 !/.profile
 !/.vimrc
-!/.zshrc
+!/.zshenv
 !/Brewfile
 !/Library/
 /Library/*
