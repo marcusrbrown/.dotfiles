@@ -53,14 +53,14 @@ github = "zdharma/history-search-multi-word"
 
 [plugins.mise]
 local = '~/.config/zsh'
-apply = ['inline']
-hooks.raw = 'command_exists mise && eval "$(mise activate zsh)"'
+apply = ['znap']
+hooks.eval = 'mise activate zsh'
 
 # starship 🚀
 [plugins.starship]
 local = '~/.config/zsh'
-apply = ['inline']
-hooks.raw = 'command_exists starship && eval "$(starship init zsh)"'
+apply = ['znap']
+hooks.eval = 'starship init zsh --print-full-init'
 
 # Secure Shellfish
 [plugins.shellfish]
@@ -118,4 +118,9 @@ source ='''
 {{ "\n" | nl }}# region "{{ name }}"
 {{ "() {" | nl }}{{ hooks?.pre | nl }}{% for file in files %}source "{{ file }}"
 {% endfor %}{{ hooks?.post | nl }}{{ "} \"$@\"" | nl }}# endregion "{{ name }}"
+'''
+znap = '''
+{{ "\n" | nl }}# region "{{ name }}" (znap)
+{% with hooks?.eval as hook %}{% if hook %}znap eval {{ name }} '{{ hook }}'{% endif %}
+{% endwith -%}# endregion "{{ name }}"
 '''
