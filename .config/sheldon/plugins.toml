@@ -3,21 +3,6 @@
 
 shell = "zsh"
 
-[templates]
-autoload = """{{ hooks?.pre | nl }}autoload -Uz "{{ dir }}/{{ name }}"\n{{ hooks?.post | nl }}"""
-defer = '''
-{{ "\n" | nl }}# region "{{ name }}" (deferred)
-{% with hooks?.pre as hook %}{% if hook %}zsh-defer -c "$(<<{{ "EOF" | nl }}{{ hook | nl }}{{ "EOF\n)\"" | nl }}{% endif %}{% endwith -%}
-{% for file in files %}zsh-defer source "{{ file }}"{% endfor %}
-{% with hooks?.post as hook %}{% if hook %}zsh-defer -c "$(<<{{ "EOF" | nl }}{{ hook | nl }}{{ "EOF\n)\"" | nl }}{% endif %}{% endwith -%}
-# endregion "{{ name }}"
-'''
-source ='''
-{{ "\n" | nl }}# region "{{ name }}"
-{{ hooks?.pre | nl }}{% for file in files %}source "{{ file }}"
-{% endfor %}{{ hooks?.post | nl }}# endregion "{{ name }}"
-'''
-
 [plugins.header]
 inline = '{{ "#!/usr/bin/env zsh\n# shellcheck disable=SC1071\n\n" | nl }}'
 
@@ -173,4 +158,19 @@ apply = ["defer"]
 pre = '''
 export FAST_WORK_DIR="$XDG_CONFIG_HOME/fsh"
 [[ ! -d "${FAST_WORK_DIR}" ]] && mkdir -p "${FAST_WORK_DIR}"
+'''
+
+[templates]
+autoload = """{{ hooks?.pre | nl }}autoload -Uz "{{ dir }}/{{ name }}"\n{{ hooks?.post | nl }}"""
+defer = '''
+{{ "\n" | nl }}# region "{{ name }}" (deferred)
+{% with hooks?.pre as hook %}{% if hook %}zsh-defer -c "$(<<{{ "EOF" | nl }}{{ hook | nl }}{{ "EOF\n)\"" | nl }}{% endif %}{% endwith -%}
+{% for file in files %}zsh-defer source "{{ file }}"{% endfor %}
+{% with hooks?.post as hook %}{% if hook %}zsh-defer -c "$(<<{{ "EOF" | nl }}{{ hook | nl }}{{ "EOF\n)\"" | nl }}{% endif %}{% endwith -%}
+# endregion "{{ name }}"
+'''
+source ='''
+{{ "\n" | nl }}# region "{{ name }}"
+{{ hooks?.pre | nl }}{% for file in files %}source "{{ file }}"
+{% endfor %}{{ hooks?.post | nl }}# endregion "{{ name }}"
 '''
