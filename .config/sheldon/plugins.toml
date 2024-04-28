@@ -54,13 +54,16 @@ github = "zdharma/history-search-multi-word"
 [plugins.mise]
 local = '~/.config/zsh'
 apply = ['znap']
+use = ['plugins']
 hooks.eval = 'mise activate zsh'
 
 # starship 🚀
 [plugins.starship]
 local = '~/.config/zsh'
 apply = ['znap']
+use = ['plugins']
 hooks.eval = 'starship init zsh --print-full-init'
+hooks.post = 'znap prompt'
 
 # Secure Shellfish
 [plugins.shellfish]
@@ -101,12 +104,14 @@ export FAST_WORK_DIR="$XDG_CONFIG_HOME/fsh"
 '''
 
 [templates]
+_pre_hook = '{% if hooks?.pre %}{{ "() {" | nl }}{% else if hooks?.post %}{{ "() {" | nl }}{% endif %}{{ hooks?.pre | nl }}'
+_post_hook = '{{ hooks?.post | nl }}{% if hooks?.post %}{{ "}" | nl }}{% else if hooks?.pre %}{{ "}" | nl }}{% endif %}'
 autoload = """{{ hooks?.pre | nl }}autoload -Uz "{{ dir }}/{{ name }}"\n{{ hooks?.post | nl }}"""
 defer = '''
 {{ "\n" | nl }}# region "{{ name }}" (deferred)
 {% with hooks?.pre as hook %}{{ "() {" | nl }}{% if hook %}zsh-defer -c "$(<<{{ "EOF" | nl }}{{ hook | nl }}{{ "EOF\n)\"" | nl }}{% endif %}{% endwith -%}
 {% for file in files %}zsh-defer source "{{ file }}"{% endfor %}
-{% with hooks?.post as hook %}{% if hook %}zsh-defer -c "$(<<{{ "EOF" | nl }}{{ hook | nl }}{{ "EOF\n)\"" | nl }}{% endif %}{{ "} \"$@\"" | nl }}{% endwith -%}
+{% with hooks?.post as hook %}{% if hook %}zsh-defer -c "$(<<{{ "EOF" | nl }}{{ hook | nl }}{{ "EOF\n)\"" | nl }}{% endif %}{{ "}" | nl }}{% endwith -%}
 # endregion "{{ name }}"
 '''
 inline = '''
@@ -116,11 +121,11 @@ inline = '''
 '''
 source ='''
 {{ "\n" | nl }}# region "{{ name }}"
-{{ "() {" | nl }}{{ hooks?.pre | nl }}{% for file in files %}source "{{ file }}"
-{% endfor %}{{ hooks?.post | nl }}{{ "} \"$@\"" | nl }}# endregion "{{ name }}"
+{% include "_pre_hook" %}{% for file in files %}source "{{ file }}"
+{% endfor %}{% include "_post_hook" %}# endregion "{{ name }}"
 '''
 znap = '''
 {{ "\n" | nl }}# region "{{ name }}" (znap)
-{% with hooks?.eval as hook %}{% if hook %}znap eval {{ name }} '{{ hook }}'{% endif %}
-{% endwith -%}# endregion "{{ name }}"
+{% include "_pre_hook" %}{% with hooks?.eval as hook %}{% if hook %}znap eval {{ name }} '{{ hook }}{{ "'" | nl }}{% endif %}{% endwith -%}
+{% include "_post_hook" %}# endregion "{{ name }}"
 '''
