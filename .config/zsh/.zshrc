@@ -24,6 +24,11 @@ zcompare "${ZDOTDIR:-${HOME}}/.zshrc"
 # If unset, then ZLE_REMOVE_SUFFIX_CHARS is ' \t\n;&|'; I don't want | included
 ZLE_REMOVE_SUFFIX_CHARS=$' \t\n;&'
 
+# Set up Pretzo modules
+zstyle ':prezto:module:history' histfile $HISTFILE
+zstyle ':prezto:module:history' histsize $HISTSIZE
+zstyle ':prezto:module:history' savehist $SAVEHIST
+
 # Set path to repositories for Znap to manage to the Sheldon plugin path
 zstyle ':znap:*' repos-dir "$XDG_DATA_HOME/sheldon/repos/github.com"
 
