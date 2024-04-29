@@ -65,6 +65,12 @@ use = ['plugins']
 hooks.eval = 'starship init zsh --print-full-init'
 hooks.post = 'znap prompt'
 
+[plugins.pretzo]
+local = '~/.config/zsh'
+apply = ['inline']
+use = ['plugins']
+hooks.raw = 'znap source sorin-ionescu/prezto modules/{environment,history,directory}'
+
 # Secure Shellfish
 [plugins.shellfish]
 local = '~/.config/zsh'
