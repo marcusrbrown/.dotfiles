@@ -16,6 +16,14 @@ local = '~/.config/zsh/plugins'
 [plugins.keybindings]
 local = '~/.config/zsh/plugins'
 
+[plugins.zsh-utils]
+github = "belak/zsh-utils"
+use = ["{editor,completion}/*.plugin.zsh"]
+
+[plugins.pretzo]
+github = 'sorin-ionescu/prezto'
+use = ['modules/{environment,history,directory}/init.zsh']
+
 [plugins.aliases]
 local = "~/.config/bash"
 use = ["aliases"]
@@ -28,10 +36,6 @@ github = "zpm-zsh/ssh"
 
 [plugins.zsh-completions]
 github = "zsh-users/zsh-completions"
-
-[plugins.zsh-utils]
-github = "belak/zsh-utils"
-use = ["{editor,completion}/*.plugin.zsh"]
 
 [plugins.zsh-better-npm-completion]
 github = "lukechilds/zsh-better-npm-completion"
@@ -56,6 +60,7 @@ local = '~/.config/zsh'
 apply = ['znap']
 use = ['plugins']
 hooks.eval = 'mise activate zsh'
+hooks.completion = 'mise completions zsh'
 
 # starship 🚀
 [plugins.starship]
@@ -65,11 +70,17 @@ use = ['plugins']
 hooks.eval = 'starship init zsh --print-full-init'
 hooks.post = 'znap prompt'
 
-[plugins.pretzo]
+[plugins.rustup]
 local = '~/.config/zsh'
-apply = ['inline']
+apply = ['znap']
 use = ['plugins']
-hooks.raw = 'znap source sorin-ionescu/prezto modules/{environment,history,directory}'
+hooks.completion = 'rustup completions zsh'
+
+[plugins.cargo]
+local = '~/.config/zsh'
+apply = ['znap']
+use = ['plugins']
+hooks.completion = 'rustup completions zsh cargo'
 
 # Secure Shellfish
 [plugins.shellfish]
@@ -132,6 +143,8 @@ source ='''
 '''
 znap = '''
 {{ "\n" | nl }}# region "{{ name }}" (znap)
-{% include "_pre_hook" %}{% with hooks?.eval as hook %}{% if hook %}znap eval {{ name }} '{{ hook }}{{ "'" | nl }}{% endif %}{% endwith -%}
+{% include "_pre_hook" %}
+{%- with hooks?.eval as hook %}{% if hook %}znap eval {{ name }} '{{ hook }}{{ "'" | nl }}{% endif %}{% endwith -%}
+{%- with hooks?.completion as hook %}{% if hook %}znap function _{{ name }} 'znap eval {{ name }}-completion "{{ hook }}"{{ "'" | nl }}compdef _{{ name }} {{ name | nl }}{% endif %}{% endwith -%}
 {% include "_post_hook" %}# endregion "{{ name }}"
 '''
