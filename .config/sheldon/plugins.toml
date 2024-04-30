@@ -145,6 +145,6 @@ znap = '''
 {{ "\n" | nl }}# region "{{ name }}" (znap)
 {% include "_pre_hook" %}
 {%- with hooks?.eval as hook %}{% if hook %}znap eval {{ name }} '{{ hook }}{{ "'" | nl }}{% endif %}{% endwith -%}
-{%- with hooks?.completion as hook %}{% if hook %}znap function _{{ name }} 'znap eval {{ name }}-completion "{{ hook }}"{{ "'" | nl }}compdef _{{ name }} {{ name | nl }}{% endif %}{% endwith -%}
+{%- with hooks?.completion as hook %}{% if hook %}znap fpath _{{ name }} '{{ hook }}{{ "'" | nl }}{% endif %}{% endwith -%}
 {% include "_post_hook" %}# endregion "{{ name }}"
 '''
