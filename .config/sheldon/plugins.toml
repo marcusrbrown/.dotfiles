@@ -22,7 +22,9 @@ use = ["{editor,completion}/*.plugin.zsh"]
 
 [plugins.pretzo]
 github = 'sorin-ionescu/prezto'
-use = ['modules/{environment,history,directory}/init.zsh']
+use = ['modules/{environment,history,directory}']
+apply = ['pretzo']
+hooks.foo = 'bar'
 
 [plugins.aliases]
 local = "~/.config/bash"
@@ -134,6 +136,50 @@ defer = '''
 inline = '''
 {{ "\n" | nl }}# region "{{ name }}" (inline)
 {% with hooks?.raw as hook %}{{ "() {" | nl }}{{ hook | nl }}{{ "} \"$@\"" | nl }}{% endwith -%}
+# endregion "{{ name }}"
+'''
+pretzo = '''
+{{ "\n" | nl }}# region "{{ name }}" (znap)
+function {
+  local -a locations=( {% for file in files %}"{{ file }}" {% endfor %})
+  local pmodule
+  local pmodule_location
+  local pfunction_glob='^([_.]*|prompt_*_setup|README*|*~)(-.N:t)'
+  for pmodule_location in $locations; do
+    pmodule="${pmodule_location:t:r}"
+    if zstyle -t ":pretzo:module:$pmodule" loaded 'yes' 'no'; then
+      continue
+    else
+      echo "Loading $pmodule module from $pmodule_location" >&2
+      fpath=(${pmodule_location}/functions(-/FN) $fpath)
+      function {
+        local pfunction
+        setopt LOCAL_OPTIONS EXTENDED_GLOB
+        for pfunction in ${pmodule_location}/functions/$~pfunction_glob; do
+          autoload -Uz "$pfunction"
+        done
+      }
+      if [[ -s "${pmodule_location}/init.zsh" ]]; then
+        source "${pmodule_location}/init.zsh"
+      elif [[ -s "${pmodule_location}/${pmodule}.plugin.zsh" ]]; then
+        source "${pmodule_location}/${pmodule}.plugin.zsh"
+      fi
+      if (( $? == 0 )); then
+        zstyle ":pretzo:module:$pmodule" loaded 'yes'
+      else
+        fpath[(r)${pmodule_location}/functions]=()
+        function {
+          local pfunction
+          setopt LOCAL_OPTIONS EXTENDED_GLOB
+          for pfunction in ${pmodule_location}/functions/$~pfunction_glob; do
+            unfunction "$pfunction"
+          done
+        }
+        zstyle ":pretzo:module:$pmodule" loaded 'no'
+      fi
+    fi
+  done
+}
 # endregion "{{ name }}"
 '''
 source ='''
