@@ -139,7 +139,7 @@ inline = '''
 # endregion "{{ name }}"
 '''
 pretzo = '''
-{{ "\n" | nl }}# region "{{ name }}" (znap)
+{{ "\n" | nl }}# region "{{ name }}" (pretzo)
 function {
   local -a locations=( {% for file in files %}"{{ file }}" {% endfor %})
   local pmodule
@@ -191,6 +191,6 @@ znap = '''
 {{ "\n" | nl }}# region "{{ name }}" (znap)
 {% include "_pre_hook" %}
 {%- with hooks?.eval as hook %}{% if hook %}znap eval {{ name }} '{{ hook }}{{ "'" | nl }}{% endif %}{% endwith -%}
-{%- with hooks?.completion as hook %}{% if hook %}znap fpath _{{ name }} '{{ hook }}{{ "'" | nl }}{% endif %}{% endwith -%}
+{%- with hooks?.completion as hook %}{% if hook %}command_exists {{ name }} && znap fpath _{{ name }} '{{ hook }}{{ "'" | nl }}{% endif %}{% endwith -%}
 {% include "_post_hook" %}# endregion "{{ name }}"
 '''
