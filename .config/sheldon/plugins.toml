@@ -150,7 +150,6 @@ function {
     if zstyle -t ":pretzo:module:$pmodule" loaded 'yes' 'no'; then
       continue
     else
-      echo "Loading $pmodule module from $pmodule_location" >&2
       fpath=(${pmodule_location}/functions(-/FN) $fpath)
       function {
         local pfunction
