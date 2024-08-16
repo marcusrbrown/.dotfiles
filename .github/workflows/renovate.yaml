@@ -1,0 +1,26 @@
+---
+# Renovate this repository if Renovate-specific tasks are checked, if this workflow file or the Renovate configuration file is changed, or if dispatched.
+name: Renovate
+
+"on":
+  issues:
+    types: [edited]
+  pull_request:
+    types: [edited]
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+    inputs:
+      print-config:
+        description: Log the fully-resolved Renovate config for each repository, plus fully-resolved presets.
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  renovate:
+    name: Renovate
+    secrets: inherit
+    uses: marcusrbrown/.github/.github/workflows/renovate.yaml@main
+    with:
+      print-config: ${{ inputs.print-config || ( github.event_name == 'push' && github.event.ref != 'refs/heads/main' ) }}

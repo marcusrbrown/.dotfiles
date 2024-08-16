@@ -13,6 +13,7 @@
 /.dotfiles/*
 !/.dotfiles/docs/
 !/.dotfiles/docs/*.md
+!/.github/
 !/.ssh/
 /.ssh/*
 !/.ssh/config.d/
