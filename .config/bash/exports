@@ -154,7 +154,7 @@ if command_exists go; then
   append_to_path "$GOROOT/bin"
 fi
 
-# npm
+# Node.js and npm
 
 if command_exists node; then
   if [[ "$HOST_OS" == "darwin" ]]; then
