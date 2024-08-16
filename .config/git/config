@@ -37,6 +37,9 @@ untrackedCache = true
 
 [fetch]
 prune = true
+pruneTags = true
+recurseSubmodules = true
+tags = true
 
 [filter "lfs"]
 clean = git-lfs clean -- %f
@@ -60,7 +63,10 @@ keepBackup = false
 
 [pull]
 autoStash = true
+prune = true
+pruneTags = true
 rebase = false
+tags = true
 
 [push]
 autoSetupRemote = true
