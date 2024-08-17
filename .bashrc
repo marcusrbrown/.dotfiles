@@ -1,10 +1,7 @@
-# Fig pre block. Keep at the top of this file.
-[[ -f "$HOME/.fig/shell/bashrc.pre.bash" ]] && builtin source "$HOME/.fig/shell/bashrc.pre.bash"
+#!/usr/bin/env bash
 
-if [ -n "$PS1" ]; then
-  DOT_BASHRC_LOADED=1
-  ! [ "$DOT_PROFILE_LOADED" = "1" ] && . ~/.profile
-fi
+# Abort if not running interactively
+[[ $- == *i* ]] || return 0
 
-# Fig post block. Keep at the bottom of this file.
-[[ -f "$HOME/.fig/shell/bashrc.post.bash" ]] && builtin source "$HOME/.fig/shell/bashrc.post.bash"
+eval \
+  "$(sheldon --config-file="$XDG_CONFIG_HOME"/sheldon/plugins.bash.toml --data-dir="$XDG_DATA_HOME"/sheldon/bash source)"

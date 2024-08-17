@@ -8,10 +8,6 @@ if [ -n "$INTERACTIVE" ]; then
   shopt -s cmdhist                  # save a multi-line command in a single history entry
 
   HISTSIZE=10000
-  HISTFILESIZE=1000000000
-  HISTCONTROL=ignoreboth
-  HISTIGNORE="&:cd:ls:ll:la:lal:[bf]g:exit:clear:pwd"
-  HISTTIMEFORMAT='%F %T '
 
   history_command="history -a"
   if [ -n "$(command -v __set_prompt_command)" ]; then

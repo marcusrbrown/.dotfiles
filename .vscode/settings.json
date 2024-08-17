@@ -1,40 +1,4 @@
 {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-
-    "files.associations": {
-        "*.yaml": "home-assistant",
-        ".gitconfig.local": "properties",
-        ".bash*": "shellscript",
-        "**/.bash/*": "shellscript",
-        ".zcompdump*": "shellscript",
-        ".zsh*": "shellscript",
-        "**/.ssh/config.d/*.conf": "ssh_config"
-    },
-    "files.exclude": {
-        "**/*.zwc": { "when": "$(basename)" },
-        ".dotfiles/{hooks,info,logs,refs,rr-cache,subtree-cache,objects}/**": true,
-        ".dotfiles/{COMMIT*,config,description,*HEAD,index,MERGE*,packed-refs}": true
-    },
-    "files.insertFinalNewline": true,
-    "files.trimTrailingWhitespace": true,
-    "files.watcherExclude": {
-        "**/[^.]*": true,
-        ".dotfiles/objects/**": true,
-        ".dotfiles/subtree-cache/**": true
-    },
-
-    "search.exclude": {
-        "**/[^.]*": true,
-        "**/.*_history": true
-    },
-    "search.useGlobalIgnoreFiles": true,
-    "search.useIgnoreFiles": true,
-
-    "evenBetterToml.schema.associations": {
-        "**/starship.toml": "https://starship.rs/config-schema.json"
-    },
-
     "[ignore]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
     },
@@ -46,5 +10,67 @@
     },
     "[shellscript]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
+
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+
+    "evenBetterToml.schema.associations": {
+        "**/starship.toml": "https://starship.rs/config-schema.json"
+    },
+
+    "files.associations": {
+        "**/.config/bash/*": "shellscript",
+        "**/.config/bash/inputrc": "properties",
+        "**/.ssh/config.d/*.conf": "ssh_config",
+        "**/.config/git/config": "properties",
+        "**/.config/git/ignore": "ignore",
+        "**/.config/git/attributes": "properties",
+        "**/sheldon/plugins.lock": "toml",
+        ".gitconfig.local": "properties",
+        ".bash*": "shellscript",
+        ".zcompdump*": "shellscript",
+        ".zsh*": "shellscript",
+        ".zpretzorc": "shellscript"
+    },
+    "files.exclude": {
+        "**/*.zwc": {"when": "$(basename)"},
+        ".dotfiles/{hooks,info,logs,refs,rr-cache,subtree-cache,objects}/**": true,
+        ".dotfiles/{COMMIT*,config,description,*HEAD,index,MERGE*,packed-refs}": true
+    },
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "files.watcherExclude": {
+        "**/[^.]*": true,
+        ".dotfiles/objects/**": true,
+        ".dotfiles/subtree-cache/**": true
+    },
+
+    "scm.showHistoryGraph": false,
+
+    "search.exclude": {
+        "**/[^.]*": true,
+        "**/.*_history": true
+    },
+    "search.useGlobalIgnoreFiles": true,
+    "search.useIgnoreFiles": true,
+
+    "shellcheck.ignorePatterns": {
+        "**/*.xonshrc": true,
+        "**/*.xsh": true,
+        "**/*.zsh": true,
+        "**/*.zshrc": true,
+        "**/zshrc": true,
+        "**/*.zprofile": true,
+        "**/zprofile": true,
+        "**/*.zlogin": true,
+        "**/zlogin": true,
+        "**/*.zlogout": true,
+        "**/zlogout": true,
+        "**/*.zshenv": true,
+        "**/zshenv": true,
+        "**/*.zsh-theme": true
     }
+
+    // Keep sorted entries above this line
 }

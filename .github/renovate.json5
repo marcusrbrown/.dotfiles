@@ -1,0 +1,15 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['github>marcusrbrown/renovate-config#v2'],
+  packageRules: [
+    {
+      description: 'Enable SemVer pinning of @bfra-me GitHub actions, reusable workflows, and Renovate config presets.',
+      matchDatasources: ['github-tags'],
+      matchPackageNames: ['bfra-me/**'],
+      updatePinnedDependencies: false,
+    },
+  ],
+  automergeType: 'pr',
+  prCreation: 'immediate',
+  rebaseWhen: 'behind-base-branch',
+}

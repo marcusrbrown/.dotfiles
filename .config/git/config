@@ -1,18 +1,6 @@
-[user]
-name = "Marcus R. Brown"
-email = "contact@marcusrbrown.com"
-
-[core]
-excludesFile = ~/.gitignore
-pager = less -F -S -R -i -x1,5
-
-# Make `git rebase` safe on OSX
-# http://www.git-tower.com/blog/make-git-rebase-safe-on-osx/
-trustctime = false
-
-# Speed up commands that involve determining untracked files such as `git status`.
-# https://git-scm.com/docs/git-update-index#_untracked_cache
-untrackedCache = true
+[advice]
+forceDeleteBranch = false
+skippedCherryPicks = false
 
 [alias]
 ci = commit
@@ -29,33 +17,69 @@ discard = checkout --
 ignored = !"bash -c 'diff --unified=999999999 --color=always <(echo a; git check-ignore --verbose --non-matching --no-index . \"$@\") <(echo b; git check-ignore --verbose --non-matching . \"$@\")' - \"$@\" | tail -n+7; git hidden \"$@\" # Show ignore status of arguments. Files included by index are tagged with prepended '+'."
 hidden = !"git ls-files -v -- \"$@\"| grep -E '^(S|[[:lower:]])' # S means update-index --skip-worktree, and lower first letter means --assume-unchanged."
 
-[fetch]
-prune = true
-
-[init]
-defaultBranch = main
-
-[push]
-default = current
-autoSetupRemote = true
-
-[pull]
-rebase = false
-
-[rerere]
-enabled = 1
-
-[mergetool]
-keepBackup = false
-
 [branch]
 autoSetupRebase = always
 
 [commit]
 gpgSign = true
+verbose = true
 
-[advice]
-skippedCherryPicks = false
+[core]
+attributesfile = ~/.config/git/attributes
+excludesFile = ~/.config/git/ignore
+pager = less -F -S -R -i -x1,5
+# Make `git rebase` safe on OSX
+# http://www.git-tower.com/blog/make-git-rebase-safe-on-osx/
+trustctime = false
+# Speed up commands that involve determining untracked files such as `git status`.
+# https://git-scm.com/docs/git-update-index#_untracked_cache
+untrackedCache = true
+
+[fetch]
+prune = true
+pruneTags = true
+recurseSubmodules = true
+tags = true
+
+[filter "lfs"]
+clean = git-lfs clean -- %f
+smudge = git-lfs smudge -- %f
+process = git-lfs filter-process
+required = true
+
+[ghq]
+root = ~/go/src
+root = ~/src
+
+[init]
+defaultBranch = main
+
+[merge]
+autoStash = true
+ff = only
+
+[mergetool]
+keepBackup = false
+
+[pull]
+autoStash = true
+prune = true
+pruneTags = true
+rebase = false
+tags = true
+
+[push]
+autoSetupRemote = true
+default = current
+
+[rebase]
+autoStash = true
+
+[rerere]
+enabled = 1
+
+[status]
+showUntrackedFiles = all
 
 [url "git@github.com:"]
 insteadOf = "gh:"
@@ -73,15 +97,8 @@ pushInsteadOf = "git://gist.github.com/"
 [url "git://gist.github.com/"]
 insteadOf = "gist:"
 
-[filter "lfs"]
-clean = git-lfs clean -- %f
-smudge = git-lfs smudge -- %f
-process = git-lfs filter-process
-required = true
-
-[ghq]
-root = ~/go/src
-root = ~/src
+[user]
+useConfigOnly = true
 
 [include]
 path = .gitconfig.local

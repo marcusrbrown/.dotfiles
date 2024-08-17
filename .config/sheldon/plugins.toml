@@ -1,0 +1,195 @@
+# sheldon: zsh
+# See the documentation for more https://github.com/rossmacarthur/sheldon#readme
+
+shell = "zsh"
+
+[plugins.header]
+inline = '{{ "#!/usr/bin/env zsh\n# shellcheck disable=SC1071\n\n" | nl }}'
+
+[plugins.znap]
+github = 'marlonrichert/zsh-snap'
+use = ['{{ name }}.zsh']
+
+[plugins.settings]
+local = '~/.config/zsh/plugins'
+
+[plugins.keybindings]
+local = '~/.config/zsh/plugins'
+
+[plugins.zsh-utils]
+github = "belak/zsh-utils"
+use = ["{editor,completion}/*.plugin.zsh"]
+
+[plugins.pretzo]
+github = 'sorin-ionescu/prezto'
+use = ['modules/{environment,history,directory}']
+apply = ['pretzo']
+hooks.foo = 'bar'
+
+[plugins.aliases]
+local = "~/.config/bash"
+use = ["aliases"]
+
+[plugins.gpg-agent]
+local = '~/.config/zsh/plugins'
+
+[plugins.ssh]
+github = "zpm-zsh/ssh"
+
+[plugins.zsh-completions]
+github = "zsh-users/zsh-completions"
+
+[plugins.zsh-better-npm-completion]
+github = "lukechilds/zsh-better-npm-completion"
+
+[plugins.zsh-nvm]
+github = "lukechilds/zsh-nvm"
+[plugins.zsh-nvm.hooks]
+pre = '''
+NVM_AUTO_USE=true
+NVM_COMPLETION=true
+'''
+
+[plugins.zsh-defer]
+github = "romkatv/zsh-defer"
+apply = ["autoload"]
+
+[plugins.history-search-multi-word]
+github = "zdharma/history-search-multi-word"
+
+[plugins.mise]
+local = '~/.config/zsh'
+apply = ['znap']
+use = ['plugins']
+hooks.eval = 'mise activate zsh'
+hooks.completion = 'mise completions zsh'
+
+# starship 🚀
+[plugins.starship]
+local = '~/.config/zsh'
+apply = ['znap']
+use = ['plugins']
+hooks.eval = 'starship init zsh --print-full-init'
+hooks.post = 'znap prompt'
+
+[plugins.rustup]
+local = '~/.config/zsh'
+apply = ['znap']
+use = ['plugins']
+hooks.completion = 'rustup completions zsh'
+
+[plugins.cargo]
+local = '~/.config/zsh'
+apply = ['znap']
+use = ['plugins']
+hooks.completion = 'rustup completions zsh cargo'
+
+# Secure Shellfish
+[plugins.shellfish]
+local = '~/.config/zsh'
+apply = ['inline']
+hooks.raw = 'source "$HOME/.shellfishrc" 2>/dev/null || true'
+
+[plugins.zsh-history-substring-search]
+github = "zsh-users/zsh-history-substring-search"
+use = ["{{ name }}.zsh"]
+apply = ["defer"]
+[plugins.zsh-history-substring-search.hooks]
+post = '''
+bindkey "$terminfo[kcuu1]" history-substring-search-up
+bindkey "$terminfo[kcud1]" history-substring-search-down
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+'''
+
+[plugins.zsh-autosuggestions]
+github = "zsh-users/zsh-autosuggestions"
+use = ["{{ name }}.zsh"]
+apply = ["defer"]
+[plugins.zsh-autosuggestions.hooks]
+pre = '''
+typeset -ga ZSH_AUTOSUGGEST_STRATEGY
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_USE_ASYNC=1
+'''
+
+[plugins.fast-syntax-highlighting]
+github = "zdharma-continuum/fast-syntax-highlighting"
+apply = ["defer"]
+[plugins.fast-syntax-highlighting.hooks]
+pre = '''
+export FAST_WORK_DIR="$XDG_CONFIG_HOME/fsh"
+[[ ! -d "${FAST_WORK_DIR}" ]] && mkdir -p "${FAST_WORK_DIR}"
+'''
+
+[templates]
+_pre_hook = '{% if hooks?.pre %}{{ "() {" | nl }}{% else if hooks?.post %}{{ "() {" | nl }}{% endif %}{{ hooks?.pre | nl }}'
+_post_hook = '{{ hooks?.post | nl }}{% if hooks?.post %}{{ "}" | nl }}{% else if hooks?.pre %}{{ "}" | nl }}{% endif %}'
+autoload = """{{ hooks?.pre | nl }}autoload -Uz "{{ dir }}/{{ name }}"\n{{ hooks?.post | nl }}"""
+defer = '''
+{{ "\n" | nl }}# region "{{ name }}" (deferred)
+{% with hooks?.pre as hook %}{{ "() {" | nl }}{% if hook %}zsh-defer -c "$(<<{{ "EOF" | nl }}{{ hook | nl }}{{ "EOF\n)\"" | nl }}{% endif %}{% endwith -%}
+{% for file in files %}zsh-defer source "{{ file }}"{% endfor %}
+{% with hooks?.post as hook %}{% if hook %}zsh-defer -c "$(<<{{ "EOF" | nl }}{{ hook | nl }}{{ "EOF\n)\"" | nl }}{% endif %}{{ "}" | nl }}{% endwith -%}
+# endregion "{{ name }}"
+'''
+inline = '''
+{{ "\n" | nl }}# region "{{ name }}" (inline)
+{% with hooks?.raw as hook %}{{ "() {" | nl }}{{ hook | nl }}{{ "} \"$@\"" | nl }}{% endwith -%}
+# endregion "{{ name }}"
+'''
+pretzo = '''
+{{ "\n" | nl }}# region "{{ name }}" (pretzo)
+function {
+  local -a locations=( {% for file in files %}"{{ file }}" {% endfor %})
+  local pmodule
+  local pmodule_location
+  local pfunction_glob='^([_.]*|prompt_*_setup|README*|*~)(-.N:t)'
+  for pmodule_location in $locations; do
+    pmodule="${pmodule_location:t:r}"
+    if zstyle -t ":pretzo:module:$pmodule" loaded 'yes' 'no'; then
+      continue
+    else
+      fpath=(${pmodule_location}/functions(-/FN) $fpath)
+      function {
+        local pfunction
+        setopt LOCAL_OPTIONS EXTENDED_GLOB
+        for pfunction in ${pmodule_location}/functions/$~pfunction_glob; do
+          autoload -Uz "$pfunction"
+        done
+      }
+      if [[ -s "${pmodule_location}/init.zsh" ]]; then
+        source "${pmodule_location}/init.zsh"
+      elif [[ -s "${pmodule_location}/${pmodule}.plugin.zsh" ]]; then
+        source "${pmodule_location}/${pmodule}.plugin.zsh"
+      fi
+      if (( $? == 0 )); then
+        zstyle ":pretzo:module:$pmodule" loaded 'yes'
+      else
+        fpath[(r)${pmodule_location}/functions]=()
+        function {
+          local pfunction
+          setopt LOCAL_OPTIONS EXTENDED_GLOB
+          for pfunction in ${pmodule_location}/functions/$~pfunction_glob; do
+            unfunction "$pfunction"
+          done
+        }
+        zstyle ":pretzo:module:$pmodule" loaded 'no'
+      fi
+    fi
+  done
+}
+# endregion "{{ name }}"
+'''
+source ='''
+{{ "\n" | nl }}# region "{{ name }}"
+{% include "_pre_hook" %}{% for file in files %}source "{{ file }}"
+{% endfor %}{% include "_post_hook" %}# endregion "{{ name }}"
+'''
+znap = '''
+{{ "\n" | nl }}# region "{{ name }}" (znap)
+{% include "_pre_hook" %}
+{%- with hooks?.eval as hook %}{% if hook %}znap eval {{ name }} '{{ hook }}{{ "'" | nl }}{% endif %}{% endwith -%}
+{%- with hooks?.completion as hook %}{% if hook %}command_exists {{ name }} && znap fpath _{{ name }} '{{ hook }}{{ "'" | nl }}{% endif %}{% endwith -%}
+{% include "_post_hook" %}# endregion "{{ name }}"
+'''

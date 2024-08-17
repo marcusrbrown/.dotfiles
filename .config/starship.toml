@@ -1,6 +1,8 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
 add_newline = true
 
-command_timeout = 1000
+command_timeout = 1500
 
 format = """\
 [](fg:#161925)\
@@ -195,7 +197,7 @@ format = '[ $symbol ($version )]($style)'
 [python]
 symbol = ""
 style = "fg:#cba6f7 bg:#2c324a"
-format = '[ $symbol ($version )]($style)'
+format = '[ $symbol ($version )(\($virtualenv\) )]($style)'
 
 [ruby]
 symbol = ""
