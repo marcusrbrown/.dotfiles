@@ -9,4 +9,7 @@
       updatePinnedDependencies: false,
     },
   ],
+  automergeType: 'pr',
+  prCreation: 'immediate',
+  rebaseWhen: 'behind-base-branch',
 }
