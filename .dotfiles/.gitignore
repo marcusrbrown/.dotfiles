@@ -28,6 +28,8 @@
 !/.bashrc
 !/.editorconfig
 !/.gitattributes
+!/.prettierignore
+!/.prettierrc.yaml
 !/.profile
 !/.vimrc
 !/.zshenv

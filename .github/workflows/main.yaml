@@ -1,0 +1,35 @@
+---
+name: Main
+
+'on':
+  merge_group:
+  push:
+    branches: [main, 'renovate/**']
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+
+      - name: Install mise
+        uses: jdx/mise-action@v2
+
+      - name: 💅🏽 Run Prettier
+        run: |
+          npm install @bfra.me/prettier-config@0.4.0
+          npx prettier@3.3.3 --no-color --check .devcontainer .dotfiles .github
