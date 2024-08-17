@@ -28,9 +28,14 @@ jobs:
           ref: ${{ github.head_ref }}
 
       - name: Install mise
+        env:
+          MISE_VERSION: 2024.8.7 # renovate: datasource=github-releases packageName=jdx/mise
         uses: jdx/mise-action@v2
+        with:
+          version: $MISE_VERSION
 
       - name: 💅🏽 Run Prettier
         run: |
+          # Install our Prettier config and check formatting
           npm install @bfra.me/prettier-config@0.4.0
           npx prettier@3.3.3 --no-color --check .devcontainer .dotfiles .github
