@@ -2,13 +2,13 @@
 # Renovate this repository if Renovate-specific tasks are checked, if this workflow file or the Renovate configuration file is changed, or if dispatched.
 name: Renovate
 
-"on":
+'on':
   issues:
     types: [edited]
   pull_request:
     types: [edited]
   push:
-    branches: ["**"]
+    branches: ['**']
   workflow_dispatch:
     inputs:
       print-config:
