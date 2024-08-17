@@ -1,4 +1,14 @@
 {
+    "[ignore]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
+    "[properties]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
+    "[shellscript]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
+
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
 
@@ -17,7 +27,7 @@
         ".zpretzorc": "shellscript"
     },
     "files.exclude": {
-        "**/*.zwc": { "when": "$(basename)" },
+        "**/*.zwc": {"when": "$(basename)"},
         ".dotfiles/{hooks,info,logs,refs,rr-cache,subtree-cache,objects}/**": true,
         ".dotfiles/{COMMIT*,config,description,*HEAD,index,MERGE*,packed-refs}": true
     },
@@ -28,6 +38,8 @@
         ".dotfiles/objects/**": true,
         ".dotfiles/subtree-cache/**": true
     },
+
+    "scm.showHistoryGraph": false,
 
     "search.exclude": {
         "**/[^.]*": true,
@@ -51,15 +63,7 @@
         "**/*.zshenv": true,
         "**/zshenv": true,
         "**/*.zsh-theme": true
-    },
-
-    "[ignore]": {
-        "editor.defaultFormatter": "foxundermoon.shell-format"
-    },
-    "[properties]": {
-        "editor.defaultFormatter": "foxundermoon.shell-format"
-    },
-    "[shellscript]": {
-        "editor.defaultFormatter": "foxundermoon.shell-format"
     }
+
+    // Keep sorted entries above this line
 }
