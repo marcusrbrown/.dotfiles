@@ -32,7 +32,7 @@ jobs:
           MISE_VERSION: 2024.8.7 # renovate: datasource=github-releases packageName=jdx/mise
         uses: jdx/mise-action@v2
         with:
-          version: $MISE_VERSION
+          version: ${{ env.MISE_VERSION }}
 
       - name: 💅🏽 Run Prettier
         run: |
