@@ -16,6 +16,7 @@ export XDG_STATE_HOME="$HOME/.local/state"
 
 [ -d "$XDG_CONFIG_HOME" ] || mkdir -m 0750 "$XDG_CONFIG_HOME"
 [ -d "$XDG_CACHE_HOME" ]  || mkdir -m 0750 "$XDG_CACHE_HOME"
+[ -d "$HOME/.local" ]     || mkdir -m 0750 "$HOME/.local"
 [ -d "$XDG_DATA_HOME" ]   || mkdir -m 0750 "$XDG_DATA_HOME"
 [ -d "$XDG_STATE_HOME" ]  || mkdir -m 0750 "$XDG_STATE_HOME"
 
@@ -91,7 +92,7 @@ prepend_to_path "$HOME/.local/bin"
 
 export ASDF_CONFIG_FILE="$XDG_CONFIG_HOME"/asdf/asdfrc
 export ASDF_DATA_DIR="$XDG_DATA_HOME"/asdf
-if [ -d "$ASDF_DATA_DIR" ]; then
+if [ -d "$ASDF_DATA_DIR/bin" ]; then
   prepend_to_path "$ASDF_DATA_DIR/bin"
 fi
 
@@ -99,6 +100,19 @@ fi
 if [ -d "$XDG_DATA_HOME/mise/shims" ]; then
   prepend_to_path "$XDG_DATA_HOME/mise/shims"
 fi
+
+# Zsh
+
+export ZDOTDIR="$XDG_CONFIG_HOME"/zsh
+[ ! -d "$XDG_CACHE_HOME"/zsh ] && mkdir -m 0750 "$XDG_CACHE_HOME"/zsh
+[ ! -d "$XDG_STATE_HOME"/zsh ] && mkdir -m 0750 "$XDG_STATE_HOME"/zsh
+
+# Bash
+
+[ ! -d "$XDG_STATE_HOME"/bash ] && mkdir -m 0750 "$XDG_STATE_HOME"/bash
+
+# https://www.gnu.org/software/bash/manual/html_node/Readline-Init-File.html
+export INPUTRC="$XDG_CONFIG_HOME"/readline/inputrc
 
 # History
 
@@ -115,12 +129,9 @@ elif [ "$ZSH_VERSION" ]; then
   # Comes from OMZ/lib/history.zsh
   export HIST_STAMPS="%F %T "
 fi
+[ ! -f "$HISTFILE" ] && touch "$HISTFILE"
 
-# Zsh
-export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
-
-# https://www.gnu.org/software/bash/manual/html_node/Readline-Init-File.html
-export INPUTRC="$XDG_CONFIG_HOME"/readline/inputrc
+# GnuPG
 
 # https://www.gnupg.org/documentation/manuals/gnupg/GPG-Configuration.html
 export GNUPGHOME="$XDG_CONFIG_HOME/gnupg"
@@ -164,6 +175,7 @@ if command_exists node; then
 fi
 
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+[ ! -d "$XDG_CONFIG_HOME"/npm ] && mkdir -m 0750 "$XDG_CONFIG_HOME"/npm
 
 export NVM_DIR="$XDG_DATA_HOME"/nvm
 
@@ -174,8 +186,8 @@ export TS_NODE_HISTORY="$XDG_STATE_HOME"/ts_node_repl_history
 export IPYTHONDIR="$XDG_CONFIG_HOME"/ipython
 
 if command_exists pipx; then
-  export PIPX_BIN_DIR="$XDG_DATA_HOME/pipx/bin"
-  export PIPX_HOME="$XDG_DATA_HOME/pipx"
+  export PIPX_HOME="$XDG_DATA_HOME"/pipx
+  export PIPX_BIN_DIR="$PIPX_HOME"/bin
   prepend_to_path "$PIPX_BIN_DIR"
 fi
 
