@@ -8,6 +8,12 @@
       matchPackageNames: ['bfra-me/**'],
       updatePinnedDependencies: false,
     },
+    {
+      description: 'Disable digest pinning for base images',
+      matchFiles: ['.devcontainer/Dockerfile', '**/devcontainer.json'],
+      matchPackageNames: ['mcr.microsoft.com/devcontainers/base'],
+      pinDigests: false,
+    },
   ],
   automergeType: 'pr',
   prCreation: 'immediate',
