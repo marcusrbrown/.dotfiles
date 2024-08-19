@@ -3,9 +3,7 @@
 {
     "name": "marcusrbrown/.dotfiles",
 
-    "build": {
-        "dockerfile": "Dockerfile"
-    },
+    "image": "mcr.microsoft.com/devcontainers/base:1.0.3-bookworm",
 
     "hostRequirements": {
         "cpus": 4
@@ -13,20 +11,9 @@
 
     // Features to add to the dev container. More info: https://containers.dev/features.
     "features": {
-        // "ghcr.io/devcontainers/features/common-utils:2": {
-        //     "configureZshAsDefaultShell": true,
-        //     "username": "vscode",
-        //     "userUid": 1000,
-        //     "userGid": 1000
-        // },
-        // "ghcr.io/devcontainers/features/git:1": {},
         "ghcr.io/devcontainers/features/github-cli:1": {}
     },
 
-    // Use 'forwardPorts' to make a list of ports inside the container available locally.
-    // "forwardPorts": [],
-
-    // Configure tool-specific properties.
     "customizations": {
         "vscode": {
             "extensions": [
@@ -37,21 +24,33 @@
                 "github.vscode-github-actions",
                 "GitHub.vscode-pull-request-github",
                 "jeff-hykin.better-shellscript-syntax",
-                "mads-hartmann.bash-ide-vscode",
                 "redhat.vscode-yaml",
                 "tamasfe.even-better-toml",
                 "timonwong.shellcheck"
-            ]
+            ],
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "zsh",
+                "terminal.integrated.profiles.linux": {
+                    "zsh": {
+                        "path": "/usr/bin/zsh"
+                    }
+                }
+            }
         }
     },
 
-    "postCreateCommand": ".devcontainer/post-create.sh",
-    "waitFor": "postCreateCommand",
     "containerEnv": {
+        "ANDROID_SDK_HOME": "$HOME/.local/share/android",
+        "DC_NMMODE": "hardlinks-local",
+        "GNUPGHOME": "$HOME/.config/gnupg",
+        "NPM_CONFIG_USERCONFIG": "$HOME/.config/npm/npmrc",
+        "RANDFILE": "$HOME/.cache/randfile",
+        "TERMINFO": "$HOME/.local/share/terminfo",
         "XDG_CONFIG_HOME": "${containerWorkspaceFolder}/.config",
         "XDG_CACHE_HOME": "${containerWorkspaceFolder}/.cache",
         "XDG_DATA_HOME": "${containerWorkspaceFolder}/.local/share",
-        "XDG_STATE_HOME": "${containerWorkspaceFolder}/.local/state"
+        "XDG_STATE_HOME": "${containerWorkspaceFolder}/.local/state",
+        "ZDOTDIR": "$HOME/.config/zsh"
     },
     "remoteEnv": {
         "GIT_DIR": "${containerWorkspaceFolder}/.dotfiles",
@@ -59,5 +58,5 @@
     },
     "remoteUser": "vscode",
     "workspaceFolder": "/home/vscode",
-    "workspaceMount": "source=local-clone,target=/home/vscode,type=volume"
+    "workspaceMount": "source=dotfiles-dev,target=/home/vscode,type=volume"
 }
