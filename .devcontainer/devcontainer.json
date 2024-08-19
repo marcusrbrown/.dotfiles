@@ -53,6 +53,6 @@
         "GIT_WORK_TREE": "${containerWorkspaceFolder}"
     },
     "remoteUser": "vscode",
-    "workspaceFolder": "/home/vscode",
-    "workspaceMount": "source=dotfiles-dev,target=/home/vscode,type=volume"
+    "workspaceFolder": "/home/vscode"
+    // "workspaceMount": "source=dotfiles-dev,target=/home/vscode,type=volume"
 }
