@@ -35,22 +35,22 @@
     },
 
     "containerEnv": {
-        "ANDROID_SDK_HOME": "${containerEnv:HOME}/.local/share/android",
+        "ANDROID_SDK_HOME": "${containerWorkspaceFolder}/.local/share/android",
         "DC_NMMODE": "hardlinks-local",
-        "GNUPGHOME": "${containerEnv:HOME}/.config/gnupg",
+        "GNUPGHOME": "${containerWorkspaceFolder}/.config/gnupg",
         "LOCAL_WORKSPACE": "${localWorkspaceFolder}",
-        "NPM_CONFIG_USERCONFIG": "${containerEnv:HOME}/.config/npm/npmrc",
-        "RANDFILE": "${containerEnv:HOME}/.cache/randfile",
-        "TERMINFO": "${containerEnv:HOME}/.local/share/terminfo",
-        "XDG_CONFIG_HOME": "${containerEnv:HOME}/.config",
-        "XDG_CACHE_HOME": "${containerEnv:HOME}/.cache",
-        "XDG_DATA_HOME": "${containerEnv:HOME}/.local/share",
-        "XDG_STATE_HOME": "${containerEnv:HOME}/.local/state",
-        "ZDOTDIR": "${containerEnv:HOME}/.config/zsh"
+        "NPM_CONFIG_USERCONFIG": "${containerWorkspaceFolder}/.config/npm/npmrc",
+        "RANDFILE": "${containerWorkspaceFolder}/.cache/randfile",
+        "TERMINFO": "${containerWorkspaceFolder}/.local/share/terminfo",
+        "XDG_CONFIG_HOME": "${containerWorkspaceFolder}/.config",
+        "XDG_CACHE_HOME": "${containerWorkspaceFolder}/.cache",
+        "XDG_DATA_HOME": "${containerWorkspaceFolder}/.local/share",
+        "XDG_STATE_HOME": "${containerWorkspaceFolder}/.local/state",
+        "ZDOTDIR": "${containerWorkspaceFolder}/.config/zsh"
     },
     "remoteEnv": {
-        "GIT_DIR": "${containerEnv:HOME}/.dotfiles",
-        "GIT_WORK_TREE": "${containerEnv:HOME}"
+        "GIT_DIR": "${containerWorkspaceFolder}/.dotfiles",
+        "GIT_WORK_TREE": "${containerWorkspaceFolder}"
     },
     "remoteUser": "vscode",
     "workspaceFolder": "/home/vscode",
