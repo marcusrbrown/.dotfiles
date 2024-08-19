@@ -40,17 +40,18 @@
     },
 
     "containerEnv": {
-        "ANDROID_SDK_HOME": "$HOME/.local/share/android",
+        "ANDROID_SDK_HOME": "${HOME}/.local/share/android",
         "DC_NMMODE": "hardlinks-local",
-        "GNUPGHOME": "$HOME/.config/gnupg",
-        "NPM_CONFIG_USERCONFIG": "$HOME/.config/npm/npmrc",
-        "RANDFILE": "$HOME/.cache/randfile",
-        "TERMINFO": "$HOME/.local/share/terminfo",
+        "GNUPGHOME": "${HOME}/.config/gnupg",
+        "NPM_CONFIG_USERCONFIG": "${HOME}/.config/npm/npmrc",
+        "RANDFILE": "${HOME}/.cache/randfile",
+        "REMOTE_WORKSPACE": "${remoteWorkspaceFolder}",
+        "TERMINFO": "${HOME}/.local/share/terminfo",
         "XDG_CONFIG_HOME": "${containerWorkspaceFolder}/.config",
         "XDG_CACHE_HOME": "${containerWorkspaceFolder}/.cache",
         "XDG_DATA_HOME": "${containerWorkspaceFolder}/.local/share",
         "XDG_STATE_HOME": "${containerWorkspaceFolder}/.local/state",
-        "ZDOTDIR": "$HOME/.config/zsh"
+        "ZDOTDIR": "${HOME}/.config/zsh"
     },
     "remoteEnv": {
         "GIT_DIR": "${containerWorkspaceFolder}/.dotfiles",
