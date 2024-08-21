@@ -1,0 +1,6 @@
+{
+  "id": "mise",
+  "name": "Mise",
+  "version": "none",
+  "installsAfter": ["ghcr.io/devcontainers/features/common-utils"]
+}

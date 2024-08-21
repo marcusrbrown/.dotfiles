@@ -18,13 +18,15 @@
             "installOhMyZshConfig": false,
             "username": "vscode"
         },
-        "ghcr.io/devcontainers/features/github-cli:1.0.13": {}
+        "ghcr.io/devcontainers/features/github-cli:1.0.13": {},
+        "./local-features/mise": {},
+        "./local-features/sheldon": {},
+        "./local-features/starship": {}
     },
 
     "customizations": {
         "vscode": {
             "extensions": [
-                "bmalehorn.shell-syntax",
                 "EditorConfig.EditorConfig",
                 "esbenp.prettier-vscode",
                 "foxundermoon.shell-format",
@@ -39,6 +41,12 @@
                 "usernamehw.errorlens"
             ],
             "settings": {
+                "json.schemas": [
+                    {
+                        "fileMatch": ["*/devcontainer-feature.json"],
+                        "url": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainerFeature.schema.json"
+                    }
+                ],
                 "terminal.integrated.defaultProfile.linux": "zsh"
             }
         }
