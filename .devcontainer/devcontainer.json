@@ -11,12 +11,20 @@
 
     // Features to add to the dev container. More info: https://containers.dev/features.
     "features": {
-        "ghcr.io/devcontainers/features/github-cli:1.0.11": {}
+        "ghcr.io/devcontainers/features/common-utils:2.4.7": {
+            "installZsh": true,
+            "configureZshAsDefaultShell": true,
+            "installOhMyZsh": false,
+            "installOhMyZshConfig": false,
+            "username": "vscode"
+        },
+        "ghcr.io/devcontainers/features/github-cli:1.0.13": {}
     },
 
     "customizations": {
         "vscode": {
             "extensions": [
+                "bmalehorn.shell-syntax",
                 "EditorConfig.EditorConfig",
                 "esbenp.prettier-vscode",
                 "foxundermoon.shell-format",
@@ -25,8 +33,10 @@
                 "GitHub.vscode-pull-request-github",
                 "jeff-hykin.better-shellscript-syntax",
                 "redhat.vscode-yaml",
+                "sourcegraph.cody-ai",
                 "tamasfe.even-better-toml",
-                "timonwong.shellcheck"
+                "timonwong.shellcheck",
+                "usernamehw.errorlens"
             ],
             "settings": {
                 "terminal.integrated.defaultProfile.linux": "zsh"
@@ -53,6 +63,6 @@
         "GIT_WORK_TREE": "${containerWorkspaceFolder}"
     },
     "remoteUser": "vscode",
-    "workspaceFolder": "/home/vscode"
-    // "workspaceMount": "source=dotfiles-dev,target=/home/vscode,type=volume"
+    "workspaceFolder": "/home/vscode",
+    "workspaceMount": "source=dotfiles-dev,target=/home/vscode,type=volume"
 }
