@@ -8,4 +8,4 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # Install starship
-curl -sS https://starship.rs/install.sh | sh -s -- --verbose --yes --bin-dir ~/.local/bin
+curl -sS https://starship.rs/install.sh | sh -s -- --verbose --yes --bin-dir /usr/local/bin

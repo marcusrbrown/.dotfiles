@@ -7,6 +7,7 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-curl https://mise.run | sh
+MISE_INSTALL_PATH=/usr/local/bin/mise
+curl https://mise.run | MISE_INSTALL_PATH="$MISE_INSTALL_PATH" sh
 
-~/.local/bin/mise --version
+"$MISE_INSTALL_PATH" --version

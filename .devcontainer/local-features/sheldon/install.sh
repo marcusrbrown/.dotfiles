@@ -8,6 +8,6 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
-    | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
+    | bash -s -- --repo rossmacarthur/sheldon --to /usr/local/bin
 
-~/.local/bin/sheldon --version
+/usr/local/bin/sheldon --version
