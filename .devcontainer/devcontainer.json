@@ -73,5 +73,5 @@
     },
     "remoteUser": "vscode",
     "workspaceFolder": "/home/vscode",
-    "workspaceMount": "source=dotfiles-dev,target=${containerWorkspaceFolder},type=volume"
+    "workspaceMount": "source=dotfiles-dev,target=${containerWorkspaceFolder},type=volume,consistency=cached"
 }

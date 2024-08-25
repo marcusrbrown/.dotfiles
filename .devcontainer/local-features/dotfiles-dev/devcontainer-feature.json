@@ -2,7 +2,7 @@
     "id": "dotfiles-dev",
     "version": "none",
     "containerEnv": {
-        "PATH": "~/.local/bin:${PATH}"
+        "PATH": "${containerWorkspaceFolder}/.local/bin:${PATH}"
     },
     "installsAfter": [
         "ghcr.io/devcontainers/features/common-utils",
