@@ -1,0 +1,7 @@
+{
+    "id": "keychain",
+    "name": "Keychain (via GitHub Releases)",
+    "version": "none",
+    "description": "Install keychain via GitHub Releases.",
+    "installsAfter": ["ghcr.io/devcontainers/features/common-utils"]
+}

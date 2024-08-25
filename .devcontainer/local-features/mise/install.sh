@@ -10,4 +10,4 @@ fi
 MISE_INSTALL_PATH=/usr/local/bin/mise
 curl https://mise.run | MISE_INSTALL_PATH="$MISE_INSTALL_PATH" sh
 
-"$MISE_INSTALL_PATH" --version
+su "$_REMOTE_USER" -c 'mise --version'
