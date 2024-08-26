@@ -2,6 +2,9 @@
     "[ignore]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
     },
+    "[markdown]": {
+        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+    },
     "[properties]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
     },
@@ -11,6 +14,10 @@
 
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
+
+    "evenBetterToml.schema.associations": {
+        "**/starship.toml": "https://starship.rs/config-schema.json"
+    },
 
     "files.associations": {
         "**/.config/bash/*": "shellscript",

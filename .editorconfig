@@ -48,5 +48,5 @@ indent_style = space
 [.vscode/*.json]
 indent_size = 4
 
-[.devcontainer/*.json]
+[.devcontainer/**/devcontainer*.json]
 indent_size = 4

@@ -2,7 +2,6 @@
 name: Main
 
 'on':
-  merge_group:
   push:
     branches: [main, 'renovate/**']
   pull_request:
@@ -17,6 +16,32 @@ permissions:
   contents: read
 
 jobs:
+  devcontainer:
+    name: Build and test devcontainer
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft != true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: ${{ github.head_ref }}
+
+      - id: devcontainer-ci
+        name: Build and start devcontainer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: devcontainers/ci@a56d055efecd725e8cfe370543b6071b79989cc8 # v0.3.1900000349
+        with:
+          runCmd: 'devcontainer-info'
+
+      - if: always()
+        name: Display devcontainer output
+        env:
+          OUTPUT: ${{ steps.devcontainer-ci.outputs.runCmdOutput }}
+        run: |
+          echo "Devcontainer output:"
+          echo "$OUTPUT"
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -30,7 +55,7 @@ jobs:
       - name: Install mise
         env:
           MISE_VERSION: 2024.8.7 # renovate: datasource=github-releases packageName=jdx/mise
-        uses: jdx/mise-action@d6e32c1796099e0f1f3ac741c220a8b7eae9e5dd # v2
+        uses: jdx/mise-action@d6e32c1796099e0f1f3ac741c220a8b7eae9e5dd # v2.0.6
         with:
           version: ${{ env.MISE_VERSION }}
 

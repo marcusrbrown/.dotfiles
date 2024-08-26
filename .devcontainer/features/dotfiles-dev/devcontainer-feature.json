@@ -1,0 +1,12 @@
+{
+    "id": "dotfiles-dev",
+    "version": "none",
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils",
+        "ghcr.io/devcontainers-contrib/features/starship",
+        "./features/mise",
+        "./features/sheldon",
+        "./features/keychain"
+    ],
+    "postCreateCommand": "/usr/local/share/dotfiles-dev/post-create.sh"
+}
