@@ -3,6 +3,12 @@
   extends: ['github>marcusrbrown/renovate-config#v2'],
   packageRules: [
     {
+      description: 'Enable patch updates for some managers.',
+      mmatchManagers: ['devcontainer', 'dockerfile', 'docker-compose'],
+      matchUpdateTypes: ['patch'],
+      enabled: true,
+    },
+    {
       description: 'Enable SemVer pinning of @bfra-me GitHub actions, reusable workflows, and Renovate config presets.',
       matchDatasources: ['github-tags'],
       matchPackageNames: ['bfra-me/**'],
