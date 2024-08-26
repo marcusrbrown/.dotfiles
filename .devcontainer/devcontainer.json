@@ -74,5 +74,7 @@
     },
     "remoteUser": "vscode",
     "workspaceFolder": "/home/vscode",
-    "workspaceMount": "source=dotfiles-dev,target=${containerWorkspaceFolder},type=volume,consistency=cached"
+    "workspaceMount": "source=dotfiles-dev,target=${containerWorkspaceFolder},type=volume,consistency=cached",
+
+    "updateContentCommand": "npm install -g @devcontainers/cli"
 }
