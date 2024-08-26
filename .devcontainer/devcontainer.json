@@ -20,10 +20,10 @@
         "ghcr.io/lukewiwa/features/shellcheck:0.2.3": {},
         "ghcr.io/devcontainers-contrib/features/shfmt:1.0.0": {},
         "ghcr.io/devcontainers-contrib/features/starship:1.0.9": {},
-        "./local-features/mise": {},
-        "./local-features/sheldon": {},
-        "./local-features/keychain": {},
-        "./local-features/dotfiles-dev": {}
+        "./features/mise": {},
+        "./features/sheldon": {},
+        "./features/keychain": {},
+        "./features/dotfiles-dev": {}
     },
 
     "customizations": {
@@ -68,6 +68,7 @@
         "ZDOTDIR": "${containerWorkspaceFolder}/.config/zsh"
     },
     "remoteEnv": {
+        "GH_TOKEN": "${localEnv:GH_TOKEN}",
         "GIT_DIR": "${containerWorkspaceFolder}/.dotfiles",
         "GIT_WORK_TREE": "${containerWorkspaceFolder}"
     },

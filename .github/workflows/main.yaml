@@ -31,8 +31,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: devcontainers/ci@a56d055efecd725e8cfe370543b6071b79989cc8 # v0.3.1900000349
         with:
-          env: |
-            GH_TOKEN: ${{ env.GH_TOKEN }}
           runCmd: 'ls -laFh && env | sort && mount && ls -laFh /'
 
   lint:

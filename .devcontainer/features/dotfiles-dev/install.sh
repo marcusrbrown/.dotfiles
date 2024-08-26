@@ -5,7 +5,6 @@ set -e
 USERNAME="${USERNAME:-"automatic"}"
 
 DOTFILES_DEV_PATH="/usr/local/share/dotfiles-dev"
-DEBUG_ENV_FILE="${DOTFILES_DEV_PATH}/debug.env"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo -e 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
@@ -60,24 +59,24 @@ GIT_DIR="${GIT_DIR:-${HOME}/.dotfiles}"
 GIT_WORK_TREE="${GIT_WORK_TREE:-${HOME}}"
 export GIT_DIR GIT_WORK_TREE
 
-if ! git ls-files -- ~/.dotfiles >/dev/null 2>&1; then
+if ! git ls-files -- "$GIT_DIR" >/dev/null 2>&1; then
     echo "Cloning dotfiles into bare repo ‘${GIT_DIR}’..."
-    if type gh >/dev/null 2>&1; then
+    if [ -n "$GH_TOKEN" ] && type gh >/dev/null 2>&1; then
         gh repo clone marcusrbrown/.dotfiles "$GIT_DIR" -- --bare 2>&1 | sed 's/^/    /'
     else
         git clone --bare https://github.com:marcusrbrown/.dotfiles.git "$GIT_DIR" 2>&1 | sed 's/^/    /'
     fi
 fi
 
-if [ ! -s "${GIT_DIR}/.gitconfig" ]; then
-    echo "Checking out dotfiles bare repo into ‘${GIT_WORK_TREE}’..."
-    git checkout --force main
-    git config --local include.path .gitconfig
+if git ls-files -- "$GIT_DIR" >/dev/null 2>&1; then
+    if [ ! -s "${GIT_DIR}/.gitconfig" ]; then
+        echo "Checking out dotfiles bare repo into ‘${GIT_WORK_TREE}’..."
+        git checkout --force main
+        git config --local include.path .gitconfig
+    fi
 fi
 EOF
 
 chmod 0755 "$POST_CREATE_SCRIPT_PATH"
-
-env | sort 2>&1 | tee "$DEBUG_ENV_FILE"
 
 echo "Done!"
