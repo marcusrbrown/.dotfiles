@@ -5,6 +5,7 @@ name: Main
   push:
     branches: [main, 'renovate/**']
   pull_request:
+    branches: [main]
     types: [opened, synchronize, ready_for_review, reopened]
   workflow_dispatch:
 
