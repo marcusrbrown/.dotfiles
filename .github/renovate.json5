@@ -4,7 +4,7 @@
   packageRules: [
     {
       description: 'Enable patch updates for some managers.',
-      mmatchManagers: ['devcontainer', 'dockerfile', 'docker-compose'],
+      matchManagers: ['devcontainer', 'dockerfile', 'docker-compose'],
       matchUpdateTypes: ['patch'],
       enabled: true,
     },
@@ -22,6 +22,4 @@
     },
   ],
   automergeType: 'pr',
-  prCreation: 'immediate',
-  rebaseWhen: 'behind-base-branch',
 }
