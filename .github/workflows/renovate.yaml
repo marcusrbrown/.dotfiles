@@ -16,9 +16,14 @@ name: Renovate
         required: false
         type: boolean
         default: false
+  workflow_run:
+    workflows: ['CI']
+    branches: ['main']
+    types: ['completed']
 
 jobs:
   renovate:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     name: Renovate
     secrets: inherit
     uses: marcusrbrown/.github/.github/workflows/renovate.yaml@main
