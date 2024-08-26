@@ -76,5 +76,5 @@
     "workspaceFolder": "/home/vscode",
     "workspaceMount": "source=dotfiles-dev,target=${containerWorkspaceFolder},type=volume,consistency=cached",
 
-    "updateContentCommand": "npm install -g @devcontainers/cli"
+    "updateContentCommand": "mise install --yes"
 }
