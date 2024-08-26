@@ -53,8 +53,6 @@ EOF
 tee -a "$POST_CREATE_SCRIPT_PATH" > /dev/null \
 << 'EOF'
 
-env | sort
-
 GIT_DIR="${GIT_DIR:-${HOME}/.dotfiles}"
 GIT_WORK_TREE="${GIT_WORK_TREE:-${HOME}}"
 export GIT_DIR GIT_WORK_TREE
@@ -62,9 +60,9 @@ export GIT_DIR GIT_WORK_TREE
 if ! git ls-files -- "$GIT_DIR" >/dev/null 2>&1; then
     echo "Cloning dotfiles into bare repo ‘${GIT_DIR}’..."
     if [ -n "$GH_TOKEN" ] && type gh >/dev/null 2>&1; then
-        gh repo clone marcusrbrown/.dotfiles "$GIT_DIR" -- --bare 2>&1 | sed 's/^/    /'
+        gh repo clone marcusrbrown/.dotfiles "$GIT_DIR" -- --bare 2>&1
     else
-        git clone --bare https://github.com:marcusrbrown/.dotfiles.git "$GIT_DIR" 2>&1 | sed 's/^/    /'
+        git clone --bare https://github.com:marcusrbrown/.dotfiles.git "$GIT_DIR" 2>&1
     fi
 fi
 
