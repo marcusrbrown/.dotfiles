@@ -55,9 +55,9 @@
     },
 
     "containerEnv": {
-        "ANDROID_SDK_HOME": "${containerWorkspaceFolder}/.local/share/android",
         "DC_NMMODE": "hardlinks-local",
         "GNUPGHOME": "${containerWorkspaceFolder}/.config/gnupg",
+        "MISE_DATA_DIR": "${containerWorkspaceFolder}/.local/share/mise",
         "NPM_CONFIG_USERCONFIG": "${containerWorkspaceFolder}/.config/npm/npmrc",
         "RANDFILE": "${containerWorkspaceFolder}/.cache/randfile",
         "TERMINFO": "${containerWorkspaceFolder}/.local/share/terminfo",
@@ -74,7 +74,5 @@
     },
     "remoteUser": "vscode",
     "workspaceFolder": "/home/vscode",
-    "workspaceMount": "source=dotfiles-dev,target=${containerWorkspaceFolder},type=volume,consistency=cached",
-
-    "updateContentCommand": "mise install --yes"
+    "workspaceMount": "source=dotfiles-dev,target=${containerWorkspaceFolder},type=volume,consistency=cached"
 }
