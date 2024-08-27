@@ -9,6 +9,7 @@
 # Include the contents of the repository
 !/.config/
 !/.devcontainer/
+/.devcontainer/.*Marker
 !/.dotfiles/
 /.dotfiles/*
 !/.dotfiles/docs/
