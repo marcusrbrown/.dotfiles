@@ -1,0 +1,18 @@
+# Update repository settings to match the definitions in .github/settings.yml.
+---
+name: Update Repo Settings
+
+'on':
+  push:
+    branches: [main]
+  schedule:
+    - cron: '37 04 * * *' # 4:37 UTC
+  workflow_dispatch:
+
+jobs:
+  update-repo-settings:
+    name: Update Repo Settings
+    secrets:
+      APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
+      APPLICATION_PRIVATE_KEY: ${{ secrets.APPLICATION_PRIVATE_KEY }}
+    uses: bfra-me/.github/.github/workflows/update-repo-settings.yaml@f0d65ebf9ea4f371005e8d651c893d4951efaac5 # v1.10.0
