@@ -125,6 +125,7 @@ if [ "$BASH" ]; then
   export HISTTIMEFORMAT='[%F %T] '
 elif [ "$ZSH_VERSION" ]; then
   export HISTFILE="$XDG_STATE_HOME"/zsh/history
+  export HISTSIZE
   export SAVEHIST=$HISTSIZE
   # Comes from OMZ/lib/history.zsh
   export HIST_STAMPS="%F %T "
@@ -134,18 +135,7 @@ fi
 # GnuPG
 
 # https://www.gnupg.org/documentation/manuals/gnupg/GPG-Configuration.html
-export GNUPGHOME="$XDG_CONFIG_HOME/gnupg"
-
-# Set up gpg-agent to work with ssh
-# shellcheck disable=SC2155
-export GPG_TTY=$(tty)
-if command_exists gpgconf && [[ $(gpgconf --list-options gpg-agent 2>/dev/null | awk -F: '$1=="enable-ssh-support" {print $10}') = 1 ]]; then
-  unset SSH_AGENT_PID
-  if [[ "${gnupg_SSH_AUTH_SOCK_by:-0}" -ne $$ ]]; then
-    # shellcheck disable=SC2155
-    export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
-  fi
-fi
+export GNUPGHOME=${GNUPGHOME:-"$XDG_CONFIG_HOME/gnupg"}
 
 # Go
 
