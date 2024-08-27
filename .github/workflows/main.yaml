@@ -17,8 +17,8 @@ permissions:
   contents: read
 
 jobs:
-  devcontainer:
-    name: Build and test devcontainer
+  devcontainer-ci:
+    name: Devcontainer CI
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.pull_request.draft != true
     steps:
