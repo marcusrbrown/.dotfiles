@@ -76,5 +76,5 @@
     "workspaceFolder": "/home/vscode",
     "workspaceMount": "source=dotfiles-dev,target=${containerWorkspaceFolder},type=volume,consistency=cached",
 
-    "updateContentCommand": "zsh -c 'mise install --yes && eval \"$(mise activate zsh)\" && npm install -g @devcontainers/cli'"
+    "updateContentCommand": "zsh -c 'mise use --global --yes node && npm install -g @devcontainers/cli'"
 }
