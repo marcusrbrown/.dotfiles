@@ -58,7 +58,9 @@
         "ANDROID_SDK_HOME": "${containerWorkspaceFolder}/.local/share/android",
         "DC_NMMODE": "hardlinks-local",
         "GNUPGHOME": "${containerWorkspaceFolder}/.config/gnupg",
+        "MISE_DATA_DIR": "${containerWorkspaceFolder}/.local/share/mise",
         "NPM_CONFIG_USERCONFIG": "${containerWorkspaceFolder}/.config/npm/npmrc",
+        "PATH": "${containerWorkspaceFolder}/.local/share/mise/shims:$PATH",
         "RANDFILE": "${containerWorkspaceFolder}/.cache/randfile",
         "TERMINFO": "${containerWorkspaceFolder}/.local/share/terminfo",
         "XDG_CONFIG_HOME": "${containerWorkspaceFolder}/.config",
@@ -76,5 +78,5 @@
     "workspaceFolder": "/home/vscode",
     "workspaceMount": "source=dotfiles-dev,target=${containerWorkspaceFolder},type=volume,consistency=cached",
 
-    "updateContentCommand": "zsh -c 'mise install --yes && mise exec -- npm install -g @devcontainers/cli'"
+    "updateContentCommand": "mise install --yes && npm install -g @devcontainers/cli"
 }
