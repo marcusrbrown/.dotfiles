@@ -1,5 +1,5 @@
 # What protocol to use when performing git operations. Supported values: ssh, https
-git_protocol: ssh
+git_protocol:
 # What editor gh should run when creating issues, pull requests, etc. If blank, will refer to environment.
 editor:
 # When to interactively prompt. This is a global config that cannot be overridden by hostname. Supported values: enabled, disabled
@@ -9,4 +9,4 @@ pager: bat
 # Aliases allow you to create nicknames for gh commands
 aliases:
   co: pr checkout
-version: "1"
+version: '1'
