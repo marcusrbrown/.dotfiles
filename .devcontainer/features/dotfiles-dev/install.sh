@@ -53,6 +53,11 @@ EOF
 tee -a "$POST_CREATE_SCRIPT_PATH" > /dev/null \
 << 'EOF'
 
+if [ "$GH_TOKEN" == "" ]; then
+    unset GH_TOKEN
+    echo "The GH_TOKEN environment variable is not set. The script will attempt to clone the dotfiles repo without it."
+fi
+
 GIT_DIR="${GIT_DIR:-${HOME}/.dotfiles}"
 GIT_WORK_TREE="${GIT_WORK_TREE:-${HOME}}"
 export GIT_DIR GIT_WORK_TREE
