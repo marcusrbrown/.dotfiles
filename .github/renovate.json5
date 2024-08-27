@@ -4,7 +4,7 @@
   packageRules: [
     {
       description: 'Enable patch updates for some managers.',
-      matchManagers: ['devcontainer', 'dockerfile', 'docker-compose'],
+      matchManagers: ['devcontainer', 'dockerfile', 'docker-compose', 'mise'],
       matchUpdateTypes: ['patch'],
       enabled: true,
     },
