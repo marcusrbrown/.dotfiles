@@ -74,7 +74,5 @@
     },
     "remoteUser": "vscode",
     "workspaceFolder": "/home/vscode",
-    "workspaceMount": "source=dotfiles-dev,target=${containerWorkspaceFolder},type=volume,consistency=cached",
-
-    "updateContentCommand": "zsh -c 'mise use --global --yes node && npm install -g @devcontainers/cli'"
+    "workspaceMount": "source=dotfiles-dev,target=${containerWorkspaceFolder},type=volume,consistency=cached"
 }
