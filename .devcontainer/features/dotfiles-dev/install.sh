@@ -46,7 +46,7 @@ POST_CREATE_SCRIPT_PATH="${DOTFILES_DEV_PATH}/post-create.sh"
 
 tee "$POST_CREATE_SCRIPT_PATH" > /dev/null \
 << EOF
-#!/bin/sh
+#!/bin/bash
 set -e
 EOF
 
