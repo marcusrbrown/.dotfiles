@@ -20,19 +20,19 @@ chmod +x /etc/profile.d/00-restore-env.sh
 if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
     if [ "${_REMOTE_USER}" != "root" ]; then
         USERNAME="${_REMOTE_USER}"
-    else
+  else
         USERNAME=""
         POSSIBLE_USERS=("devcontainer" "vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
         for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
             if id -u ${CURRENT_USER} > /dev/null 2>&1; then
                 USERNAME=${CURRENT_USER}
                 break
-            fi
-        done
+      fi
+    done
         if [ "${USERNAME}" = "" ]; then
             USERNAME=vscode
-        fi
     fi
+  fi
 elif [ "${USERNAME}" = "none" ] || ! id -u ${USERNAME} > /dev/null 2>&1; then
     USERNAME=root
 fi
@@ -67,7 +67,7 @@ if ! git ls-files -- "$GIT_DIR" >/dev/null 2>&1; then
     if [ -n "$GH_TOKEN" ] && type gh >/dev/null 2>&1; then
         gh repo clone marcusrbrown/.dotfiles "$GIT_DIR" -- --bare 2>&1
     else
-        git clone --bare https://github.com:marcusrbrown/.dotfiles.git "$GIT_DIR" 2>&1
+        git clone --bare https://github.com/marcusrbrown/.dotfiles.git "$GIT_DIR" 2>&1
     fi
 fi
 
