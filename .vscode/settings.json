@@ -23,9 +23,11 @@
         "**/.config/bash/*": "shellscript",
         "**/.config/bash/inputrc": "properties",
         "**/.ssh/config.d/*.conf": "ssh_config",
+        "**/.config/gem/config": "yaml",
         "**/.config/git/config": "properties",
         "**/.config/git/ignore": "ignore",
         "**/.config/git/attributes": "properties",
+        "**/.config/yarn/config": "yaml",
         "**/sheldon/plugins.lock": "toml",
         ".gitconfig.local": "properties",
         ".bash*": "shellscript",
@@ -70,7 +72,9 @@
         "**/*.zshenv": true,
         "**/zshenv": true,
         "**/*.zsh-theme": true
-    }
+    },
+
+    "shellformat.flag": "-bn -ci -i=4 -kp -sr"
 
     // Keep sorted entries above this line
 }

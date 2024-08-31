@@ -33,8 +33,12 @@ indent_size = 4
 indent_size  = 4
 indent_style = tab
 
-[*.{sh,bash,csh,tcsh,zsh}]
+[*.{sh,bash,csh,tcsh}]
 indent_size = 4
+indent_style = space
+
+[*.{fish,zsh}]
+indent_size = 2
 indent_style = space
 
 [*.{go,rb,rs,sql,swift}]

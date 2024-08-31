@@ -1,5 +1,39 @@
 #!/usr/bin/env bash
 
+# Path utilities
+
+# Remove path from PATH
+remove_from_path() {
+    PATH="$(echo "$PATH" | sed -e "s@:$1@@g" -e "s@$1:@@g" -e "s@$1@@g")"
+}
+
+# Add path to the start of PATH
+prepend_to_path() {
+    remove_from_path "$1"
+    [ -d "$1" ] || return
+    PATH="$1:${PATH}"
+}
+
+# Add path to the end of PATH
+append_to_path() {
+    remove_from_path "$1"
+    [ -d "$1" ] || return
+    PATH="${PATH}:$1"
+}
+
+# Check if a command exists, pass multiple commands to check for
+command_exists() {
+    [ -n "$(command -v "$@" 2>/dev/null)" ] && return 0
+    return 1
+}
+
+# Ensure a directory exists
+ensure_dir() {
+    local mode=${2:-0750}
+    # shellcheck disable=SC2174
+    [ -d "$1" ] || mkdir -m "$mode" -p "$1"
+}
+
 # Locale
 
 : "${LANG:=en_US.UTF-8}"
@@ -9,52 +43,26 @@ LC_ALL="$LANG"
 export LANG LANGUAGE LC_CTYPE LC_ALL
 
 # XDG directories
-export XDG_CACHE_HOME="$HOME/.cache"
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_DATA_HOME="$HOME/.local/share"
-export XDG_STATE_HOME="$HOME/.local/state"
 
-[ -d "$XDG_CONFIG_HOME" ] || mkdir -m 0750 "$XDG_CONFIG_HOME"
-[ -d "$XDG_CACHE_HOME" ]  || mkdir -m 0750 "$XDG_CACHE_HOME"
-[ -d "$HOME/.local" ]     || mkdir -m 0750 "$HOME/.local"
-[ -d "$XDG_DATA_HOME" ]   || mkdir -m 0750 "$XDG_DATA_HOME"
-[ -d "$XDG_STATE_HOME" ]  || mkdir -m 0750 "$XDG_STATE_HOME"
+export XDG_CACHE_HOME=${XDG_CACHE_HOME:-"$HOME/.cache"}
+export XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-"$HOME/.config"}
+export XDG_DATA_HOME=${XDG_DATA_HOME:-"$HOME/.local/share"}
+export XDG_STATE_HOME=${XDG_STATE_HOME:-"$HOME/.local/state"}
 
-# Path utilities
-
-# Remove path from PATH
-remove_from_path() {
-  new_path="$(echo "$PATH" | sed -e "s@:$1@@g" -e "s@$1:@@g" -e "s@$1@@g")"
-  PATH="$new_path"
-}
-
-# Add path to the start of PATH
-prepend_to_path() {
-  [ -d "$1" ] || return
-  remove_from_path "$1"
-  PATH="$1:${PATH}"
-}
-
-# Add path to the end of PATH
-append_to_path() {
-  [ -d "$1" ] || return
-  remove_from_path "$1"
-  PATH="${PATH}:$1"
-}
-
-# Check if a command exists
-command_exists() {
-  command -v "$1" >/dev/null 2>&1
-}
+ensure_dir "$XDG_CACHE_HOME"
+ensure_dir "$XDG_CONFIG_HOME"
+ensure_dir "$XDG_DATA_HOME"
+ensure_dir "$XDG_STATE_HOME"
 
 # detect remote shell
 if [ -n "$SSH_CONNECTION" ]; then
-  export REMOTE=1
+    export REMOTE=1
 else
-  unset REMOTE
+    unset REMOTE
 fi
 
 # Kernel and system identification.
+
 # Don't set any variables named OS, OS_TYPE, or HOSTTYPE, these may already exist.
 # Strip any numbers trailing the kernel, i.e. remove "32..." from "mingw32..."
 HOST_OS=$(uname -s | sed -e 's/  */-/g;y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/;s/[0-9].*//')
@@ -63,42 +71,26 @@ HOST_VERSION=$(expr "$(uname -r)" : '[^0-9]*\([0-9]*\.[0-9]*\)')
 export HOST_PLATFORM="${HOST_MACHINE}-${HOST_OS}-${HOST_VERSION}"
 
 if [[ "$HOST_OS" == "darwin" ]]; then
-  export HOMEBREW_AUTOREMOVE=1
-  export HOMEBREW_CASK_OPTS="--no-quarantine"
-  export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
-  export HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=1
-  # Enable Homebrew developer mode
-  export HOMEBREW_DEVELOPER=1
-  # Disable 'anonymous' analytics
-  export HOMEBREW_NO_ANALYTICS=1
-  # Remove previously installed versions of insalled/upgraded formulae
-  export HOMEBREW_INSTALL_CLEANUP=1
-  # Do not permit redirects from HTTPS to HTTP
-  export HOMEBREW_NO_INSECURE_REDIRECT=1
-  # Do not show environment variable hints
-  export HOMEBREW_NO_ENV_HINTS=1
+    export HOMEBREW_AUTOREMOVE=1
+    export HOMEBREW_CASK_OPTS="--no-quarantine"
+    export HOMEBREW_CLEANUP_MAX_AGE_DAYS=30
+    export HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=1
+    # Enable Homebrew developer mode
+    export HOMEBREW_DEVELOPER=1
+    # Disable 'anonymous' analytics
+    export HOMEBREW_NO_ANALYTICS=1
+    # Remove previously installed versions of insalled/upgraded formulae
+    export HOMEBREW_INSTALL_CLEANUP=1
+    # Do not permit redirects from HTTPS to HTTP
+    export HOMEBREW_NO_INSECURE_REDIRECT=1
+    # Do not show environment variable hints
+    export HOMEBREW_NO_ENV_HINTS=1
 
-  PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
-  [ ! -x "$PREFIX/bin/brew" ] && PREFIX="/usr/local"
-  if [ -x "$PREFIX/bin/brew" ]; then
-    eval "$("$PREFIX"/bin/brew shellenv)"
-  fi
-fi
-
-# Local tools and utilities
-prepend_to_path "$HOME/.local/bin"
-
-# ASDF
-
-export ASDF_CONFIG_FILE="$XDG_CONFIG_HOME"/asdf/asdfrc
-export ASDF_DATA_DIR="$XDG_DATA_HOME"/asdf
-if [ -d "$ASDF_DATA_DIR/bin" ]; then
-  prepend_to_path "$ASDF_DATA_DIR/bin"
-fi
-
-# Add the path to `mise` shims
-if [ -d "$XDG_DATA_HOME/mise/shims" ]; then
-  prepend_to_path "$XDG_DATA_HOME/mise/shims"
+    PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
+    [ ! -x "$PREFIX/bin/brew" ] && PREFIX="/usr/local"
+    if [ -x "$PREFIX/bin/brew" ]; then
+        eval "$("$PREFIX"/bin/brew shellenv)"
+    fi
 fi
 
 # Zsh
@@ -112,23 +104,23 @@ export ZDOTDIR="$XDG_CONFIG_HOME"/zsh
 [ ! -d "$XDG_STATE_HOME"/bash ] && mkdir -m 0750 "$XDG_STATE_HOME"/bash
 
 # https://www.gnu.org/software/bash/manual/html_node/Readline-Init-File.html
-export INPUTRC="$XDG_CONFIG_HOME"/readline/inputrc
+export INPUTRC=${INPUTRC:-"$XDG_CONFIG_HOME"/readline/inputrc}
 
 # History
 
 HISTSIZE=100000
 if [ "$BASH" ]; then
-  export HISTFILE="$XDG_STATE_HOME"/bash/history
-  export HISTFILESIZE=1000000000
-  export HISTCONTROL=ignoreboth
-  export HISTIGNORE="&:cd:ls:ll:la:lal:l:[bf]g:exit:clear:pwd"
-  export HISTTIMEFORMAT='[%F %T] '
+    export HISTFILE="$XDG_STATE_HOME"/bash/history
+    export HISTFILESIZE=1000000000
+    export HISTCONTROL=ignoreboth
+    export HISTIGNORE="&:cd:ls:ll:la:lal:l:[bf]g:exit:clear:pwd"
+    export HISTTIMEFORMAT='[%F %T] '
 elif [ "$ZSH_VERSION" ]; then
-  export HISTFILE="$XDG_STATE_HOME"/zsh/history
-  export HISTSIZE
-  export SAVEHIST=$HISTSIZE
-  # Comes from OMZ/lib/history.zsh
-  export HIST_STAMPS="%F %T "
+    export HISTFILE="$XDG_STATE_HOME"/zsh/history
+    export HISTSIZE
+    export SAVEHIST=$HISTSIZE
+    # Comes from OMZ/lib/history.zsh
+    export HIST_STAMPS="%F %T "
 fi
 [ ! -f "$HISTFILE" ] && touch "$HISTFILE"
 
@@ -136,145 +128,220 @@ fi
 
 # https://www.gnupg.org/documentation/manuals/gnupg/GPG-Configuration.html
 export GNUPGHOME=${GNUPGHOME:-"$XDG_CONFIG_HOME/gnupg"}
+ensure_dir "$GNUPGHOME"
 
 # Go
 
 if command_exists go; then
-  export GOPATH="$XDG_DATA_HOME"/go
-  if command_exists go; then
-    : "${GOROOT:=$(go env GOROOT)}"
-  elif command_exists brew && [[ -d "$(brew --prefix golang)/libexec" ]]; then
-    : "${GOROOT:=$(brew --prefix golang)/libexec}"
-  elif [[ -d /usr/local/go ]]; then
-    : "${GOROOT:=/usr/local/go}"
-  fi
-  export GOROOT
-  test -d "$GOPATH" || mkdir -p "$GOPATH"
-  test -d "$GOPATH/src/github.com" || mkdir -p "$GOPATH/src/github.com"
-  append_to_path "$GOPATH/bin"
-  append_to_path "$GOROOT/bin"
+    export GOPATH=${GOPATH:-"$XDG_DATA_HOME"/go}
+    if command_exists go; then
+        : "${GOROOT:=$(go env GOROOT)}"
+    elif command_exists brew && [[ -d "$(brew --prefix golang)/libexec" ]]; then
+        : "${GOROOT:=$(brew --prefix golang)/libexec}"
+    elif [[ -d /usr/local/go ]]; then
+        : "${GOROOT:=/usr/local/go}"
+    fi
+    export GOROOT
+    if [ ! -d "$GOPATH/src/github.com" ]; then
+        mkdir -p "$GOPATH/src/github.com"
+    fi
+    append_to_path "$GOPATH/bin"
+    append_to_path "$GOROOT/bin"
 fi
 
 # Node.js and npm
 
 if command_exists node; then
-  if [[ "$HOST_OS" == "darwin" ]]; then
-    export NODE_EXTRA_CA_CERTS="$PREFIX/etc/ca-certificates/cert.pem"
-  fi
-  export NODE_REPL_HISTORY="$XDG_DATA_HOME"/node_repl_history
+    if [[ "$HOST_OS" == "darwin" ]]; then
+        export NODE_EXTRA_CA_CERTS="$PREFIX/etc/ca-certificates/cert.pem"
+    fi
+    export NODE_REPL_HISTORY="$XDG_CACHE_HOME"/node_repl_history
 fi
 
-export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
-[ ! -d "$XDG_CONFIG_HOME"/npm ] && mkdir -m 0750 "$XDG_CONFIG_HOME"/npm
+if command_exists npm; then
+    ensure_dir "$XDG_CONFIG_HOME"/npm
+    export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+fi
 
-export NVM_DIR="$XDG_DATA_HOME"/nvm
+if [ -z "$NVM_DIR" ] || [ ! -d "$NVM_DIR" ]; then
+    export NVM_DIR="${NVM_DIR:-"$XDG_DATA_HOME"/nvm}"
+    ensure_dir "$NVM_DIR"
+fi
 
-export TS_NODE_HISTORY="$XDG_STATE_HOME"/ts_node_repl_history
+if command_exists ts-node; then
+    export TS_NODE_HISTORY=${TS_NODE_HISTORY:-"$XDG_STATE_HOME"/ts_node_repl_history}
+fi
+
+# pnpm
+
+if command_exists pnpm; then
+    configure_pnpm_dirs() {
+        ensure_dir "$XDG_CACHE_HOME"/pnpm
+        ensure_dir "$XDG_DATA_HOME"/pnpm
+        ensure_dir "$XDG_DATA_HOME"/pnpm/global
+        ensure_dir "$XDG_STATE_HOME"/pnpm
+
+        if [ -n "$PNPM_HOME" ]; then
+            prepend_to_path "$PNPM_HOME"
+        else
+            prepend_to_path "$XDG_DATA_HOME/pnpm"
+        fi
+
+        # See https://pnpm.io/npmrc
+        pnpm config set --global cache-dir "$XDG_CACHE_HOME/pnpm"
+        pnpm config set --global global-bin-dir "$XDG_DATA_HOME/pnpm"
+        pnpm config set --global global-dir "$XDG_DATA_HOME/pnpm/global"
+        pnpm config set --global state-dir "$XDG_STATE_HOME/pnpm"
+        pnpm config set --global store-dir "$XDG_DATA_HOME/pnpm/store"
+    }
+
+    # If the PNPM_HOME variable is empty or the directory doesn't exist, set global config to use XDG directories
+    if [ -z "$PNPM_HOME" ] || [ ! -d "$PNPM_HOME" ]; then
+        configure_pnpm_dirs
+    fi
+
+    unset -f configure_pnpm_dirs
+fi
 
 # Python
 
-export IPYTHONDIR="$XDG_CONFIG_HOME"/ipython
-
 if command_exists pipx; then
-  export PIPX_HOME="$XDG_DATA_HOME"/pipx
-  export PIPX_BIN_DIR="$PIPX_HOME"/bin
-  prepend_to_path "$PIPX_BIN_DIR"
+    export PIPX_HOME=${PIPX_HOME:-"$XDG_DATA_HOME"/pipx}
+    ensure_dir "$PIPX_HOME"
+    export PIPX_BIN_DIR="$PIPX_HOME"/bin
+    prepend_to_path "$PIPX_BIN_DIR"
 fi
 
-export POETRY_CACHE_DIR="$XDG_CACHE_HOME/poetry"
-export POETRY_CONFIG_DIR="$XDG_CONFIG_HOME/poetry"
-export POETRY_DATA_DIR="$XDG_DATA_HOME/poetry"
-export POETRY_VIRTUALENVS_PATH="$XDG_DATA_HOME/python/poetry"
+if command_exists poetry; then
+    export POETRY_CACHE_DIR=${POETRY_CACHE_DIR:-"$XDG_CACHE_HOME/poetry"}
+    ensure_dir "$POETRY_CACHE_DIR"
+    export POETRY_CONFIG_DIR="$XDG_CONFIG_HOME/poetry"
+    export POETRY_DATA_DIR=${POETRY_DATA_DIR:-"$XDG_DATA_HOME/poetry"}
+    ensure_dir "$POETRY_DATA_DIR"
+    export POETRY_VIRTUALENVS_PATH=${POETRY_VIRTUALENVS_PATH:-"$XDG_DATA_HOME/python/poetry"}
+    ensure_dir "$POETRY_VIRTUALENVS_PATH"
+fi
 
 if [ -z "$VIRTUAL_ENV" ] && command_exists pyenv; then
-  export PYENV_ROOT="$XDG_DATA_HOME"/pyenv
-  export PYENV_VIRTUALENV_DISABLE_PROMPT=1
-  eval "$(pyenv init --no-push-path -)"
+    export PYENV_ROOT="$XDG_DATA_HOME"/pyenv
+    export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+    eval "$(pyenv init --no-push-path -)"
 fi
 
-export PYLINTHOME="$XDG_CACHE_HOME"/pylint
-export PYTHONHISTORY="$XDG_CACHE_HOME"/python_history
+if command_exists pylint; then
+    export PYLINTHOME=${PYLINTHOME:-"$XDG_CACHE_HOME"/pylint}
+    ensure_dir "$PYLINTHOME"
+    export PYLINTRC="$XDG_CONFIG_HOME"/pylint/pylintrc
+    ensure_dir "$(dirname "$PYLINTRC")"
+fi
+
+if command_exists python; then
+    export PYTHONHISTORY="$XDG_CACHE_HOME"/python_history
+fi
 
 export WORKON_HOME="$XDG_DATA_HOME"/virtualenvs
+ensure_dir "$WORKON_HOME"
 
 # Rust
 
-export CARGO_HOME="$XDG_DATA_HOME"/cargo
-if [ -d "$CARGO_HOME/bin" ]; then
-  prepend_to_path "$CARGO_HOME/bin"
+if command_exists cargo; then
+    export CARGO_HOME=${CARGO_HOME:-"$XDG_DATA_HOME"/cargo}
+    prepend_to_path "$CARGO_HOME/bin"
 fi
-export RUSTUP_HOME="$XDG_DATA_HOME"/rustup
+
+if command_exists rustup; then
+    export RUSTUP_HOME=${RUSTUP_HOME:-"$XDG_DATA_HOME"/rustup}
+fi
 
 # cURL
 
 if command_exists brew && [[ -d "$(brew --prefix curl)/bin" ]]; then
-  prepend_to_path "$(brew --prefix curl)/bin"
+    prepend_to_path "$(brew --prefix curl)/bin"
 fi
 
 # Ruby
 
 if command_exists brew && [[ -d "$(brew --prefix ruby)/bin" ]]; then
-  prepend_to_path "$(brew --prefix ruby)/bin"
+    prepend_to_path "$(brew --prefix ruby)/bin"
 fi
 
-export BUNDLE_USER_CACHE="$XDG_CACHE_HOME"/bundle
-export BUNDLE_USER_CONFIG="$XDG_CONFIG_HOME"/bundle
-export BUNDLE_USER_PLUGIN="$XDG_DATA_HOME"/bundle
+if command_exists bundle; then
+    export BUNDLE_USER_CACHE=${BUNDLE_USER_CACHE:-"$XDG_CACHE_HOME"/bundle}
+    export BUNDLE_USER_CONFIG=${BUNDLE_USER_CONFIG:-"$XDG_CONFIG_HOME"/bundle}
+    export BUNDLE_USER_PLUGIN=${BUNDLE_USER_PLUGIN:-"$XDG_DATA_HOME"/bundle}
+fi
 
 if command_exists gem; then
-  export GEMRC="$XDG_CONFIG_HOME"/gem/config
-  # shellcheck disable=SC2155
-  export GEM_HOME="$XDG_DATA_HOME"/gem
-  export GEM_SPEC_CACHE="$XDG_CACHE_HOME"/gem
-  append_to_path "$GEM_HOME/bin"
+    export GEMRC="$XDG_CONFIG_HOME"/gem/config
+    # shellcheck disable=SC2155
+    export GEM_HOME=${GEM_HOME:-"$XDG_DATA_HOME"/gem}
+    export GEM_SPEC_CACHE=${GEM_SPEC_CACHE:-"$XDG_CACHE_HOME"/gem}
+    append_to_path "$GEM_HOME/bin"
 fi
 
 # Platformio
 
-export PLATFORMIO_CACHE_DIR="$XDG_CACHE_HOME"/platformio
-export PLATFORMIO_CORE_DIR="$XDG_DATA_HOME"/platformio
+if command_exists platformio pio; then
+    export PLATFORMIO_CACHE_DIR=${PLATFORMIO_CACHE_DIR:-"$XDG_CACHE_HOME"/platformio}
+    export PLATFORMIO_CORE_DIR=${PLATFORMIO_CORE_DIR:-"$XDG_DATA_HOME"/platformio}
 
-export PLATFORMIO_SETTING_ENABLE_TELEMETRY=No
+    export PLATFORMIO_SETTING_ENABLE_TELEMETRY=No
+fi
 
 # Android
 
 if [ -d "$HOME/Library/Android/sdk" ]; then
-  export ANDROID_SDK_HOME="$XDG_DATA_HOME"/android
-  export ANDROID_HOME="$HOME"/Library/Android/sdk
-  append_to_path "$ANDROID_HOME/tools"
-  append_to_path "$ANDROID_HOME/platform-tools"
+    export ANDROID_SDK_HOME=${ANDROID_SDK_HOME:-"$XDG_DATA_HOME"/android}
+    export ANDROID_HOME=${ANDROID_HOME:-"$HOME"/Library/Android/sdk}
+    append_to_path "$ANDROID_HOME/tools"
+    append_to_path "$ANDROID_HOME/platform-tools"
 fi
 
 # Pagers
 
 if command_exists bat; then
-  export MANPAGER="sh -c 'col -bx | bat -l man --style=grid --pager \"less -R -M -i +Gg\"'"
-  export MANROFFOPT='-c'
+    export MANPAGER="sh -c 'col -bx | bat -l man --style=grid --pager \"less -R -M -i +Gg\"'"
+    export MANROFFOPT='-c'
 fi
 
-# Long options: --quit-if-one-screen --LONG-PROMPT --RAW-CONTROL-CHARS --chop-long-lines --ignore-case
-export LESS="-F -M -R -S -i"
-export LESSHISTFILE="$XDG_STATE_HOME"/less/history
-export LESSKEY="$XDG_CONFIG_HOME/lesskey/output"
+if command_exists less; then
+    # Long options: --quit-if-one-screen --LONG-PROMPT --RAW-CONTROL-CHARS --chop-long-lines --ignore-case
+    export LESS="-F -M -R -S -i"
+    export LESSHISTFILE=${LESSHISTFILE:-"$XDG_CACHE_HOME"/less/history}
+    export LESSKEY="$XDG_CONFIG_HOME"/less/lesskey
+fi
 
 # SQLite
-export SQLITE_HISTORY="$XDG_CACHE_HOME/sqlite_history"
 
-# Matplotlib
+if command_exists sqlite sqlite3; then
+    export SQLITE_HISTORY=${SQLITE_HISTORY:-"$XDG_DATA_HOME/sqlite_history"}
+fi
 
-export MPLCONFIGDIR="$XDG_CONFIG_HOME"/matplotlib
-if [ -d "$MPLCONFIGDIR" ] && [ ! -d "$XDG_CACHE_HOME/matplotlib" ]; then
-  mkdir -p "$XDG_CACHE_HOME/matplotlib"
+# ipython & Matplotlib
+
+if command_exists ipython; then
+    export IPYTHONDIR="$XDG_CONFIG_HOME"/ipython
+    export MPLCONFIGDIR=${MPLCONFIGDIR:-"$XDG_CONFIG_HOME"/matplotlib}
+    if [ -d "$MPLCONFIGDIR" ]; then
+        # If the matplotlib config directory exists, ensure the cache directory exists.
+        ensure_dir "$XDG_CACHE_HOME/matplotlib"
+    fi
 fi
 
 # Redis
 
-export REDISCLI_HISTFILE="$XDG_DATA_HOME"/redis/rediscli_history
-export REDISCLI_RCFILE="$XDG_CONFIG_HOME"/redis/redisclirc
+if command_exists redis-cli; then
+    export REDISCLI_HISTFILE=${REDISCLI_HISTFILE:-"$XDG_DATA_HOME"/redis/rediscli_history}
+    ensure_dir "$(dirname "$REDISCLI_HISTFILE")"
+    export REDISCLI_RCFILE=${REDISCLI_RCFILE:-"$XDG_CONFIG_HOME"/redis/redisclirc}
+    ensure_dir "$(dirname "$REDISCLI_RCFILE")"
+fi
 
 # IPFS
 
-export IPFS_PATH="$XDG_DATA_HOME"/ipfs
+if command_exists ipfs; then
+    export IPFS_PATH=${IPFS_PATH:-"$XDG_DATA_HOME"/ipfs}
+fi
 
 # AWS
 
@@ -285,9 +352,26 @@ export AWS_CONFIG_FILE="$XDG_CONFIG_HOME"/aws/config
 
 export AZURE_CONFIG_DIR="$XDG_DATA_HOME"/azure
 
-# Editors
+# ASDF
 
-export ATOM_HOME="$XDG_DATA_HOME"/atom
+if command_exists asdf; then
+    export ASDF_CONFIG_FILE="$XDG_CONFIG_HOME"/asdf/asdfrc
+    export ASDF_DATA_DIR="$XDG_DATA_HOME"/asdf
+    if [ -d "$ASDF_DATA_DIR/bin" ]; then
+        prepend_to_path "$ASDF_DATA_DIR/bin"
+    fi
+fi
+
+if command_exists mise; then
+    if [ -d "$XDG_DATA_HOME/mise/shims" ]; then
+        # Add the path to `mise` shims
+        prepend_to_path "$XDG_DATA_HOME/mise/shims"
+    fi
+fi
+
+# Local tools and utilities
+
+prepend_to_path "$HOME/.local/bin"
 
 # Clean up
 
@@ -295,4 +379,4 @@ unset PREFIX
 
 export PATH
 
-# vim: set ft=sh ts=2 sw=2 tw=80 et :
+# vim: set ft=sh ts=4 sw=4 tw=120 et :

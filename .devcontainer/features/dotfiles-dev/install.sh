@@ -20,19 +20,19 @@ chmod +x /etc/profile.d/00-restore-env.sh
 if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
     if [ "${_REMOTE_USER}" != "root" ]; then
         USERNAME="${_REMOTE_USER}"
-  else
+    else
         USERNAME=""
         POSSIBLE_USERS=("devcontainer" "vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
         for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
             if id -u ${CURRENT_USER} > /dev/null 2>&1; then
                 USERNAME=${CURRENT_USER}
                 break
-      fi
-    done
+            fi
+        done
         if [ "${USERNAME}" = "" ]; then
             USERNAME=vscode
+        fi
     fi
-  fi
 elif [ "${USERNAME}" = "none" ] || ! id -u ${USERNAME} > /dev/null 2>&1; then
     USERNAME=root
 fi
@@ -44,14 +44,12 @@ fi
 # --- Generate a 'post-create.sh' script to be executed by the 'postCreateCommand' lifecycle hook
 POST_CREATE_SCRIPT_PATH="${DOTFILES_DEV_PATH}/post-create.sh"
 
-tee "$POST_CREATE_SCRIPT_PATH" > /dev/null \
-<< EOF
+tee "$POST_CREATE_SCRIPT_PATH" > /dev/null << EOF
 #!/bin/bash
 set -e
 EOF
 
-tee -a "$POST_CREATE_SCRIPT_PATH" > /dev/null \
-<< 'EOF'
+tee -a "$POST_CREATE_SCRIPT_PATH" > /dev/null << 'EOF'
 
 if [ "$GH_TOKEN" == "" ]; then
     unset GH_TOKEN
