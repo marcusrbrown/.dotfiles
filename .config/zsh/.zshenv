@@ -1,13 +1,7 @@
 #!/usr/bin/env zsh
 # shellcheck disable=SC1071
 
-# XDG directories
-export XDG_CACHE_HOME="$HOME/.cache"
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_DATA_HOME="$HOME/.local/share"
-export XDG_STATE_HOME="$HOME/.local/state"
-
-export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
+source "$HOME/.config/bash/exports"
 
 typeset -U {,F,MAN}PATH {,f,man}path
 path=(

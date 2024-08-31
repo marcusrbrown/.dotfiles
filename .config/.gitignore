@@ -18,6 +18,7 @@
 /matplotlib/
 /NuGet/
 /pipedream/
+/pnpm/rc
 /raycast/
 /robomongo/
 /sanity/
@@ -26,5 +27,6 @@
 /Unreal Engine/
 /vscode-dev-containers/
 /xbuild/
-/yarn/
+/yarn/*
+!/yarn/config
 /zsh/.zcompdump
