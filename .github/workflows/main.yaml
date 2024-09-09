@@ -63,5 +63,5 @@ jobs:
       - name: 💅🏽 Run Prettier
         run: |
           # Install our Prettier config and check formatting
-          npm install @bfra.me/prettier-config@0.5.0
+          npm install @bfra.me/prettier-config@0.6.0
           npx prettier@3.3.3 --config .dotfiles/.prettierrc.yaml --no-color --check .devcontainer .dotfiles .github
