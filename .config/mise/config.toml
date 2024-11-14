@@ -6,4 +6,3 @@ python = "3.13.0"
 
 [settings]
 python_compile = true
-disable_hints = ["python_multi", "python_precompiled"]
