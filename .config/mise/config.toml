@@ -3,3 +3,7 @@ node = "22.11.0"
 pnpm = "9.13.0"
 yarn = "1.22.22"
 python = "3.13.0"
+
+[settings]
+python_compile = true
+disable_hints = ["python_multi", "python_precompiled"]
