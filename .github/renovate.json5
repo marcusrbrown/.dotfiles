@@ -1,7 +1,21 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: ['github>marcusrbrown/renovate-config#v2'],
+  ignorePresets: ['mergeConfidence:age-confidence-badges', 'mergeConfidence:all-badges'],
   packageRules: [
+    {
+      description: 'Show Merge Confidence, OpenSSF Scorecard, and Sourcegraph badges for Renovate dependencies.',
+      matchDatasources: ['go', 'maven', 'npm', 'nuget', 'packagist', 'pypi', 'rubygems'],
+      matchUpdateTypes: ['pin', 'patch', 'minor', 'major'],
+      prBodyColumns: ['Package', 'Change', 'Age', 'Confidence', 'Sourcegraph'],
+    },
+    {
+      description: '[GitHub] Show Merge Confidence, OpenSSF Scorecard, and Sourcegraph badges for Renovate dependencies.',
+      matchDatasources: ['go', 'maven', 'npm', 'nuget', 'packagist', 'pypi', 'rubygems'],
+      matchUpdateTypes: ['pin', 'patch', 'minor', 'major'],
+      matchSourceUrls: ['https://github.com/**'],
+      prBodyColumns: ['Package', 'Change', 'Age', 'Confidence', 'OpenSSF', 'Sourcegraph'],
+    },
     {
       description: 'Enable patch updates for some managers.',
       matchManagers: ['devcontainer', 'dockerfile', 'docker-compose', 'mise'],
@@ -15,11 +29,21 @@
       updatePinnedDependencies: false,
     },
     {
+      description: '[GitHub] Enable SemVer pinning of @bfra-me GitHub actions, reusable workflows, and Renovate config presets.',
+      matchDatasources: ['github-tags'],
+      matchPackageNames: ['bfra-me/**'],
+      matchUpdateTypes: ['major'],
+      updatePinnedDependencies: true,
+    },
+    {
       description: 'Disable digest pinning for base images',
-      matchFiles: ['.devcontainer/Dockerfile', '**/devcontainer.json'],
+      matchFileNames: ['.devcontainer/Dockerfile', '**/devcontainer.json'],
       matchPackageNames: ['mcr.microsoft.com/devcontainers/base'],
       pinDigests: false,
     },
   ],
+  prBodyDefinitions: {
+    Sourcegraph: '[![code search for "{{{depName}}}"](https://sourcegraph.com/search/badge?q=repo:%5Egithub%5C.com/{{{encodeURIComponent repository}}}%24+case:yes+-file:package%28-lock%29%3F%5C.json%7Cyarn%5C.lock%7Cpnpm-lock%5C.yaml+{{{encodeURIComponent depName}}}&label=matches)](https://sourcegraph.com/search?q=repo:%5Egithub%5C.com/{{{encodeURIComponent repository}}}%24+case:yes+-file:package%28-lock%29%3F%5C.json%7Cyarn%5C.lock%7Cpnpm-lock%5C.yaml+{{{encodeURIComponent depName}}})',
+  },
   automergeType: 'pr',
 }
