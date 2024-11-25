@@ -36,7 +36,7 @@
         ".zpretzorc": "shellscript"
     },
     "files.exclude": {
-        "**/*.zwc": {"when": "$(basename)"},
+        "**/*.zwc": { "when": "$(basename)" },
         ".dotfiles/{hooks,info,logs,refs,rr-cache,subtree-cache,objects}/**": true,
         ".dotfiles/{COMMIT*,config,description,*HEAD,index,MERGE*,packed-refs}": true
     },
@@ -47,6 +47,8 @@
         ".dotfiles/objects/**": true,
         ".dotfiles/subtree-cache/**": true
     },
+
+    "prettier.configPath": ".dotfiles/.prettierrc.yaml",
 
     "scm.showHistoryGraph": false,
 
