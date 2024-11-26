@@ -64,4 +64,4 @@ jobs:
         run: |
           # Install our Prettier config and check formatting
           npm install @bfra.me/prettier-config@0.9.4
-          npx prettier@3.4.0 --config .dotfiles/.prettierrc.yaml --no-color --check .devcontainer .dotfiles .github
+          npx prettier@3.4.1 --config .dotfiles/.prettierrc.yaml --no-color --check .devcontainer .dotfiles .github
