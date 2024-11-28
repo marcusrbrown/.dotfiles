@@ -55,13 +55,13 @@ jobs:
 
       - name: Install mise
         env:
-          MISE_VERSION: 2024.8.7 # renovate: datasource=github-releases packageName=jdx/mise
-        uses: jdx/mise-action@53d027c2e96fed8f955f5d95bff910a3e031cc58 # v2.1.6
+          MISE_VERSION: 2024.11.32 # renovate: datasource=github-releases packageName=jdx/mise
+        uses: jdx/mise-action@63a673876c7072c1d6ecb2049c0d572976c83b22 # v2.1.7
         with:
           version: ${{ env.MISE_VERSION }}
 
       - name: 💅🏽 Run Prettier
         run: |
           # Install our Prettier config and check formatting
-          npm install @bfra.me/prettier-config@0.9.3
-          npx prettier@3.3.3 --config .dotfiles/.prettierrc.yaml --no-color --check .devcontainer .dotfiles .github
+          npm install @bfra.me/prettier-config@0.12.0
+          npx prettier@3.4.1 --config .dotfiles/.prettierrc.yaml --no-color --check .devcontainer .dotfiles .github

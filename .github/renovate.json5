@@ -1,6 +1,6 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
-  extends: ['github>marcusrbrown/renovate-config#v2'],
+  extends: ['github>marcusrbrown/renovate-config#v2.4.2'],
   ignorePresets: ['mergeConfidence:age-confidence-badges', 'mergeConfidence:all-badges'],
   packageRules: [
     {
