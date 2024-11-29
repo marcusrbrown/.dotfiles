@@ -18,25 +18,14 @@
     },
     {
       description: 'Enable patch updates for some managers.',
-      matchManagers: [
-        'devcontainer',
-        'dockerfile',
-        'docker-compose',
-        'mise',
-      ],
-      matchUpdateTypes: [
-        'patch',
-      ],
+      matchManagers: ['devcontainer', 'dockerfile', 'docker-compose', 'mise'],
+      matchUpdateTypes: ['patch'],
       enabled: true,
     },
     {
       description: 'Enable SemVer pinning of @bfra-me GitHub actions, reusable workflows, and Renovate config presets.',
-      matchDatasources: [
-        'github-tags',
-      ],
-      matchPackageNames: [
-        'bfra-me/**',
-      ],
+      matchDatasources: ['github-tags'],
+      matchPackageNames: ['bfra-me/**'],
       updatePinnedDependencies: false,
     },
     {
