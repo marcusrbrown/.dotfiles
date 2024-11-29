@@ -1,6 +1,17 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: ['github>marcusrbrown/renovate-config#v2.4.3'],
+  customManagers: [
+    {
+      customType: 'regex',
+      description: 'Update _VERSION variables in the global Mise config file.',
+      fileMatch: ['^\\.config\\/mise\\/config\\.toml$'],
+      matchStrings: [
+        '# renovate: datasource=(?<datasource>[a-z-.]+?)(?: depName=(?<depName>.+?))?(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+?.+?_VERSION=(?<currentValue>.+?)\\s',
+      ],
+      versioningTemplate: '{{#if versioning}}{{versioning}}{{else}}semver{{/if}}',
+    },
+  ],
   ignorePresets: ['mergeConfidence:age-confidence-badges', 'mergeConfidence:all-badges'],
   packageRules: [
     {

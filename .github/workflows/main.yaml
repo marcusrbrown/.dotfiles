@@ -60,8 +60,5 @@ jobs:
         with:
           version: ${{ env.MISE_VERSION }}
 
-      - name: 💅🏽 Run Prettier
-        run: |
-          # Install our Prettier config and check formatting
-          npm install @bfra.me/prettier-config@0.13.0
-          npx prettier@3.4.1 --config .dotfiles/.prettierrc.yaml --no-color --check .devcontainer .dotfiles .github
+      - name: 💅🏽 Format
+        run: mise run format
