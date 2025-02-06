@@ -2,7 +2,7 @@
 node = "22.13.1"
 pnpm = "9.15.5"
 yarn = "1.22.22"
-python = "3.13.1"
+python = "3.13.2"
 poetry = "2.0.1"
 
 [tasks.format]
