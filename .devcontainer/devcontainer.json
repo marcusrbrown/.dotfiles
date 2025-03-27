@@ -11,7 +11,7 @@
 
     // Features to add to the dev container. More info: https://containers.dev/features.
     "features": {
-        "ghcr.io/devcontainers/features/common-utils:2.5.2": {
+        "ghcr.io/devcontainers/features/common-utils:2.5.3": {
             "installZsh": true,
             "configureZshAsDefaultShell": true,
             "username": "vscode"
