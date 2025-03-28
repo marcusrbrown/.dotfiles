@@ -55,7 +55,7 @@ jobs:
 
       - name: Install mise
         env:
-          MISE_VERSION: 2025.3.10 # renovate: datasource=github-releases packageName=jdx/mise
+          MISE_VERSION: 2025.3.11 # renovate: datasource=github-releases packageName=jdx/mise
         uses: jdx/mise-action@5083fe46898c414b2475087cc79da59e7da859e8 # v2.1.11
         with:
           version: ${{ env.MISE_VERSION }}
