@@ -3,7 +3,7 @@ name: Main
 
 'on':
   push:
-    branches: [main, 'renovate/**']
+    branches: [main]
   pull_request:
     branches: [main]
     types: [opened, synchronize, ready_for_review, reopened]

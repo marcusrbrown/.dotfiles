@@ -18,14 +18,16 @@ name: Renovate
         default: false
   workflow_run:
     workflows: ['Main']
-    branches: ['main', 'renovate/**']
+    branches: ['main']
     types: ['completed']
 
 jobs:
   renovate:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     name: Renovate
-    secrets: inherit
-    uses: marcusrbrown/.github/.github/workflows/renovate.yaml@main
+    secrets:
+      APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
+      APPLICATION_PRIVATE_KEY: ${{ secrets.APPLICATION_PRIVATE_KEY }}
+    uses: bfra-me/.github/.github/workflows/renovate.yaml@b7a51daf008e7b94fbcdb814d67638c8bc25f1fd # v2.3.2
     with:
-      print-config: ${{ inputs.print-config || ( github.event_name == 'push' && github.event.ref != 'refs/heads/main' ) }}
+      print_config: ${{ inputs.print-config || ( github.event_name == 'push' && github.event.ref != 'refs/heads/main' ) }}
