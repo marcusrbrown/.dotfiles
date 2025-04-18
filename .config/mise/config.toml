@@ -4,7 +4,7 @@ pnpm = "10.8.1"
 yarn = "1.22.22"
 python = "3.13.3"
 poetry = "2.1.2"
-deno = "2.2.10"
+deno = "2.2.11"
 
 [tasks.format]
 dir = '{{cwd}}'
