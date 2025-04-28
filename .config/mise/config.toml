@@ -1,6 +1,6 @@
 [tools]
 node = "22.15.0"
-pnpm = "10.9.0"
+pnpm = "10.10.0"
 yarn = "1.22.22"
 python = "3.13.3"
 poetry = "2.1.2"
