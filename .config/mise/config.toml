@@ -4,14 +4,14 @@ pnpm = "10.10.0"
 yarn = "1.22.22"
 python = "3.13.3"
 poetry = "2.1.2"
-deno = "2.2.12"
+deno = "2.3.0"
 
 [tasks.format]
 dir = '{{cwd}}'
 run = '''
 #!/bin/sh -x
 # renovate: datasource=npm depName=@bfra.me/prettier-config
-PRETTIER_CONFIG_VERSION=0.15.4
+PRETTIER_CONFIG_VERSION=0.15.3
 # renovate: datasource=npm depName=prettier
 PRETTIER_VERSION=3.5.3
 pnpm --package @bfra.me/prettier-config@${PRETTIER_CONFIG_VERSION} --package prettier@${PRETTIER_VERSION} dlx prettier --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .github
