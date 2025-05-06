@@ -17,9 +17,7 @@ clean_up() {
 }
 clean_up
 
-
-apt_get_update()
-{
+apt_get_update() {
     echo "Running apt-get update..."
     apt-get update -y
 }
@@ -85,7 +83,9 @@ KEYCHAIN_VERSION="${KEYCHAIN_VERSION#v}"
 KEYCHAIN_ARCHIVE="keychain-${KEYCHAIN_VERSION}.tar.gz"
 KEYCHAIN_URL="https://github.com/funtoo/keychain/archive/refs/tags/${KEYCHAIN_VERSION}.tar.gz"
 curl -sSL -o ${TMP_DIR}/"${KEYCHAIN_ARCHIVE}" "${KEYCHAIN_URL}"
-tar -xzf ${TMP_DIR}/"${KEYCHAIN_ARCHIVE}" -C ${TMP_DIR} --strip-components=1 keychain-"${KEYCHAIN_VERSION}"/keychain
+tar -xzf ${TMP_DIR}/"${KEYCHAIN_ARCHIVE}" -C ${TMP_DIR} --strip-components=1
+make -C ${TMP_DIR} keychain
+ls -la ${TMP_DIR}
 mv ${TMP_DIR}/keychain /usr/local/bin/keychain
 chmod 0755 /usr/local/bin/keychain
 rm -rf ${TMP_DIR}
