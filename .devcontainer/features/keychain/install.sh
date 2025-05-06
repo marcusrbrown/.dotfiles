@@ -17,16 +17,14 @@ clean_up() {
 }
 clean_up
 
-
-apt_get_update()
-{
+apt_get_update() {
     echo "Running apt-get update..."
     apt-get update -y
 }
 
 # Checks if packages are installed and installs them if not
 check_packages() {
-    if ! dpkg -s "$@" > /dev/null 2>&1; then
+    if ! dpkg -s "$@" >/dev/null 2>&1; then
         if [ "$(find /var/lib/apt/lists/* | wc -l)" = "0" ]; then
             apt_get_update
         fi
@@ -62,7 +60,7 @@ find_version_from_git_tags() {
             set -e
         fi
     fi
-    if [ -z "${!variable_name}" ] || ! echo "${version_list}" | grep "^${!variable_name//./\\.}$" > /dev/null 2>&1; then
+    if [ -z "${!variable_name}" ] || ! echo "${version_list}" | grep "^${!variable_name//./\\.}$" >/dev/null 2>&1; then
         echo -e "Invalid ${variable_name} value: ${requested_version}\nValid values:\n${version_list}" >&2
         exit 1
     fi
@@ -85,7 +83,9 @@ KEYCHAIN_VERSION="${KEYCHAIN_VERSION#v}"
 KEYCHAIN_ARCHIVE="keychain-${KEYCHAIN_VERSION}.tar.gz"
 KEYCHAIN_URL="https://github.com/funtoo/keychain/archive/refs/tags/${KEYCHAIN_VERSION}.tar.gz"
 curl -sSL -o ${TMP_DIR}/"${KEYCHAIN_ARCHIVE}" "${KEYCHAIN_URL}"
-tar -xzf ${TMP_DIR}/"${KEYCHAIN_ARCHIVE}" -C ${TMP_DIR} --strip-components=1 keychain-"${KEYCHAIN_VERSION}"/keychain
+tar -xzf ${TMP_DIR}/"${KEYCHAIN_ARCHIVE}" -C ${TMP_DIR} --strip-components=1
+make -C ${TMP_DIR} keychain
+ls -la ${TMP_DIR}
 mv ${TMP_DIR}/keychain /usr/local/bin/keychain
 chmod 0755 /usr/local/bin/keychain
 rm -rf ${TMP_DIR}
