@@ -3,7 +3,7 @@
     "version": "none",
     "installsAfter": [
         "ghcr.io/devcontainers/features/common-utils",
-        "ghcr.io/devcontainers-contrib/features/starship",
+        "ghcr.io/devcontainers-extra/features/starship:1",
         "./features/mise",
         "./features/sheldon",
         "./features/keychain"
