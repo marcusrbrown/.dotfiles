@@ -50,7 +50,10 @@
       description: 'Disable digest pinning for base images',
       matchFileNames: ['.devcontainer/Dockerfile', '**/devcontainer.json'],
       matchPackageNames: ['mcr.microsoft.com/devcontainers/base'],
-      pinDigests: false,
+      // Troubleshooting
+      // pinDigests: false,
+      autoMergeType: 'branch',
+      dependencyDashboardApproval: true,
     },
   ],
   prBodyDefinitions: {
