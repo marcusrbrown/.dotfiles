@@ -1,4 +1,7 @@
 {
+    "[dotenv]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
     "[ignore]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
     },
@@ -16,7 +19,7 @@
     "editor.formatOnSave": true,
 
     "evenBetterToml.schema.associations": {
-        "**/starship.toml": "https://starship.rs/config-schema.json"
+        "(^|/)starship\\.toml$": "https://starship.rs/config-schema.json"
     },
 
     "files.associations": {
@@ -29,7 +32,8 @@
         "**/.config/git/attributes": "properties",
         "**/.config/yarn/config": "yaml",
         "**/sheldon/plugins.lock": "toml",
-        ".gitconfig.local": "properties",
+        ".cursorrules": "markdown",
+        ".gitconfig*": "properties",
         ".bash*": "shellscript",
         ".zcompdump*": "shellscript",
         ".zsh*": "shellscript",
