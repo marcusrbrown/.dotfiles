@@ -14,6 +14,7 @@
         "ghcr.io/devcontainers/features/common-utils:2.5.3": {
             "installZsh": true,
             "configureZshAsDefaultShell": true,
+            "installOhMyZsh": false,
             "username": "vscode"
         },
         "ghcr.io/devcontainers/features/github-cli:1.0.14": {},
@@ -29,15 +30,16 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "EditorConfig.EditorConfig",
+                "ban.spellright",
+                "davidanson.vscode-markdownlint",
+                "editorconfig.editorconfig",
                 "esbenp.prettier-vscode",
                 "foxundermoon.shell-format",
-                "github.copilot",
                 "github.vscode-github-actions",
-                "GitHub.vscode-pull-request-github",
+                "gitHub.vscode-pull-request-github",
                 "jeff-hykin.better-shellscript-syntax",
+                "ms-azuretools.vscode-docker",
                 "redhat.vscode-yaml",
-                "sourcegraph.cody-ai",
                 "tamasfe.even-better-toml",
                 "timonwong.shellcheck",
                 "usernamehw.errorlens"
