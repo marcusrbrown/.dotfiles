@@ -52,7 +52,7 @@
       matchPackageNames: ['mcr.microsoft.com/devcontainers/base'],
       // Troubleshooting
       // pinDigests: false,
-      autoMergeType: 'branch',
+      automergeType: 'branch',
       dependencyDashboardApproval: true,
     },
   ],
