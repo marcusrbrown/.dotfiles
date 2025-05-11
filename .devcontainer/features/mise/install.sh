@@ -10,4 +10,9 @@ fi
 MISE_INSTALL_PATH=/usr/local/bin/mise
 curl https://mise.run | MISE_INSTALL_PATH="$MISE_INSTALL_PATH" sh
 
-su "$_REMOTE_USER" -c 'mise --version'
+su "$_REMOTE_USER" -c 'mise --version' || {
+    echo "Failed to install mise"
+    exit 1
+}
+
+echo "Done!"

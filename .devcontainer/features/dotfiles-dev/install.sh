@@ -81,11 +81,10 @@ EOF
 # If mise is installed, install tools
 tee -a "$POST_CREATE_SCRIPT_PATH" > /dev/null << 'EOF'
 # Install tools using mise:
-# - Disable parallel installs.
 # - Show verbose output.
 # - Always answer "yes" to prompts.
 if type mise > /dev/null 2>&1; then
-    mise install --jobs=1 --verbose --yes 2>&1
+   exec "$SHELL" -lc 'mise install --verbose --yes || true' # Temporary workaround for poetry install failure.
 fi
 
 EOF
