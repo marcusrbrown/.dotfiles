@@ -29,12 +29,15 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "EditorConfig.EditorConfig",
+                "ban.spellright",
+                "davidanson.vscode-markdownlint",
+                "editorconfig.editorconfig",
                 "esbenp.prettier-vscode",
                 "foxundermoon.shell-format",
                 "github.vscode-github-actions",
-                "GitHub.vscode-pull-request-github",
+                "gitHub.vscode-pull-request-github",
                 "jeff-hykin.better-shellscript-syntax",
+                "ms-azuretools.vscode-docker",
                 "redhat.vscode-yaml",
                 "tamasfe.even-better-toml",
                 "timonwong.shellcheck",
