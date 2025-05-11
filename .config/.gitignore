@@ -6,6 +6,7 @@
 /fish/fish_variables
 /gcloud/
 /gem/ruby/*/
+/git/.gitconfig-*
 /gh/hosts.yml
 /gnupg/*
 !/gnupg/gpg*.conf
@@ -16,6 +17,7 @@
 /ipython/profile_default/startup/README
 /iterm2/AppSupport
 /matplotlib/
+/mcp/**/memory.json
 /NuGet/
 /pipedream/
 /pnpm/rc
