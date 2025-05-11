@@ -32,12 +32,10 @@
                 "EditorConfig.EditorConfig",
                 "esbenp.prettier-vscode",
                 "foxundermoon.shell-format",
-                "github.copilot",
                 "github.vscode-github-actions",
                 "GitHub.vscode-pull-request-github",
                 "jeff-hykin.better-shellscript-syntax",
                 "redhat.vscode-yaml",
-                "sourcegraph.cody-ai",
                 "tamasfe.even-better-toml",
                 "timonwong.shellcheck",
                 "usernamehw.errorlens"
