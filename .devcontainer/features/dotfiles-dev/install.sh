@@ -80,12 +80,12 @@ EOF
 
 # If mise is installed, install tools
 tee -a "$POST_CREATE_SCRIPT_PATH" > /dev/null << 'EOF'
-# Install tools using mise:
-# - Show verbose output.
-# - Always answer "yes" to prompts.
+# Install tools (Deno, Python, Rust, etc.) using mise:
 if type mise > /dev/null 2>&1; then
-   # Temporary workaround for poetry install failure.
-   mise install --verbose --yes || true
+    _shell_type=$(basename "$SHELL")
+    eval "$(mise activate --shims --yes "${_shell_type}")" && \
+        mise env && \
+        mise install --yes || true # Temporary workaround for poetry install failure.
 fi
 
 EOF
