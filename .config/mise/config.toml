@@ -15,7 +15,7 @@ dir = '{{cwd}}'
 run = '''
 #!/bin/sh -x
 # renovate: datasource=npm depName=@bfra.me/prettier-config
-PRETTIER_CONFIG_VERSION=0.15.4
+PRETTIER_CONFIG_VERSION=0.15.3
 # renovate: datasource=npm depName=prettier
 PRETTIER_VERSION=3.5.3
 pnpm --package @bfra.me/prettier-config@${PRETTIER_CONFIG_VERSION} --package prettier@${PRETTIER_VERSION} dlx prettier --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .github
