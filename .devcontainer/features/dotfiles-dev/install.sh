@@ -84,7 +84,8 @@ tee -a "$POST_CREATE_SCRIPT_PATH" > /dev/null << 'EOF'
 # - Show verbose output.
 # - Always answer "yes" to prompts.
 if type mise > /dev/null 2>&1; then
-   exec "$SHELL" -lc 'mise install --verbose --yes || true' # Temporary workaround for poetry install failure.
+   # Temporary workaround for poetry install failure.
+   mise install --verbose --yes || true
 fi
 
 EOF
