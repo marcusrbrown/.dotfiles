@@ -83,7 +83,8 @@ tee -a "$POST_CREATE_SCRIPT_PATH" > /dev/null << 'EOF'
 # Install tools (Deno, Python, Rust, etc.) using mise:
 if type mise > /dev/null 2>&1; then
     # Temporary workaround for poetry install failure.
-    mise install || true
+    PATH="~/.local/share/mise/shims:$PATH" \
+        mise install || true
 fi
 
 EOF
