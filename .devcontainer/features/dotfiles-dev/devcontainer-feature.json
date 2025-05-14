@@ -1,12 +1,13 @@
 {
     "id": "dotfiles-dev",
     "version": "none",
-    "installsAfter": [
-        "ghcr.io/devcontainers/features/common-utils",
-        "ghcr.io/devcontainers-extra/features/starship:1",
-        "./features/mise",
-        "./features/sheldon",
-        "./features/keychain"
-    ],
+    "dependsOn": {
+        "ghcr.io/devcontainers/features/common-utils": {},
+        "ghcr.io/devcontainers/features/github-cli": {},
+        "ghcr.io/schlich/devcontainer-features/starship": {},
+        "./features/mise": {},
+        "./features/sheldon": {},
+        "./features/keychain": {}
+    },
     "postCreateCommand": "/usr/local/share/dotfiles-dev/post-create.sh"
 }

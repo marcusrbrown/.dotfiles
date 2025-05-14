@@ -20,7 +20,7 @@
         "ghcr.io/devcontainers/features/github-cli:1.0.14": {},
         "ghcr.io/lukewiwa/features/shellcheck:0.2.3": {},
         "ghcr.io/devcontainers-contrib/features/shfmt:1.0.0": {},
-        "ghcr.io/devcontainers-extra/features/starship:1.0.9": {},
+        "ghcr.io/schlich/devcontainer-features/starship:0": {},
         "./features/mise": {},
         "./features/sheldon": {},
         "./features/keychain": {},
