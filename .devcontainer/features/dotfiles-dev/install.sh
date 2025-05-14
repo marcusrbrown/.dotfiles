@@ -84,7 +84,7 @@ EOF
 tee -a "$POST_CREATE_SCRIPT_PATH" > /dev/null << 'EOF'
 # Install tools (Deno, Python, Rust, etc.) using mise:
 if type mise > /dev/null 2>&1; then
-    eval "$(mise activate zsh)"
+    eval "$(mise activate bash)"
     mise install
 fi
 
