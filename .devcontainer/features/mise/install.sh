@@ -21,7 +21,11 @@ mise doctor
 # TODO: Support other base OSes
 _mise_profile_path=/etc/profile.d/mise.sh
 tee "$_mise_profile_path" > /dev/null << 'EOF'
-eval "$(mise activate "$(basename "$SHELL")")"
+if [ -n "$ZSH_VERSION" ]; then
+   eval "$(mise activate zsh)"
+elif [ -n "$BASH_VERSION" ]; then
+   eval "$(mise activate bash)"
+fi
 EOF
 
 chmod 0755 "$_mise_profile_path"

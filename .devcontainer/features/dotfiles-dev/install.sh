@@ -73,6 +73,8 @@ if git ls-files -- "$GIT_DIR" >/dev/null 2>&1; then
         echo "Checking out dotfiles bare repo into ‘${GIT_WORK_TREE}’..."
         git checkout --force main
         git config --local include.path .gitconfig
+        git config --local core.bare false
+        git config --local status.showuntrackedfiles no
     fi
 fi
 
@@ -83,8 +85,7 @@ tee -a "$POST_CREATE_SCRIPT_PATH" > /dev/null << 'EOF'
 # Install tools (Deno, Python, Rust, etc.) using mise:
 if type mise > /dev/null 2>&1; then
     # Temporary workaround for poetry install failure.
-    PATH="~/.local/share/mise/shims:$PATH" \
-        mise install || true
+    PATH="~/.local/share/mise/shims:$PATH" mise install || true
 fi
 
 EOF
