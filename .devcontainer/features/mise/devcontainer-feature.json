@@ -2,5 +2,10 @@
     "id": "mise",
     "name": "Mise",
     "version": "none",
-    "installsAfter": ["ghcr.io/devcontainers/features/common-utils"]
+    "installsAfter": ["ghcr.io/devcontainers/features/common-utils"],
+    "customizations": {
+        "vscode": {
+            "extensions": ["hverlin.mise-vscode"]
+        }
+    }
 }
