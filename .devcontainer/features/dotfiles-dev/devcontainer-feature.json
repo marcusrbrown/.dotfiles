@@ -1,5 +1,6 @@
 {
     "id": "dotfiles-dev",
+    "description": "A feature to install dotfiles.",
     "version": "none",
     "dependsOn": {
         "ghcr.io/devcontainers/features/common-utils": {},
