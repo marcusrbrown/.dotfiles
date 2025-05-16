@@ -2,6 +2,9 @@
     "id": "mise",
     "name": "Mise",
     "version": "none",
+    "dependsOn": {
+        "./features/dotfiles-dev": {}
+    },
     "installsAfter": ["ghcr.io/devcontainers/features/common-utils"],
     "customizations": {
         "vscode": {
