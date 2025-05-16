@@ -7,5 +7,6 @@
         "vscode": {
             "extensions": ["hverlin.mise-vscode"]
         }
-    }
+    },
+    "postCreateCommand": "mise install --verbose"
 }

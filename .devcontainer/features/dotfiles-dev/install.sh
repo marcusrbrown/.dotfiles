@@ -37,6 +37,11 @@ elif [ "${USERNAME}" = "none" ] || ! id -u "${USERNAME}" > /dev/null 2>&1; then
     USERNAME=root
 fi
 
+if ! command -v starship > /dev/null 2>&1; then
+    # Install Starship
+    curl -fsSL https://starship.rs/install.sh | sh -s -- -y
+fi
+
 if [ ! -d "${DOTFILES_DEV_PATH}" ]; then
     mkdir -p "${DOTFILES_DEV_PATH}"
 fi
@@ -74,18 +79,9 @@ if git ls-files -- "$GIT_DIR" >/dev/null 2>&1; then
         git checkout --force main
         git config --local include.path .gitconfig
         git config --local core.bare false
-        git config --local status.showuntrackedfiles no
+        git config --local status.showUntrackedFiles no
+        git push -u origin main > /dev/null 2>&1
     fi
-fi
-
-EOF
-
-# If mise is installed, install tools
-tee -a "$POST_CREATE_SCRIPT_PATH" > /dev/null << 'EOF'
-# Install tools (Deno, Python, Rust, etc.) using mise:
-if type mise > /dev/null 2>&1; then
-    eval "$(mise activate bash)"
-    mise install
 fi
 
 EOF
