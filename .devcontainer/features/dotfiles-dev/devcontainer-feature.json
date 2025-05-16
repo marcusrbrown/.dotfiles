@@ -5,8 +5,6 @@
     "dependsOn": {
         "ghcr.io/devcontainers/features/common-utils": {},
         "ghcr.io/devcontainers/features/github-cli": {},
-        "ghcr.io/schlich/devcontainer-features/starship": {},
-        "./features/mise": {},
         "./features/sheldon": {},
         "./features/keychain": {}
     },

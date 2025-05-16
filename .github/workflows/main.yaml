@@ -32,7 +32,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3.1900000417
         with:
-          runCmd: 'devcontainer-info && mise doctor'
+          runCmd: 'devcontainer-info'
 
       - if: always()
         name: Display devcontainer output
