@@ -11,5 +11,5 @@
             "extensions": ["hverlin.mise-vscode"]
         }
     },
-    "postCreateCommand": "eval \"$(mise activate $(basename $SHELL))\"; mise install; mise doctor"
+    "postCreateCommand": "mise install"
 }
