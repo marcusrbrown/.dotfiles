@@ -11,5 +11,5 @@
             "extensions": ["hverlin.mise-vscode"]
         }
     },
-    "postCreateCommand": "mise install --verbose"
+    "postCreateCommand": "mise install && mise doctor"
 }
