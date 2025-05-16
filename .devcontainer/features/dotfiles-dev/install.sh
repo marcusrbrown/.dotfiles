@@ -80,7 +80,9 @@ if git ls-files -- "$GIT_DIR" >/dev/null 2>&1; then
         git config --local include.path .gitconfig
         git config --local core.bare false
         git config --local status.showUntrackedFiles no
+        set +e
         git push -u origin main > /dev/null 2>&1
+        set -e
     fi
 fi
 
