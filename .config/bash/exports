@@ -351,6 +351,10 @@ export AWS_CONFIG_FILE="$XDG_CONFIG_HOME"/aws/config
 
 export AZURE_CONFIG_DIR="$XDG_DATA_HOME"/azure
 
+# `vibe-tools`
+
+export VIBE_TOOLS_NO_TELEMETRY=1
+
 # ASDF
 
 if command_exists asdf; then
@@ -358,13 +362,6 @@ if command_exists asdf; then
     export ASDF_DATA_DIR="$XDG_DATA_HOME"/asdf
     if [ -d "$ASDF_DATA_DIR/bin" ]; then
         prepend_to_path "$ASDF_DATA_DIR/bin"
-    fi
-fi
-
-if command_exists mise; then
-    if [ -d "$XDG_DATA_HOME/mise/shims" ]; then
-        # Add the path to `mise` shims
-        prepend_to_path "$XDG_DATA_HOME/mise/shims"
     fi
 fi
 
