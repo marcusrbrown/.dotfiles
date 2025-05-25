@@ -14,6 +14,7 @@
       matchStrings: [
         '# renovate: datasource=(?<datasource>[a-z-.]+?)(?: depName=(?<depName>.+?))?(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+?.+?_VERSION=(?<currentValue>.+?)\\s',
       ],
+      depTypeTemplate: 'devDependencies',
       versioningTemplate: '{{#if versioning}}{{versioning}}{{else}}semver{{/if}}',
     },
     {
@@ -43,6 +44,7 @@
         '["\']?(?<datasource>[a-z-.]+?):(?<depName>.+?)["\']?\\s*=\\s*["\']?(?<currentValue>.+?)["\']?\\s',
       ],
       datasourceTemplate: '{{#if (equals datasource "aqua")}}github-releases{{else}}{{#if (equals datasource "cargo")}}crate{{else}}{{#if (equals datasource "dotnet")}}nuget{{else}}{{#if (equals datasource "gem")}}rubygems{{else}}{{#if (equals datasource "pipx")}}pypi{{else}}{{datasource}}{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}',
+      depTypeTemplate: 'devDependencies',
     },
   ],
   ignorePresets: ['mergeConfidence:age-confidence-badges', 'mergeConfidence:all-badges'],
