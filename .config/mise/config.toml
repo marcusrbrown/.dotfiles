@@ -11,7 +11,7 @@ deno = "2.3.6"
 "aqua:mvdan/sh" = "3.11.0"
 
 "npm:vibe-tools" = "0.61.5"
-"npm:playwright" = "1.53.0"
+"npm:playwright" = "1.53.1"
 "npm:puppeteer" = "24.10.1"
 "npm:prettier" = "3.5.3"
 "npm:@bfra.me/prettier-config" = "0.15.4"
