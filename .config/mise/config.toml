@@ -10,7 +10,7 @@ deno = "2.3.6"
  # shfmt
 "aqua:mvdan/sh" = "3.11.0"
 
-"npm:vibe-tools" = "0.61.5"
+"npm:vibe-tools" = "0.62.7"
 "npm:playwright" = "1.53.1"
 "npm:puppeteer" = "24.10.2"
 "npm:prettier" = "3.6.0"
