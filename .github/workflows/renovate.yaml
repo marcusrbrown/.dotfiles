@@ -28,14 +28,12 @@ on:
 
 jobs:
   renovate:
-    if: >
-      (github.event.action == 'edited' && !contains(github.actor, '[bot]')) ||
-      github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     name: Renovate
     secrets:
       APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
       APPLICATION_PRIVATE_KEY: ${{ secrets.APPLICATION_PRIVATE_KEY }}
-    uses: bfra-me/.github/.github/workflows/renovate.yaml@f0bfb00d23735cd50b40d557f5054afffb1205dc # v2.6.1
+    uses: bfra-me/.github/.github/workflows/renovate.yaml@b1afb13d87e7e390fd231488c11f53db20999ce0 # v4.0.0
     with:
-      log_level: ${{ inputs.log-level || (github.event_name == 'pull_request' || github.ref_name != github.event.repository.default_branch) && 'debug' || 'info' }}
-      print_config: ${{ inputs.print-config || ( github.event_name == 'push' && github.event.ref != 'refs/heads/main' ) }}
+      log-level: ${{ inputs.log-level || (github.event_name == 'pull_request' || github.ref_name != github.event.repository.default_branch) && 'debug' || 'info' }}
+      print-config: ${{ inputs.print-config || ( github.event_name == 'push' && github.event.ref != 'refs/heads/main' ) }}
