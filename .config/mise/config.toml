@@ -14,7 +14,7 @@ deno = "2.4.0"
 "npm:playwright" = "1.53.2"
 "npm:puppeteer" = "24.11.2"
 "npm:prettier" = "3.6.2"
-"npm:@bfra.me/prettier-config" = "0.15.6"
+"npm:@bfra.me/prettier-config" = "0.15.7"
 
 [tasks.format]
 dir = '{{cwd}}'
