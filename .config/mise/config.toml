@@ -12,7 +12,7 @@ deno = "2.4.1"
 
 "npm:vibe-tools" = "0.62.10"
 "npm:playwright" = "1.54.1"
-"npm:puppeteer" = "24.12.1"
+"npm:puppeteer" = "24.13.0"
 "npm:prettier" = "3.6.2"
 "npm:@bfra.me/prettier-config" = "0.16.0"
 
