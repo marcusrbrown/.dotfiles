@@ -5,7 +5,7 @@ pnpm = "10.13.1"
 yarn = "1.22.22"
 npm = "11.3.0"
 python = "3.13.5"
-deno = "2.4.1"
+deno = "2.4.2"
 
  # shfmt
 "aqua:mvdan/sh" = "3.12.0"
