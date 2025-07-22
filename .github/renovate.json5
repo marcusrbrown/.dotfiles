@@ -1,21 +1,21 @@
 {
-  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
-    'github>marcusrbrown/renovate-config#4.1.0',
-    'github>sanity-io/renovate-config:semantic-commit-type',
-    'security:openssf-scorecard',
+    "github>marcusrbrown/renovate-config#4.1.0",
+    "github>sanity-io/renovate-config:semantic-commit-type",
+    "security:openssf-scorecard",
   ],
-  automergeType: 'pr',
+  automergeType: "pr",
   customManagers: [
     {
-      customType: 'regex',
-      description: 'Update _VERSION variables in the global Mise config file.',
-      managerFilePatterns: ['^\\.config\\/mise\\/config\\.toml$'],
+      customType: "regex",
+      description: "Update _VERSION variables in the global Mise config file.",
+      managerFilePatterns: ["^\\.config\\/mise\\/config\\.toml$"],
       matchStrings: [
-        '# renovate: datasource=(?<datasource>[a-z-.]+?)(?: depName=(?<depName>.+?))?(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+?.+?_VERSION=(?<currentValue>.+?)\\s',
+        "# renovate: datasource=(?<datasource>[a-z-.]+?)(?: depName=(?<depName>.+?))?(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+?.+?_VERSION=(?<currentValue>.+?)\\s",
       ],
-      depTypeTemplate: 'devDependencies',
-      versioningTemplate: '{{#if versioning}}{{versioning}}{{else}}semver{{/if}}',
+      depTypeTemplate: "devDependencies",
+      versioningTemplate: "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}",
     },
     {
       // A backend installed package looks like:
@@ -37,50 +37,50 @@
       // gem -> rubygems
       // pipx -> pypi
       //
-      customType: 'regex',
-      description: 'Update backend packages in the global Mise config file.',
-      managerFilePatterns: ['^\\.config\\/mise\\/config\\.toml$'],
+      customType: "regex",
+      description: "Update backend packages in the global Mise config file.",
+      managerFilePatterns: ["^\\.config\\/mise\\/config\\.toml$"],
       matchStrings: [
-        '["\']?(?<datasource>[a-z-.]+?):(?<depName>.+?)["\']?\\s*=\\s*["\']?(?<currentValue>.+?)["\']?\\s',
+        "[\"']?(?<datasource>[a-z-.]+?):(?<depName>.+?)[\"']?\\s*=\\s*[\"']?(?<currentValue>.+?)[\"']?\\s",
       ],
       datasourceTemplate: '{{#if (equals datasource "aqua")}}github-releases{{else}}{{#if (equals datasource "cargo")}}crate{{else}}{{#if (equals datasource "dotnet")}}nuget{{else}}{{#if (equals datasource "gem")}}rubygems{{else}}{{#if (equals datasource "pipx")}}pypi{{else}}{{datasource}}{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}',
-      depTypeTemplate: 'devDependencies',
+      depTypeTemplate: "devDependencies",
     },
   ],
-  ignorePresets: ['mergeConfidence:age-confidence-badges', 'mergeConfidence:all-badges'],
+  ignorePresets: ["mergeConfidence:age-confidence-badges", "mergeConfidence:all-badges"],
   packageRules: [
     {
-      description: 'Show Merge Confidence, OpenSSF Scorecard, and GitHub Search badges for Renovate dependencies.',
-      matchDatasources: ['go', 'maven', 'npm', 'nuget', 'packagist', 'pypi', 'rubygems'],
-      matchUpdateTypes: ['pin', 'patch', 'minor', 'major'],
-      prBodyColumns: ['Package', 'Change', 'Age', 'Confidence', 'GitHub'],
+      description: "Show Merge Confidence, OpenSSF Scorecard, and GitHub Search badges for Renovate dependencies.",
+      matchDatasources: ["go", "maven", "npm", "nuget", "packagist", "pypi", "rubygems"],
+      matchUpdateTypes: ["pin", "patch", "minor", "major"],
+      prBodyColumns: ["Package", "Change", "Age", "Confidence", "GitHub"],
     },
     {
-      description: 'Show Merge Confidence, OpenSSF Scorecard, and GitHub Search badges for Renovate dependencies.',
-      matchDatasources: ['go', 'maven', 'npm', 'nuget', 'packagist', 'pypi', 'rubygems'],
-      matchUpdateTypes: ['pin', 'patch', 'minor', 'major'],
-      matchSourceUrls: ['https://github.com/**'],
-      prBodyColumns: ['Package', 'Change', 'Age', 'Confidence', 'OpenSSF', 'GitHub'],
+      description: "Show Merge Confidence, OpenSSF Scorecard, and GitHub Search badges for Renovate dependencies.",
+      matchDatasources: ["go", "maven", "npm", "nuget", "packagist", "pypi", "rubygems"],
+      matchUpdateTypes: ["pin", "patch", "minor", "major"],
+      matchSourceUrls: ["https://github.com/**"],
+      prBodyColumns: ["Package", "Change", "Age", "Confidence", "OpenSSF", "GitHub"],
     },
     {
-      description: 'Enable patch updates for some managers.',
-      matchManagers: ['devcontainer', 'dockerfile', 'docker-compose', 'mise'],
-      matchUpdateTypes: ['patch'],
+      description: "Enable patch updates for some managers.",
+      matchManagers: ["devcontainer", "dockerfile", "docker-compose", "mise"],
+      matchUpdateTypes: ["patch"],
       enabled: true,
     },
     {
-      description: 'Disable digest pinning for base images',
-      matchFileNames: ['.devcontainer/Dockerfile', '**/devcontainer.json'],
-      matchPackageNames: ['mcr.microsoft.com/devcontainers/base'],
+      description: "Disable digest pinning for base images",
+      matchFileNames: [".devcontainer/Dockerfile", "**/devcontainer.json"],
+      matchPackageNames: ["mcr.microsoft.com/devcontainers/base"],
       // Troubleshooting
       // pinDigests: false,
-      automergeType: 'branch',
+      automergeType: "branch",
       dependencyDashboardApproval: true,
     },
   ],
   prBodyDefinitions: {
     GitHub: '[![GitHub Code Search for "{{{depName}}}"](https://img.shields.io/badge/code_search-{{{replace "-" "--" depName}}}-2671E5.svg?logo=github)](https://github.com/search?q=repo:{{{encodeURIComponent repository}}}+NOT+path:/package(-lock)%3F%5C.json%7Cyarn%5C.lock%7Cpnpm-lock%5C.yaml/+{{{encodeURIComponent depName}}})',
   },
-  prCreation: 'immediate',
-  rebaseWhen: 'behind-base-branch',
+  prCreation: "immediate",
+  rebaseWhen: "behind-base-branch",
 }

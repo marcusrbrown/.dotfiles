@@ -1,7 +1,7 @@
 ---
 name: Main
 
-'on':
+"on":
   push:
     branches: [main]
   pull_request:
@@ -32,7 +32,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3.1900000417
         with:
-          runCmd: 'devcontainer-info'
+          runCmd: "devcontainer-info"
 
       - if: always()
         name: Display devcontainer output
@@ -54,7 +54,7 @@ jobs:
 
       - name: Install mise
         env:
-          MISE_VERSION: 2025.7.18 # renovate: datasource=github-releases packageName=jdx/mise
+          MISE_VERSION: 2025.7.19 # renovate: datasource=github-releases packageName=jdx/mise
         uses: jdx/mise-action@bfb9fa0b029db830a8c570757cee683df207a6c5 # v2.4.0
         with:
           version: ${{ env.MISE_VERSION }}
