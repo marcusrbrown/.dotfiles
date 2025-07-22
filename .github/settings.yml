@@ -3,7 +3,7 @@ _extends: .github:common-settings.yaml
 
 repository:
   name: .dotfiles
-  description: 'Used to keep my configuration files synchronized across machines.'
+  description: "Used to keep my configuration files synchronized across machines."
   topics: dotfiles, configuration, settings, preferences, zsh, sheldon, mise, starship
 
 branches:
@@ -11,7 +11,7 @@ branches:
     protection:
       required_status_checks:
         strict: true
-        contexts: ['Devcontainer CI', 'Lint', 'Renovate / Renovate']
+        contexts: ["Devcontainer CI", "Lint", "Renovate / Renovate"]
       enforce_admins: true
       required_pull_request_reviews: null
       restrictions: null
