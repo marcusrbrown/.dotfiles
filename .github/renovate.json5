@@ -1,7 +1,7 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
-    "github>marcusrbrown/renovate-config#4.1.0",
+    "github>marcusrbrown/renovate-config#4.1.1",
     "github>sanity-io/renovate-config:semantic-commit-type",
     "security:openssf-scorecard",
   ],
