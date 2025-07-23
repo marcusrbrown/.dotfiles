@@ -2,11 +2,11 @@
 ---
 name: Update Repo Settings
 
-"on":
+'on':
   push:
     branches: [main]
   schedule:
-    - cron: "37 04 * * *" # 4:37 UTC
+    - cron: '37 04 * * *' # 4:37 UTC
   workflow_dispatch:
 
 jobs:
