@@ -56,6 +56,12 @@ use = ['plugins']
 hooks.eval = 'mise activate zsh'
 hooks.completion = 'mise completions zsh'
 
+[plugins.vscode-shell-integration]
+local = '~/.config/zsh'
+apply = ['znap']
+hooks.pre = '[[ "$TERM_PROGRAM" == "vscode" ]] && \'
+hooks.eval = 'cat "$(code --locate-shell-integration-path zsh)"'
+
 # starship 🚀
 [plugins.starship]
 local = '~/.config/zsh'
