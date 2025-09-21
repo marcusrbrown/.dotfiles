@@ -1,0 +1,42 @@
+OPENAI_HOST: https://api.openai.com
+ANTHROPIC_HOST: https://api.anthropic.com
+GOOSE_PROVIDER: google
+OPENAI_BASE_PATH: v1/chat/completions
+OLLAMA_HOST: localhost
+extensions:
+  computercontroller:
+    bundled: true
+    display_name: Computer Controller
+    enabled: false
+    name: computercontroller
+    timeout: 300
+    type: builtin
+  developer:
+    bundled: true
+    display_name: Developer
+    enabled: true
+    name: developer
+    timeout: 300
+    type: builtin
+  jetbrains:
+    bundled: true
+    display_name: Jetbrains
+    enabled: false
+    name: jetbrains
+    timeout: 300
+    type: builtin
+  memory:
+    bundled: true
+    display_name: Memory
+    enabled: false
+    name: memory
+    timeout: 300
+    type: builtin
+  tutorial:
+    bundled: true
+    display_name: Tutorial
+    enabled: false
+    name: tutorial
+    timeout: 300
+    type: builtin
+GOOSE_MODEL: gemini-2.5-pro
