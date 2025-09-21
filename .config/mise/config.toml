@@ -13,6 +13,7 @@ zls = "0.15.0"
  # shfmt
 "aqua:mvdan/sh" = "3.12.0"
 
+"npm:typescript" = "5.9.2"
 "npm:vibe-tools" = "0.63.3"
 "npm:playwright" = "1.55.0"
 "npm:puppeteer" = "24.22.0"
