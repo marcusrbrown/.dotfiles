@@ -1,6 +1,6 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
-  extends: ['github>marcusrbrown/renovate-config#4.2.1', 'github>sanity-io/renovate-config:semantic-commit-type'],
+  extends: ['github>marcusrbrown/renovate-config#4.2.2', 'github>sanity-io/renovate-config:semantic-commit-type'],
   customManagers: [
     {
       customType: 'regex',
