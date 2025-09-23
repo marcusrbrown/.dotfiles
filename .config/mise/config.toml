@@ -15,7 +15,7 @@ zls = "0.15.0"
 
 "npm:typescript" = "5.9.2"
 "npm:vibe-tools" = "0.63.3"
-"npm:playwright" = "1.55.0"
+"npm:playwright" = "1.55.1"
 "npm:puppeteer" = "24.22.1"
 "npm:prettier" = "3.6.2"
 "npm:@bfra.me/prettier-config" = "0.16.1"
