@@ -4,7 +4,42 @@
 shell = "zsh"
 
 [plugins.header]
-inline = '{{ "#!/usr/bin/env zsh\n# shellcheck disable=SC1071\n\n" | nl }}'
+inline = '{{ "#!/usr/bin/env zsh\n# shellcheck disable=SC1071\n" | nl }}'
+
+[plugins.zsh-defer]
+github = "romkatv/zsh-defer"
+
+[plugins.zsh-history-substring-search]
+github = "zsh-users/zsh-history-substring-search"
+use = ["{{ name }}.zsh"]
+apply = ["defer"]
+[plugins.zsh-history-substring-search.hooks]
+post = '''
+bindkey "$terminfo[kcuu1]" history-substring-search-up
+bindkey "$terminfo[kcud1]" history-substring-search-down
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+'''
+
+[plugins.zsh-autosuggestions]
+github = "zsh-users/zsh-autosuggestions"
+use = ["{{ name }}.zsh"]
+apply = ["defer"]
+[plugins.zsh-autosuggestions.hooks]
+pre = '''
+typeset -ga ZSH_AUTOSUGGEST_STRATEGY
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_USE_ASYNC=1
+'''
+
+[plugins.fast-syntax-highlighting]
+github = "zdharma-continuum/fast-syntax-highlighting"
+apply = ["defer"]
+[plugins.fast-syntax-highlighting.hooks]
+pre = '''
+export FAST_WORK_DIR="$XDG_CONFIG_HOME/fsh"
+[[ ! -d "${FAST_WORK_DIR}" ]] && mkdir -p "${FAST_WORK_DIR}"
+'''
 
 [plugins.znap]
 github = 'marlonrichert/zsh-snap'
@@ -41,10 +76,6 @@ github = "zsh-users/zsh-completions"
 
 [plugins.zsh-better-npm-completion]
 github = "lukechilds/zsh-better-npm-completion"
-
-[plugins.zsh-defer]
-github = "romkatv/zsh-defer"
-apply = ["autoload"]
 
 [plugins.history-search-multi-word]
 github = "zdharma/history-search-multi-word"
@@ -88,42 +119,9 @@ local = '~/.config/zsh'
 apply = ['inline']
 hooks.raw = 'source "$HOME/.shellfishrc" 2>/dev/null || true'
 
-[plugins.zsh-history-substring-search]
-github = "zsh-users/zsh-history-substring-search"
-use = ["{{ name }}.zsh"]
-apply = ["defer"]
-[plugins.zsh-history-substring-search.hooks]
-post = '''
-bindkey "$terminfo[kcuu1]" history-substring-search-up
-bindkey "$terminfo[kcud1]" history-substring-search-down
-bindkey '^[[A' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
-'''
-
-[plugins.zsh-autosuggestions]
-github = "zsh-users/zsh-autosuggestions"
-use = ["{{ name }}.zsh"]
-apply = ["defer"]
-[plugins.zsh-autosuggestions.hooks]
-pre = '''
-typeset -ga ZSH_AUTOSUGGEST_STRATEGY
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-ZSH_AUTOSUGGEST_USE_ASYNC=1
-'''
-
-[plugins.fast-syntax-highlighting]
-github = "zdharma-continuum/fast-syntax-highlighting"
-apply = ["defer"]
-[plugins.fast-syntax-highlighting.hooks]
-pre = '''
-export FAST_WORK_DIR="$XDG_CONFIG_HOME/fsh"
-[[ ! -d "${FAST_WORK_DIR}" ]] && mkdir -p "${FAST_WORK_DIR}"
-'''
-
 [templates]
 _pre_hook = '{% if hooks?.pre %}{{ "() {" | nl }}{% else if hooks?.post %}{{ "() {" | nl }}{% endif %}{{ hooks?.pre | nl }}'
 _post_hook = '{{ hooks?.post | nl }}{% if hooks?.post %}{{ "}" | nl }}{% else if hooks?.pre %}{{ "}" | nl }}{% endif %}'
-autoload = """{{ hooks?.pre | nl }}autoload -Uz "{{ dir }}/{{ name }}"\n{{ hooks?.post | nl }}"""
 defer = '''
 {{ "\n" | nl }}# region "{{ name }}" (deferred)
 {% with hooks?.pre as hook %}{{ "() {" | nl }}{% if hook %}zsh-defer -c "$(<<{{ "EOF" | nl }}{{ hook | nl }}{{ "EOF\n)\"" | nl }}{% endif %}{% endwith -%}
