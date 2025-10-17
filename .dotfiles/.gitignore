@@ -7,6 +7,10 @@
 *.zwc
 
 # Include the contents of the repository
+!/.claude/
+/.claude/*
+!/.claude/commands/
+!/.claude/CLAUDE.md
 !/.config/
 !/.devcontainer/
 /.devcontainer/.*Marker
@@ -29,6 +33,7 @@
 !/.bashrc
 !/.editorconfig
 !/.gitattributes
+!/.markdownlint-cli2.yaml
 !/.prettierignore
 !/.prettierrc.yaml
 !/.profile

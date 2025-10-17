@@ -1,0 +1,10 @@
+---
+globs:
+  - '!.claude/**'
+  - '!.cursorrules'
+  - '!.cursor/rules/**'
+  - '!**/node_modules'
+  - '!.specstory/**'
+  - '!.ai/**'
+  - '!AGENTS.md'
+  - '!CLAUDE.md'
