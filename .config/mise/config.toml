@@ -7,7 +7,7 @@ python = "3.14.0"
 deno = "2.5.4"
 rust = "1.90.0"
 cargo-binstall = "1.15.5"
-zig = "0.15.1"
+zig = "0.15.2"
 zls = "0.15.0"
 
  # shfmt
