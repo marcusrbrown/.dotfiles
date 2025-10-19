@@ -9,6 +9,8 @@
 # Include the contents of the repository
 !/.claude/
 /.claude/*
+!/.claude/agents/
+!/.claude/agents/*.md
 !/.claude/commands/
 !/.claude/CLAUDE.md
 !/.config/
