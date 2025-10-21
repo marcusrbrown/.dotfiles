@@ -3,7 +3,7 @@
 {
     "name": "marcusrbrown/.dotfiles",
 
-    "image": "mcr.microsoft.com/devcontainers/base:2.0.1",
+    "image": "mcr.microsoft.com/devcontainers/base:2.0.2",
 
     "hostRequirements": {
         "cpus": 4
