@@ -13,6 +13,7 @@
 !/.claude/agents/*.md
 !/.claude/commands/
 !/.claude/CLAUDE.md
+!/.claude/settings.json
 !/.config/
 !/.devcontainer/
 /.devcontainer/.*Marker
