@@ -23,6 +23,8 @@ zls = "0.15.0"
 "npm:@anthropic-ai/claude-code" = "2.0.25"
 "npm:tsx" = "4.20.6"
 
+"ubi:mazznoer/lolcrab" = "0.4.1"
+
 [tasks.format]
 dir = '{{cwd}}'
 run = '''
