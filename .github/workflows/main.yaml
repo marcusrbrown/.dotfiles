@@ -42,8 +42,8 @@ jobs:
           echo "Devcontainer output:"
           echo "$OUTPUT"
 
-  lint:
-    name: Lint
+  install-mise:
+    name: Install mise
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -55,8 +55,3 @@ jobs:
         uses: jdx/mise-action@e3d7b8d67a7958d1207f6ed871e83b1ea780e7b0 # v3.3.1
         with:
           version: ${{ env.MISE_VERSION }}
-
-      - name: 💅🏽 Format
-        env:
-          MISE_GLOBAL_CONFIG_FILE: ${{ github.workspace }}/.config/mise/config.yaml
-        run: mise run format
