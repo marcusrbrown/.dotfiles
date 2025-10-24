@@ -1,0 +1,20 @@
+[install]
+description = "Install dotfiles"
+run = [
+  {task = "mise:tools:install"},
+  {task = "print:done"}
+]
+
+[format]
+description = "Format dotfiles"
+dir = '{{cwd}}'
+run = '''
+#!/bin/sh -x
+prettier --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .github
+'''
+
+["print:done"]
+description = "Print an animated DONE message"
+hide = true
+run = "echo DONE | figlet | lolcrab -a --speed 1 --duration 1 --gradient warm"
+silent = true
