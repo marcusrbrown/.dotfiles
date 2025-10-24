@@ -1,0 +1,8 @@
+["mise:tools:install"]
+description = "Install all tools managed by mise"
+run = "mise install"
+
+["mise:tools:outdated"]
+description = "List outdated tools (including major bumps)"
+run = "mise outdated --bump"
+silent = true

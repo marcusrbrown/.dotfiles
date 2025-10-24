@@ -25,12 +25,8 @@ zls = "0.15.0"
 
 "ubi:mazznoer/lolcrab" = "0.4.1"
 
-[tasks.format]
-dir = '{{cwd}}'
-run = '''
-#!/bin/sh -x
-prettier --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .github
-'''
+[task_config]
+includes = ["tasks/dotfiles.toml", "tasks/_mise.toml"]
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
