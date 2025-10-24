@@ -58,5 +58,5 @@ jobs:
 
       - name: 💅🏽 Format
         env:
-          MISE_GLOBAL_CONFIG_ROOT: ${{ github.workspace }}
+          MISE_GLOBAL_CONFIG_FILE: ${{ github.workspace }}/.config/mise/config.yaml
         run: mise run format
