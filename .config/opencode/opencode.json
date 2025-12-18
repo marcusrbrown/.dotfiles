@@ -1,7 +1,7 @@
 {
   "plugin": [
     "oh-my-opencode",
-    "opencode-antigravity-auth@1.1.2"
+    "opencode-antigravity-auth@1.1.4"
   ],
   "provider": {
     "google": {
@@ -28,6 +28,23 @@
           "limit": {
             "context": 1048576,
             "output": 65535
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        },
+        "gemini-3-flash": {
+          "name": "Gemini 3 Flash (Antigravity)",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
           },
           "modalities": {
             "input": [

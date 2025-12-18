@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "agents": {
     "oracle": {
-      "model": "anthropic/claude-opus-4-5"
+      "model": "google/claude-opus-4-5-thinking"
     },
     "frontend-ui-ux-engineer": {
       "model": "google/gemini-3-pro-high"
@@ -12,6 +12,9 @@
     },
     "multimodal-looker": {
       "model": "google/gemini-2.5-flash"
+    },
+    "OmO-Plan": {
+      "model": "google/claude-opus-4-5-thinking"
     }
   },
   "google_auth": false
