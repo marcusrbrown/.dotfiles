@@ -24,7 +24,7 @@ zls = "0.15.0"
 "npm:tsx" = "4.21.0"
 
 "ubi:mazznoer/lolcrab" = "0.4.1"
-"ubi:sst/opencode" = "1.0.175"
+"ubi:sst/opencode" = "1.0.176"
 
 [task_config]
 includes = ["tasks/dotfiles.toml", "tasks/_mise.toml"]
