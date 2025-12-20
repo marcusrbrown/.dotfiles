@@ -13,7 +13,10 @@
     "multimodal-looker": {
       "model": "google/gemini-2.5-flash"
     },
-    "OmO-Plan": {
+    "Sisyphus": {
+      "model": "google/claude-opus-4-5-thinking"
+    },
+    "Planner-Sisyphus": {
       "model": "google/claude-opus-4-5-thinking"
     }
   },
