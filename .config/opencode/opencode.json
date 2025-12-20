@@ -1,6 +1,7 @@
 {
   "plugin": [
     "oh-my-opencode",
+    "@tarquinen/opencode-dcp@latest",
     "opencode-antigravity-auth@1.2.0"
   ],
   "provider": {
