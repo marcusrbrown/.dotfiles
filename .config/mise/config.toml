@@ -20,7 +20,7 @@ zls = "0.15.0"
 "npm:prettier" = "3.7.4"
 "npm:@bfra.me/prettier-config" = "0.16.6"
 "npm:rimraf" = "6.1.2"
-"npm:@anthropic-ai/claude-code" = "2.0.71"
+"npm:@anthropic-ai/claude-code" = "2.0.72"
 "npm:tsx" = "4.21.0"
 
 "github:mazznoer/lolcrab" = "0.4.1"
