@@ -8,3 +8,5 @@ globs:
   - '!.ai/**'
   - '!AGENTS.md'
   - '!CLAUDE.md'
+  - '!.opencode/**'
+  - '!.config/opencode/**'
