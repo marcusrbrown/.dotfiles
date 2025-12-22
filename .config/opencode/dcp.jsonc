@@ -4,7 +4,7 @@
   // Enable debug logging to ~/.config/opencode/logs/dcp/
   "debug": false,
   // Summary display: "off", "minimal", or "detailed"
-  "pruningSummary": "detailed",
+  "pruningSummary": "minimal",
   // Strategies for pruning tokens from chat history
   "strategies": {
     // Remove duplicate tool calls (same tool with same arguments)
