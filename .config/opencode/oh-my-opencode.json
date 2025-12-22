@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "agents": {
     "oracle": {
-      "model": "google/claude-opus-4-5-thinking"
+      "model": "github-copilot/gpt-5.2"
     },
     "frontend-ui-ux-engineer": {
       "model": "google/gemini-3-pro-high"
@@ -14,10 +14,10 @@
       "model": "google/gemini-2.5-flash"
     },
     "Sisyphus": {
-      "model": "google/claude-opus-4-5-thinking"
+      "model": "anthropic/claude-opus-4-5"
     },
     "Planner-Sisyphus": {
-      "model": "google/claude-opus-4-5-thinking"
+      "model": "github-copilot/claude-opus-4.5"
     }
   },
   "google_auth": false
