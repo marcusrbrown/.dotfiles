@@ -5,7 +5,7 @@
     {
       customType: 'regex',
       description: 'Update _VERSION variables in the global Mise config file.',
-      managerFilePatterns: ['^\\.config\\/mise\\/config\\.toml$'],
+      managerFilePatterns: ['/(^|/)\\.?mise\\.toml$/', '/(^|/)\\.?mise/config\\.toml$/'],
       matchStrings: [
         '# renovate: datasource=(?<datasource>[a-z-.]+?)(?: depName=(?<depName>.+?))?(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+?.+?_VERSION=(?<currentValue>.+?)\\s',
       ],
@@ -32,7 +32,7 @@
       //
       customType: 'regex',
       description: 'Update backend packages in the global Mise config file.',
-      managerFilePatterns: ['^\\.config\\/mise\\/config\\.toml$'],
+      managerFilePatterns: ['/(^|/)\\.?mise\\.toml$/', '/(^|/)\\.?mise/config\\.toml$/'],
       matchStrings: [
         '["\']?(?<datasource>[a-z-.]+?):(?<depName>.+?)["\']?\\s*=\\s*["\']?(?<currentValue>.+?)["\']?\\s',
       ],
