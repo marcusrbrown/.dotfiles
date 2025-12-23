@@ -14,6 +14,7 @@
 !/.claude/commands/
 !/.claude/CLAUDE.md
 !/.claude/settings.json
+!/.claude/skills/
 !/.config/
 !/.devcontainer/
 /.devcontainer/.*Marker
