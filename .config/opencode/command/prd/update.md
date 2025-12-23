@@ -18,15 +18,15 @@ $ARGUMENTS
 </existing-features>
 
 <existing-rfcs>
-!`ls -la RFCs/*.md 2>/dev/null || echo "No RFCs folder found"`
+!`ls RFCs/RFC-*.md docs/rfc/RFC-*.md docs/rfcs/RFC-*.md 2>&1 | grep -E "^RFCs/|^docs/" | head -20 || echo "No RFC files found"`
 </existing-rfcs>
 
 <git-status>
-!`git status --short 2>/dev/null || echo "Not a git repository"`
+!`git rev-parse --git-dir >/dev/null 2>&1 && { git status --porcelain | head -20 | grep -q . && git status --porcelain | head -20 || echo "No uncommitted changes"; } || echo "Not a git repository"`
 </git-status>
 
 <recent-commits>
-!`git log --oneline -10 2>/dev/null || echo "No git history available"`
+!`git log --oneline -10 2>&1 | grep -v "not a git repository" | grep -v "does not have any commits" | grep -q . && git log --oneline -10 || echo "No git history available"`
 </recent-commits>
 
 ## Role

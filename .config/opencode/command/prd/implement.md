@@ -18,15 +18,15 @@ $ARGUMENTS
 </rfcs-index>
 
 <project-structure>
-!`find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | head -50`
+!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`
 </project-structure>
 
 <git-status>
-!`git status --porcelain 2>&1 | head -20 | grep -q . && git status --porcelain | head -20 || echo "Not a git repository"`
+!`git rev-parse --git-dir >/dev/null 2>&1 && { git status --porcelain | head -20 | grep -q . && git status --porcelain | head -20 || echo "No uncommitted changes"; } || echo "Not a git repository"`
 </git-status>
 
 <git-diff-summary>
-!`git diff --stat 2>&1 | tail -20 | grep -q . && git diff --stat | tail -20 || echo "No changes or not a git repository"`
+!`git rev-parse --git-dir >/dev/null 2>&1 && { git diff --stat | tail -20 | grep -q . && git diff --stat | tail -20 || echo "No unstaged changes"; } || echo "Not a git repository"`
 </git-diff-summary>
 
 <package-json>
@@ -42,7 +42,7 @@ $ARGUMENTS
 </tsconfig>
 
 <lockfiles>
-!`ls -la package-lock.json yarn.lock pnpm-lock.yaml 2>&1 | grep -E "^-" || echo "No lockfiles found"`
+!`ls -la package-lock.json yarn.lock pnpm-lock.yaml bun.lock* 2>&1 | grep -E "^-" || echo "No lockfiles found"`
 </lockfiles>
 
 <recent-commits>
@@ -100,7 +100,7 @@ Note which documents are missing but proceed with available context.
 
 **Decision Flow:**
 ```
-RFCS.md exists? 
+RFCS.md exists?
   → NO: Warn and skip validation
   → YES: Parse table
     → Find current RFC row
@@ -165,21 +165,21 @@ Analyze the current implementation state to determine if this is a fresh start o
 4. **Present State Assessment:**
    ```markdown
    ## Implementation State Assessment
-   
+
    **RFC:** RFC-XXX - [Title]
-   
+
    ### Appears Implemented
    - [File/component that exists with relevant code]
    - [Another implemented item]
-   
+
    ### Appears Pending
    - [File/component that doesn't exist]
    - [File that exists but appears incomplete]
-   
+
    ### Tests
    - Implemented: [list]
    - Missing: [list]
-   
+
    ### Assessment
    [Fresh start | Partial implementation detected]
    ```
@@ -207,16 +207,16 @@ This implementation MUST follow a strict two-phase approach:
 
 2. **Understand Existing Codebase:**
    - Use the `explore` subagent to analyze relevant parts of the codebase
-   
+
    **Before invoking the explore agent, customize the prompt by replacing placeholders with actual values from the RFC document:**
    - `[RFC Title]` → The actual RFC title (e.g., "User Authentication System")
    - `[relevant area from RFC]` → The primary technical domain (e.g., "authentication", "API endpoints", "data storage", "state management")
    - `[list key requirements]` → Extract 3-5 key requirements from the RFC (be specific)
-   
+
    **Explore Agent Prompt Template:**
    ```
    Analyze the codebase architecture relevant to implementing [RFC Title]:
-   
+
    1. Identify existing patterns for [relevant area from RFC - e.g., "authentication", "API endpoints", "data storage"]
    2. Find files that will need modification based on these requirements: [list key requirements]
    3. Locate reusable components, utilities, or services that can support this implementation
@@ -226,7 +226,7 @@ This implementation MUST follow a strict two-phase approach:
       - Error handling
       - Testing patterns
    5. Identify potential conflicts or areas that need refactoring
-   
+
    Return a structured summary of findings to guide implementation planning.
    ```
 
