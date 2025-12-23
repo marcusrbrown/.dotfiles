@@ -22,11 +22,11 @@ $ARGUMENTS
 </project-structure>
 
 <git-status>
-!`git status --porcelain 2>&1 | head -20 | grep -q . && git status --porcelain | head -20 || echo "Not a git repository"`
+!`git status --porcelain 2>/dev/null | head -20 | grep -q . && git status --porcelain 2>/dev/null | head -20 || echo "Not a git repository"`
 </git-status>
 
 <git-diff-summary>
-!`git diff --stat 2>&1 | tail -20 | grep -q . && git diff --stat | tail -20 || echo "No changes or not a git repository"`
+!`git diff --stat 2>/dev/null | tail -20 | grep -q . && git diff --stat 2>/dev/null | tail -20 || echo "No changes or not a git repository"`
 </git-diff-summary>
 
 <package-json>
