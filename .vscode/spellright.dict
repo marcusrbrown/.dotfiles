@@ -13,3 +13,6 @@ argv
 prd
 md
 CHANGELOG
+pytest
+lockfiles
+npm

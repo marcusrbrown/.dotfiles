@@ -1,5 +1,5 @@
 ---
-description: Convert a PRD into sequentially-ordered RFC documents with implementation prompts
+description: Convert a PRD into sequentially-ordered RFC documents
 argument-hint: <path-to-prd> (e.g., docs/PRD.md)
 ---
 
@@ -62,13 +62,13 @@ Use the `list` tool to check if the RFCs folder exists. If not, it will be creat
 Throughout this command, use the following tools:
 - `read` - To analyze PRD, FEATURES, RULES, and any referenced files
 - `glob` - To discover existing files matching patterns (e.g., `RFCs/*.md`)
-- `write` - To create new RFC files and implementation prompts
+- `write` - To create new RFC files and RFCS.md index
 - `list` - To verify folder structure before and after file creation
 - `explore` subagent - For deep codebase analysis when existing code is present
 
 ## RFC Generation Process
 
-Generate the RFCs files under RFCs folder including PROMPT CREATION md files by:
+Generate the RFC files under RFCs folder by:
 
 1. IMPLEMENTATION ORDER ANALYSIS:
    - Analyze the entire project to determine the optimal implementation sequence
@@ -129,160 +129,35 @@ Generate the RFCs files under RFCs folder including PROMPT CREATION md files by:
    - Explain how this RFC fits into the overall sequential implementation plan
    - Describe how this RFC builds upon the functionality implemented in previous RFCs
 
-5. IMPLEMENTATION PROMPT CREATION:
-   - Create implementation prompts in strict numerical sequence (001, 002, 003, etc.)
-   - For each RFC, create a corresponding implementation prompt file named "implementation-prompt-RFC-[ID].md"
-   - IMPORTANT: You MUST copy the EXACT content from <implementation-prompt-template> as your starting point
-   - First, read the entire <implementation-prompt-template> content to understand its structure and content
-   - Make ONLY the following specific replacements in the template:
-     * Replace all instances of "[ID]" with the RFC's identifier (e.g., "001")
-     * Replace all instances of "[Title]" with the RFC's title (e.g., "User Authentication")
-     * Replace all instances of "[brief description]" with a concise summary of the RFC's purpose
-   - DO NOT modify, remove, or add any other content from the template
-   - DO NOT change any section headings, formatting, or structure
-   - DO NOT duplicate implementation details in the prompt that are already included in the RFC document
-   - Verify that each implementation prompt maintains the exact same sections and instructions as the template
-   - Double-check that all placeholders have been properly replaced before finalizing
-
-   <implementation-prompt-template>
-   ```markdown
-   # Implementation Prompt for RFC-[ID]: [Title]
-
-    ## Role and Mindset
-    You are a senior software developer with extensive experience in building robust, maintainable, and scalable systems. Approach this implementation with the following mindset:
-
-    1. **Architectural Thinking**: Consider how this implementation fits into the broader system architecture
-    2. **Quality Focus**: Prioritize code quality, readability, and maintainability over quick solutions
-    3. **Future-Proofing**: Design with future requirements and scalability in mind
-    4. **Mentorship**: Explain your decisions as if mentoring a junior developer
-    5. **Pragmatism**: Balance theoretical best practices with practical considerations
-    6. **Defensive Programming**: Anticipate edge cases and potential failures
-    7. **System Perspective**: Consider impacts on performance, security, and user experience
-
-    ## Context
-    This implementation covers RFC-[ID], which focuses on [brief description]. Please refer to the following documents:
-    - @PRD.md for overall product requirements
-    - @FEATURES.md for detailed feature specifications
-    - @RULES.md for project guidelines and standards
-    - @RFC-[ID].md for the specific requirements being implemented
-
-    ## Two-Phase Implementation Approach
-    This implementation MUST follow a strict two-phase approach:
-
-    ### Phase 1: Implementation Planning
-    1. Thoroughly analyze the requirements and existing codebase
-    2. Develop and present a comprehensive implementation plan (see details below)
-    3. DO NOT write any actual code during this phase
-    4. Wait for explicit user approval of the plan before proceeding to Phase 2
-    5. Address any feedback, modifications, or additional requirements from the user
-
-    ### Phase 2: Implementation Execution
-    1. Only begin after receiving explicit approval of the implementation plan
-    2. Follow the approved plan, noting any necessary deviations
-    3. Implement in logical segments as outlined in the approved plan
-    4. Explain your approach for complex sections
-    5. Conduct a self-review before finalizing
-
-    ## Implementation Guidelines
-
-    ### Before Writing Code
-    1. Analyze all relevant code files thoroughly to understand the existing architecture
-    2. Get full context of how this feature fits into the broader application
-    3. If you need more clarification on requirements or existing code, ask specific questions
-    4. Critically evaluate your approach - ask "Is this the best way to implement this feature?"
-    5. Consider performance, maintainability, and scalability in your solution
-    6. Identify potential security implications and address them proactively
-    7. Evaluate how this implementation might affect other parts of the system
-
-    ### Implementation Standards
-    1. Follow all naming conventions and code organization principles in @RULES.md
-    2. Do not create workaround solutions. If you encounter an implementation challenge:
-      a. First, clearly explain the challenge you're facing
-      b. Propose a proper architectural solution that follows best practices
-      c. If you believe a workaround is truly necessary, explain:
-          - Why a proper solution isn't feasible
-          - The specific trade-offs of your workaround
-          - Future technical debt implications
-          - How it could be properly fixed later
-      d. Always flag workarounds with "WORKAROUND: [explanation]" in comments
-      e. Never implement a workaround without explicit user approval
-    3. If a method, class, or component already exists in the codebase, improve it rather than creating a new one
-    4. Ensure proper error handling and input validation
-    5. Add appropriate comments and documentation
-    6. Include necessary tests according to the project's testing standards
-    7. Apply SOLID principles and established design patterns where appropriate
-    8. Optimize for readability and maintainability first, then performance
-
-    ### Implementation Process
-    1. First, provide a detailed implementation plan including:
-      - Files to be created or modified
-      - Key components/functions to implement
-      - Data structures and state management approach
-      - API endpoints or interfaces required
-      - Any database changes needed
-      - Potential impacts on existing functionality
-      - Proposed implementation sequence with logical segments
-      - Any technical decisions or trade-offs being made
-    2. IMPORTANT: DO NOT proceed with any coding until receiving explicit user approval of the plan
-    3. The user may provide feedback, request modifications, or add requirements to the plan
-    4. Only after receiving clear confirmation, proceed with implementation
-    5. Implement the code in logical segments as outlined in the approved plan
-    6. Explain your approach for complex sections
-    7. Highlight any deviations from the original plan and explain why they were necessary
-    8. Conduct a self-review of your implementation before finalizing it
-
-    ### Problem Solving
-    When troubleshooting or making design decisions:
-    1. Rate your confidence in the solution (1-10)
-    2. If your confidence is below 8, explain alternative approaches considered
-    3. For complex problems, outline your reasoning process
-    4. When facing implementation challenges:
-      - Clearly articulate the problem
-      - Explain why it's challenging
-      - Present multiple potential solutions with pros/cons
-      - Make a recommendation based on best practices, not expediency
-    5. Apply a senior developer's critical thinking:
-      - Consider edge cases and failure modes
-      - Evaluate long-term maintenance implications
-      - Assess performance characteristics under various conditions
-      - Consider security implications
-
-    ## Code Quality Assurance
-    As a senior developer, ensure your implementation meets these quality standards:
-    1. **Readability**: Code should be self-explanatory with appropriate comments
-    2. **Testability**: Code should be structured to facilitate testing
-    3. **Modularity**: Functionality should be properly encapsulated
-    4. **Error Handling**: All potential errors should be properly handled
-    5. **Performance**: Implementation should be efficient and avoid unnecessary operations
-    6. **Security**: Code should follow security best practices
-    7. **Consistency**: Implementation should be consistent with the existing codebase
-
-    ## Scope Limitation
-    Please only implement the features specified in @RFC-[ID].md. If you identify dependencies on features from other RFCs, note them but do not implement them unless explicitly instructed.
-
-    ## Final Deliverables
-    1. All code changes necessary to implement the RFC
-    2. Brief documentation of how the implementation works
-    3. Any necessary tests
-    4. Notes on any future considerations or potential improvements
-    5. A list of any architectural decisions made, especially those that deviated from initial plans
-    6. A senior developer's assessment of the implementation, including:
-      - Strengths of the implementation
-      - Areas that might benefit from future refinement
-      - Potential scaling considerations as the application grows
-    ```
-    </implementation-prompt-template>
-
-6. RFCS.MD CREATION:
+5. RFCS.MD CREATION:
    - Create a master RFCS.md file that lists all RFCs in their strict numerical implementation order
-   - Include a dependency graph or table showing relationships between RFCs
-   - Provide a clear, sequential implementation roadmap
-   - Group RFCs into implementation phases if appropriate
+   - Include an RFC Summary Table with the following columns:
+     * RFC ID (e.g., RFC-001, RFC-002)
+     * Title (brief, descriptive name)
+     * Priority (MUST, SHOULD, COULD)
+     * Complexity (Low, Medium, High)
+     * Phase (implementation phase number)
+     * Status (Pending - all RFCs start as Pending, will be updated to Completed by /prd/implement command)
+   - Example table format:
+     ```markdown
+     ## RFC Summary Table
+
+     | RFC ID  | Title                          | Priority | Complexity | Phase | Status  |
+     | ------- | ------------------------------ | -------- | ---------- | ----- | ------- |
+     | RFC-001 | IndexedDB Storage Foundation   | MUST     | High       | 1     | Pending |
+     | RFC-002 | Security Infrastructure        | MUST     | High       | 1     | Pending |
+     | RFC-003 | Provider Abstraction Layer     | MUST     | Medium     | 1     | Pending |
+     ```
+   - Below the table, include a dependency graph or section showing relationships between RFCs
+   - Provide a clear, sequential implementation roadmap grouped by phases
    - For each RFC, indicate which previous RFCs it builds upon
    - For each RFC, indicate which future RFCs will build upon it
-   - Make it clear that implementation will proceed strictly in the numbered sequence
+   - Make it clear that:
+     * Implementation will proceed strictly in the numbered sequence
+     * Each RFC should be implemented using the `/prd/implement` command
+     * The Status column will be automatically updated to "Completed" after successful implementation
 
-7. TECHNICAL SPECIFICATIONS:
+6. TECHNICAL SPECIFICATIONS:
    - For each RFC, provide detailed technical specifications including:
      * Component architecture diagrams (described textually)
      * Data flow diagrams (described textually)
@@ -297,7 +172,7 @@ Generate the RFCs files under RFCs folder including PROMPT CREATION md files by:
    - Explain how each technical specification builds upon or extends the implementations from previous RFCs
    - Ensure specifications account for the sequential implementation order
 
-8. IMPLEMENTATION CONSTRAINTS:
+7. IMPLEMENTATION CONSTRAINTS:
    - Document any technical constraints that must be adhered to
    - Specify required coding standards and patterns
    - Note any performance budgets or requirements
@@ -306,11 +181,31 @@ Generate the RFCs files under RFCs folder including PROMPT CREATION md files by:
    - Highlight constraints that affect the sequential implementation order
    - Ensure constraints are addressed in the appropriate sequence
 
-First, provide a brief overview of how you've approached breaking down the project, with special emphasis on the sequential implementation order you've determined. Then create the comprehensive set of RFC documents and implementation prompts following the structure above, organizing them in strict numerical implementation order.
+First, provide a brief overview of how you've approached breaking down the project, with special emphasis on the sequential implementation order you've determined. Then create the comprehensive set of RFC documents following the structure above, organizing them in strict numerical implementation order.
 
 Ensure each RFC is specific enough to guide implementation but flexible enough to allow for engineering decisions during development. Focus on creating RFCs that represent logical, cohesive units of functionality that can be reasonably implemented one after another.
 
 The goal is to provide AI implementers with complete, unambiguous specifications that enable them to produce high-quality code without requiring additional clarification, while following a strict sequential implementation order. Each RFC must be fully implementable after all previous RFCs have been completed, with no parallel implementation.
+
+## Implementation Workflow
+
+After generating the RFCs, inform the user:
+
+```
+RFCs have been successfully generated. To implement each RFC:
+
+1. Use the /prd/implement command with the RFC file path:
+   /prd/implement RFCs/RFC-001-[Title].md
+
+2. The implementation command will:
+   - Validate prerequisites (check previous RFCs are completed)
+   - Support resuming partial implementations
+   - Follow a two-phase approach (planning → approval → execution)
+   - Run project-adaptive validation (tests, build, lint)
+   - Update RFCS.md status to "Completed" after verification
+
+3. Implement RFCs strictly in numerical order (001, 002, 003, etc.)
+```
 
 ## Error Handling & Edge Cases
 
@@ -330,7 +225,10 @@ Handle these situations appropriately:
 
 After generating all files, use the `glob` tool with pattern `RFCs/*.md` to verify:
 - All planned RFC files were created
-- All implementation prompt files were created
 - RFCS.md master index exists
 
-Report a summary of created files to the user.
+Report a summary of created files to the user, including:
+- Number of RFCs created
+- Implementation phases identified
+- Location of files
+- Next steps (use /prd/implement to begin implementation)
