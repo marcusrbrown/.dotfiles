@@ -206,7 +206,7 @@ This implementation MUST follow a strict two-phase approach:
    - Note any constraints or special requirements
 
 2. **Understand Existing Codebase:**
-   - Use the `explore` subagent to analyze relevant parts of the codebase
+   - Ask the @explore subagent to analyze relevant parts of the codebase
 
    **Before invoking the explore agent, customize the prompt by replacing placeholders with actual values from the RFC document:**
    - `[RFC Title]` → The actual RFC title (e.g., "User Authentication System")
