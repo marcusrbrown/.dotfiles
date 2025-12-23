@@ -47,7 +47,7 @@ Review <existing-rules> output. If existing rules are found:
 - Note any existing conventions that should be preserved
 
 ### Step 3: Codebase Analysis (if existing code)
-If <project-structure> shows existing source code, use the `explore` subagent to detect conventions:
+If <project-structure> shows existing source code, ask the @explore subagent to detect conventions:
 
 **Explore Agent Prompt:**
 ```
@@ -127,7 +127,7 @@ Handle these situations appropriately:
    - Replace entirely with new rules
    - Merge new rules with existing ones
    - Cancel and review existing rules first
-4. **Tech stack unclear**: Use <package-json> and `explore` agent to detect from existing code
+4. **Tech stack unclear**: Use <package-json> and @explore agent to detect from existing code
 5. **Conflicting requirements**: If PRD contains contradictions, list them and ask for resolution
 6. **No existing codebase**: If <project-structure> shows no source files, base rules purely on PRD specifications
 

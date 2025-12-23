@@ -49,7 +49,7 @@ Throughout this review, use the following tools:
 
 ### Technical Feasibility Check (if codebase exists)
 
-If <project-structure> shows existing source code, use the `explore` subagent:
+If <project-structure> shows existing source code, ask the @explore subagent:
 
 **Prompt:** "Analyze the project's current architecture and tech stack. Identify any constraints or patterns that should inform PRD technical requirements. Flag any PRD requirements that may conflict with existing implementation."
 

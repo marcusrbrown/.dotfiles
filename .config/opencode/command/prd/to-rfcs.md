@@ -40,7 +40,7 @@ Use the `read` tool to analyze the following files (in parallel):
 If any of these files don't exist, note which are missing and proceed with available documents.
 
 ### Step 2: Codebase Analysis (if existing code)
-If <project-structure> shows existing source code, use the `explore` subagent to analyze the codebase:
+If <project-structure> shows existing source code, ask the @explore subagent to analyze the codebase:
 
 **Explore Agent Prompt:**
 ```

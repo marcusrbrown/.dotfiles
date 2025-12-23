@@ -45,7 +45,7 @@ Before analyzing changes, gather context:
 
 ### Development Status Assessment
 
-Use the `explore` subagent to understand current implementation state:
+Ask the @explore subagent to understand current implementation state:
 
 **Prompt:** "Analyze the codebase to determine:
 1. Which features from FEATURES.md are already implemented
