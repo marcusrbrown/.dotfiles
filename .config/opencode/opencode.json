@@ -1,4 +1,14 @@
 {
+  "mcp": {
+    "playwright-mcp": {
+      "type": "local",
+      "command": [
+        "npx",
+        "@playwright/mcp@latest",
+        "--caps=tracing,vision"
+      ]
+    }
+  },
   "plugin": [
     "oh-my-opencode",
     "@tarquinen/opencode-dcp@latest",
