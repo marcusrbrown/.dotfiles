@@ -251,6 +251,9 @@ Create a detailed plan with the following sections:
 ### Overview
 [Brief summary of what will be implemented and overall approach]
 
+### Acceptance Criteria
+- [List each acceptance criterion from the RFC]
+
 ### Files to Create
 - **[File path]**
   - Purpose: [what this file does]
@@ -623,10 +626,10 @@ Once validation passes, update the RFC status in RFCS.md:
 
 ### Final Deliverables
 
-Provide the user with a comprehensive completion summary:
+1. **Provide the user with a comprehensive completion summary**:
 
 ```markdown
-## Implementation Complete ✅
+## ✅ RFC-XXX: Implementation Complete
 
 **RFC:** RFC-XXX - [Title]
 **Status:** Completed and Verified
@@ -649,12 +652,34 @@ Provide the user with a comprehensive completion summary:
 - Coverage: [what's tested]
 
 ### Validation Results
-- ✅ Tests: All passing ([number] tests)
-- ✅ Build: Success
 - ✅ Lint: Clean (no errors)
+- ✅ Type Check: Passed (0 errors)
+- ✅ Security Scan: Passed (0 HIGH/CRITICAL vulnerabilities)
+- ✅ Tests: All passing ([number] tests)
+- ✅ Accessibility: Passed (if applicable)
+- ✅ Visual & Usability: Passed (if UI component - Playwright tests)
+- ✅ Build: Successful
+- ✅ Format: Compliant
 
-### Implementation Notes
-[Any important technical notes, decisions made, or context for future developers]
+### Security Validation
+- ✅ No hardcoded credentials
+- ✅ Input validation implemented
+- ✅ Secure error handling
+- ✅ Dependencies verified
+
+### Implementation Details
+- [Technical approach taken]
+- [Key challenges overcome]
+- [Files created/modified]
+- [Security considerations addressed]
+- [Accessibility features implemented (if applicable)]
+- [Any important technical notes, decisions made, or context for future developers]
+
+### Results Summary
+- [What was accomplished]
+- [Acceptance criteria met]
+- [Performance characteristics]
+- [Known limitations or future improvements]
 
 ### Future Considerations
 - [Potential improvement 1]
@@ -662,7 +687,6 @@ Provide the user with a comprehensive completion summary:
 - [Scaling consideration 1]
 
 ### Senior Developer Assessment
-
 **Strengths:**
 - [What was done well]
 - [Good architectural decisions]
@@ -677,6 +701,13 @@ Provide the user with a comprehensive completion summary:
 - [Performance characteristics]
 - [Potential bottlenecks to watch]
 ```
+
+2. **Include Evidence**:
+   - Terminal output from quality gate commands
+   - Test results summary (including accessibility tests)
+   - Security scan results
+   - Build success confirmation
+   - Any warnings or issues resolved
 
 ## Error Handling and Edge Cases
 
