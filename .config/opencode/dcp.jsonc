@@ -3,9 +3,35 @@
   "enabled": true,
   // Enable debug logging to ~/.config/opencode/logs/dcp/
   "debug": false,
-  // Summary display: "off", "minimal", or "detailed"
-  "pruningSummary": "minimal",
-  // Strategies for pruning tokens from chat history
+  // Notification display: "off", "minimal", or "detailed"
+  "pruneNotification": "minimal",
+  // Protect from pruning for <turns> message turns
+  "turnProtection": {
+    "enabled": false,
+    "turns": 4
+  },
+  // LLM-driven context pruning tools
+  "tools": {
+    // Shared settings for all prune tools
+    "settings": {
+      // Nudge the LLM to use prune tools (every <nudgeFrequency> tool results)
+      "nudgeEnabled": true,
+      "nudgeFrequency": 10,
+      // Additional tools to protect from pruning
+      "protectedTools": []
+    },
+    // Removes tool content from context without preservation (for completed tasks or noise)
+    "discard": {
+      "enabled": true
+    },
+    // Distills key findings into preserved knowledge before removing raw content
+    "extract": {
+      "enabled": true,
+      // Show distillation content as an ignored message notification
+      "showDistillation": false
+    }
+  },
+  // Automatic pruning strategies
   "strategies": {
     // Remove duplicate tool calls (same tool with same arguments)
     "deduplication": {
@@ -16,17 +42,6 @@
     // Prune write tool inputs when the file has been subsequently read
     "supersedeWrites": {
       "enabled": true
-    },
-    // Exposes a prune tool to your LLM to call when it determines pruning is necessary
-    "pruneTool": {
-      "enabled": true,
-      // Additional tools to protect from pruning
-      "protectedTools": [],
-      // Nudge the LLM to use the prune tool (every <frequency> tool results)
-      "nudge": {
-        "enabled": true,
-        "frequency": 10
-      }
     },
     // (Legacy) Run an LLM to analyze what tool calls are no longer relevant on idle
     "onIdle": {
