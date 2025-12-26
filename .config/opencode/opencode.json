@@ -10,8 +10,7 @@
     }
   },
   "plugin": [
-    "oh-my-opencode",
-    "@tarquinen/opencode-dcp@latest"
+    "oh-my-opencode"
   ],
   "$schema": "https://opencode.ai/config.json"
 }

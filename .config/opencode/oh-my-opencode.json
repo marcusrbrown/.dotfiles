@@ -2,10 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "agents": {
     "Sisyphus": {
-      "model": "github-copilot/claude-sonnet-4.5",
-      "temperature": 0.3
-    },
-    "Build-Sisyphus": {
       "model": "github-copilot/claude-opus-4.5"
     },
     "Planner-Sisyphus": {
@@ -26,8 +22,5 @@
     "multimodal-looker": {
       "model": "github-copilot/gemini-3-flash-preview"
     }
-  },
-  "sisyphus_agent": {
-    "replace_build": false
   }
 }
