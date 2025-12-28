@@ -10,16 +10,13 @@ $ARGUMENTS
 </prd-path>
 
 <existing-prd>
-!`cat PRD.md 2>/dev/null || cat docs/PRD.md 2>/dev/null || echo "No PRD found at default locations"`
-</existing-prd>
+!`cat PRD.md 2>/dev/null || cat docs/PRD.md 2>/dev/null || echo "No PRD found at default locations"`</existing-prd>
 
 <existing-features>
-!`cat FEATURES.md 2>/dev/null || cat docs/FEATURES.md 2>/dev/null || echo "No existing FEATURES.md found"`
-</existing-features>
+!`cat FEATURES.md 2>/dev/null || cat docs/FEATURES.md 2>/dev/null || echo "No existing FEATURES.md found"`</existing-features>
 
 <project-docs>
-!`ls -la docs/*.md 2>/dev/null || ls *.md 2>/dev/null | head -10 || echo "No docs found"`
-</project-docs>
+!`(find docs -maxdepth 1 -type f -name '*.md' 2>/dev/null || ls *.md 2>/dev/null) | sort | head -20 |  awk 'NR { print; found=1 } END { if (!found) print "No docs found" }'`</project-docs>
 
 ## Role
 

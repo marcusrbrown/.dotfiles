@@ -4,11 +4,8 @@
     "Sisyphus": {
       "model": "github-copilot/claude-opus-4.5"
     },
-    "Planner-Sisyphus": {
-      "model": "github-copilot/gpt-5.2"
-    },
     "librarian": {
-      "model": "github-copilot/claude-haiku-4.5"
+      "model": "github-copilot/claude-sonnet-4.5"
     },
     "oracle": {
       "model": "github-copilot/gpt-5.2"
@@ -17,7 +14,7 @@
       "model": "github-copilot/gemini-3-pro-preview"
     },
     "document-writer": {
-      "model": "github-copilot/gemini-3-pro-preview"
+      "model": "github-copilot/gemini-3-flash-preview"
     },
     "multimodal-looker": {
       "model": "github-copilot/gemini-3-flash-preview"

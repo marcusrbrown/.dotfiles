@@ -10,20 +10,16 @@ $ARGUMENTS
 </prd-path>
 
 <project-structure>
-!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`
-</project-structure>
+!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`</project-structure>
 
 <package-json>
-!`cat package.json 2>/dev/null || echo "No package.json found"`
-</package-json>
+!`cat package.json 2>/dev/null || echo "No package.json found"`</package-json>
 
 <existing-rules>
-!`cat RULES.md 2>/dev/null || cat docs/RULES.md 2>/dev/null || cat .cursor/rules/RULES.md 2>/dev/null || echo "No existing RULES.md found"`
-</existing-rules>
+!`cat RULES.md 2>/dev/null || cat docs/RULES.md 2>/dev/null || echo "No existing RULES.md found"`</existing-rules>
 
 <existing-docs>
-!`ls -la docs/ 2>/dev/null || ls -la *.md 2>/dev/null | head -10 || echo "No docs found"`
-</existing-docs>
+!`(find docs -maxdepth 1 -type f -name '*.md' 2>/dev/null || ls *.md 2>/dev/null) | sort | head -20 |  awk 'NR { print; found=1 } END { if (!found) print "No docs found" }'`</existing-docs>
 
 ## Role
 
@@ -136,6 +132,5 @@ Handle these situations appropriately:
 Use the `write` tool to create the RULES.md file. Choose location based on project structure:
 - `RULES.md` (project root) - default
 - `docs/RULES.md` - if docs folder exists
-- `.cursor/rules/RULES.md` - if .cursor folder exists (for Cursor IDE)
 
 After writing, use `read` to verify the file was created correctly and report success to user.
