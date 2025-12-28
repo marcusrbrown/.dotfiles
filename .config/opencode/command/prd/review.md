@@ -10,16 +10,13 @@ $ARGUMENTS
 </prd-path>
 
 <existing-prd>
-!`cat PRD.md 2>/dev/null || cat docs/PRD.md 2>/dev/null || echo "No PRD found at default locations"`
-</existing-prd>
+!`cat PRD.md 2>/dev/null || cat docs/PRD.md 2>/dev/null || echo "No PRD found at default locations"`</existing-prd>
 
 <related-docs>
-!`ls -la docs/*.md 2>/dev/null || ls *.md 2>/dev/null | head -10 || echo "No docs found"`
-</related-docs>
+!`(find docs -maxdepth 1 -type f -name '*.md' 2>/dev/null || ls *.md 2>/dev/null) | sort | head -20 |  awk 'NR { print; found=1 } END { if (!found) print "No docs found" }'`</related-docs>
 
 <project-structure>
-!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`
-</project-structure>
+!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`</project-structure>
 
 ## Role
 
@@ -35,6 +32,7 @@ Before analyzing, gather the necessary context:
    - If neither has content, prompt user for the correct path
 
 2. Use the `glob` tool to check for related docs: `docs/*.md` or `*.md`
+   - If <related-docs> shows relevant documentation, read those files
    - Look for FEATURES.md, RULES.md that may provide additional context
 
 3. If <project-structure> shows existing code, consider technical feasibility against the codebase

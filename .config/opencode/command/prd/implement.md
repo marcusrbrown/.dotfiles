@@ -10,48 +10,37 @@ $ARGUMENTS
 </rfc-path>
 
 <available-rfcs>
-!`ls RFCs/RFC-*.md docs/rfc/RFC-*.md docs/rfcs/RFC-*.md 2>&1 | grep -E "^RFCs/|^docs/" | head -20 || echo "No RFC files found"`
-</available-rfcs>
+!`find RFCs docs/rfcs doc/rfcs -maxdepth 1 -type f -name 'RFC-*.md' 2>/dev/null | sort | head -20 | awk 'NR { print; found=1 } END { if (!found) print "No RFC files found" }'`</available-rfcs>
 
 <rfcs-index>
-!`cat RFCs/RFCS.md docs/rfc/RFCS.md docs/rfcs/RFCS.md 2>/dev/null | head -100 | grep -q . && cat RFCs/RFCS.md docs/rfc/RFCS.md docs/rfcs/RFCS.md 2>/dev/null | head -100 || echo "No RFCS.md index found"`
-</rfcs-index>
+!`cat RFCs/RFCS.md docs/rfc/RFCS.md docs/rfcs/RFCS.md 2>/dev/null | head -100 | grep -q . && cat RFCs/RFCS.md docs/rfc/RFCS.md docs/rfcs/RFCS.md 2>/dev/null | head -100 || echo "No RFCS.md index found"`</rfcs-index>
 
 <project-structure>
-!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`
-</project-structure>
+!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`</project-structure>
 
 <git-status>
-!`git rev-parse --git-dir >/dev/null 2>&1 && { git status --porcelain | head -20 | grep -q . && git status --porcelain | head -20 || echo "No uncommitted changes"; } || echo "Not a git repository"`
-</git-status>
+!`git status --porcelain | head -20 | awk 'NR { print; found=1 } END { if (!found) print "No uncommitted changes" }'`</git-status>
 
 <git-diff-summary>
-!`git rev-parse --git-dir >/dev/null 2>&1 && { git diff --stat | tail -20 | grep -q . && git diff --stat | tail -20 || echo "No unstaged changes"; } || echo "Not a git repository"`
-</git-diff-summary>
+!`git diff --stat | tail -20 | awk 'NR { print; found=1 } END { if (!found) print "No unstaged changes" }'`</git-diff-summary>
 
 <package-json>
-!`test -f package.json && cat package.json | head -50 || echo "No package.json found"`
-</package-json>
+!`test -f package.json && cat package.json | head -25 || echo "No package.json found"`</package-json>
 
 <pyproject-toml>
-!`test -f pyproject.toml && cat pyproject.toml | head -80 || echo "No pyproject.toml found"`
-</pyproject-toml>
+!`test -f pyproject.toml && cat pyproject.toml | head -40 || echo "No pyproject.toml found"`</pyproject-toml>
 
 <tsconfig>
-!`test -f tsconfig.json && cat tsconfig.json | head -20 || echo "No tsconfig.json found"`
-</tsconfig>
+!`test -f tsconfig.json && cat tsconfig.json | head -20 || echo "No tsconfig.json found"`</tsconfig>
 
 <lockfiles>
-!`ls -la package-lock.json yarn.lock pnpm-lock.yaml bun.lock* 2>&1 | grep -E "^-" || echo "No lockfiles found"`
-</lockfiles>
+!`ls pnpm-lock.yaml yarn.lock package-lock.json bun.lock bun.lockb 2>/dev/null | grep . || echo "No lockfiles found"`</lockfiles>
 
 <recent-commits>
-!`git log --oneline -10 2>&1 | grep -v "not a git repository" | grep -v "does not have any commits" | grep -q . && git log --oneline -10 || echo "No git history available"`
-</recent-commits>
+!`git log --oneline -10 2>&1 | grep -v "not a git repository" | grep -v "does not have any commits" | grep -q . && git log --oneline -10 || echo "No git history available"`</recent-commits>
 
 <project-config>
-!`ls -la Makefile pyproject.toml setup.py Cargo.toml go.mod build.gradle pom.xml 2>&1 | grep -E "^-" || echo "No standard build config found"`
-</project-config>
+!`ls Makefile pyproject.toml setup.py Cargo.toml go.mod build.gradle pom.xml build.zig 2>/dev/null | grep . || echo "No standard build config found"`</project-config>
 
 ## Role and Mindset
 
@@ -243,89 +232,112 @@ This implementation MUST follow a strict two-phase approach:
 
 #### Present Comprehensive Implementation Plan
 
-Create a detailed plan with the following sections:
+Create a detailed plan using the following template:
+
+##### Mandatory Template Structure
+
+All implementation plans must strictly adhere to the following template. Each section is required and must be populated with specific, actionable content. AI agents must validate template compliance before execution.
+
+##### Template Validation Rules
+
+- All front matter fields must be present and properly formatted
+- All section headers must match exactly (case-sensitive)
+- All identifier prefixes must follow the specified format
+- Tables must include all required columns
+- No placeholder text may remain in the final output
+
+##### Status
+
+The status of the implementation plan must be clearly defined in the front matter and must reflect the current state of the plan. The status can be one of the following (status_color in brackets): `Completed` (bright green badge), `In progress` (yellow badge), `Planned` (blue badge), `Deprecated` (red badge), or `On Hold` (orange badge). It should also be displayed as a badge in the introduction section.
 
 ```markdown
-## Implementation Plan for RFC-XXX: [Title]
+---
+goal: [Concise Title Describing the Package Implementation Plan's Goal]
+version: [Optional: e.g., 1.0, Date]
+date_created: [YYYY-MM-DD]
+last_updated: [Optional: YYYY-MM-DD]
+status: 'Completed'|'In progress'|'Planned'|'Deprecated'|'On Hold'
+tags: [Optional: List of relevant tags or categories, e.g., `feature`, `upgrade`, `chore`, `architecture`, `migration`, `bug` etc]
+---
 
-### Overview
-[Brief summary of what will be implemented and overall approach]
+# Implementation Plan for RFC-XXX: [Title]
 
-### Acceptance Criteria
-- [List each acceptance criterion from the RFC]
+![Status: <status>](https://img.shields.io/badge/status-<status>-<status_color>)
 
-### Files to Create
-- **[File path]**
-  - Purpose: [what this file does]
-  - Key exports: [functions, classes, types]
-  - Dependencies: [what it imports/uses]
+[Brief summary of what will be implemented and overall approach and the goal it is intended to achieve.]
 
-### Files to Modify
-- **[File path]**
-  - Changes: [specific changes to make]
-  - Rationale: [why these changes are needed]
-  - Impact: [what other parts of the system might be affected]
+## 1. Requirements & Constraints
 
-### Key Components/Functions
-1. **[Component/Function Name]**
-   - Responsibility: [what it does]
-   - Inputs: [parameters/props]
-   - Outputs: [return value/side effects]
-   - Complexity: [simple/moderate/complex]
+[Explicitly list all requirements & constraints that affect the plan and constrain how it is implemented. Use bullet points or tables for clarity.]
 
-### Data Structures and State Management
-- [Describe data models, state shape, storage approach]
-- [Explain state management pattern to use]
+- **REQ-001**: Requirement 1
+- **SEC-001**: Security Requirement 1
+- **[3 LETTERS]-001**: Other Requirement 1
+- **CON-001**: Constraint 1
+- **GUD-001**: Guideline 1
+- **PAT-001**: Pattern to follow 1
 
-### API Endpoints/Interfaces (if applicable)
-- **[Endpoint/Interface Name]**
-  - Method/Type: [GET/POST/etc or interface signature]
-  - Request/Input: [format]
-  - Response/Output: [format]
-  - Error handling: [approach]
+## 2. Implementation Sequence
 
-### Database Changes (if applicable)
-- Schema changes: [describe]
-- Migrations: [needed/not needed]
-- Indexing: [any indexes to add]
+### Segment 1
 
-### Implementation Sequence
-1. **Segment 1:** [Description]
-   - Files: [list]
-   - Estimated complexity: [simple/moderate/complex]
-   - Rationale: [why this comes first]
+- GOAL-001: [Describe the goal of this segment, e.g., "Implement feature X", "Refactor module Y", etc.]
 
-2. **Segment 2:** [Description]
-   - Files: [list]
-   - Dependencies: [requires Segment 1 because...]
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-001 | Description of task 1 | ✅ | 2025-04-25 |
+| TASK-002 | Description of task 2 | |  |
+| TASK-003 | Description of task 3 | |  |
 
-3. [Continue for all segments...]
+### Segment 2
 
-### Technical Decisions and Trade-offs
-1. **Decision:** [What you're deciding]
-   - Options considered: [A, B, C]
-   - Selected: [Option]
-   - Rationale: [Why - consider performance, maintainability, scalability]
-   - Trade-offs: [What we gain vs. what we sacrifice]
+- GOAL-002: [Describe the goal of this segment, e.g., "Implement feature X", "Refactor module Y", etc.]
 
-### Potential Risks and Mitigations
-- **Risk:** [Description]
-  - Impact: [High/Medium/Low]
-  - Mitigation: [How to address]
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-004 | Description of task 4 | |  |
+| TASK-005 | Description of task 5 | |  |
+| TASK-006 | Description of task 6 | |  |
 
-### Testing Strategy
-- Unit tests: [what to test]
-- Integration tests: [what to test]
-- Edge cases: [list important edge cases]
+## 3. Alternatives
 
-### Performance Considerations
-- [Any performance-critical sections]
-- [Optimization strategies]
+[A bullet point list of any alternative approaches that were considered and why they were not chosen. This helps to provide context and rationale for the chosen approach.]
 
-### Security Considerations
-- [Authentication/authorization requirements]
-- [Input validation needs]
-- [Sensitive data handling]
+- **ALT-001**: Alternative approach 1
+- **ALT-002**: Alternative approach 2
+
+## 4. Dependencies
+
+[List any dependencies that need to be addressed, such as libraries, frameworks, or other components that the plan relies on.]
+
+- **DEP-001**: Dependency 1
+- **DEP-002**: Dependency 2
+
+## 5. Files
+
+[List the files that will be affected by the feature or refactoring task.]
+
+- **FILE-001**: Description of file 1
+- **FILE-002**: Description of file 2
+
+## 6. Testing
+
+[List the tests that need to be implemented to verify the implementation.]
+
+- **TEST-001**: Description of test 1
+- **TEST-002**: Description of test 2
+
+## 7. Risks & Assumptions
+
+[List any risks or assumptions related to the implementation of the plan, their impact, and mitigation strategies.]
+
+- **RISK-001**: Risk 1
+- **ASSUMPTION-001**: Assumption 1
+
+## 8. Related Specifications / Further Reading
+
+[Link to related spec 1]
+[Link to relevant external documentation]
 ```
 
 #### CRITICAL GATE: WAIT FOR APPROVAL
@@ -590,14 +602,6 @@ If any validation step fails:
    - Continue the fix-verify cycle until all validation passes
    - Do not proceed to completion phase with failing validation
 
-### Pre-existing Failures
-
-If validation failures appear to be pre-existing (not caused by your changes):
-
-1. Try to isolate whether the failure is related to your changes
-2. Check git history or ask the user: "This test/lint error appears to be pre-existing. Should I fix it as part of this RFC, or note it and proceed?"
-3. Only proceed if explicitly told to ignore pre-existing failures
-
 ## Completion Phase
 
 ### Update RFCS.md Status
@@ -765,21 +769,6 @@ Handle these scenarios gracefully:
 | RFCS.md not found | Warn: "Cannot update RFCS.md (not found). Please manually mark RFC-XXX as Completed." |
 | Table format unexpected | Show user the table, explain expected format, ask: "Cannot parse table. Please update manually or help me understand the format." |
 | Edit fails | Provide manual instructions: "Please update RFC-XXX Status column to 'Completed' in [path to RFCS.md]" |
-
-## Tool Usage Reference
-
-Throughout this implementation command, use these tools explicitly:
-
-| Tool | When to Use | Example |
-|------|-------------|---------|
-| `read` | Load RFC, PRD, FEATURES, RULES, RFCS.md, existing code files | `read /path/to/RFC-001.md` |
-| `write` | Create new implementation files | `write /path/to/NewComponent.tsx` |
-| `edit` | Modify existing files, update RFCS.md status | `edit /path/to/existing.ts` |
-| `glob` | Find files matching patterns, discover test files | `glob src/**/*test.ts` |
-| `grep` | Search for patterns in codebase | `grep "function authenticate" src/` |
-| `bash` | Run tests, build, lint, git commands | Run with bash tool: `npm test` |
-| `explore` subagent | Deep codebase analysis for planning phase | See Phase 1 for detailed prompt |
-| `list` | Verify directory structure, check for files | `list src/components` |
 
 ## Scope Limitation
 

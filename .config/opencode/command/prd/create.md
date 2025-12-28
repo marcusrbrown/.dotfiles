@@ -9,20 +9,16 @@ $ARGUMENTS
 </initial-idea>
 
 <project-structure>
-!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`
-</project-structure>
+!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`</project-structure>
 
 <existing-docs>
-!`ls -la docs/ 2>/dev/null || ls *.md 2>/dev/null | head -10 || echo "No existing docs found"`
-</existing-docs>
+!`(find docs -maxdepth 1 -type f -name '*.md' 2>/dev/null || ls *.md 2>/dev/null) | sort | head -20 |  awk 'NR { print; found=1 } END { if (!found) print "No existing docs found" }'`</existing-docs>
 
 <existing-prd>
-!`cat PRD.md 2>/dev/null || cat docs/PRD.md 2>/dev/null || echo "No existing PRD found"`
-</existing-prd>
+!`cat PRD.md 2>/dev/null || cat docs/PRD.md 2>/dev/null || echo "No existing PRD found"`</existing-prd>
 
 <package-json>
-!`cat package.json 2>/dev/null | head -25 || echo "No package.json found"`
-</package-json>
+!`cat package.json 2>/dev/null | head -25 || echo "No package.json found"`</package-json>
 
 ## Role
 
@@ -33,6 +29,7 @@ You are an experienced Product Manager with expertise in creating detailed Produ
 Review the injected context above:
 - If <initial-idea> contains content, use it as the starting point and skip basic "what is your product" questions
 - If <project-structure> shows existing code, tailor questions to understand how the PRD fits the existing codebase
+- If <existing-docs> shows relevant documentation, reference it to inform your questions
 - If <existing-prd> shows an existing PRD, ask user whether to replace it, update it, or create with a different name
 - If <package-json> shows tech stack info, incorporate this into technical requirement questions
 
