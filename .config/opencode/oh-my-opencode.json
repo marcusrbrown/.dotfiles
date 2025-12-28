@@ -24,6 +24,9 @@
       "model": "github-copilot/gemini-3-flash-preview"
     }
   },
+  "comment_checker": {
+    "custom_prompt": "Found {{comments}} comments. Review and fix only critical issues."
+  },
   "experimental": {
     "aggressive_truncation": true,
     "auto_resume": true,
