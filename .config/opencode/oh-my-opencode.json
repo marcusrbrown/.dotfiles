@@ -4,6 +4,10 @@
     "Sisyphus": {
       "model": "github-copilot/claude-opus-4.5"
     },
+    "Planner-Sisyphus": {
+      "model": "github-copilot/claude-sonnet-4.5",
+      "temperature": 0.3
+    },
     "librarian": {
       "model": "github-copilot/claude-sonnet-4.5"
     },
@@ -19,5 +23,10 @@
     "multimodal-looker": {
       "model": "github-copilot/gemini-3-flash-preview"
     }
+  },
+  "experimental": {
+    "aggressive_truncation": true,
+    "auto_resume": true,
+    "dcp_for_compaction": true
   }
 }
