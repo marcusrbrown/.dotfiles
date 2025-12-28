@@ -7,7 +7,7 @@
   "pruneNotification": "minimal",
   // Protect from pruning for <turns> message turns
   "turnProtection": {
-    "enabled": false,
+    "enabled": true,
     "turns": 4
   },
   // LLM-driven context pruning tools
