@@ -13,6 +13,7 @@
 !/.claude/agents/*.md
 !/.claude/commands/
 !/.claude/CLAUDE.md
+!/.claude/rules/
 !/.claude/settings.json
 !/.claude/skills/
 !/.config/
