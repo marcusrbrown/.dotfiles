@@ -1,16 +1,8 @@
 {
-  "mcp": {
-    "playwright-mcp": {
-      "type": "local",
-      "command": [
-        "npx",
-        "@playwright/mcp@latest",
-        "--caps=tracing,vision"
-      ]
-    }
-  },
   "plugin": [
-    "oh-my-opencode"
+    "oh-my-opencode",
+    "@tarquinen/opencode-dcp"
   ],
+  "small_model": "github-copilot/claude-haiku-4.5",
   "$schema": "https://opencode.ai/config.json"
 }
