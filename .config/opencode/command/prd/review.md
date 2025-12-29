@@ -10,7 +10,7 @@ $ARGUMENTS
 </prd-path>
 
 <existing-prd>
-!`cat PRD.md 2>/dev/null || cat docs/PRD.md 2>/dev/null || echo "No PRD found at default locations"`</existing-prd>
+!`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found at default locations"`</existing-prd>
 
 <related-docs>
 !`(find docs -maxdepth 1 -type f -name '*.md' 2>/dev/null || ls *.md 2>/dev/null) | sort | head -20 |  awk 'NR { print; found=1 } END { if (!found) print "No docs found" }'`</related-docs>
@@ -43,11 +43,11 @@ Throughout this review, use the following tools:
 - `read` - To load the PRD and any related documentation
 - `glob` - To discover related docs (FEATURES.md, RULES.md, etc.)
 - `write` - To save the improved PRD
-- `explore` subagent - For technical feasibility validation (if codebase exists)
+- `explore` agent - For technical feasibility validation (if codebase exists)
 
 ### Technical Feasibility Check (if codebase exists)
 
-If <project-structure> shows existing source code, ask the @explore subagent:
+If <project-structure> shows existing source code, ask the explore agent:
 
 **Prompt:** "Analyze the project's current architecture and tech stack. Identify any constraints or patterns that should inform PRD technical requirements. Flag any PRD requirements that may conflict with existing implementation."
 

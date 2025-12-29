@@ -15,7 +15,7 @@ $ARGUMENTS
 !`(find docs -maxdepth 1 -type f -name '*.md' 2>/dev/null || ls *.md 2>/dev/null) | sort | head -20 |  awk 'NR { print; found=1 } END { if (!found) print "No existing docs found" }'`</existing-docs>
 
 <existing-prd>
-!`cat PRD.md 2>/dev/null || cat docs/PRD.md 2>/dev/null || echo "No existing PRD found"`</existing-prd>
+!`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found at default locations"`</existing-prd>
 
 <package-json>
 !`cat package.json 2>/dev/null | head -25 || echo "No package.json found"`</package-json>

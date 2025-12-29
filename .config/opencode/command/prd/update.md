@@ -10,7 +10,7 @@ $ARGUMENTS
 </change-request>
 
 <existing-prd>
-!`cat PRD.md 2>/dev/null || cat docs/PRD.md 2>/dev/null || echo "No PRD found at default locations"`</existing-prd>
+!`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found at default locations"`</existing-prd>
 
 <existing-features>
 !`cat FEATURES.md 2>/dev/null || cat docs/FEATURES.md 2>/dev/null || echo "No FEATURES.md found"`</existing-features>
@@ -33,14 +33,14 @@ You are an expert product manager and change management specialist tasked with a
 Before analyzing changes, gather context:
 
 1. Use the `read` tool to load the full PRD from <existing-prd>
-2. Use `glob` to discover all RFC files: `RFCs/*.md`
+2. Use `glob` to discover all RFC files in <existing-rfcs>
 3. Review <existing-features> for current feature scope
 4. Analyze <git-status> and <recent-commits> for development progress
 5. Parse <change-request> to understand proposed modifications
 
 ### Development Status Assessment
 
-Ask the @explore subagent to understand current implementation state:
+Ask the explore agent to understand current implementation state:
 
 **Prompt:** "Analyze the codebase to determine:
 1. Which features from FEATURES.md are already implemented
@@ -54,7 +54,7 @@ Return a structured implementation status report."
 Throughout this command, use the following tools:
 - `read` - To load PRD.md, FEATURES.md, and relevant RFCs
 - `glob` - To discover all RFC files and related docs
-- `explore` subagent - To assess current implementation status
+- `explore` agent - To assess current implementation status
 - `edit` - To update PRD.md with changes (prefer edit over full rewrite)
 - `write` - To create CHANGELOG.md entry documenting updates
 
@@ -97,24 +97,18 @@ Assess and integrate the proposed changes by:
    - Identify parallel work streams that could minimize disruption
    - Propose testing strategy for validating changes
 
-4. DOCUMENTATION UPDATES:
+4. RISK ASSESSMENT:
+   - Identify risks introduced by implementing the changes mid-development
+   - Suggest mitigation strategies for each identified risk
+   - Assess potential impact on product quality and technical debt
+   - Evaluate business risks of not implementing the changes
+
+5. DOCUMENTATION UPDATES:
    - Provide updated PRD sections incorporating the changes
    - Highlight all modifications to the original PRD
    - Update affected user stories and acceptance criteria
    - Revise any impacted technical specifications
    - Update timeline and milestone documentation
-
-5. COMMUNICATION PLAN:
-   - Identify all stakeholders who need to be informed of the changes
-   - Suggest key messages for different stakeholder groups
-   - Recommend synchronization points with the development team
-   - Propose change review meetings or approval processes
-
-6. RISK ASSESSMENT:
-   - Identify risks introduced by implementing the changes mid-development
-   - Suggest mitigation strategies for each identified risk
-   - Assess potential impact on product quality and technical debt
-   - Evaluate business risks of not implementing the changes
 
 First, provide a summary of your overall assessment of the proposed changes and their impact. Then provide detailed analysis following the structure above. Finally, deliver a clear recommendation on how to proceed with each change.
 
@@ -131,7 +125,7 @@ When updating the PRD:
 
 1. Display change impact summary in chat first
 2. Use `edit` to update PRD.md with approved changes
-3. Use `write` to create/append to `CHANGELOG.md` documenting the update
+3. Use `write` to create/append to `CHANGELOG.md` documenting the update (if necessary)
 4. If RFCs need updates, use `edit` on affected RFC files
 
 After updates, suggest next steps:
@@ -142,7 +136,7 @@ After updates, suggest next steps:
 ## Error Handling
 
 - If PRD not found in <existing-prd>: prompt user for correct path
-- If no RFCs exist: note that impact analysis will be limited to PRD scope
+- If no RFCs exist in <existing-rfcs>: note that impact analysis will be limited to PRD scope
 - If <change-request> is vague: ask clarifying questions before analysis
 - If proposed changes conflict with each other: flag conflicts before proceeding
 - If `edit` fails: use `write` to create updated PRD as `PRD-updated.md`
