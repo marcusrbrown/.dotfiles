@@ -26,7 +26,7 @@
     },
     // Distills key findings into preserved knowledge before removing raw content
     "extract": {
-      "enabled": true,
+      "enabled": false,
       // Show distillation content as an ignored message notification
       "showDistillation": false
     }
