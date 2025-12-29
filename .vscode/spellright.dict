@@ -27,3 +27,5 @@ Vitest
 jsx
 navbar
 Navbar
+lsp
+ast
