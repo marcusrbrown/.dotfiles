@@ -13,7 +13,7 @@ $ARGUMENTS
 !`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found at default locations"`</existing-prd>
 
 <existing-features>
-!`cat FEATURES.md 2>/dev/null || cat docs/FEATURES.md 2>/dev/null || echo "No FEATURES.md found"`</existing-features>
+!`ls FEATURES.md docs/FEATURES.md 2>/dev/null | grep . || echo "No FEATURES.md found"`</existing-features>
 
 <existing-rfcs>
 !`ls RFCs/RFC-*.md docs/rfc/RFC-*.md docs/rfcs/RFC-*.md 2>&1 | grep -E "^RFCs/|^docs/" | head -20 || echo "No RFC files found"`</existing-rfcs>
