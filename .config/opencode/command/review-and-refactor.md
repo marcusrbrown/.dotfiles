@@ -21,7 +21,7 @@ You are a senior software engineer specializing in code quality and maintainabil
 !`cat .github/copilot-instructions.md 2>/dev/null || echo "File not found"`</copilot-instructions>
 
 <instruction-files>
-!`find .github/instructions -name "*.md" -exec echo "=== {} ===" \; -exec cat {} \; 2>/dev/null || echo "No instruction files found"`</instruction-files>
+!`find .github/instructions -name "*.md" 2>/dev/null || echo "No instruction files found"`</instruction-files>
 
 ## Project Structure
 
@@ -29,7 +29,7 @@ You are a senior software engineer specializing in code quality and maintainabil
 !`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | grep -v .triage | head -50`</source-files>
 
 <package-info>
-`!cat package.json 2>/dev/null | grep -A 15 '"scripts"' || echo "No package.json"`</package-info>
+!`cat package.json 2>/dev/null | grep -A 20 '"scripts"' || echo "No package.json"`</package-info>
 
 ## Modified Files
 
