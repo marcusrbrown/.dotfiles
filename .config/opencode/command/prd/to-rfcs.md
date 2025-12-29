@@ -9,6 +9,9 @@ argument-hint: <path-to-prd> (e.g., docs/PRD.md)
 $ARGUMENTS
 </prd-path>
 
+<existing-prd>
+!`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found at default locations"`</existing-prd>
+
 <project-structure>
 !`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`</project-structure>
 
@@ -31,6 +34,7 @@ If any critical information is missing or unclear in the provided documents that
 ### Step 1: Read Input Documents
 Use the `read` tool to analyze the following files (in parallel):
 - The PRD file specified in <prd-path>
+- If unspecified, check <existing-prd> for PRD content
 - If unspecified, look for FEATURES.md in the project (check <project-structure> or <existing-docs> for location)
 - If unspecified, look for RULES.md in the project (check <project-structure> or <existing-docs> for location)
 

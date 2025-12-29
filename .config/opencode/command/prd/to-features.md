@@ -10,7 +10,7 @@ $ARGUMENTS
 </prd-path>
 
 <existing-prd>
-!`cat PRD.md 2>/dev/null || cat docs/PRD.md 2>/dev/null || echo "No PRD found at default locations"`</existing-prd>
+!`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found at default locations"`</existing-prd>
 
 <existing-features>
 !`cat FEATURES.md 2>/dev/null || cat docs/FEATURES.md 2>/dev/null || echo "No existing FEATURES.md found"`</existing-features>
