@@ -18,11 +18,11 @@ Carefully analyze the provided command file against the following criteria:
 
 ### 2. Opencode Command-Specific Features
 - **Shell Output Injection**:
-  - Verify use of backtick-wrapped !`command` syntax for embedding shell output (e.g., !`npm test`, !`git status` )
+  - Verify use of opencode "!`command`" syntax for embedding shell output (e.g., !`npm test`, !`git status` )
   - Check that injected output is wrapped in descriptive XML tags (e.g., `<git-status>`, `<file-list>`, `<test-results>`)
   - Ensure shell injection is used when the output provides valuable context for the task
   - Verify the command doesn't instruct the model to run commands when shell injection would be more appropriate
-  - Confirm the backticks properly surround the !command syntax
+  - Confirm the backticks properly surround the command in the "!`command`" syntax, not the exclamation mark
 - **$ARGUMENTS Handling**:
   - Check that `$ARGUMENTS` is properly wrapped in XML tags
   - Verify specific XML tag names for specific inputs (e.g., `<file-path>`, `<component-name>`)
@@ -122,7 +122,7 @@ After reviewing the command file, provide your feedback in the following format:
 
 ### Example 1: Missing Shell Output Injection
 **Issue**: Command tells model to "run git status" instead of embedding the output
-**Fix**: Use backtick-wrapped !command syntax with proper XML tagging
+**Fix**: Use opencode shell injection !`command` syntax with proper XML tagging
 ```markdown
 # Instead of:
 First, run git status to see what files have changed.
@@ -180,8 +180,11 @@ Use the codebase-analyzer subagent with the following prompt:
 
 ## Additional Notes
 
-- Pay special attention to proper !`command` shell injection syntax (with backticks) vs instructing the model to run commands
+- Pay special attention to proper "!`command`" shell injection syntax (with backticks) vs instructing the model to run commands:
+  - Correct: `<git-status> !`git status` </git-status>`
+  - Incorrect: "Run git status to see..."
 - Understand that !`agentic metadata` or similar commands are valid shell injections, not instructions to the model
+- Verify the "!" in "!`command`" is directly followed by the backtick without spaces
 - Verify XML tag naming is semantic and consistent throughout the command
 - Ensure $ARGUMENTS is always wrapped and referenced consistently
 - Check that injected shell output provides valuable context, not just noise
