@@ -3,7 +3,9 @@ description: Implement an RFC document with two-phase approach (plan then execut
 argument-hint: <rfc-path> (e.g., RFCs/RFC-001-User-Authentication.md)
 ---
 
-# RFC Implementation
+# RFC Implementation Guide
+
+## Arguments
 
 <rfc-path>
 $ARGUMENTS
@@ -16,7 +18,7 @@ $ARGUMENTS
 !`cat RFCs/RFCS.md docs/rfc/RFCS.md docs/rfcs/RFCS.md 2>/dev/null | head -100 | grep -q . && cat RFCs/RFCS.md docs/rfc/RFCS.md docs/rfcs/RFCS.md 2>/dev/null | head -100 || echo "No RFCS.md index found"`</rfcs-index>
 
 <project-structure>
-!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`</project-structure>
+!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | grep -v .triage | grep -v coverage | head -50`</project-structure>
 
 <git-status>
 !`git status --porcelain | head -20 | awk 'NR { print; found=1 } END { if (!found) print "No uncommitted changes" }'`</git-status>
@@ -232,113 +234,89 @@ This implementation MUST follow a strict two-phase approach:
 
 #### Present Comprehensive Implementation Plan
 
-Create a detailed plan using the following template:
-
-##### Mandatory Template Structure
-
-All implementation plans must strictly adhere to the following template. Each section is required and must be populated with specific, actionable content. AI agents must validate template compliance before execution.
-
-##### Template Validation Rules
-
-- All front matter fields must be present and properly formatted
-- All section headers must match exactly (case-sensitive)
-- All identifier prefixes must follow the specified format
-- Tables must include all required columns
-- No placeholder text may remain in the final output
-
-##### Status
-
-The status of the implementation plan must be clearly defined in the front matter and must reflect the current state of the plan. The status can be one of the following (status_color in brackets): `Completed` (bright green badge), `In progress` (yellow badge), `Planned` (blue badge), `Deprecated` (red badge), or `On Hold` (orange badge). It should also be displayed as a badge in the introduction section.
+Create a detailed plan with the following sections:
 
 ```markdown
----
-goal: [Concise Title Describing the Package Implementation Plan's Goal]
-version: [Optional: e.g., 1.0, Date]
-date_created: [YYYY-MM-DD]
-last_updated: [Optional: YYYY-MM-DD]
-status: 'Completed'|'In progress'|'Planned'|'Deprecated'|'On Hold'
-tags: [Optional: List of relevant tags or categories, e.g., `feature`, `upgrade`, `chore`, `architecture`, `migration`, `bug` etc]
----
+## Implementation Plan for RFC-XXX: [Title]
 
-# Implementation Plan for RFC-XXX: [Title]
+### Overview
+[Brief summary of what will be implemented and overall approach]
 
-![Status: <status>](https://img.shields.io/badge/status-<status>-<status_color>)
+### Acceptance Criteria
+- [List each acceptance criterion from the RFC]
 
-[Brief summary of what will be implemented and overall approach and the goal it is intended to achieve.]
+### Files to Create
+- **[File path]**
+  - Purpose: [what this file does]
+  - Key exports: [functions, classes, types]
+  - Dependencies: [what it imports/uses]
 
-## 1. Requirements & Constraints
+### Files to Modify
+- **[File path]**
+  - Changes: [specific changes to make]
+  - Rationale: [why these changes are needed]
+  - Impact: [what other parts of the system might be affected]
 
-[Explicitly list all requirements & constraints that affect the plan and constrain how it is implemented. Use bullet points or tables for clarity.]
+### Key Components/Functions
+1. **[Component/Function Name]**
+   - Responsibility: [what it does]
+   - Inputs: [parameters/props]
+   - Outputs: [return value/side effects]
+   - Complexity: [simple/moderate/complex]
 
-- **REQ-001**: Requirement 1
-- **SEC-001**: Security Requirement 1
-- **[3 LETTERS]-001**: Other Requirement 1
-- **CON-001**: Constraint 1
-- **GUD-001**: Guideline 1
-- **PAT-001**: Pattern to follow 1
+### Data Structures and State Management
+- [Describe data models, state shape, storage approach]
+- [Explain state management pattern to use]
 
-## 2. Implementation Sequence
+### API Endpoints/Interfaces (if applicable)
+- **[Endpoint/Interface Name]**
+  - Method/Type: [GET/POST/etc or interface signature]
+  - Request/Input: [format]
+  - Response/Output: [format]
+  - Error handling: [approach]
 
-### Segment 1
+### Database Changes (if applicable)
+- Schema changes: [describe]
+- Migrations: [needed/not needed]
+- Indexing: [any indexes to add]
 
-- GOAL-001: [Describe the goal of this segment, e.g., "Implement feature X", "Refactor module Y", etc.]
+### Implementation Sequence
+1. **Segment 1:** [Description]
+   - Files: [list]
+   - Estimated complexity: [simple/moderate/complex]
+   - Rationale: [why this comes first]
 
-| Task | Description | Completed | Date |
-|------|-------------|-----------|------|
-| TASK-001 | Description of task 1 | ✅ | 2025-04-25 |
-| TASK-002 | Description of task 2 | |  |
-| TASK-003 | Description of task 3 | |  |
+2. **Segment 2:** [Description]
+   - Files: [list]
+   - Dependencies: [requires Segment 1 because...]
 
-### Segment 2
+3. [Continue for all segments...]
 
-- GOAL-002: [Describe the goal of this segment, e.g., "Implement feature X", "Refactor module Y", etc.]
+### Technical Decisions and Trade-offs
+1. **Decision:** [What you're deciding]
+   - Options considered: [A, B, C]
+   - Selected: [Option]
+   - Rationale: [Why - consider performance, maintainability, scalability]
+   - Trade-offs: [What we gain vs. what we sacrifice]
 
-| Task | Description | Completed | Date |
-|------|-------------|-----------|------|
-| TASK-004 | Description of task 4 | |  |
-| TASK-005 | Description of task 5 | |  |
-| TASK-006 | Description of task 6 | |  |
+### Potential Risks and Mitigations
+- **Risk:** [Description]
+  - Impact: [High/Medium/Low]
+  - Mitigation: [How to address]
 
-## 3. Alternatives
+### Testing Strategy
+- Unit tests: [what to test]
+- Integration tests: [what to test]
+- Edge cases: [list important edge cases]
 
-[A bullet point list of any alternative approaches that were considered and why they were not chosen. This helps to provide context and rationale for the chosen approach.]
+### Performance Considerations
+- [Any performance-critical sections]
+- [Optimization strategies]
 
-- **ALT-001**: Alternative approach 1
-- **ALT-002**: Alternative approach 2
-
-## 4. Dependencies
-
-[List any dependencies that need to be addressed, such as libraries, frameworks, or other components that the plan relies on.]
-
-- **DEP-001**: Dependency 1
-- **DEP-002**: Dependency 2
-
-## 5. Files
-
-[List the files that will be affected by the feature or refactoring task.]
-
-- **FILE-001**: Description of file 1
-- **FILE-002**: Description of file 2
-
-## 6. Testing
-
-[List the tests that need to be implemented to verify the implementation.]
-
-- **TEST-001**: Description of test 1
-- **TEST-002**: Description of test 2
-
-## 7. Risks & Assumptions
-
-[List any risks or assumptions related to the implementation of the plan, their impact, and mitigation strategies.]
-
-- **RISK-001**: Risk 1
-- **ASSUMPTION-001**: Assumption 1
-
-## 8. Related Specifications / Further Reading
-
-[Link to related spec 1]
-[Link to relevant external documentation]
-```
+### Security Considerations
+- [Authentication/authorization requirements]
+- [Input validation needs]
+- [Sensitive data handling]
 
 #### CRITICAL GATE: WAIT FOR APPROVAL
 
@@ -508,58 +486,16 @@ After implementation is complete, run comprehensive validation to ensure quality
    - **Rust/Go/Java**: Use standard toolchain commands
    - **Makefile**: Run `bash make -n test` and `bash make -n build` to check target existence
 
-3. **Run Detected Commands** in priority order: tests → build → lint
-
-#### Project-Specific Detection Hints
-
-**Node.js/TypeScript** (check `<package-json>`):
-- **Test**: Look for `test`, `test:unit`, `test:integration` in `scripts` section
-- **Build**: Look for `build`, `compile`, `dist` in `scripts` section
-- **Lint**: Look for `lint`, `lint:check`, `eslint` in `scripts` section
-- **Type Check**: If `<tsconfig>` exists, look for `type-check` script or run `npx tsc --noEmit`
-- **Package Manager**: Detect from `<lockfiles>` (`package-lock.json` → npm, `yarn.lock` → yarn, `pnpm-lock.yaml` → pnpm)
-
-**Python** (check `<pyproject-toml>` or `<project-config>` for `setup.py`):
-- **Test**: Look for `[tool.pytest]` section in `<pyproject-toml>`, then use `pytest` or `python -m pytest`
-- **Lint**: Look for `[tool.ruff]`, `[tool.flake8]`, `[tool.black]` sections in `<pyproject-toml>`
-- **Type Check**: Look for `[tool.mypy]` section in `<pyproject-toml>`
-
-**Rust** (`Cargo.toml` exists):
-- Standard toolchain: `cargo test`, `cargo build`, `cargo clippy`, `cargo fmt --check`
-
-**Go** (`go.mod` exists):
-- Standard toolchain: `go test ./...`, `go build ./...`, `go vet ./...`
-
-**Makefile** (check `<project-config>`):
-- Use `bash` tool to run `make -n test`, `make -n build`, `make -n lint` to check if targets exist
+3. **Run Detected Commands** in priority order: lint → build → test
 
 #### Adaptive Command Execution
 
 Based on detected project type, run validation commands in this order:
 
-1. **Tests** (REQUIRED): Execute test command, ALL must pass
-2. **Build** (REQUIRED if build script/command exists): Must complete without errors
-3. **Lint** (REQUIRED if lint script/command exists): NO errors allowed (warnings OK)
+1. **Lint** (REQUIRED if lint script/command exists): NO errors allowed (warnings OK)
+2. **Tests** (REQUIRED): Execute test command, ALL must pass
+3. **Build** (REQUIRED if build script/command exists): Must complete without errors
 4. **Type Check** (OPTIONAL): Run if explicitly configured in project
-
-**Example Detection Logic:**
-```
-if <package-json> contains scripts section:
-  parse scripts for test/build/lint commands
-  detect package manager from <lockfiles>
-  run: {npm|yarn|pnpm} test, {npm|yarn|pnpm} run build, {npm|yarn|pnpm} run lint
-  if <tsconfig> exists and no type-check script: run `npx tsc --noEmit`
-elif <pyproject-toml> exists:
-  if [tool.pytest] section: run `pytest`
-  if [tool.ruff] section: run `ruff check .`
-  if [tool.mypy] section: run `mypy .`
-elif <project-config> shows Cargo.toml:
-  run `cargo test`, `cargo build`, `cargo clippy`
-elif <project-config> shows go.mod:
-  run `go test ./...`, `go build ./...`, `go vet ./...`
-elif <project-config> shows Makefile:
-  use bash tool to check and run: `make test`, `make build`, `make lint`
-```
 
 ### Validation Requirements (MANDATORY)
 
@@ -602,6 +538,14 @@ If any validation step fails:
    - Continue the fix-verify cycle until all validation passes
    - Do not proceed to completion phase with failing validation
 
+### Pre-existing Failures
+
+If validation failures appear to be pre-existing (not caused by your changes):
+
+1. Try to isolate whether the failure is related to your changes
+2. Check git history or ask the user: "This test/lint error appears to be pre-existing. Should I fix it as part of this RFC, or note it and proceed?"
+3. Only proceed if explicitly told to ignore pre-existing failures
+
 ## Completion Phase
 
 ### Update RFCS.md Status
@@ -633,10 +577,10 @@ Once validation passes, update the RFC status in RFCS.md:
 1. **Provide the user with a comprehensive completion summary**:
 
 ```markdown
-## ✅ RFC-XXX: Implementation Complete
+## RFC-XXX: Implementation Complete
 
 **RFC:** RFC-XXX - [Title]
-**Status:** Completed and Verified
+**Status:** [status after update]
 
 ### Features Implemented
 - [Feature 1: brief description]
@@ -658,12 +602,8 @@ Once validation passes, update the RFC status in RFCS.md:
 ### Validation Results
 - ✅ Lint: Clean (no errors)
 - ✅ Type Check: Passed (0 errors)
-- ✅ Security Scan: Passed (0 HIGH/CRITICAL vulnerabilities)
 - ✅ Tests: All passing ([number] tests)
-- ✅ Accessibility: Passed (if applicable)
-- ✅ Visual & Usability: Passed (if UI component - Playwright tests)
-- ✅ Build: Successful
-- ✅ Format: Compliant
+- ✅ Security Scan: Passed (0 HIGH/CRITICAL vulnerabilities)
 
 ### Security Validation
 - ✅ No hardcoded credentials
@@ -671,19 +611,9 @@ Once validation passes, update the RFC status in RFCS.md:
 - ✅ Secure error handling
 - ✅ Dependencies verified
 
-### Implementation Details
-- [Technical approach taken]
-- [Key challenges overcome]
-- [Files created/modified]
-- [Security considerations addressed]
-- [Accessibility features implemented (if applicable)]
-- [Any important technical notes, decisions made, or context for future developers]
-
-### Results Summary
-- [What was accomplished]
-- [Acceptance criteria met]
-- [Performance characteristics]
-- [Known limitations or future improvements]
+### Implementation Notes
+[Any important technical notes, decisions made, or context for future developers]
+[Include evidence such as terminal outputs, test summaries, security scan results, build status]
 
 ### Future Considerations
 - [Potential improvement 1]
@@ -706,33 +636,9 @@ Once validation passes, update the RFC status in RFCS.md:
 - [Potential bottlenecks to watch]
 ```
 
-2. **Include Evidence**:
-   - Terminal output from quality gate commands
-   - Test results summary (including accessibility tests)
-   - Security scan results
-   - Build success confirmation
-   - Any warnings or issues resolved
-
 ## Error Handling and Edge Cases
 
 Handle these scenarios gracefully:
-
-### RFC Selection Errors
-
-| Scenario | Action |
-|----------|--------|
-| `<rfc-path>` is empty | Show available RFCs from `<available-rfcs>`, ask user to select one |
-| RFC file not found at path | Search alternate locations (`RFCs/`, `docs/rfc/`, `docs/rfcs/`), if still not found, ask user for correct path |
-| RFC file is malformed | Report specific parsing errors, ask user to fix or provide clarification |
-
-### Missing Context Documents
-
-| Document | Action |
-|----------|--------|
-| PRD.md missing | Warn: "PRD.md not found. Proceeding with RFC specifications only." |
-| FEATURES.md missing | Warn: "FEATURES.md not found. Using RFC as primary requirements source." |
-| RULES.md missing | Warn: "RULES.md not found. Using general best practices and codebase patterns." |
-| All missing | Warn: "No context documents found. Proceeding with RFC only. Quality may be impacted." |
 
 ### Prerequisite and Dependency Errors
 
@@ -741,15 +647,6 @@ Handle these scenarios gracefully:
 | RFCS.md not found | Warn: "RFCS.md index not found. Cannot validate prerequisites. Proceeding without dependency checking." |
 | Prerequisites incomplete | List incomplete RFCs, explain dependency chain, ask: "Prerequisites [list] are not completed. Proceed anyway?" |
 | Circular dependencies | Report: "Circular dependency detected between [RFCs]. Please resolve in RFCS.md before proceeding." |
-| RFCS.md parse error | Report: "Cannot parse RFCS.md table format. Expected format: [show example]. Please fix or confirm to proceed without validation." |
-
-### Git and Version Control Errors
-
-| Scenario | Action |
-|----------|--------|
-| Not a git repository | Warn: "Not a git repository. Cannot detect resume state or track changes. Proceeding with fresh implementation." |
-| Git commands fail | Use fallback: skip resume detection, proceed as fresh start |
-| Uncommitted changes unrelated to RFC | Inform: "Detected uncommitted changes unrelated to this RFC. Consider committing or stashing before proceeding." |
 
 ### Validation Failures
 
@@ -758,17 +655,8 @@ Handle these scenarios gracefully:
 | Tests fail | Analyze error, fix code, re-run tests. Repeat until passing. |
 | Build fails | Analyze error, fix issues, re-run build. Repeat until success. |
 | Lint errors | Fix all errors, re-run lint. Repeat until clean. |
-| Can't determine project type | Ask: "Cannot detect project type. Please specify test command, build command, and lint command." |
 | Validation command not found | Try alternatives, ask user: "Cannot find [command]. How should I validate this project?" |
-| Pre-existing failures | Ask: "These failures appear pre-existing: [list]. Should I fix them or note and proceed?" |
-
-### RFCS.md Update Errors
-
-| Scenario | Action |
-|----------|--------|
-| RFCS.md not found | Warn: "Cannot update RFCS.md (not found). Please manually mark RFC-XXX as Completed." |
-| Table format unexpected | Show user the table, explain expected format, ask: "Cannot parse table. Please update manually or help me understand the format." |
-| Edit fails | Provide manual instructions: "Please update RFC-XXX Status column to 'Completed' in [path to RFCS.md]" |
+| Pre-existing failures | Fix them and proceed |
 
 ## Scope Limitation
 
@@ -785,7 +673,7 @@ If you identify dependencies on features from other RFCs, note them in your impl
 1. ✅ **Pre-Implementation:** Resolve RFC, load context, validate prerequisites, detect resume state
 2. ✅ **Phase 1 - Planning:** Analyze, plan, present → WAIT FOR APPROVAL
 3. ✅ **Phase 2 - Execution:** Implement following approved plan, explain complex sections
-4. ✅ **Validation:** Run tests, build, lint → ALL MUST PASS
+4. ✅ **Validation:** Run tests, build, lint → ALL QUALITY GATES MUST PASS
 5. ✅ **Completion:** Update RFCS.md, provide final deliverables and assessment
 
 Begin by executing Step 1 of the Pre-Implementation Phase.
