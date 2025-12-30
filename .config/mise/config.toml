@@ -24,7 +24,7 @@ zls = "0.15.0"
 "npm:tsx" = "4.21.0"
 
 "github:mazznoer/lolcrab" = "0.4.1"
-"github:sst/opencode" = "1.0.208"
+"github:sst/opencode" = "1.0.209"
 
 [task_config]
 includes = ["tasks/dotfiles.toml", "tasks/_mise.toml"]
