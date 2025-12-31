@@ -13,7 +13,7 @@
     },
     "librarian": {
       "model": "github-copilot/claude-sonnet-4.5",
-      "prompt_append": "\n---\n\n**Important:** The `## External Resources` section in AGENTS.md (if available) list key dependencies, references, and documentation to assist in providing accurate and context-aware responses. Read this section carefully before you begin."
+      "prompt_append": "\n---\n\n**Important:** The `## External Resources` section in AGENTS.md documents key dependencies, references, and documentation to assist you in providing accurate and context-aware responses. Read this section carefully before you begin."
     },
     "explore": {
       "model": "github-copilot/gemini-3-flash-preview"
