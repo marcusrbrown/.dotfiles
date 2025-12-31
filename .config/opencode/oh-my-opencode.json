@@ -34,7 +34,6 @@
   "experimental": {
     "aggressive_truncation": true,
     "auto_resume": true,
-    "dcp_for_compaction": true,
-    "preemptive_compaction_threshold": 0.75
+    "dcp_for_compaction": true
   }
 }
