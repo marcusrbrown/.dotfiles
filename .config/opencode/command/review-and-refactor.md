@@ -15,10 +15,10 @@ You are a senior software engineer specializing in code quality and maintainabil
 ## Project Guidelines
 
 <agents-md>
-!`cat AGENTS.md 2>/dev/null || echo "File not found"`</agents-md>
+!`ls AGENTS.md 2>/dev/null | grep . || echo "File not found"`</agents-md>
 
 <copilot-instructions>
-!`cat .github/copilot-instructions.md 2>/dev/null || echo "File not found"`</copilot-instructions>
+!`ls .github/copilot-instructions.md 2>/dev/null | grep . || echo "File not found"`</copilot-instructions>
 
 <instruction-files>
 !`find .github/instructions -name "*.md" 2>/dev/null || echo "No instruction files found"`</instruction-files>
