@@ -3,6 +3,6 @@
     "oh-my-opencode",
     "@tarquinen/opencode-dcp"
   ],
-  "small_model": "github-copilot/claude-haiku-4.5",
+  "small_model": "github-copilot/gemini-3-flash-preview",
   "$schema": "https://opencode.ai/config.json"
 }
