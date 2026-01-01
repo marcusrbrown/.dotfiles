@@ -35,5 +35,6 @@
     "aggressive_truncation": true,
     "auto_resume": true,
     "dcp_for_compaction": true
-  }
+  },
+  "google_auth": false
 }
