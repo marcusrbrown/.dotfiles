@@ -16,16 +16,16 @@
       "prompt_append": "\n---\n\n**Important:** The `## External Resources` section in AGENTS.md documents key dependencies, references, and documentation to assist you in providing accurate and context-aware responses. Read this section carefully before you begin."
     },
     "explore": {
-      "model": "github-copilot/gemini-3-flash-preview"
+      "model": "google/gemini-3-flash"
     },
     "frontend-ui-ux-engineer": {
-      "model": "github-copilot/gemini-3-pro-preview"
+      "model": "google/gemini-3-pro-high"
     },
     "document-writer": {
-      "model": "github-copilot/gemini-3-flash-preview"
+      "model": "google/gemini-3-flash"
     },
     "multimodal-looker": {
-      "model": "github-copilot/gemini-3-flash-preview"
+      "model": "google/gemini-3-flash"
     }
   },
   "comment_checker": {
@@ -33,7 +33,6 @@
   },
   "experimental": {
     "aggressive_truncation": true,
-    "auto_resume": true,
     "dcp_for_compaction": true
   },
   "google_auth": false
