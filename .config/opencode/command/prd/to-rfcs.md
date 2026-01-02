@@ -66,6 +66,7 @@ Throughout this command, use the following tools:
 - `write` - To create new RFC files and RFCS.md index
 - `list` - To verify folder structure before and after file creation
 - `explore` subagent - For deep codebase analysis when existing code is present
+- `librarian` agent - To reference library documentation or external resources if needed
 
 ## RFC Generation Process
 

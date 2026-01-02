@@ -37,6 +37,8 @@ Before analyzing, gather the necessary context:
 
 3. If <project-structure> shows existing code, consider technical feasibility against the codebase
 
+4. Relevant research from references and links in the PRD should be noted for context
+
 ## Tool Usage
 
 Throughout this review, use the following tools:
@@ -44,6 +46,7 @@ Throughout this review, use the following tools:
 - `glob` - To discover related docs (FEATURES.md, RULES.md, etc.)
 - `write` - To save the improved PRD
 - `explore` agent - For technical feasibility validation (if codebase exists)
+- `librarian` agent - To reference library documentation or external resources if needed
 
 ### Technical Feasibility Check (if codebase exists)
 
@@ -122,6 +125,7 @@ Save the improved PRD using the `write` tool:
 After saving, suggest next steps:
 - "Run `/prd/to-features` to extract a features list from the improved PRD"
 - "Run `/prd/to-rules` to generate technical guidelines"
+- "Run `/prd/to-rfcs` to break down into implementation RFCs"
 
 ## Error Handling
 

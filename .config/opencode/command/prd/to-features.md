@@ -45,6 +45,7 @@ Throughout this command, use the following tools:
 - `glob` - To discover related docs and check for existing FEATURES.md
 - `write` - To save the FEATURES.md file
 - `explore` subagent - For technical complexity validation (if codebase exists)
+- `librarian` agent - To reference library documentation or external resources if needed
 
 ## Task
 
