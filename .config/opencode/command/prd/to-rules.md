@@ -19,7 +19,7 @@ $ARGUMENTS
 !`test -f package.json && cat package.json | head -25 || echo "No package.json found"`</package-json>
 
 <existing-rules>
-!`cat RULES.md 2>/dev/null || cat docs/RULES.md 2>/dev/null || echo "No existing RULES.md found"`</existing-rules>
+!`ls RULES.md docs/RULES.md 2>/dev/null | grep . || echo "No existing RULES.md found"`</existing-rules>
 
 <existing-docs>
 !`(find docs -maxdepth 1 -type f -name '*.md' 2>/dev/null || ls *.md 2>/dev/null) | sort | head -20 |  awk 'NR { print; found=1 } END { if (!found) print "No docs found" }'`</existing-docs>
@@ -70,6 +70,7 @@ Throughout this command, use the following tools:
 - `write` - To create the RULES.md file
 - `list` - To verify folder structure
 - `explore` subagent - For deep codebase convention analysis
+- `librarian` agent - To reference library documentation or external resources if needed
 
 ## Rules Generation Process
 
