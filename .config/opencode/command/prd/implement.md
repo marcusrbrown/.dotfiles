@@ -15,7 +15,7 @@ $ARGUMENTS
 !`find RFCs docs/rfcs doc/rfcs -maxdepth 1 -type f -name 'RFC-*.md' 2>/dev/null | sort | head -20 | awk 'NR { print; found=1 } END { if (!found) print "No RFC files found" }'`</available-rfcs>
 
 <rfcs-index>
-!`cat RFCs/RFCS.md docs/rfc/RFCS.md docs/rfcs/RFCS.md 2>/dev/null | head -100 | grep -q . && cat RFCs/RFCS.md docs/rfc/RFCS.md docs/rfcs/RFCS.md 2>/dev/null | head -100 || echo "No RFCS.md index found"`</rfcs-index>
+!`ls RFCs/RFCS.md docs/rfc/RFCS.md docs/rfcs/RFCS.md 2>/dev/null | grep . || echo "No RFCS.md index found"`</rfcs-index>
 
 <project-structure>
 !`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | grep -v .triage | grep -v coverage | head -50`</project-structure>
@@ -221,12 +221,27 @@ This implementation MUST follow a strict two-phase approach:
    Return a structured summary of findings to guide implementation planning.
    ```
 
-3. **Review Project Standards:**
+3. **Incorporate External Knowledge:**
+   - If the RFC requires specific domain knowledge, algorithms, or best practices, consult the @librarian agent to gather relevant information
+   - Use to reference official documentation, implementation examples, or for codebase exploration
+   - Summarize key insights that will inform technical decisions
+
+   **Librarian Agent Prompt Template:**
+   ```
+   Research best practices and implementation strategies for [specific topic from RFC - e.g., "OAuth 2.0 authentication", "RESTful API design", "data caching strategies"].
+
+    1. Summarize official documentation and standards
+    2. Provide code examples or patterns commonly used in the industry
+    3. Highlight potential pitfalls or common mistakes to avoid
+    4. Suggest libraries or tools that could facilitate implementation
+    ```
+
+4. **Review Project Standards:**
    - Carefully read `RULES.md` for project-specific guidelines
    - Note naming conventions, code organization, and architectural patterns
    - Identify any security or performance standards to follow
 
-4. **Identify Technical Decisions:**
+5. **Identify Technical Decisions:**
    - What algorithms or approaches will you use?
    - What data structures are needed?
    - How will this integrate with existing systems?
@@ -317,6 +332,7 @@ Create a detailed plan with the following sections:
 - [Authentication/authorization requirements]
 - [Input validation needs]
 - [Sensitive data handling]
+```
 
 #### CRITICAL GATE: WAIT FOR APPROVAL
 
