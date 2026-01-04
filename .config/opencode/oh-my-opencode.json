@@ -54,7 +54,7 @@
   "experimental": {
     "aggressive_truncation": false,
     "auto_resume": false,
-    "dcp_for_compaction": true,
+    "dcp_for_compaction": false,
     "truncate_all_tool_outputs": true
   },
   "google_auth": false
