@@ -2,41 +2,24 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "agents": {
     "Sisyphus": {
-      "model": "github-copilot/claude-opus-4.5",
-      "temperature": 0.3,
-      "top_p": 0.9
+      "model": "github-copilot/claude-opus-4.5"
     },
     "Planner-Sisyphus": {
       "model": "github-copilot/claude-sonnet-4.5",
       "temperature": 0.3
     },
     "oracle": {
-      "model": "github-copilot/gpt-5.2",
-      "temperature": 0.1,
-      "tools": {
-        "write": false,
-        "edit": false,
-        "task": false
-      }
+      "model": "github-copilot/gpt-5.2"
     },
     "librarian": {
       "model": "github-copilot/claude-sonnet-4.5",
-      "tools": {
-        "write": false,
-        "edit": false,
-        "bash": false
-      },
       "prompt_append": "\n---\n\n**Important:** The `## External Resources` section in AGENTS.md documents key dependencies, references, and documentation to assist you in providing accurate and context-aware responses. Read this section carefully before you begin."
     },
     "explore": {
-      "model": "google/gemini-3-flash",
-      "tools": {
-        "call_omo_agent": false
-      }
+      "model": "google/gemini-3-flash"
     },
     "frontend-ui-ux-engineer": {
       "model": "google/gemini-3-pro-high",
-      "color": "#FF6B9D",
       "temperature": 0.5
     },
     "document-writer": {
