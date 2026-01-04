@@ -301,6 +301,7 @@
     }
   },
   "small_model": "github-copilot/gemini-3-flash-preview",
+  "theme": "catppuccin",
   "tools": {
     "webfetch": false
   }
