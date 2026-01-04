@@ -2,40 +2,60 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "agents": {
     "Sisyphus": {
-      "model": "github-copilot/claude-opus-4.5"
+      "description": "Primary orchestrator agent with powerful AI capabilities",
+      "model": "github-copilot/claude-opus-4.5",
+      "temperature": 0.3
+    },
+    "OpenCode-Builder": {
+      "description": "Default build agent for development tasks",
+      "model": "github-copilot/claude-opus-4.5",
+      "temperature": 0.3
     },
     "Planner-Sisyphus": {
-      "model": "github-copilot/claude-sonnet-4.5",
+      "description": "Strategic planning agent with minimal creativity",
+      "model": "github-copilot/claude-opus-4.5",
       "temperature": 0.3
     },
     "oracle": {
-      "model": "github-copilot/gpt-5.2"
+      "description": "Expert technical advisor for architecture decisions and code analysis",
+      "model": "github-copilot/gpt-5.2",
+      "temperature": 0.2
     },
     "librarian": {
-      "model": "github-copilot/claude-sonnet-4.5",
-      "prompt_append": "\n---\n\n**Important:** The `## External Resources` section in AGENTS.md documents key dependencies, references, and documentation to assist you in providing accurate and context-aware responses. Read this section carefully before you begin."
+      "description": "Multi-repository analysis, official docs, and implementation examples",
+      "model": "github-copilot/claude-opus-4.5",
+      "temperature": 0.1,
+      "prompt_append": "\n---\n\n**Important:** The `## EXTERNAL RESOURCES` section in AGENTS.md documents key dependencies, references, and documentation to assist you in providing accurate and context-aware responses. Read this section carefully before you begin."
     },
     "explore": {
-      "model": "google/gemini-3-flash"
+      "description": "Fast agent for codebase exploration and pattern matching",
+      "model": "github-copilot/claude-haiku-4.5",
+      "temperature": 0.1
     },
     "frontend-ui-ux-engineer": {
-      "model": "google/gemini-3-pro-high",
+      "description": "Designer-turned-developer for stunning UI/UX implementation",
+      "model": "google/antigravity-gemini-3-pro-high",
       "temperature": 0.5
     },
     "document-writer": {
-      "model": "google/gemini-3-flash",
-      "temperature": 0.2
+      "description": "Technical writing expert for documentation and guides",
+      "model": "google/antigravity-gemini-3-pro-high",
+      "temperature": 0.3
     },
     "multimodal-looker": {
-      "model": "google/gemini-3-flash"
+      "description": "Analyzes PDFs, images, diagrams beyond raw text",
+      "model": "google/antigravity-gemini-3-flash",
+      "temperature": 0.2
     }
   },
   "comment_checker": {
     "custom_prompt": "Found {{comments}} comments. Review and fix only critical issues."
   },
   "experimental": {
-    "aggressive_truncation": true,
-    "dcp_for_compaction": true
+    "aggressive_truncation": false,
+    "auto_resume": false,
+    "dcp_for_compaction": true,
+    "truncate_all_tool_outputs": true
   },
   "google_auth": false
 }
