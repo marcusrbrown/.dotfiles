@@ -232,6 +232,12 @@
       }
     }
   },
+  "mcp": {
+    "tavily": {
+      "type": "remote",
+      "url": "https://mcp.tavily.com/mcp/?tavilyApiKey={file:~/.secrets/tavily-api-key}"
+    }
+  },
   "small_model": "github-copilot/gemini-3-flash-preview",
   "theme": "catppuccin",
   "permission": {
