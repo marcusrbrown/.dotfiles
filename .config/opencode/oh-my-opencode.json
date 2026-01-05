@@ -51,6 +51,9 @@
   "comment_checker": {
     "custom_prompt": "Found {{comments}} comments. Review and fix only critical issues."
   },
+  "disabled_mcps": [
+    "websearch_exa"
+  ],
   "experimental": {
     "aggressive_truncation": false,
     "auto_resume": false,
