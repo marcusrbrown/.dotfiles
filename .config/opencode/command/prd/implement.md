@@ -32,7 +32,7 @@ $ARGUMENTS
 <recent-commits>
 !`git log --oneline -10 2>&1 | grep -v "not a git repository" | grep -v "does not have any commits" | grep -q . && git log --oneline -10 || echo "No git history available"`</recent-commits>
 
-1. **Load Context Documents**: Load the following documents in parallel (batch multiple read calls in a single response):
+1. **Load Context Documents**: Use the `read` tool to load the following documents in parallel (batch multiple `read` calls in a single response):
    - The RFC file from `<rfc-path>` (REQUIRED)
    - `PRD.md` or `docs/PRD.md` (if exists)
    - `FEATURES.md` or `docs/FEATURES.md` (if exists)
@@ -67,9 +67,9 @@ $ARGUMENTS
         - Components/modules to implement
         - Test files required
    3. **Cross-Reference Implementation State:**
-      - Use `glob` tool to check if files mentioned in RFC exist
-      - For existing files, use `read` tool to check if they contain RFC-related implementation
-      - Check for test files mentioned in RFC acceptance criteria
+      - Use the `glob` tool to check if files mentioned in RFC exist
+      - For existing files, use the `read` tool to check if they contain RFC-related implementation
+      - Use the `glob` tool to check for test files mentioned in RFC acceptance criteria
    4. **Present State Assessment:**
       ```markdown
       ## Implementation State Assessment
@@ -119,7 +119,22 @@ This implementation MUST follow a strict two-phase approach:
 ## Implementation Guidelines
 
 ### Before Writing Code
-1. Analyze all relevant code files thoroughly to understand the existing architecture
+1. Use the `explore` subagent to analyze relevant code files and understand existing architecture:
+   ```
+   Explore Agent Prompt Example:
+   "Analyze files related to [RFC scope]. Focus on:
+   - Existing patterns for [feature type]
+   - Reusable components/utilities
+   - Architecture and conventions to follow
+   Return file paths, key patterns observed, and recommendations."
+   ```
+2. If the RFC involves unfamiliar libraries or frameworks, use the `librarian` agent to fetch official documentation:
+   ```
+   Librarian Agent Prompt Example:
+   "Find documentation and examples for [library name] focusing on [specific feature/API].
+   Return relevant API references, code examples, and best practices."
+   ```
+3. Analyze all relevant code files thoroughly to understand the existing architecture
 2. Get full context of how this feature fits into the broader application
 3. If you need more clarification on requirements or existing code, ask specific questions
 4. Critically evaluate your approach - ask "Is this the best way to implement this feature?"
@@ -127,8 +142,21 @@ This implementation MUST follow a strict two-phase approach:
 6. Identify potential security implications and address them proactively
 7. Evaluate how this implementation might affect other parts of the system
 
+### Using the RFC as Implementation Source
+The RFC document is your primary source of truth. Follow these guidelines:
+
+1. **Technical Specification Section**: Implement the structure and code provided in this section verbatim as your foundation
+   - Follow TDD if applicable to the project
+   - If the provided code is incomplete, expand where needed to address gaps
+   - The code and structure in this section represents actual implementation details combined with requirements from the rest of the RFC
+2. **Test Cases Section**: Use the framework/code provided in this section (if applicable) as your testing foundation
+   - Expand tests to cover any implementation gaps not addressed by the provided test cases
+3. **Acceptance Criteria**: ALL acceptance criteria MUST be met for implementation to be considered complete
+4. **Quality Checks**: All quality checks (lint, build, tests) must pass before completion
+5. The RFC is the source of truth - make best effort to implement exactly as specified and shore up any gaps
+
 ### Implementation Standards
-1. Follow all naming conventions and code organization principles in @RULES.md
+1. Follow all naming conventions and code organization principles in @RULES.md (if it exists in the project)
 2. Do not create workaround solutions. If you encounter an implementation challenge:
    a. First, clearly explain the challenge you're facing
    b. Propose a proper architectural solution that follows best practices
@@ -167,7 +195,16 @@ This implementation MUST follow a strict two-phase approach:
 ### Problem Solving
 When troubleshooting or making design decisions:
 1. Rate your confidence in the solution (1-10)
-2. If your confidence is below 8, explain alternative approaches considered
+2. If your confidence is below 8, explain alternative approaches considered and consult the `oracle` subagent for architectural guidance:
+   ```
+   Oracle Agent Prompt Example:
+   "I'm implementing [RFC feature] and facing [specific challenge].
+   Confidence: [X]/10
+   Options considered:
+   1. [Option A] - pros/cons
+   2. [Option B] - pros/cons
+   What is your recommendation considering [constraints]?"
+   ```
 3. For complex problems, outline your reasoning process
 4. When facing implementation challenges:
    - Clearly articulate the problem
@@ -191,10 +228,24 @@ As a senior developer, ensure your implementation meets these quality standards:
 7. **Consistency**: Implementation should be consistent with the existing codebase
 
 ## Completion Phase
+
+### Verification Before Completion
+Before marking the implementation complete, verify:
+1. Use `lsp_diagnostics` on all changed files to ensure no errors or warnings
+2. Run project build command if available (`npm run build`, `cargo build`, `go build`, etc.)
+3. Run project test command if available (`npm test`, `pytest`, `go test`, etc.)
+4. Verify all acceptance criteria from the RFC are satisfied
+
+### Update RFC Status
 Once validation passes, update the RFC status in RFCS.md:
 1. **Locate RFCS.md:** Check the same locations as in Context Gathering
 2. **Find RFC Row:** Identify the row corresponding to this RFC's ID
 3. **Update Status:** Change Status to `Completed`
+4. **Update RFC Document:** Add a completion note at the end of the RFC document with:
+   - Date of completion
+   - Summary of implementation
+   - Any deviations from original plan
+5. **Preserve Formatting:** Ensure the table formatting remains intact
 
 Preserve all other columns and formatting.
 
