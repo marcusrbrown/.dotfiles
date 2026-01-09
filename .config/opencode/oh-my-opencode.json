@@ -3,17 +3,17 @@
   "agents": {
     "Sisyphus": {
       "description": "Primary orchestrator agent with powerful AI capabilities",
-      "model": "github-copilot/claude-opus-4.5",
+      "model": "google/antigravity-claude-opus-4-5-thinking",
       "temperature": 0.3
     },
     "OpenCode-Builder": {
       "description": "Default build agent for development tasks",
-      "model": "github-copilot/claude-opus-4.5",
+      "model": "google/antigravity-claude-opus-4-5-thinking",
       "temperature": 0.3
     },
     "Planner-Sisyphus": {
       "description": "Strategic planning agent with minimal creativity",
-      "model": "github-copilot/claude-opus-4.5",
+      "model": "google/antigravity-claude-opus-4-5-thinking",
       "temperature": 0.3
     },
     "oracle": {
@@ -23,7 +23,7 @@
     },
     "librarian": {
       "description": "Multi-repository analysis, official docs, and implementation examples",
-      "model": "github-copilot/claude-opus-4.5",
+      "model": "google/antigravity-claude-sonnet-4-5-thinking",
       "temperature": 0.1,
       "prompt_append": "\n---\n\n**Important:** The `## EXTERNAL RESOURCES` section in AGENTS.md documents key dependencies, references, and documentation to assist you in providing accurate and context-aware responses. Read this section carefully before you begin."
     },
@@ -34,12 +34,12 @@
     },
     "frontend-ui-ux-engineer": {
       "description": "Designer-turned-developer for stunning UI/UX implementation",
-      "model": "google/antigravity-gemini-3-pro-high",
+      "model": "google/antigravity-gemini-3-pro",
       "temperature": 0.5
     },
     "document-writer": {
       "description": "Technical writing expert for documentation and guides",
-      "model": "google/antigravity-gemini-3-pro-high",
+      "model": "google/antigravity-gemini-3-pro",
       "temperature": 0.3
     },
     "multimodal-looker": {
