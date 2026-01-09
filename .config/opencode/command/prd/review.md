@@ -10,129 +10,109 @@ $ARGUMENTS
 </prd-path>
 
 <existing-prd>
-!`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found at default locations"`</existing-prd>
-
-<related-docs>
-!`(find docs -maxdepth 1 -type f -name '*.md' 2>/dev/null || ls *.md 2>/dev/null) | sort | head -20 |  awk 'NR { print; found=1 } END { if (!found) print "No docs found" }'`</related-docs>
-
-<project-structure>
-!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`</project-structure>
+!`ls PRD.md docs/PRD.md 2>/dev/null || echo "No PRD found"`</existing-prd>
 
 ## Role
 
-You are an expert product manager tasked with reviewing a Product Requirements Document (PRD). Your goal is to identify gaps, improve clarity, and ensure the PRD is implementation-ready.
+Expert product manager reviewing PRDs for gaps, clarity, and implementation-readiness. Be constructive, not critical—focus on actionable improvements.
+
+## When to Use This Command
+
+- **`/prd/review`**: Pre-development quality pass. May restructure heavily. Creates `PRD-improved.md`.
+- **`/prd/update`**: During development when requirements change. Minimal disruption. Updates existing `PRD.md` + CHANGELOG.
+
+## Non-negotiables
+
+- Do NOT write `PRD-improved.md` until user approves the proposed changes outline.
+- If existing downstream docs (FEATURES/RULES/RFCs) conflict with PRD changes, surface conflicts first.
+- If rewrite is Medium/Large (>30% sections changed, scope change, or new integrations): consult `oracle` before finalizing.
+- If <prd-path> is empty and <existing-prd> shows nothing: prompt user for path and STOP.
 
 ## Pre-Review Phase
 
-Before analyzing, gather the necessary context:
+1. **Load PRD**: Use `read` on path from <prd-path>, or first match in <existing-prd>
+2. **Discover related docs**: Use `glob` for `docs/*.md` and `*.md` patterns
+3. **Read key docs**: Load FEATURES.md, RULES.md, RFCs index if they exist
+4. **Codebase check**: If source files exist, use `explore` agent for technical feasibility
 
-1. Use the `read` tool to load the PRD file:
-   - If <prd-path> contains a path, read that file
-   - Otherwise, check <existing-prd> for content
-   - If neither has content, prompt user for the correct path
+### Drift/Conflict Detection
 
-2. Use the `glob` tool to check for related docs: `docs/*.md` or `*.md`
-   - If <related-docs> shows relevant documentation, read those files
-   - Look for FEATURES.md, RULES.md that may provide additional context
+Before proposing changes:
+1. Compare PRD against existing FEATURES.md, RULES.md, RFCs for inconsistencies
+2. If downstream docs exist, note any PRD claims that contradict them
+3. Flag conflicts before proceeding with analysis
 
-3. If <project-structure> shows existing code, consider technical feasibility against the codebase
+### Technical Feasibility (if codebase exists)
 
-4. Relevant research from references and links in the PRD should be noted for context
+Use `explore` agent: "Analyze project architecture and tech stack. Flag PRD requirements that conflict with existing implementation. Return: constraints, patterns, conflicts."
 
-## Tool Usage
+## Tools
 
-Throughout this review, use the following tools:
-- `read` - To load the PRD and any related documentation
-- `glob` - To discover related docs (FEATURES.md, RULES.md, etc.)
-- `write` - To save the improved PRD
-- `explore` agent - For technical feasibility validation (if codebase exists)
-- `librarian` agent - To reference library documentation or external resources if needed
+- `read` - Load PRD and related documentation
+- `glob` - Discover docs (FEATURES.md, RULES.md, RFCs)
+- `write` - Save improved PRD (after approval)
+- `explore` agent - Technical feasibility validation
+- `librarian` agent - External library documentation
+- `oracle` agent - Review significant rewrites
 
-### Technical Feasibility Check (if codebase exists)
+## Review Process
 
-If <project-structure> shows existing source code, ask the explore agent:
+### 1. Findings Table
 
-**Prompt:** "Analyze the project's current architecture and tech stack. Identify any constraints or patterns that should inform PRD technical requirements. Flag any PRD requirements that may conflict with existing implementation."
+Analyze PRD and produce a structured findings table:
 
-## STEP 1: GAP ANALYSIS
+| Severity | Area | Issue | Recommendation |
+|----------|------|-------|----------------|
+| High/Med/Low | Product/Technical/Business/Implementation | Gap or problem | Specific fix |
 
-Quickly identify any critical missing elements in these key areas:
+**Areas to check:**
+- **Product**: Vision, problem statement, target users, success metrics, scope
+- **Technical**: Tech constraints, integrations, security, performance, infrastructure
+- **Business**: Timeline, budget, regulatory, market factors
+- **Implementation**: Dependencies, team resources, testing, deployment
 
-1. PRODUCT FUNDAMENTALS
-   - Product vision and problem statement
-   - Target users and their needs
-   - Success metrics and scope boundaries
+### 2. Quality Scores
 
-2. TECHNICAL REQUIREMENTS
-   - Technology constraints and integrations
-   - Security, performance, and scalability needs
-   - Infrastructure requirements
+Score PRD (1-10) on:
+- **Completeness**: All required sections present
+- **Clarity**: Requirements are unambiguous
+- **Feasibility**: Technically achievable
+- **User-Focus**: Clear user needs and journeys
 
-3. BUSINESS CONSIDERATIONS
-   - Timeline and budget constraints
-   - Regulatory requirements
-   - Market factors and business model
+### 3. Proposed Changes Outline
 
-4. IMPLEMENTATION FACTORS
-   - Dependencies and third-party requirements
-   - Team resources and skills needed
-   - Testing and deployment needs
+Present a summary of key changes before writing:
+- Sections to add/restructure
+- Requirements to clarify
+- User stories to improve
+- Scope boundaries to define
 
-## STEP 2: IMPROVEMENT RECOMMENDATIONS
+### 4. Oracle Review (for Medium/Large rewrites)
 
-Provide specific recommendations to improve the PRD in these areas:
+If rewrite affects >30% of sections, changes scope, or adds integrations:
+1. Draft proposed changes outline
+2. Submit to `oracle`: "Review this PRD improvement plan for: missing gaps, feasibility issues, structural problems, downstream doc conflicts. Return: critical issues + suggested edits."
+3. Incorporate feedback before presenting to user
 
-1. STRUCTURE & CLARITY
-   - Ensure all essential sections are included
-   - Clarify ambiguous requirements
-   - Format user stories properly
+### 5. Approval Prompt
 
-2. COMPLETENESS & FEASIBILITY
-   - Fill gaps in user journeys
-   - Identify technical challenges
-   - Suggest alternatives for problematic requirements
+Present findings + proposed outline and ask: **"Approve this improvement plan? (yes / no / modify)"**
 
-3. PRIORITIZATION & IMPLEMENTATION
-   - Apply MoSCoW prioritization
-   - Identify critical path requirements
-   - Suggest logical implementation sequence
+## Output (after approval)
 
-## DELIVERABLES
-
-After your review, provide:
-
-1. SUMMARY OF FINDINGS
-   - List of critical gaps (High/Medium/Low impact)
-   - 2-3 sentence overall assessment
-
-2. SPECIFIC RECOMMENDATIONS
-   - Concrete suggestions for improvement
-   - Examples of how to clarify ambiguous requirements
-
-3. IMPROVED PRD
-   - Create an enhanced version addressing the issues
-   - Format in clean markdown with proper structure
-
-4. QUALITY ASSESSMENT
-   - Score the PRD (1-10) on: Completeness, Clarity, Feasibility, and User-Focus
-   - Brief explanation of scores
-
-Save the improved PRD using the `write` tool:
-- If original was `PRD.md` → save as `PRD-improved.md` in same location
-- If original was `docs/PRD.md` → save as `docs/PRD-improved.md`
-- Use the `read` tool to verify the file was created correctly
-
-After saving, suggest next steps:
-- "Run `/prd/to-features` to extract a features list from the improved PRD"
-- "Run `/prd/to-rules` to generate technical guidelines"
-- "Run `/prd/to-rfcs` to break down into implementation RFCs"
+1. Write improved PRD:
+   - `PRD.md` → `PRD-improved.md`
+   - `docs/PRD.md` → `docs/PRD-improved.md`
+2. Use `read` to verify file was created
+3. Suggest next steps:
+   - `/prd/to-features` to extract features list
+   - `/prd/to-rules` to generate technical guidelines
+   - `/prd/to-rfcs` to break down into RFCs
 
 ## Error Handling
 
-- If PRD file not found in <prd-path>: check <existing-prd>, prompt user for correct path
-- If PRD is too brief to review meaningfully: suggest using `/prd/update` to expand it first
-- If `write` fails for improved PRD: output content directly in chat
-- If PRD has fundamental issues (missing vision, no clear users): recommend starting fresh with `/prd/create`
-- If technical requirements conflict with existing codebase: flag specific conflicts and suggest alternatives
-
-Be constructive, not critical—focus on actionable improvements that will lead to successful implementation. Remember that this is the second step in the product definition process, building upon the initial PRD created through the interactive questioning process.
+- PRD not found: check <existing-prd>, prompt for path
+- PRD too brief: suggest `/prd/update` to expand first
+- Write fails: output content in chat
+- Fundamental issues (no vision, no users): recommend `/prd/create`
+- Technical conflicts with codebase: flag specific conflicts with alternatives
