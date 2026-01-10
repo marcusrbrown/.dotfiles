@@ -10,227 +10,258 @@ $ARGUMENTS
 </prd-path>
 
 <existing-prd>
-!`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found at default locations"`</existing-prd>
-
-<project-structure>
-!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`</project-structure>
+!`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found"`</existing-prd>
 
 <existing-rfcs>
-!`ls RFCs/RFC-*.md docs/rfc/RFC-*.md docs/rfcs/RFC-*.md 2>&1 | grep -E "^RFCs/|^docs/" | head -20 || echo "No RFC files found"`</existing-rfcs>
+!`ls RFCs/RFC-*.md docs/rfcs/RFC-*.md 2>/dev/null | grep . || echo "No RFC files found"`</existing-rfcs>
 
 <existing-docs>
-!`(find docs -maxdepth 1 -type f -name '*.md' 2>/dev/null || ls *.md 2>/dev/null) | sort | head -20 |  awk 'NR { print; found=1 } END { if (!found) print "No docs found" }'`</existing-docs>
+!`ls docs/*.md *.md 2>/dev/null | grep . | head -15 || echo "No docs found"`</existing-docs>
+
+<project-manifests>
+!`ls package.json pyproject.toml go.mod Cargo.toml pom.xml 2>/dev/null | grep . || echo "No manifests"`</project-manifests>
 
 ## Role
+Expert software architect breaking down PRD into sequential RFC documents. Each RFC = cohesive, implementable unit. Ordering is critical—RFCs are implemented strictly one-by-one.
 
-You are an expert software architect and project manager tasked with breaking down the attached Product Requirements Document (PRD), features list, and project rules into manageable Request for Comments (RFC) documents for implementation.
+## Non-negotiables
+- Do NOT write/overwrite RFC files until user explicitly approves the plan.
+- If existing RFCs have drifted from PRD/codebase: classify drift and get approval before regenerating.
+- Later RFCs MUST build on earlier RFCs—no contradicting established decisions.
+- If PRD conflicts with existing code: surface conflict and ask before proceeding.
+- If <prd-path> is empty or ambiguous: ask for clarification.
 
-Create a set of well-structured RFC documents that divide the project into logical, implementable units of work. Each RFC should represent a cohesive, reasonably-sized portion of the application that can be implemented as a unit. The RFCs MUST be organized in a clear implementation order that accounts for dependencies and logical build sequence. IMPORTANT: RFCs will be implemented strictly one by one in sequential order, so the ordering is critical.
+## Phase 1: Gather Context
 
-If any critical information is missing or unclear in the provided documents that prevents thorough RFC creation, ask specific questions to gather the necessary details before proceeding.
+### Step 1: Read Input Documents (parallel)
+Use `read` tool on:
+- PRD file from <prd-path> (or <existing-prd> if unspecified)
+- FEATURES.md, RULES.md if they exist (check <existing-docs>)
 
-## Pre-Analysis Phase
-
-### Step 1: Read Input Documents
-Use the `read` tool to analyze the following files (in parallel):
-- The PRD file specified in <prd-path>
-- If unspecified, check <existing-prd> for PRD content
-- If unspecified, look for FEATURES.md in the project (check <project-structure> or <existing-docs> for location)
-- If unspecified, look for RULES.md in the project (check <project-structure> or <existing-docs> for location)
-
-If any of these files don't exist, note which are missing and proceed with available documents.
+Note missing files and proceed with what's available.
 
 ### Step 2: Codebase Analysis (if existing code)
-If <project-structure> shows existing source code, ask the @explore subagent to analyze the codebase:
-
-**Explore Agent Prompt:**
+If <project-manifests> shows a project, use `explore` agent:
 ```
-Analyze this project's codebase to understand:
-1. Current architecture and folder structure
-2. Existing components, services, and utilities that can be reused
-3. Technology stack and frameworks in use
-4. Existing patterns for state management, API calls, and error handling
-5. Any existing database schemas or data models
-
-Focus on identifying reusable foundations for RFC planning. Return a structured summary of findings.
+Analyze codebase: architecture, reusable components, tech stack, patterns (state, API, errors), data models. Return structured summary for RFC planning.
 ```
 
-### Step 3: Verify Output Location
-Use the `list` tool to check if the RFCs folder exists. If not, it will be created during file generation.
+### Step 3: Read Existing RFCs (if any)
+If <existing-rfcs> shows RFC files, use `read` tool to load ALL existing RFCs in parallel. These are needed for drift detection and dependency chaining.
+
+---
+
+## Phase 2: Drift Detection & RFC Regeneration
+
+**Skip this phase if no existing RFCs.**
+
+### Drift Assessment
+For each existing RFC, compare against current PRD and codebase:
+
+| Drift Level | Criteria | Action |
+|-------------|----------|--------|
+| **None/Low** | Still accurate, minor updates only | Keep as-is |
+| **Medium** | Partially accurate, some sections outdated | Propose targeted patches |
+| **High** | Major mismatch with PRD or codebase reality | Propose regeneration |
+
+### Classification Process
+For each RFC:
+1. Extract: purpose, scope, key decisions (APIs, types, schemas), acceptance criteria
+2. Compare against: PRD requirements + current implementation reality
+3. List specific mismatches (quote PRD vs RFC discrepancies)
+
+### Approval Gate (MANDATORY)
+Present drift classification to user:
+```
+## RFC Drift Assessment
+
+### Keep (No/Low Drift)
+- RFC-001: [reason still accurate]
+
+### Patch (Medium Drift)
+- RFC-002: [list specific changes needed]
+
+### Regenerate (High Drift)
+- RFC-003: [list 3-5 concrete mismatches]
+
+**Proceed with patching/regenerating?** [Wait for approval]
+```
+
+**Do NOT modify any RFC files until user approves.**
+
+---
+
+## Phase 3: RFC Dependency Chaining
+
+**Principle**: Later RFCs MUST build on earlier RFCs. Never contradict established decisions.
+
+### Dependency Identification
+For each RFC beyond RFC-001:
+- **Depends on**: List earlier RFCs this builds upon (with specific reasons)
+- **Provides to later RFCs**: What contracts/APIs/types this establishes
+
+### When Drafting RFC-002+
+Before writing RFC-00N:
+1. **Read dependency RFCs** in full (use `read` tool)
+2. **Extract and pin**:
+   - Terminology / domain model from earlier RFCs
+   - Key decisions: APIs, data models, auth, storage, error handling
+   - File/module boundaries established
+   - Non-goals and constraints that affect later work
+3. **Reference explicitly**: Use "Per RFC-001 §[Section]..." when building on earlier decisions
+4. **No silent divergence**: If changes needed to earlier RFC decisions, propose an amendment instead
+
+### Consistency Check (required in each RFC)
+Include at end of each RFC-002+:
+```markdown
+## Compatibility with Dependencies
+- RFC-001: [Confirm no contradictions, or list required amendments]
+- RFC-002: [If applicable]
+```
+
+---
 
 ## Tool Usage
 
-Throughout this command, use the following tools:
-- `read` - To analyze PRD, FEATURES, RULES, and any referenced files
-- `glob` - To discover existing files matching patterns (e.g., `RFCs/*.md`)
-- `write` - To create new RFC files and RFCS.md index
-- `list` - To verify folder structure before and after file creation
-- `explore` subagent - For deep codebase analysis when existing code is present
-- `librarian` agent - To reference library documentation or external sources
+Tools:
+- `read` - PRD, FEATURES, RULES, existing RFCs
+- `glob` - Discover files (e.g., `RFCs/*.md`)
+- `write` - Create RFC files and RFCS.md index
+- `explore` agent - Codebase analysis
+- `librarian` agent - External library docs
+- `oracle` agent - Validate RFC plan before presenting to user
 
-## RFC Generation Process
+---
 
-Generate the RFC files under RFCs folder by:
+## Phase 4: Oracle Review Gate (MANDATORY)
 
-1. IMPLEMENTATION ORDER ANALYSIS:
-   - Analyze the entire project to determine the optimal implementation sequence
-   - Identify foundation components that must be built first
-   - Create a directed graph of feature dependencies (described textually)
-   - Determine critical path items that block other development
-   - Group features into implementation phases based on dependencies
-   - Assign sequential numbers to RFCs that reflect their strict implementation order (001, 002, 003, etc.)
-   - CRITICAL: Each RFC will be implemented one at a time in numerical order, so the sequence must be logical and buildable
-   - Each RFC must be fully implementable after all previous RFCs in the sequence have been completed
-   - No parallel implementation will occur - RFC-002 will only begin after RFC-001 is complete
-   - Map all dependencies between features to ensure the sequential order is feasible
+Before presenting the RFC plan to the user, consult `oracle` agent:
 
-2. FEATURE GROUPING:
-   - Group related features that should be implemented together in a single RFC
-   - Ensure each RFC represents a logical, cohesive unit of functionality
-   - Balance RFC size - not too small (trivial) or too large (unmanageable)
-   - Consider dependencies between features when grouping
-   - Identify shared components or services that multiple features might depend on
-   - Organize groups to align with the strict sequential implementation order
-   - Ensure features that build upon each other are grouped in the correct sequence
-
-3. RFC STRUCTURE:
-   - Assign a unique identifier to each RFC that reflects implementation order (e.g., RFC-001-User-Authentication for the first component to be implemented)
-   - Provide a clear title that describes the functionality
-   - Include a summary of what the RFC covers
-   - List all features/requirements addressed in the RFC
-   - Detail technical approach and architecture considerations
-   - Explicitly identify which previous RFCs this RFC builds upon
-   - Specify which future RFCs will build upon this RFC
-   - Estimate relative complexity (Low, Medium, High)
-   - Include detailed acceptance criteria for each feature
-   - Specify any API contracts or interfaces that will be exposed
-   - Document data models and database schema changes required
-   - Outline state management approach where applicable
-   - Include specific implementation details such as:
-     * Required file structure and organization
-     * Key algorithms or business logic to implement
-     * UI/UX specifications and design patterns to follow
-     * State management approach
-     * API integration details
-     * Database interactions and data flow
-     * Error handling requirements
-     * Testing strategy with specific test cases
-     * Performance considerations and optimization techniques
-
-4. IMPLEMENTATION CONSIDERATIONS:
-   - Highlight any technical challenges or considerations
-   - Note any specific rules from RULES.md that particularly apply to this RFC
-   - Identify potential edge cases or special handling requirements
-   - Suggest testing approaches for the functionality
-   - Specify performance expectations and optimization considerations
-   - Address security concerns and required safeguards
-   - Document any third-party dependencies or libraries needed
-   - Outline error handling strategies and fallback mechanisms
-   - Provide guidance on accessibility requirements
-   - Include internationalization/localization considerations
-   - Explain how this RFC fits into the overall sequential implementation plan
-   - Describe how this RFC builds upon the functionality implemented in previous RFCs
-
-5. RFCS.MD CREATION:
-   - Create a master RFCS.md file that lists all RFCs in their strict numerical implementation order
-   - Include an RFC Summary Table with the following columns:
-     * RFC ID (e.g., RFC-001, RFC-002)
-     * Title (brief, descriptive name)
-     * Priority (MUST, SHOULD, COULD)
-     * Complexity (Low, Medium, High)
-     * Phase (implementation phase number)
-     * Status (Pending - all RFCs start as Pending, will be updated to Completed by /prd/implement command)
-   - Example table format:
-     ```markdown
-     ## RFC Summary Table
-
-     | RFC ID  | Title                          | Priority | Complexity | Phase | Status  |
-     | ------- | ------------------------------ | -------- | ---------- | ----- | ------- |
-     | RFC-001 | IndexedDB Storage Foundation   | MUST     | High       | 1     | Pending |
-     | RFC-002 | Security Infrastructure        | MUST     | High       | 1     | Pending |
-     | RFC-003 | Provider Abstraction Layer     | MUST     | Medium     | 1     | Pending |
-     ```
-   - Below the table, include a dependency graph or section showing relationships between RFCs
-   - Provide a clear, sequential implementation roadmap grouped by phases
-   - For each RFC, indicate which previous RFCs it builds upon
-   - For each RFC, indicate which future RFCs will build upon it
-   - Make it clear that:
-     * Implementation will proceed strictly in the numbered sequence
-     * Each RFC should be implemented using the `/prd/implement` command
-     * The Status column will be automatically updated to "Completed" after successful implementation
-
-6. TECHNICAL SPECIFICATIONS:
-   - For each RFC, provide detailed technical specifications including:
-     * Component architecture diagrams (described textually)
-     * Data flow diagrams (described textually)
-     * API endpoints with request/response formats
-     * Database schema changes with field definitions
-     * State management patterns
-     * Authentication and authorization requirements
-     * Caching strategies where applicable
-     * Specific algorithms or business logic pseudocode
-     * Error codes and handling mechanisms
-     * Logging and monitoring requirements
-   - Explain how each technical specification builds upon or extends the implementations from previous RFCs
-   - Ensure specifications account for the sequential implementation order
-
-7. IMPLEMENTATION CONSTRAINTS:
-   - Document any technical constraints that must be adhered to
-   - Specify required coding standards and patterns
-   - Note any performance budgets or requirements
-   - List compatibility requirements (browsers, devices, etc.)
-   - Identify any regulatory or compliance considerations
-   - Highlight constraints that affect the sequential implementation order
-   - Ensure constraints are addressed in the appropriate sequence
-
-First, provide a brief overview of how you've approached breaking down the project, with special emphasis on the sequential implementation order you've determined. Then create the comprehensive set of RFC documents following the structure above, organizing them in strict numerical implementation order.
-
-Ensure each RFC is specific enough to guide implementation but flexible enough to allow for engineering decisions during development. Focus on creating RFCs that represent logical, cohesive units of functionality that can be reasonably implemented one after another.
-
-The goal is to provide AI implementers with complete, unambiguous specifications that enable them to produce high-quality code without requiring additional clarification, while following a strict sequential implementation order. Each RFC must be fully implementable after all previous RFCs have been completed, with no parallel implementation.
-
-## Implementation Workflow
-
-After generating the RFCs, inform the user:
-
+**Oracle Prompt:**
 ```
-RFCs have been successfully generated. To implement each RFC:
+Review this RFC plan for a PRD-to-RFC conversion:
 
-1. Use the `/prd/implement` command with the RFC file path:
-   `/prd/implement RFCs/RFC-001-[Title].md`
+PRD Summary: [brief PRD overview]
+Proposed RFCs: [list RFC-001 through RFC-00N with titles]
+Dependency Chain: [show which RFCs depend on which]
+Drift Decisions: [if applicable - what's being kept/patched/regenerated]
 
-2. The implementation command will:
-   - Validate prerequisites (check previous RFCs are completed)
-   - Support resuming partial implementations
-   - Follow a two-phase approach (planning → approval → execution)
-   - Run project-adaptive validation (tests, build, lint)
-   - Update RFCS.md status to "Completed" after verification
+Validate:
+1. Is the sequential order correct? Any dependency issues?
+2. Are RFC scopes appropriate (not too large/small)?
+3. Any contradictions between proposed RFCs?
+4. Missing critical components that should be separate RFCs?
+5. Any technical feasibility concerns?
 
-3. Implement RFCs strictly in numerical order (001, 002, 003, etc.)
+Return: approval or specific issues to address.
 ```
 
-## Error Handling & Edge Cases
+**Only proceed to present plan to user after oracle approval.**
 
-Handle these situations appropriately:
+---
 
-1. **Missing PRD file**: If the file in <prd-path> doesn't exist, prompt the user for the correct path
-2. **Missing FEATURES.md or RULES.md**: Proceed with available documents; note which are missing in the output
-3. **RFCs folder doesn't exist**: Create it using `write` tool when generating the first RFC
-4. **Existing RFCs found**: Check <existing-rfcs> - if RFCs already exist, ask user whether to:
-   - Overwrite existing RFCs
-   - Append new RFCs with incremented numbers
-   - Cancel and review existing RFCs first
-5. **Circular dependencies detected**: If features have circular dependencies, flag this explicitly and propose a resolution before proceeding
-6. **Ambiguous requirements**: If PRD contains ambiguous or contradictory requirements, list them and ask for clarification before generating RFCs
+## Phase 5: RFC Generation
 
-## Output Verification
+### 5.1 Implementation Order Analysis
+1. Identify foundation components (must build first)
+2. Create dependency graph (textual)
+3. Assign sequential numbers (001, 002, 003...)
+4. **Critical**: Each RFC fully implementable after all previous RFCs complete. No parallel implementation.
 
-After generating all files, use the `glob` tool with pattern `RFCs/*.md` to verify:
-- All planned RFC files were created
-- RFCS.md master index exists
+### 5.2 Feature Grouping
+- Group related features into cohesive RFCs
+- Balance size: not trivial, not unmanageable
+- Shared components → earlier RFCs
 
-Report a summary of created files to the user, including:
-- Number of RFCs created
-- Implementation phases identified
-- Location of files
-- Next steps (use /prd/implement to begin implementation)
+### 5.3 RFC Template
+Each RFC must include:
+
+```markdown
+# RFC-00N: [Title]
+
+## Summary
+[What this RFC covers]
+
+## Dependencies
+- **Builds on**: RFC-00X (reason), RFC-00Y (reason)
+- **Provides to later RFCs**: [contracts/APIs/types established]
+
+## Features/Requirements
+[List from PRD]
+
+## Technical Approach
+- Architecture considerations
+- API contracts / interfaces
+- Data models / schema changes
+- State management (if applicable)
+
+## Implementation Details
+- File structure
+- Key algorithms / business logic
+- UI/UX patterns (if applicable)
+- Error handling
+- Testing strategy
+
+## Acceptance Criteria
+[Specific, testable criteria]
+
+## Complexity
+[Low | Medium | High]
+
+## Compatibility with Dependencies
+[Confirm no contradictions with earlier RFCs]
+```
+
+### 5.4 RFCS.md Index
+Create master index with:
+
+| RFC ID | Title | Priority | Complexity | Phase | Status |
+|--------|-------|----------|------------|-------|--------|
+| RFC-001 | [Title] | MUST/SHOULD/COULD | Low/Med/High | 1 | Pending |
+
+Include:
+- Dependency graph showing RFC relationships
+- Note: Use `/prd/implement` for each RFC in order
+- Status auto-updates to "Completed" after implementation
+
+---
+
+## Phase 6: User Approval & File Generation
+
+### Present Plan for Approval
+Before writing any files, present:
+1. RFC list with titles and dependencies
+2. Drift decisions (if existing RFCs)
+3. Ask: **"Proceed with generating these RFCs?"**
+
+### After Approval
+Use `write` tool to create:
+- `RFCs/RFC-001-[Title].md` through `RFC-00N-[Title].md`
+- `RFCs/RFCS.md` index
+
+### Verification
+Use `glob` with `RFCs/*.md` to confirm all files created.
+
+---
+
+## Error Handling
+
+| Situation | Action |
+|-----------|--------|
+| Missing PRD | Prompt for correct path |
+| Missing FEATURES/RULES | Proceed with available; note missing |
+| RFCs folder missing | Create via `write` |
+| Existing RFCs | Run drift detection (Phase 2) |
+| Circular dependencies | Flag and propose resolution |
+| Ambiguous requirements | List and ask for clarification |
+
+---
+
+## Completion Message
+
+```
+RFCs generated. Next steps:
+1. `/prd/implement RFCs/RFC-001-[Title].md`
+2. Implement strictly in order (001 → 002 → ...)
+3. Status auto-updates to "Completed" after each RFC
+```
