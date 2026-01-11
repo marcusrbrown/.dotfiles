@@ -32,3 +32,10 @@ ast
 toml
 mypy
 negotiables
+auditability
+typecheck
+metaprogramming
+microservices
+backpressure
+complecting
+debuggability
