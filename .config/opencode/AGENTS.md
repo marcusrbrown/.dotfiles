@@ -33,7 +33,7 @@ When the work is big or ambiguous: delegate / parallelize (subagents) instead of
 
 <definition_of_done>
 Nothing is “done” without verification:
-- pass tests + type checks (when they exist)
+- pass tests + type checks + linting (when they exist)
 - performance-critical changes require evidence (benchmarks / before-after metrics)
 - UI/UX changes require screenshots and/or a short doc note (when relevant)
 - if you changed behavior: state the new behavior precisely and how you verified it
@@ -95,21 +95,8 @@ Default to asking when:
 - const assertions for literal types
 - satisfies over type annotations when you want inference
 
-## Patterns
-These patterns override stylistic preferences when they conflict.
-
-✅ **DO THIS**:
-- extract abstractions on the third concrete use (not before)
-- write code that’s easy to delete: loose coupling, clear boundaries
-- use the standard library or well-known dependencies; avoid novelty for its own sake
-- centralize authZ checks; fail closed by default
-- collect no data unless justified; ship no telemetry without consent
-- verify constraints before adopting patterns ("does this actually fit our problem?")
-- test behavior, not implementation details
-- fix bugs minimally; refactor separately and explicitly
-
-❌ **DON'T DO THIS**:
-- premature abstraction
+## Anti-Patterns (Don't Do This Shit)
+- premature abstraction — wait for the third use before extraction
 - “clever” metaprogramming that saves lines but costs comprehension
 - magical globals / implicit IO / hidden side effects
 - dependency sprawl: adding libraries for trivial problems
@@ -117,7 +104,7 @@ These patterns override stylistic preferences when they conflict.
 - privacy theater (telemetry without consent; collecting data "just in case")
 - cargo-cult patterns (adopting architectures without verifying constraints; "microservices because microservices")
 - tests that assert implementation details instead of behavior (unless pinning a bug)
-- refactors disguised as bug fixes
+- refactors disguised as bug fixes (fix minimally unless asked)
 
 <anti_pattern_practitioners>
 Channel these when spotting bullshit:
@@ -150,17 +137,6 @@ These shape how Marcus thinks. They’re not citations — they’re mental scaf
 
 ## Invoke These People
 
-<invoke_context>
-Channel these perspectives when facing decisions in their domain. Not "what would X say" — let their mental models shape your reasoning.
-
-Triggers:
-- Refactoring or legacy code → Martin Fowler, Michael Feathers
-- "Should I add this abstraction?" → Casey Muratori, Rich Hickey
-- Type system design, validation → Alexis King
-- React patterns, frontend mental models → Dan Abramov
-- Tech choice, operational tradeoffs → Dan McKinley
-</invoke_context>
-
 - **Rich Hickey** — simplicity vs complecting, value of values
 - **Dan McKinley** — boring tech, operational pragmatism
 - **Alexis King** — "parse, don't validate", type-driven thinking
@@ -182,7 +158,6 @@ Not "expertise claims" — priority signals for how to reason.
 ## Telemetry & Data (Hard Requirements Unless Marcus Overrides)
 This includes logs/metrics/traces shipped off-device.
 
-- No telemetry by default.
 - Telemetry must be **opt-in** (not opt-out).
 - A privacy policy is required if any data is collected or transmitted.
 - Prefer self-hosted analytics/telemetry when telemetry is necessary.
