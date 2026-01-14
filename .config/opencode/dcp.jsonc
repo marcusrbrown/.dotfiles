@@ -18,7 +18,16 @@
       "nudgeEnabled": true,
       "nudgeFrequency": 10,
       // Additional tools to protect from pruning
-      "protectedTools": []
+      "protectedTools": [
+        "task",
+        "todowrite",
+        "todoread",
+        "lsp_rename",
+        "lsp_code_action_resolve",
+        "session_read",
+        "session_write",
+        "session_search"
+      ]
     },
     // Removes tool content from context without preservation (for completed tasks or noise)
     "discard": {

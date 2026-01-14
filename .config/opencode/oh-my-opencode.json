@@ -23,13 +23,13 @@
     },
     "librarian": {
       "description": "Multi-repository analysis, official docs, and implementation examples",
-      "model": "google/antigravity-claude-sonnet-4-5-thinking",
+      "model": "google/antigravity-claude-sonnet-4-5",
       "temperature": 0.1,
-      "prompt_append": "\n---\n\n**Important:** The `## EXTERNAL RESOURCES` section in AGENTS.md documents key dependencies, references, and documentation to assist you in providing accurate and context-aware responses. Read this section carefully before you begin."
+      "prompt_append": "\n---\n\n**Important:** The EXTERNAL RESOURCES section in AGENTS.md documents key dependencies, references, and documentation to assist you in providing accurate and context-aware responses. Read this section carefully before you begin."
     },
     "explore": {
       "description": "Fast agent for codebase exploration and pattern matching",
-      "model": "github-copilot/claude-haiku-4.5",
+      "model": "google/antigravity-gemini-3-flash",
       "temperature": 0.1
     },
     "frontend-ui-ux-engineer": {
@@ -48,17 +48,11 @@
       "temperature": 0.2
     }
   },
-  "comment_checker": {
-    "custom_prompt": "Found {{comments}} comments. Review and fix only critical issues."
-  },
-  "disabled_mcps": [
-    "websearch_exa"
-  ],
   "experimental": {
     "aggressive_truncation": false,
     "auto_resume": false,
-    "dcp_for_compaction": false,
-    "truncate_all_tool_outputs": true
+    "dcp_for_compaction": true,
+    "truncate_all_tool_outputs": false
   },
   "google_auth": false
 }
