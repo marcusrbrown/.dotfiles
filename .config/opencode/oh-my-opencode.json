@@ -3,34 +3,28 @@
   "agents": {
     "Sisyphus": {
       "description": "Primary orchestrator agent with powerful AI capabilities",
-      "model": "google/antigravity-claude-opus-4-5-thinking",
-      "temperature": 0.3
+      "model": "google/antigravity-claude-opus-4-5-thinking"
     },
     "OpenCode-Builder": {
       "description": "Default build agent for development tasks",
-      "model": "google/antigravity-claude-opus-4-5-thinking",
-      "temperature": 0.3
+      "model": "google/antigravity-claude-opus-4-5-thinking"
     },
     "Planner-Sisyphus": {
       "description": "Strategic planning agent with minimal creativity",
-      "model": "google/antigravity-claude-opus-4-5-thinking",
-      "temperature": 0.3
+      "model": "google/antigravity-claude-opus-4-5-thinking"
     },
     "oracle": {
       "description": "Expert technical advisor for architecture decisions and code analysis",
-      "model": "github-copilot/gpt-5.2",
-      "temperature": 0.2
+      "model": "github-copilot/gpt-5.2"
     },
     "librarian": {
       "description": "Multi-repository analysis, official docs, and implementation examples",
       "model": "google/antigravity-claude-sonnet-4-5",
-      "temperature": 0.1,
       "prompt_append": "\n---\n\n**Important:** The EXTERNAL RESOURCES section in AGENTS.md documents key dependencies, references, and documentation to assist you in providing accurate and context-aware responses. Read this section carefully before you begin."
     },
     "explore": {
       "description": "Fast agent for codebase exploration and pattern matching",
-      "model": "google/antigravity-gemini-3-flash",
-      "temperature": 0.1
+      "model": "google/antigravity-gemini-3-flash"
     },
     "frontend-ui-ux-engineer": {
       "description": "Designer-turned-developer for stunning UI/UX implementation",
