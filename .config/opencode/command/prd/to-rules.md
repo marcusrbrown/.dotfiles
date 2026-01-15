@@ -13,7 +13,7 @@ $ARGUMENTS
 !`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found at default locations"`</existing-prd>
 
 <project-structure>
-!`find . -type f \( -name "*.json" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.md" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" \) 2>/dev/null | grep -v node_modules | grep -v __pycache__ | grep -v .git | grep -v dist | grep -v build | grep -v target | grep -v .next | grep -v storybook-static | head -50`</project-structure>
+!`find . -maxdepth 4 -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.py" -o -name "*.go" -o -name "*.rs" \) 2>/dev/null | head -40`</project-structure>
 
 <package-json>
 !`test -f package.json && cat package.json | head -25 || echo "No package.json found"`</package-json>
@@ -22,32 +22,31 @@ $ARGUMENTS
 !`ls RULES.md docs/RULES.md 2>/dev/null | grep . || echo "No existing RULES.md found"`</existing-rules>
 
 <existing-docs>
-!`(find docs -maxdepth 1 -type f -name '*.md' 2>/dev/null || ls *.md 2>/dev/null) | sort | head -20 |  awk 'NR { print; found=1 } END { if (!found) print "No docs found" }'`</existing-docs>
+!`ls docs/*.md *.md 2>/dev/null | head -15 || echo "No docs found"`</existing-docs>
 
 ## Role
 
-You are an expert software architect and technical lead tasked with creating a comprehensive RULES.md file based on the Product Requirements Document (PRD) and features list.
+Expert software architect creating RULES.md from PRD. Rules establish technical standards and guidelines for AI-assisted development, ensuring consistency and quality.
 
-Create a clear, structured RULES.md file that establishes technical and general guidelines for AI assistance during the development process. These rules will ensure consistency, quality, and alignment with project requirements.
+## Non-negotiables
+- Do NOT write RULES.md until user explicitly approves the draft.
+- If existing RULES.md found: classify changes and get approval before overwriting.
+- If PRD conflicts with detected codebase conventions: surface conflict and ask.
+- If <prd-path> is empty or ambiguous: ask for clarification.
+- If critical information missing: ask specific questions before proceeding.
 
-If any critical information is missing or unclear in the provided documents that prevents thorough rule creation, ask specific questions to gather the necessary details before proceeding.
-
-## Pre-Analysis Phase
+## Phase 1: Gather Context
 
 ### Step 1: Read Input Documents
-Use the `read` tool to analyze the following files (in parallel):
-- The PRD file specified in <prd-path>
-- If unspecified, check <existing-prd> for PRD content
-- Look for FEATURES.md in the project (check <existing-docs> for location)
-- Review <package-json> for existing tech stack information
+Use `read` tool on these files **in a single parallel batch**:
+- PRD file from <prd-path> (or <existing-prd> if unspecified)
+- FEATURES.md, RULES.md if they exist (check <existing-docs>)
+- Review <package-json> for tech stack
 
-### Step 2: Check Existing Rules
-Review <existing-rules> output. If existing rules are found:
-- Ask user whether to replace entirely, merge, or append
-- Note any existing conventions that should be preserved
+Note missing files and proceed with what's available.
 
-### Step 3: Codebase Analysis (if existing code)
-If <project-structure> shows existing source code, ask the @explore subagent to detect conventions:
+### Step 2: Codebase Analysis (if existing code)
+If <project-structure> shows source files, use `explore` agent:
 
 **Explore Agent Prompt:**
 ```
@@ -62,80 +61,187 @@ Analyze this project's codebase to identify:
 Return a structured summary of detected conventions to inform RULES.md creation.
 ```
 
+### Step 3: External Reference (if unfamiliar stack)
+If tech stack includes unfamiliar frameworks, use `librarian` agent:
+```
+Find best practices and conventions for [framework] projects.
+Focus on: naming conventions, folder structure, testing patterns, common pitfalls.
+```
+
+---
+
+## Phase 2: Drift Detection (if existing RULES.md)
+
+**Skip this phase if no existing RULES.md.**
+
+### Drift Assessment
+Compare existing rules against current PRD and detected codebase conventions:
+
+| Drift Level | Criteria | Action |
+|-------------|----------|--------|
+| **None/Low** | Rules still accurate, minor updates only | Keep as-is |
+| **Medium** | Some sections outdated or incomplete | Propose targeted patches |
+| **High** | Major mismatch with PRD or codebase reality | Propose regeneration |
+
+### Classification Process
+1. Extract key rules from existing RULES.md by category
+2. Compare against: PRD requirements + detected codebase patterns
+3. List specific mismatches (quote discrepancies)
+
+### Approval Gate (MANDATORY)
+Present drift classification to user:
+```
+## RULES.md Drift Assessment
+
+### Keep (No/Low Drift)
+- [Category]: [reason still accurate]
+
+### Patch (Medium Drift)
+- [Category]: [list specific changes needed]
+
+### Regenerate (High Drift)
+- [Category]: [list concrete mismatches]
+
+**Proceed with patching/regenerating?** [Wait for approval]
+```
+
+**Do NOT modify RULES.md until user approves.**
+
+---
+
 ## Tool Usage
 
-Throughout this command, use the following tools:
-- `read` - To analyze PRD, FEATURES.md, and config files
-- `glob` - To discover existing files and detect patterns
-- `write` - To create the RULES.md file
-- `list` - To verify folder structure
-- `explore` subagent - For deep codebase convention analysis
-- `librarian` agent - To reference library documentation or external resources if needed
+Tools:
+- `read` - PRD, FEATURES, existing RULES, config files
+- `glob` - Discover files (e.g., `docs/*.md`)
+- `write` - Create RULES.md
+- `explore` agent - Codebase convention analysis
+- `librarian` agent - External framework docs/best practices
+- `oracle` agent - Validate rules draft before presenting to user
 
-## Rules Generation Process
+---
 
-Generate the RULES.md by:
+## Phase 3: Oracle Review Gate (MANDATORY)
 
-1. TECHNOLOGY STACK DEFINITION:
-   - Identify the core technologies mentioned or implied in the PRD/features
-   - Specify the latest stable versions to use for each technology
-   - Define any specific libraries, frameworks, or tools required
+Before presenting RULES.md draft to user, consult `oracle` agent:
 
-2. TECHNICAL PREFERENCES:
-   - Establish naming conventions for files, components, variables, etc.
-   - Define code organization principles (folder structure, modularity)
-   - Specify architectural patterns to follow
-   - Set standards for data handling, state management, and API interactions
-   - Outline performance requirements and optimization strategies
-   - Define security practices and requirements
+**Oracle Prompt:**
+```
+Review this RULES.md draft for a [project type] project:
 
-3. DEVELOPMENT STANDARDS:
-   - Establish testing requirements and coverage expectations
-   - Define documentation standards
-   - Specify error handling and logging requirements
-   - Set accessibility standards to follow
-   - Define responsive design requirements
+Tech Stack: [detected/specified stack]
+Key Rules by Category:
+- Technology: [summary]
+- Code Style: [summary]
+- Testing: [summary]
+- Security: [summary]
 
-4. IMPLEMENTATION PRIORITIES:
-   - Clarify which features are core vs. enhancements
-   - Establish any phased implementation approach
-   - Define quality thresholds that must be met
+Validate:
+1. Are rules internally consistent?
+2. Any contradictions with detected codebase patterns?
+3. Missing critical areas (security, testing, accessibility, error handling)?
+4. Are rules actionable and specific enough?
+5. Any rules that are too restrictive or too vague?
 
-5. GENERAL GUIDELINES:
-   - Establish rules for following requirements precisely
-   - Define expectations for code quality, readability, and maintainability
-   - Set standards for completeness (no TODOs or placeholders)
-   - Establish communication guidelines for questions or clarifications
-   - Define how to handle uncertainty or ambiguity
+Return: approval or specific issues to address.
+```
 
-6. RULES.MD CREATION:
-   - Format the rules in clean, well-structured markdown
-   - Organize rules logically with clear headings
-   - Ensure rules are specific, actionable, and unambiguous
-   - Include examples where helpful for clarity
+**Only proceed to present draft to user after oracle approval.**
 
-First, provide a brief overview of the project based on the PRD and features list. Then create the comprehensive RULES.md content following the structure above.
+---
 
-Ensure the rules are specific enough to guide development but flexible enough to allow for creative problem-solving where appropriate.
+## Phase 4: Rules Generation
 
-## Error Handling & Edge Cases
+Generate RULES.md covering these categories:
 
-Handle these situations appropriately:
+| Category | Key Areas |
+|----------|-----------|
+| **Technology Stack** | Core tech + versions, required libraries/frameworks |
+| **Code Style** | Naming conventions, folder structure, architectural patterns |
+| **Data & State** | State management, API interactions, data handling |
+| **Quality** | Testing requirements, coverage, error handling, logging |
+| **Security** | Auth patterns, input validation, secrets handling |
+| **Accessibility** | WCAG compliance level, responsive design requirements |
+| **General** | Code quality expectations, no TODOs/placeholders, ambiguity handling |
 
-1. **Missing PRD file**: If the file in <prd-path> doesn't exist, prompt the user for the correct path
-2. **Missing FEATURES.md**: Proceed with PRD only; note that feature-specific rules may be incomplete
-3. **Existing RULES.md found**: Check <existing-rules> - ask user whether to:
-   - Replace entirely with new rules
-   - Merge new rules with existing ones
-   - Cancel and review existing rules first
-4. **Tech stack unclear**: Use <package-json> and @explore agent to detect from existing code
-5. **Conflicting requirements**: If PRD contains contradictions, list them and ask for resolution
-6. **No existing codebase**: If <project-structure> shows no source files, base rules purely on PRD specifications
+### RULES.md Structure
+```markdown
+# Project Rules
 
-## Output
+## Technology Stack
+[Specific versions and libraries]
 
-Use the `write` tool to create the RULES.md file. Choose location based on project structure:
-- `RULES.md` (project root) - default
-- `docs/RULES.md` - if docs folder exists
+## Code Style & Organization
+[Naming, structure, patterns]
 
-After writing, use `read` to verify the file was created correctly and report success to user.
+## Testing & Quality
+[Coverage requirements, testing patterns]
+
+## Security
+[Auth, validation, secrets]
+
+## Accessibility
+[Standards to follow]
+
+## General Guidelines
+[Quality expectations, communication]
+```
+
+Rules must be **specific and actionable**, not vague. Include examples where helpful.
+
+---
+
+## Phase 5: User Approval
+
+### Present Draft for Approval
+Before writing any files, present:
+1. Brief project overview
+2. Key rules by category (summary)
+3. If existing RULES.md: drift decisions
+4. Ask: **"Proceed with generating RULES.md?"**
+
+**Do NOT write files until user approves.**
+
+---
+
+## Error Handling
+
+| Situation | Action |
+|-----------|--------|
+| Missing PRD | Prompt for correct path |
+| Missing FEATURES.md | Proceed with PRD only; note limitation |
+| Existing RULES.md | Run drift detection (Phase 2) |
+| Tech stack unclear | Use `explore` agent to detect from code |
+| Conflicting requirements | List contradictions, ask for resolution |
+| No existing codebase | Base rules purely on PRD specs |
+
+## Phase 6: Output & Verification
+
+### Output Location
+Use `glob` with `docs/*.md` to check if docs folder exists:
+- If `docs/` folder exists → `docs/RULES.md`
+- Otherwise → `RULES.md` (project root)
+
+### After Approval
+Use `write` tool to create RULES.md at determined location.
+
+### Verification
+Use `read` to verify file was created correctly.
+
+---
+
+## Completion Message
+
+```
+RULES.md generated at [location]. 
+
+Key rules established:
+- Technology: [brief summary]
+- Code Style: [brief summary]
+- Testing: [brief summary]
+
+Next steps:
+1. Review generated rules for project-specific adjustments
+2. Use `/prd/to-rfcs` to create implementation RFCs
+3. Reference RULES.md during all development work
+```

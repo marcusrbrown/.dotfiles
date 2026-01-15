@@ -16,7 +16,7 @@ $ARGUMENTS
 !`ls FEATURES.md docs/FEATURES.md 2>/dev/null | grep . || echo "No FEATURES.md found"`</existing-features>
 
 <existing-rfcs>
-!`ls RFCs/RFC-*.md docs/rfc/RFC-*.md docs/rfcs/RFC-*.md 2>/dev/null || echo "No RFC files found"`</existing-rfcs>
+!`ls RFCs/RFC-*.md docs/rfc/RFC-*.md docs/rfcs/RFC-*.md 2>/dev/null | grep . || echo "No RFC files found"`</existing-rfcs>
 
 <git-status>
 !`git status --porcelain 2>/dev/null | head -30 || echo "No git repository"`</git-status>
