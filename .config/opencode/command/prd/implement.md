@@ -111,6 +111,60 @@ This implementation MUST follow a strict two-phase approach:
 7. Wait for explicit user approval of the plan before proceeding to Phase 2
 8. Address any feedback, modifications, or additional requirements from the user
 
+**Phase 1 Output Format (REQUIRED):**
+```
+## Implementation Plan: [RFC-XXX Title]
+
+### Drift Assessment
+- **Level**: [Low/Medium/High]
+- **Summary**: [1-2 sentences on existing code overlap]
+
+### Files to Create
+| File | Purpose | Dependencies |
+|------|---------|--------------|
+| path/to/file.ts | [What it does] | [What it imports/requires] |
+
+### Files to Modify
+| File | Changes | Risk |
+|------|---------|------|
+| path/to/existing.ts | [What changes] | [Low/Medium/High + reason] |
+
+### Implementation Order
+1. [Step]: [Rationale for ordering]
+2. [Step]: [Rationale for ordering]
+3. ...
+
+### Test Strategy
+- **Unit tests**: [Files/functions to test]
+- **Integration tests**: [Flows to verify]
+- **Acceptance criteria verification**: [How each criterion will be proven]
+
+### Integration Points (for library/module RFCs)
+If this RFC creates reusable library code, you MUST define integration before Phase 2:
+
+| Question | Answer |
+|----------|--------|
+| Where will this be **called** from? | [File path + function/component] |
+| What **triggers** execution? | [Event, user action, schedule, or import] |
+| How does data **flow in**? | [Input types/sources] |
+| How does output **flow out**? | [Consumers of the result] |
+
+**If any answer is "TBD" or "unknown" → resolve before Phase 2.**
+
+**Architecture Alignment:**
+1. **Find the pattern**: Use `explore` agent to identify where similar functionality lives in the codebase
+2. **Match the abstraction level**: If similar code is extracted to a module/function, yours should be too
+3. **Avoid entry point bloat**: Complex logic (>5 lines or with conditionals) should be extracted, not inlined in entry points
+
+### Risks & Mitigations
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| [What could go wrong] | [Consequence] | [How to prevent/handle] |
+
+### Open Questions (if any)
+- [Uncertainties requiring user input before Phase 2]
+```
+
 **Drift-Aware Planning:**
 The implementation plan MUST account for drift findings:
 - If drift is Low: Proceed with RFC as written, noting any minor adjustments
@@ -135,8 +189,29 @@ Before presenting the plan to the user, submit to `oracle` for review and incorp
 ## Implementation Guidelines
 
 ### Before Writing Code
-1. Use `explore` agent: "Analyze [RFC scope]. Return: existing patterns, files to modify, reusable components."
-2. Use `librarian` agent (if unfamiliar libs): "Find docs/examples for [library] [feature]. Return: APIs, gotchas, best practices."
+1. Use `explore` agent with structured prompt:
+   ```
+   TASK: Analyze RFC implementation scope
+   RFC: [ID] - [Title]
+   SCOPE: [files/components from RFC]
+
+   RETURN FORMAT:
+   - PATTERNS: [existing patterns to follow, with file:line references]
+   - FILES_TO_MODIFY: [list with specific line ranges]
+   - REUSABLE: [components/utilities/types to leverage]
+   - CONFLICTS: [potential issues with existing code]
+   ```
+2. Use `librarian` agent (if unfamiliar libs) with structured prompt:
+   ```
+   TASK: Find documentation and examples for [library] [feature]
+   CONTEXT: Implementing [brief RFC description]
+
+   RETURN FORMAT:
+   - API_REFERENCE: [key functions/methods with signatures]
+   - GOTCHAS: [common pitfalls, version-specific issues]
+   - BEST_PRACTICES: [recommended patterns]
+   - EXAMPLES: [relevant code snippets from official docs or reputable OSS]
+   ```
 3. Analyze relevant code files to understand existing architecture
 4. If unclear on requirements, ask specific questions
 5. Consider: performance, maintainability, scalability, security implications
@@ -161,6 +236,13 @@ The RFC document is your primary source of truth. Follow these guidelines:
 4. Ensure proper error handling, input validation, comments, and tests
 5. Apply SOLID principles; optimize for readability first, then performance
 
+### Integration Red Flags (STOP and reconsider)
+If you observe any of these patterns during implementation, pause and reassess:
+- Adding significant logic to entry points instead of extracting to modules
+- New module imports going directly to entry points with no intermediate layer
+- No existing code path calls your new functions (library code without consumers)
+- "I'll integrate it later" thinking — integration must be part of the implementation, not deferred
+
 ### Implementation Process
 Follow Phase 1 (plan + oracle review + user approval) then Phase 2 (execute). Implement in small, reviewable segments. Document any deviations from the approved plan with reasoning.
 
@@ -171,10 +253,16 @@ Follow Phase 1 (plan + oracle review + user approval) then Phase 2 (execute). Im
 ## Completion Phase
 
 ### Verification Before Completion
-1. Run `lsp_diagnostics` on all changed files—no errors or warnings
+1. Run `lsp_diagnostics` with severity="error" on all changed files—no errors allowed
 2. Run build command if available (`npm run build`, `cargo build`, etc.)
 3. Run test command if available (`npm test`, `pytest`, etc.)
 4. Verify ALL acceptance criteria from RFC are satisfied
+5. **Integration verification** (for library/module RFCs):
+   - [ ] Library functions are imported and called from the locations specified in Phase 1
+   - [ ] Integration follows existing codebase patterns (not inlined in entry points)
+   - [ ] Data flows through existing type system as planned
+   - [ ] Tests verify the integration path, not just isolated library functions
+   - [ ] RFC completion note documents WHERE integration happens
 
 ### Code Quality Checklist
 Ensure: readable code, proper error handling, testable structure, consistent with codebase, secure, performant.
