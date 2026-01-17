@@ -3,7 +3,8 @@
   "agents": {
     "Sisyphus": {
       "description": "Primary orchestrator agent with powerful AI capabilities",
-      "model": "google/antigravity-claude-opus-4-5-thinking"
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "prompt_append": "\n---\n\n## Session Management (REQUIRED)\n\nBefore investigating any issue:\n1. Use `session_search` to find relevant prior sessions for this repository\n2. Use `session_read` to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs"
     },
     "OpenCode-Builder": {
       "description": "Default build agent for development tasks",
