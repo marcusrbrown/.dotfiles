@@ -28,18 +28,15 @@
     },
     "frontend-ui-ux-engineer": {
       "description": "Designer-turned-developer for stunning UI/UX implementation",
-      "model": "google/antigravity-gemini-3-pro",
-      "temperature": 0.5
+      "model": "google/antigravity-gemini-3-pro"
     },
     "document-writer": {
       "description": "Technical writing expert for documentation and guides",
-      "model": "google/antigravity-gemini-3-pro",
-      "temperature": 0.3
+      "model": "google/antigravity-gemini-3-pro"
     },
     "multimodal-looker": {
       "description": "Analyzes PDFs, images, diagrams beyond raw text",
-      "model": "google/antigravity-gemini-3-flash",
-      "temperature": 0.2
+      "model": "google/antigravity-gemini-3-flash"
     }
   },
   "experimental": {
