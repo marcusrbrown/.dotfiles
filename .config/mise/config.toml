@@ -21,7 +21,7 @@ go = "1.25.6"
 "npm:prettier" = "3.8.0"
 "npm:@bfra.me/prettier-config" = "0.16.6"
 "npm:rimraf" = "6.1.2"
-"npm:@anthropic-ai/claude-code" = "2.1.7"
+"npm:@anthropic-ai/claude-code" = "2.1.8"
 "npm:tsx" = "4.21.0"
 "npm:opencode-ai" = "1.1.25"
 
