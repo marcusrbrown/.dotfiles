@@ -10,7 +10,7 @@ $ARGUMENTS
 </prd-path>
 
 <existing-prd>
-!`ls PRD.md docs/PRD.md 2>/dev/null || echo "No PRD found"`</existing-prd>
+!`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found"`</existing-prd>
 
 ## Role
 
