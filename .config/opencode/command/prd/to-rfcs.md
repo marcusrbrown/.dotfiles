@@ -13,10 +13,10 @@ $ARGUMENTS
 !`ls PRD.md docs/PRD.md 2>/dev/null | grep . || echo "No PRD found"`</existing-prd>
 
 <existing-rfcs>
-!`ls RFCs/RFC-*.md docs/rfcs/RFC-*.md 2>/dev/null | grep . || echo "No RFC files found"`</existing-rfcs>
+!`find . -maxdepth 3 -name "RFC-*.md" -type f 2>/dev/null | sort || echo "No RFC files found"`</existing-rfcs>
 
 <existing-docs>
-!`ls docs/*.md *.md 2>/dev/null | grep . | head -15 || echo "No docs found"`</existing-docs>
+!`(find docs -maxdepth 1 -type f -name '*.md' 2>/dev/null || ls *.md 2>/dev/null) | sort | head -20 |  awk 'NR { print; found=1 } END { if (!found) print "No docs found" }'`</existing-docs>
 
 <project-manifests>
 !`ls package.json pyproject.toml go.mod Cargo.toml pom.xml 2>/dev/null | grep . || echo "No manifests"`</project-manifests>
