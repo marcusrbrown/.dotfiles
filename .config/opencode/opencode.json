@@ -1,10 +1,20 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "oh-my-opencode",
-    "opencode-antigravity-auth@1.2.8",
-    "@tarquinen/opencode-dcp@latest"
+    "opencode-antigravity-auth@1.3.0",
+    "oh-my-opencode@2.14.0",
+    "@tarquinen/opencode-dcp@latest",
+    "@franlol/opencode-md-table-formatter@latest"
   ],
+  "agent": {
+    "compaction": {
+      "model": "opencode/glm-4.7-free"
+    },
+    "plan": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max"
+    }
+  },
   "provider": {
     "google": {
       "models": {
@@ -210,15 +220,37 @@
       }
     }
   },
+  "lsp": {
+    "remark-language-server": {
+      "command": [
+        "remark-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".md"
+      ]
+    }
+  },
   "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      },
+      "oauth": false
+    },
     "tavily": {
       "type": "remote",
-      "url": "https://mcp.tavily.com/mcp/?tavilyApiKey={file:~/.secrets/tavily-api-key}"
+      "url": "https://mcp.tavily.com/mcp/?tavilyApiKey={env:TAVILY_API_KEY}",
+      "oauth": false
+    },
+    "websearch": {
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp?exaApiKey={env:EXA_API_KEY}&tools=web_search_exa",
+      "oauth": false
     }
   },
   "small_model": "github-copilot/gemini-3-flash-preview",
-  "theme": "catppuccin",
-  "permission": {
-    "webfetch": "deny"
-  }
+  "theme": "catppuccin"
 }

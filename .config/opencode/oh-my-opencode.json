@@ -4,7 +4,7 @@
     "Sisyphus": {
       "description": "Primary orchestrator agent with powerful AI capabilities",
       "model": "google/antigravity-claude-opus-4-5-thinking",
-      "prompt_append": "\n---\n\n## Session Management (REQUIRED)\n\nBefore investigating any issue:\n1. Use `session_search` to find relevant prior sessions for this repository\n2. Use `session_read` to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs"
+      "prompt_append": "\n---\n\n## Session Management (MANDATORY)\n\nBefore investigating any issue:\n1. Use `session_search` to find relevant prior sessions for this repository\n2. Use `session_read` to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n"
     },
     "OpenCode-Builder": {
       "description": "Default build agent for development tasks",
@@ -16,12 +16,11 @@
     },
     "oracle": {
       "description": "Expert technical advisor for architecture decisions and code analysis",
-      "model": "github-copilot/gpt-5.2"
+      "model": "github-copilot/gpt-5.2-codex"
     },
     "librarian": {
       "description": "Multi-repository analysis, official docs, and implementation examples",
-      "model": "google/antigravity-claude-sonnet-4-5",
-      "prompt_append": "\n---\n\n**Important:** The EXTERNAL RESOURCES section in AGENTS.md documents key dependencies, references, and documentation to assist you in providing accurate and context-aware responses. Read this section carefully before you begin."
+      "model": "opencode/grok-code"
     },
     "explore": {
       "description": "Fast agent for codebase exploration and pattern matching",
@@ -29,22 +28,33 @@
     },
     "frontend-ui-ux-engineer": {
       "description": "Designer-turned-developer for stunning UI/UX implementation",
-      "model": "google/antigravity-gemini-3-pro"
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high"
     },
     "document-writer": {
       "description": "Technical writing expert for documentation and guides",
-      "model": "google/antigravity-gemini-3-pro"
+      "model": "google/antigravity-gemini-3-flash"
     },
     "multimodal-looker": {
       "description": "Analyzes PDFs, images, diagrams beyond raw text",
-      "model": "google/antigravity-gemini-3-flash"
+      "model": "google/gemini-2.5-flash"
     }
   },
-  "experimental": {
-    "aggressive_truncation": false,
-    "auto_resume": false,
-    "dcp_for_compaction": true,
-    "truncate_all_tool_outputs": false
-  },
-  "google_auth": false
+  "auto_update": false,
+  "disabled_mcps": [
+    "websearch",
+    "context7"
+  ],
+  "google_auth": false,
+  "lsp": {
+    "remark-language-server": {
+      "command": [
+        "remark-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".md"
+      ]
+    }
+  }
 }
