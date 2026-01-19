@@ -44,6 +44,7 @@ $ARGUMENTS
    - `FEATURES.md` or `docs/FEATURES.md` (if exists)
    - `RULES.md` or `docs/RULES.md` (if exists)
    - The RFCS.md index from one of these locations:
+     - `RFCS.md`
      - `RFCs/RFCS.md`
      - `docs/rfc/RFCS.md`
      - `docs/rfcs/RFCS.md`
@@ -268,7 +269,7 @@ Follow Phase 1 (plan + oracle review + user approval) then Phase 2 (execute). Im
 Ensure: readable code, proper error handling, testable structure, consistent with codebase, secure, performant.
 
 ### Update RFC Status
-Once validation passes, update RFCS.md:
+Once validation passes, update RFCS.md and RFC document:
 1. Find RFC row, change Status to `Completed`
 2. Add completion note to RFC document: date, summary, deviations (if any)
 3. Mark RFC Status as `Completed` in RFC document metadata section (if exists)
