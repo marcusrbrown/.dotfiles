@@ -20,7 +20,7 @@
     },
     "librarian": {
       "description": "Multi-repository analysis, official docs, and implementation examples",
-      "model": "opencode/grok-code"
+      "model": "opencode/glm-4.7-free"
     },
     "explore": {
       "description": "Fast agent for codebase exploration and pattern matching",
