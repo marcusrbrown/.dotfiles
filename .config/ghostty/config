@@ -1,0 +1,108 @@
+# Ghostty config - migrated from iTerm2
+# Reload: Cmd+Shift+, (macOS)
+
+# Font - MesloLGS Nerd Font Mono (same as iTerm)
+font-family = MesloLGS Nerd Font Mono
+font-size = 12
+
+# Window
+window-padding-x = 2
+window-padding-y = 2
+window-decoration = auto
+
+# Background opacity (iTerm had ~10% transparency)
+background-opacity = 0.90
+unfocused-split-opacity = 0.85
+
+# macOS specific
+macos-titlebar-style = hidden
+macos-window-shadow = true
+
+# Cursor
+cursor-style = block
+cursor-style-blink = true
+
+# Colors - translated from iTerm2 Snazzy/Catppuccin-style theme
+# Background: RGB(0.118, 0.118, 0.180) = #1e1e2e
+# Foreground: RGB(0.804, 0.839, 0.957) = #cdd6f4
+background = #1e1e2e
+foreground = #cdd6f4
+
+# Cursor: RGB(0.961, 0.878, 0.863)
+cursor-color = #f5e0dc
+
+# Selection: RGB(0.345, 0.357, 0.439)
+selection-background = #585b70
+selection-foreground = #cdd6f4
+
+# ANSI palette (16 colors)
+# 0 (black): RGB(0.271, 0.278, 0.353)
+palette = 0=#45475a
+# 1 (red): RGB(0.953, 0.545, 0.659)
+palette = 1=#f38ba8
+# 2 (green): RGB(0.651, 0.890, 0.631)
+palette = 2=#a6e3a1
+# 3 (yellow): RGB(0.976, 0.886, 0.686)
+palette = 3=#f9e2af
+# 4 (blue): RGB(0.537, 0.706, 0.980)
+palette = 4=#89b4fa
+# 5 (magenta): RGB(0.961, 0.761, 0.906)
+palette = 5=#f5c2e7
+# 6 (cyan): RGB(0.580, 0.886, 0.835)
+palette = 6=#94e2d5
+# 7 (white): RGB(0.729, 0.761, 0.871)
+palette = 7=#bac2de
+
+# Bright colors (8-15)
+# 8 (bright black): RGB(0.345, 0.357, 0.439)
+palette = 8=#585b70
+# 9 (bright red)
+palette = 9=#f38ba8
+# 10 (bright green)
+palette = 10=#a6e3a1
+# 11 (bright yellow)
+palette = 11=#f9e2af
+# 12 (bright blue)
+palette = 12=#89b4fa
+# 13 (bright magenta)
+palette = 13=#f5c2e7
+# 14 (bright cyan)
+palette = 14=#94e2d5
+# 15 (bright white): RGB(0.651, 0.678, 0.784)
+palette = 15=#a6adc8
+
+# Shell integration (auto-detected)
+shell-integration = detect
+
+# Keybindings - adding common iTerm2 equivalents
+# Split panes
+keybind = cmd+d=new_split:right
+keybind = cmd+shift+d=new_split:down
+
+# Navigate splits
+keybind = cmd+alt+left=goto_split:left
+keybind = cmd+alt+right=goto_split:right
+keybind = cmd+alt+up=goto_split:top
+keybind = cmd+alt+down=goto_split:bottom
+
+# Close split/tab
+keybind = cmd+w=close_surface
+
+# New tab
+keybind = cmd+t=new_tab
+
+# Tab navigation
+keybind = cmd+shift+left_bracket=previous_tab
+keybind = cmd+shift+right_bracket=next_tab
+
+# Font size
+keybind = cmd+plus=increase_font_size:1
+keybind = cmd+minus=decrease_font_size:1
+keybind = cmd+zero=reset_font_size
+
+# Copy/paste
+keybind = cmd+c=copy_to_clipboard
+keybind = cmd+v=paste_from_clipboard
+
+# Clear screen
+keybind = cmd+k=clear_screen
