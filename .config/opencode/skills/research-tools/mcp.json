@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      },
+      "oauth": false
+    },
+    "tavily": {
+      "type": "remote",
+      "url": "https://mcp.tavily.com/mcp/?tavilyApiKey={env:TAVILY_API_KEY}",
+      "oauth": false
+    },
+    "websearch": {
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp?exaApiKey={env:EXA_API_KEY}&tools=web_search_exa",
+      "oauth": false
+    }
+  }
+}
