@@ -12,36 +12,6 @@
       depTypeTemplate: 'devDependencies',
       versioningTemplate: '{{#if versioning}}{{versioning}}{{else}}semver{{/if}}',
     },
-    {
-      // A backend installed package looks like:
-      // ```toml
-      // [tools]
-      // "github:sst/opencode" = "1.0.176"
-      // "npm:vibe-tools" = "0.61.3"
-      // ```
-      //
-      // We want to update the package by configuring the datasource, depName, and currentValue to:
-      // datasource: github
-      // depName: sst/opencode
-      // currentValue: 1.0.176
-      //
-      // and then map the extracted datasource to a valid Renovate datasource:
-      // aqua -> github-releases
-      // cargo -> crate
-      // dotnet -> nuget
-      // gem -> rubygems
-      // github -> github-releases
-      // pipx -> pypi
-      //
-      customType: 'regex',
-      description: 'Update backend packages in the global Mise config file.',
-      managerFilePatterns: ['/(^|/)\\.?mise\\.toml$/', '/(^|/)\\.?mise/config\\.toml$/'],
-      matchStrings: [
-        '["\']?(?<datasource>[a-z-.]+?):(?<depName>.+?)["\']?\\s*=\\s*["\']?(?<currentValue>.+?)["\']?\\s',
-      ],
-      datasourceTemplate: '{{#if (equals datasource "aqua")}}github-releases{{else}}{{#if (equals datasource "cargo")}}crate{{else}}{{#if (equals datasource "dotnet")}}nuget{{else}}{{#if (equals datasource "gem")}}rubygems{{else}}{{#if (equals datasource "github")}}github-releases{{else}}{{#if (equals datasource "pipx")}}pypi{{else}}{{datasource}}{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}',
-      depTypeTemplate: 'devDependencies',
-    },
   ],
   ignorePresets: ['mergeConfidence:age-confidence-badges', 'mergeConfidence:all-badges'],
   packageRules: [
