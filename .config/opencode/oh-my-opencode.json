@@ -4,7 +4,10 @@
     "Sisyphus": {
       "description": "Primary orchestrator agent with powerful AI capabilities",
       "model": "google/antigravity-claude-opus-4-5-thinking",
-      "prompt_append": "\n---\n\n## Session Management (MANDATORY)\n\nBefore investigating any issue:\n1. Use `session_search` to find relevant prior sessions for this repository\n2. Use `session_read` to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n"
+      "permission": {
+        "question": "allow"
+      },
+      "prompt_append": "---\n\n## Session Management (MANDATORY)\n\nAt the start of the session or before investigating any issue:\n1. Use `session_search` to find relevant prior sessions for this repository\n2. Use `session_read` to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
     "OpenCode-Builder": {
       "description": "Default build agent for development tasks",
@@ -20,7 +23,7 @@
     },
     "librarian": {
       "description": "Multi-repository analysis, official docs, and implementation examples",
-      "model": "opencode/glm-4.7-free"
+      "model": "github-copilot/claude-haiku-4.5"
     },
     "explore": {
       "description": "Fast agent for codebase exploration and pattern matching",
@@ -43,7 +46,8 @@
   "auto_update": false,
   "disabled_mcps": [
     "websearch",
-    "context7"
+    "context7",
+    "grep_app"
   ],
   "google_auth": false,
   "lsp": {
