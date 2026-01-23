@@ -9,9 +9,12 @@ font-size = 12
 window-padding-x = 2
 window-padding-y = 2
 window-decoration = auto
+macos-titlebar-style = tabs
+macos-titlebar-proxy-icon = hidden
 
 # Background opacity (iTerm had ~10% transparency)
 background-opacity = 0.90
+background-blur = true
 unfocused-split-opacity = 0.85
 
 # macOS specific
@@ -34,6 +37,7 @@ cursor-color = #f5e0dc
 # Selection: RGB(0.345, 0.357, 0.439)
 selection-background = #585b70
 selection-foreground = #cdd6f4
+copy-on-select = clipboard
 
 # ANSI palette (16 colors)
 # 0 (black): RGB(0.271, 0.278, 0.353)
@@ -74,6 +78,9 @@ palette = 15=#a6adc8
 # Shell integration (auto-detected)
 shell-integration = detect
 
+# Notifications
+app-notifications=no-clipboard-copy
+
 # Keybindings - adding common iTerm2 equivalents
 # Split panes
 keybind = cmd+d=new_split:right
@@ -106,3 +113,6 @@ keybind = cmd+v=paste_from_clipboard
 
 # Clear screen
 keybind = cmd+k=clear_screen
+
+# Quick terminal
+keybind = cmd+ctrl+t=toggle_quick_terminal
