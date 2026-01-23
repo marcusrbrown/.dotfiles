@@ -15,7 +15,7 @@ background-opacity = 0.90
 unfocused-split-opacity = 0.85
 
 # macOS specific
-macos-titlebar-style = hidden
+macos-titlebar-style = native
 macos-window-shadow = true
 
 # Cursor
