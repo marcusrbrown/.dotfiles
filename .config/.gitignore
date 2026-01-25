@@ -21,7 +21,8 @@
 /matplotlib/
 /mcp/**/memory.json
 /NuGet/
-/opencode/plugin/superpowers.js
+/opencode/plugins/superpowers.js
+/opencode/skills/superpowers
 /opencode/antigravity-accounts.json
 /pipedream/
 /pnpm/rc
