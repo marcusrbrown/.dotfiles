@@ -24,7 +24,7 @@ ast-grep = "0.40.5"
 "npm:rimraf" = "6.1.2"
 "npm:@anthropic-ai/claude-code" = "2.1.16"
 "npm:tsx" = "4.21.0"
-"npm:opencode-ai" = "1.1.34"
+"npm:opencode-ai" = "1.1.36"
 "npm:agent-browser" = "0.6.0"
 
 # Language Servers
