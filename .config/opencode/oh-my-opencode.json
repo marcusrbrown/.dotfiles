@@ -15,7 +15,7 @@
     },
     "Planner-Sisyphus": {
       "description": "Strategic planning agent with minimal creativity",
-      "model": "google/antigravity-claude-opus-4-5-thinking"
+      "model": "github-copilot/gpt-5.2"
     },
     "oracle": {
       "description": "Expert technical advisor for architecture decisions and code analysis",
@@ -23,7 +23,7 @@
     },
     "librarian": {
       "description": "Multi-repository analysis, official docs, and implementation examples",
-      "model": "github-copilot/claude-haiku-4.5"
+      "model": "google/antigravity-claude-sonnet-4-5"
     },
     "explore": {
       "description": "Fast agent for codebase exploration and pattern matching",
