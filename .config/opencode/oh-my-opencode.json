@@ -1,7 +1,7 @@
 {
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/dev/assets/oh-my-opencode.schema.json",
   "agents": {
-    "Sisyphus": {
+    "sisyphus": {
       "description": "Primary orchestrator agent with powerful AI capabilities",
       "model": "google/antigravity-claude-opus-4-5-thinking",
       "permission": {
@@ -13,9 +13,13 @@
       "description": "Default build agent for development tasks",
       "model": "google/antigravity-claude-opus-4-5-thinking"
     },
-    "Planner-Sisyphus": {
+    "prometheus": {
       "description": "Strategic planning agent with minimal creativity",
       "model": "github-copilot/gpt-5.2"
+    },
+    "metis": {
+      "description": "Pre-planning analysis for hidden requirements and AI failure points",
+      "model": "google/antigravity-claude-sonnet-4-5"
     },
     "oracle": {
       "description": "Expert technical advisor for architecture decisions and code analysis",
@@ -44,6 +48,50 @@
     }
   },
   "auto_update": false,
+  "sisyphus_agent": {
+    "planner_enabled": true,
+    "replace_plan": true
+  },
+  "git_master": {
+    "commit_footer": false,
+    "include_co_authored_by": false
+  },
+  "background_task": {
+    "defaultConcurrency": 5,
+    "providerConcurrency": {
+      "google": 8,
+      "github-copilot": 5
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high"
+    },
+    "ultrabrain": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max"
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high"
+    },
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+      "variant": "low"
+    },
+    "unspecified-low": {
+      "model": "google/antigravity-gemini-3-flash",
+      "variant": "medium"
+    },
+    "unspecified-high": {
+      "model": "google/antigravity-claude-sonnet-4-5"
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+      "variant": "medium"
+    }
+  },
   "disabled_mcps": [
     "websearch",
     "context7",
