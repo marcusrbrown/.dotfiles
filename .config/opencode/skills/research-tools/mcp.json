@@ -8,6 +8,11 @@
       },
       "oauth": false
     },
+    "grep_app": {
+      "type": "remote",
+      "url": "https://mcp.grep.app",
+      "oauth": false
+    },
     "tavily": {
       "type": "remote",
       "url": "https://mcp.tavily.com/mcp/?tavilyApiKey={env:TAVILY_API_KEY}",
