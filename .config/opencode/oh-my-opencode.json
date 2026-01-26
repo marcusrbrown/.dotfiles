@@ -15,7 +15,8 @@
     },
     "prometheus": {
       "description": "Strategic planning agent with minimal creativity",
-      "model": "github-copilot/gpt-5.2"
+      "model": "github-copilot/gpt-5.2",
+      "variant": "xhigh"
     },
     "metis": {
       "description": "Pre-planning analysis for hidden requirements and AI failure points",
@@ -23,7 +24,8 @@
     },
     "oracle": {
       "description": "Expert technical advisor for architecture decisions and code analysis",
-      "model": "github-copilot/gpt-5.2-codex"
+      "model": "github-copilot/gpt-5.2-codex",
+      "variant": "xhigh"
     },
     "librarian": {
       "description": "Multi-repository analysis, official docs, and implementation examples",
@@ -69,8 +71,8 @@
       "variant": "high"
     },
     "ultrabrain": {
-      "model": "google/antigravity-claude-opus-4-5-thinking",
-      "variant": "max"
+      "model": "github-copilot/gpt-5.2-codex",
+      "variant": "xhigh"
     },
     "artistry": {
       "model": "google/antigravity-gemini-3-pro",
