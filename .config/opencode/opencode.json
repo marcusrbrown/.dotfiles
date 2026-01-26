@@ -228,7 +228,7 @@
       ]
     }
   },
-  "model": "github-copilot/claude-sonnet-4.5",
+  "model": "github-copilot/gpt-5.2-codex",
   "small_model": "github-copilot/gemini-3-flash-preview",
   "theme": "catppuccin"
 }
