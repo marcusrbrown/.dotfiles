@@ -2,14 +2,14 @@
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
     "opencode-antigravity-auth@1.3.1",
-    "oh-my-opencode@latest",
+    "oh-my-opencode@3.1.2",
     "@tarquinen/opencode-dcp@1.2.7",
     "@franlol/opencode-md-table-formatter@latest"
   ],
   "agent": {
     "plan": {
-      "model": "google/antigravity-claude-opus-4-5-thinking",
-      "variant": "max"
+      "model": "github-copilot/gpt-5.2",
+      "variant": "xhigh"
     }
   },
   "provider": {
