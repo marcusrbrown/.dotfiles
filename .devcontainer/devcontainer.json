@@ -17,7 +17,7 @@
             "installOhMyZsh": false,
             "username": "vscode"
         },
-        "ghcr.io/devcontainers/features/github-cli:1.0.15": {},
+        "ghcr.io/devcontainers/features/github-cli:1.1.0": {},
         "ghcr.io/devcontainers/features/node:1.6.4": {
             "installYarnUsingApt": false,
             "nodeGypDependencies": false,
