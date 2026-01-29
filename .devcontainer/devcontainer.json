@@ -18,7 +18,7 @@
             "username": "vscode"
         },
         "ghcr.io/devcontainers/features/github-cli:1.1.0": {},
-        "ghcr.io/devcontainers/features/node:1.6.4": {
+        "ghcr.io/devcontainers/features/node:1.7.0": {
             "installYarnUsingApt": false,
             "nodeGypDependencies": false,
             "pnpmVersion": "none"
