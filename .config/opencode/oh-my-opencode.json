@@ -65,6 +65,9 @@
       "github-copilot": 5
     }
   },
+  "browser_automation_engine": {
+    "provider": "agent-browser"
+  },
   "categories": {
     "visual-engineering": {
       "model": "google/antigravity-gemini-3-pro",
