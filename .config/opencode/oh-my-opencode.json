@@ -4,6 +4,7 @@
     "sisyphus": {
       "description": "Primary orchestrator agent with powerful AI capabilities",
       "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
       "permission": {
         "question": "allow"
       },
@@ -17,14 +18,14 @@
       "model": "google/antigravity-claude-opus-4-5-thinking"
     },
     "prometheus": {
-      "description": "Strategic planning agent with minimal creativity",
-      "model": "github-copilot/gpt-5.2",
-      "variant": "xhigh"
+      "description": "Strategic planning agent - verbose, detailed plans with tables and file references",
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max"
     },
     "metis": {
-      "description": "Pre-planning analysis for hidden requirements and AI failure points",
-      "model": "github-copilot/gpt-5.2",
-      "variant": "xhigh"
+      "description": "Pre-planning gap analyzer - different model perspective catches what planner misses",
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high"
     },
     "oracle": {
       "description": "Expert technical advisor for architecture decisions and code analysis",
@@ -53,17 +54,19 @@
       "model": "google/antigravity-gemini-3-flash"
     },
     "momus": {
-      "model": "github-copilot/gpt-5.2-codex",
-      "variant": "medium"
+      "description": "Meticulous plan reviewer - catches issues through rigorous analysis",
+      "model": "github-copilot/gpt-5.2",
+      "variant": "xhigh"
     },
     "atlas": {
-      "model": "google/antigravity-claude-sonnet-4-5-thinking"
+      "description": "Master orchestrator - executes plans through delegation",
+      "model": "google/antigravity-claude-opus-4-5-thinking"
     }
   },
   "auto_update": false,
   "sisyphus_agent": {
-    "planner_enabled": false,
-    "replace_plan": false
+    "planner_enabled": true,
+    "replace_plan": true
   },
   "git_master": {
     "commit_footer": false,
