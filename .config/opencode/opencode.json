@@ -8,8 +8,8 @@
   ],
   "agent": {
     "plan": {
-      "model": "github-copilot/gpt-5.2",
-      "variant": "xhigh"
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max"
     }
   },
   "provider": {
@@ -161,7 +161,7 @@
       ]
     }
   },
-  "model": "github-copilot/gpt-5.2-codex",
-  "small_model": "github-copilot/gemini-3-flash-preview",
+  "model": "google/antigravity-claude-opus-4-5-thinking",
+  "small_model": "google/antigravity-gemini-3-flash",
   "theme": "catppuccin"
 }
