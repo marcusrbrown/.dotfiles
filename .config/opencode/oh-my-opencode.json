@@ -4,7 +4,7 @@
     "sisyphus": {
       "description": "Primary orchestrator agent with powerful AI capabilities",
       "model": "google/antigravity-claude-opus-4-5-thinking",
-      "variant": "max",
+      "variant": "low",
       "permission": {
         "question": "allow"
       },
@@ -64,10 +64,6 @@
     }
   },
   "auto_update": false,
-  "sisyphus_agent": {
-    "planner_enabled": true,
-    "replace_plan": true
-  },
   "git_master": {
     "commit_footer": false,
     "include_co_authored_by": false
@@ -89,7 +85,7 @@
       "variant": "high"
     },
     "quick": {
-      "model": "google/antigravity-gemini-3-flash",
+      "model": "google/antigravity-claude-sonnet-4-5-thinking",
       "variant": "low"
     },
     "unspecified-low": {

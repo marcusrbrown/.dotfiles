@@ -23,7 +23,7 @@ ast-grep = "0.40.5"
 "npm:@bfra.me/prettier-config" = "0.16.6"
 "npm:rimraf" = "6.1.2"
 "npm:tsx" = "4.21.0"
-"npm:opencode-ai" = "1.1.47"
+"npm:opencode-ai" = "1.1.48"
 "npm:agent-browser" = "0.7.6"
 
 # Language Servers
