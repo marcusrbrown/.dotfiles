@@ -6,12 +6,6 @@
     "@tarquinen/opencode-dcp@1.2.8",
     "@franlol/opencode-md-table-formatter@latest"
   ],
-  "agent": {
-    "plan": {
-      "model": "google/antigravity-claude-opus-4-5-thinking",
-      "variant": "max"
-    }
-  },
   "provider": {
     "google": {
       "name": "Google",
