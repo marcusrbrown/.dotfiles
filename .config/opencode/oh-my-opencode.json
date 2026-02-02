@@ -1,119 +1,110 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "agents": {
+    // Powerful AI orchestrator. Plans obsessively with todos, assesses search complexity before exploration, delegates strategically via category+skills combinations. Uses explore for internal code (parallel-friendly), librarian for external docs.
     "sisyphus": {
-      "description": "Primary orchestrator agent with powerful AI capabilities",
       "model": "google/antigravity-claude-opus-4-5-thinking",
-      "variant": "low",
-      "permission": {
-        "question": "allow"
-      },
-      "prompt_append": "---\n\n## Session Management (MANDATORY)\n\nAt the start of the session or before investigating any issue:\n1. Use `session_search` to find relevant prior sessions for this repository\n2. Use `session_read` to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
+      "variant": "max",
+      "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_list` and `session_search` tools to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
-    "sisyphus-junior": {
-      "model": "google/antigravity-claude-sonnet-4-5-thinking"
+    // Autonomous Deep Worker - goal-oriented execution with GPT 5.2 Codex. Explores thoroughly before acting, uses explore/librarian agents for comprehensive context, completes tasks end-to-end. Inspired by AmpCode deep mode.
+    "hephaestus": {
+      "model": "github-copilot/gpt-5.2-codex",
+      "variant": "medium"
     },
-    "OpenCode-Builder": {
-      "description": "Default build agent for development tasks",
-      "model": "google/antigravity-claude-opus-4-5-thinking"
+    // Read-only consultation agent. High-IQ reasoning specialist for debugging hard problems and high-difficulty architecture design.
+    "oracle": {
+      "model": "github-copilot/gpt-5.2",
+      "variant": "medium"
     },
+    // Specialized codebase understanding agent for multi-repository analysis, searching remote codebases, retrieving official documentation, and finding implementation examples using GitHub CLI, Context7, and Web Search. MUST BE USED when users ask to look up code in remote repositories, explain library internals, or find usage examples in open source.
+    "librarian": {
+      "model": "google/antigravity-claude-sonnet-4-5"
+    },
+    // Contextual grep for codebases. Answers "Where is X?", "Which file has Y?", "Find the code that does Z". Fire multiple in parallel for broad searches. Specify thoroughness: "quick" for basic, "medium" for moderate, "very thorough" for comprehensive analysis.
+    "explore": {
+      "model": "github-copilot/gpt-5-mini"
+    },
+    // Analyze media files (PDFs, images, diagrams) that require interpretation beyond raw text. Extracts specific information or summaries from documents, describes visual content. Use when you need analyzed/extracted data rather than literal file contents.
+    "multimodal-looker": {
+      "model": "google/antigravity-gemini-3-flash"
+    },
+    // Strategic planning agent - verbose, detailed plans with tables and file references.
     "prometheus": {
-      "description": "Strategic planning agent - verbose, detailed plans with tables and file references",
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+      "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_list` and `session_search` tools to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
+    },
+    // Pre-planning consultant that analyzes requests to identify hidden intentions, ambiguities, and AI failure points.
+    "metis": {
       "model": "google/antigravity-claude-opus-4-5-thinking",
       "variant": "max"
     },
-    "metis": {
-      "description": "Pre-planning gap analyzer - different model perspective catches what planner misses",
-      "model": "google/antigravity-gemini-3-pro",
-      "variant": "high"
-    },
-    "oracle": {
-      "description": "Expert technical advisor for architecture decisions and code analysis",
-      "model": "github-copilot/gpt-5.2-codex",
-      "variant": "xhigh"
-    },
-    "librarian": {
-      "description": "Multi-repository analysis, official docs, and implementation examples",
-      "model": "google/antigravity-claude-sonnet-4-5"
-    },
-    "explore": {
-      "description": "Fast agent for codebase exploration and pattern matching",
-      "model": "google/antigravity-gemini-3-flash"
-    },
-    "frontend-ui-ux-engineer": {
-      "description": "Designer-turned-developer for stunning UI/UX implementation",
-      "model": "google/antigravity-gemini-3-pro",
-      "variant": "high"
-    },
-    "document-writer": {
-      "description": "Technical writing expert for documentation and guides",
-      "model": "google/antigravity-gemini-3-flash"
-    },
-    "multimodal-looker": {
-      "description": "Analyzes PDFs, images, diagrams beyond raw text",
-      "model": "google/antigravity-gemini-3-flash"
-    },
+    // Expert reviewer for evaluating work plans against rigorous clarity, verifiability, and completeness standards.
     "momus": {
-      "description": "Meticulous plan reviewer - catches issues through rigorous analysis",
       "model": "github-copilot/gpt-5.2",
-      "variant": "xhigh"
+      "variant": "medium"
     },
+    // Orchestrates work via delegate_task() to complete ALL tasks in a todo list until fully done.
     "atlas": {
-      "description": "Master orchestrator - executes plans through delegation",
-      "model": "google/antigravity-claude-opus-4-5-thinking"
+      "model": "google/antigravity-claude-sonnet-4-5-thinking",
+      "variant": "max",
+      "prompt_append": "\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     }
   },
   "auto_update": false,
-  "git_master": {
-    "commit_footer": false,
-    "include_co_authored_by": false
-  },
   "browser_automation_engine": {
     "provider": "agent-browser"
   },
   "categories": {
+    // Frontend, UI/UX, design, styling, animation
     "visual-engineering": {
-      "model": "google/antigravity-gemini-3-pro",
-      "variant": "high"
+      "model": "google/antigravity-gemini-3-pro"
     },
+    // Use ONLY for genuinely hard, logic-heavy tasks. Give clear goals only, not step-by-step instructions.
     "ultrabrain": {
       "model": "github-copilot/gpt-5.2-codex",
       "variant": "xhigh"
     },
+    // Goal-oriented autonomous problem-solving. Thorough research before action. For hairy problems requiring deep understanding.
+    "deep": {
+      "model": "github-copilot/gpt-5.2-codex",
+      "variant": "medium"
+    },
+    // Complex problem-solving with unconventional, creative approaches - beyond standard patterns
     "artistry": {
       "model": "google/antigravity-gemini-3-pro",
       "variant": "high"
     },
+    // Trivial tasks - single file changes, typo fixes, simple modifications
     "quick": {
       "model": "google/antigravity-claude-sonnet-4-5-thinking",
       "variant": "low"
     },
+    // Tasks that don't fit other categories, low effort required
     "unspecified-low": {
       "model": "google/antigravity-claude-sonnet-4-5"
     },
+    // Tasks that don't fit other categories, high effort required
     "unspecified-high": {
-      "model": "google/antigravity-claude-sonnet-4-5-thinking"
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max"
     },
+    // Documentation, prose, technical writing
     "writing": {
-      "model": "google/antigravity-gemini-3-flash",
-      "variant": "medium"
+      "model": "google/antigravity-gemini-3-flash"
     }
   },
-  "disabled_mcps": [
-    "websearch",
-    "context7",
-    "grep_app"
-  ],
+  "disabled_mcps": ["websearch", "context7", "grep_app"],
+  "git_master": {
+    "commit_footer": false,
+    "include_co_authored_by": false
+  },
   "google_auth": false,
   "lsp": {
     "remark-language-server": {
-      "command": [
-        "remark-language-server",
-        "--stdio"
-      ],
-      "extensions": [
-        ".md"
-      ]
+      "command": ["remark-language-server", "--stdio"],
+      "extensions": [".md"]
     }
   }
 }
