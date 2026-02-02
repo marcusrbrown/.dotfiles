@@ -32,6 +32,7 @@
         "**/.config/git/attributes": "properties",
         "**/.config/yarn/config": "yaml",
         "**/sheldon/plugins.lock": "toml",
+        "*opencode.json": "jsonc",
         ".cursorrules": "markdown",
         ".gitconfig*": "properties",
         ".bash*": "shellscript",

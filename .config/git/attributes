@@ -1,3 +1,5 @@
 * text=auto eol=lf
 
 Brewfile linguist-generated=true
+
+*opencode.json text linguist-language=JSON-with-comments
