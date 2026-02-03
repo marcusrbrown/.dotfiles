@@ -33,7 +33,24 @@ flag "--tools-provider <string>" help="Provider ID for tool schemas"
 flag "--tools-model <string>" help="Model ID for tool schemas"
 flag "--help" help="Show this help"
 '''
-run = "bun ~/.config/opencode/scripts/opencode-doctor.ts"
+run = '''
+#!/usr/bin/env bash
+ARGS=()
+[[ -n "${usage_port:-}" ]] && ARGS+=(--port "$usage_port")
+[[ -n "${usage_host:-}" ]] && ARGS+=(--host "$usage_host")
+[[ -n "${usage_directory:-}" ]] && ARGS+=(--directory "$usage_directory")
+[[ -n "${usage_format:-}" ]] && ARGS+=(--format "$usage_format")
+[[ "${usage_json:-false}" == "true" ]] && ARGS+=(--json)
+[[ "${usage_no_tui:-false}" == "true" ]] && ARGS+=(--no-tui)
+[[ -n "${usage_only:-}" ]] && ARGS+=(--only "$usage_only")
+[[ "${usage_full:-false}" == "true" ]] && ARGS+=(--full)
+[[ -n "${usage_limit:-}" ]] && ARGS+=(--limit "$usage_limit")
+[[ -n "${usage_tools_provider:-}" ]] && ARGS+=(--tools-provider "$usage_tools_provider")
+[[ -n "${usage_tools_model:-}" ]] && ARGS+=(--tools-model "$usage_tools_model")
+[[ "${usage_help:-false}" == "true" ]] && ARGS+=(--help)
+
+bun ~/.config/opencode/scripts/opencode-doctor.ts "${ARGS[@]}"
+'''
 
 ["print:done"]
 description = "Print an animated DONE message"
