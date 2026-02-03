@@ -16,41 +16,7 @@ prettier --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .gi
 ["opencode:doctor"]
 description = "Inspect OpenCode instance config and metadata"
 dir = '{{cwd}}'
-usage = '''
-flag "--port <port>" help="OpenCode server port" default="4096"
-flag "--host <host>" help="Hostname for base URL" default="localhost"
-flag "--directory <path>" help="Directory to target"
-flag "--format <format>" help="Output format" {
-  choices "text" "json"
-  default "text"
-}
-flag "--json" help="Shortcut for --format json"
-flag "--no-tui" help="Disable ANSI styling"
-flag "--only <keys>" help="Comma-separated sections (e.g. tools,agents,config)"
-flag "--full" help="Include expanded data where available"
-flag "--limit <number>" help="Limit list size" default="10"
-flag "--tools-provider <string>" help="Provider ID for tool schemas"
-flag "--tools-model <string>" help="Model ID for tool schemas"
-flag "--help" help="Show this help"
-'''
-run = '''
-#!/usr/bin/env bash
-ARGS=()
-[[ -n "${usage_port:-}" ]] && ARGS+=(--port "$usage_port")
-[[ -n "${usage_host:-}" ]] && ARGS+=(--host "$usage_host")
-[[ -n "${usage_directory:-}" ]] && ARGS+=(--directory "$usage_directory")
-[[ -n "${usage_format:-}" ]] && ARGS+=(--format "$usage_format")
-[[ "${usage_json:-false}" == "true" ]] && ARGS+=(--json)
-[[ "${usage_no_tui:-false}" == "true" ]] && ARGS+=(--no-tui)
-[[ -n "${usage_only:-}" ]] && ARGS+=(--only "$usage_only")
-[[ "${usage_full:-false}" == "true" ]] && ARGS+=(--full)
-[[ -n "${usage_limit:-}" ]] && ARGS+=(--limit "$usage_limit")
-[[ -n "${usage_tools_provider:-}" ]] && ARGS+=(--tools-provider "$usage_tools_provider")
-[[ -n "${usage_tools_model:-}" ]] && ARGS+=(--tools-model "$usage_tools_model")
-[[ "${usage_help:-false}" == "true" ]] && ARGS+=(--help)
-
-bun ~/.config/opencode/scripts/opencode-doctor.ts "${ARGS[@]}"
-'''
+run = 'bun ~/.config/opencode/scripts/opencode-doctor.ts "$@"'
 
 ["print:done"]
 description = "Print an animated DONE message"
