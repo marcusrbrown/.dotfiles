@@ -13,6 +13,11 @@ run = '''
 prettier --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .github
 '''
 
+["opencode:doctor"]
+description = "Inspect OpenCode instance config and metadata"
+dir = '{{cwd}}'
+run = "bun ~/.config/opencode/scripts/opencode-doctor.ts"
+
 ["print:done"]
 description = "Print an animated DONE message"
 hide = true
