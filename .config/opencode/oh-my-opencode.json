@@ -5,25 +5,26 @@
     "sisyphus": {
       "model": "google/antigravity-claude-opus-4-5-thinking",
       "variant": "max",
-      "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_list` and `session_search` tools to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
+      "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_search` tool to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
     // Autonomous Deep Worker - goal-oriented execution with GPT 5.2 Codex. Explores thoroughly before acting, uses explore/librarian agents for comprehensive context, completes tasks end-to-end. Inspired by AmpCode deep mode.
     "hephaestus": {
       "model": "github-copilot/gpt-5.2-codex",
-      "variant": "medium"
+      "variant": "medium",
+      "prompt_append": "\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
     // Read-only consultation agent. High-IQ reasoning specialist for debugging hard problems and high-difficulty architecture design.
     "oracle": {
       "model": "github-copilot/gpt-5.2",
-      "variant": "medium"
+      "variant": "high"
     },
     // Specialized codebase understanding agent for multi-repository analysis, searching remote codebases, retrieving official documentation, and finding implementation examples using GitHub CLI, Context7, and Web Search. MUST BE USED when users ask to look up code in remote repositories, explain library internals, or find usage examples in open source.
     "librarian": {
-      "model": "google/antigravity-claude-sonnet-4-5"
+      "model": "github-copilot/claude-sonnet-4.5"
     },
     // Contextual grep for codebases. Answers "Where is X?", "Which file has Y?", "Find the code that does Z". Fire multiple in parallel for broad searches. Specify thoroughness: "quick" for basic, "medium" for moderate, "very thorough" for comprehensive analysis.
     "explore": {
-      "model": "github-copilot/gpt-5-mini"
+      "model": "github-copilot/grok-code-fast-1"
     },
     // Analyze media files (PDFs, images, diagrams) that require interpretation beyond raw text. Extracts specific information or summaries from documents, describes visual content. Use when you need analyzed/extracted data rather than literal file contents.
     "multimodal-looker": {
@@ -33,12 +34,13 @@
     "prometheus": {
       "model": "google/antigravity-claude-opus-4-5-thinking",
       "variant": "max",
-      "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_list` and `session_search` tools to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
+      "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_search` tool to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
     // Pre-planning consultant that analyzes requests to identify hidden intentions, ambiguities, and AI failure points.
     "metis": {
       "model": "google/antigravity-claude-opus-4-5-thinking",
-      "variant": "max"
+      "variant": "max",
+      "prompt_append": "\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
     // Expert reviewer for evaluating work plans against rigorous clarity, verifiability, and completeness standards.
     "momus": {
@@ -48,7 +50,6 @@
     // Orchestrates work via delegate_task() to complete ALL tasks in a todo list until fully done.
     "atlas": {
       "model": "google/antigravity-claude-sonnet-4-5-thinking",
-      "variant": "max",
       "prompt_append": "\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     }
   },
@@ -78,12 +79,11 @@
     },
     // Trivial tasks - single file changes, typo fixes, simple modifications
     "quick": {
-      "model": "google/antigravity-claude-sonnet-4-5-thinking",
-      "variant": "low"
+      "model": "github-copilot/claude-haiku-4.5"
     },
     // Tasks that don't fit other categories, low effort required
     "unspecified-low": {
-      "model": "google/antigravity-claude-sonnet-4-5"
+      "model": "google/antigravity-claude-sonnet-4-5-thinking"
     },
     // Tasks that don't fit other categories, high effort required
     "unspecified-high": {
