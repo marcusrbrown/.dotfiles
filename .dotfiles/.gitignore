@@ -21,7 +21,6 @@
 /.devcontainer/.*Marker
 !/.dotfiles/
 /.dotfiles/*
-!/.dotfiles/AGENTS.md
 !/.dotfiles/docs/
 !/.dotfiles/docs/*.md
 !/.github/
@@ -53,5 +52,3 @@
 /Library/LaunchAgents/*
 !/Library/LaunchAgents/dev.mrbro.environment.plist
 !/AGENTS.md
-!/README.md
-!/UNLICENSE
