@@ -17,10 +17,14 @@
 !/.claude/settings.json
 !/.claude/skills/
 !/.config/
+!/.config/opencode/
+!/.config/opencode/scripts/
+!/.config/opencode/scripts/opencode-doctor.test.ts
 !/.devcontainer/
 /.devcontainer/.*Marker
 !/.dotfiles/
-/.dotfiles/*
+!/.dotfiles/.gitconfig
+!/.dotfiles/.gitignore
 !/.dotfiles/docs/
 !/.dotfiles/docs/*.md
 !/.github/
