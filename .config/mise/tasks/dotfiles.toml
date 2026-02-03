@@ -16,6 +16,23 @@ prettier --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .gi
 ["opencode:doctor"]
 description = "Inspect OpenCode instance config and metadata"
 dir = '{{cwd}}'
+usage = '''
+flag "--port <port>" help="OpenCode server port" default="4096"
+flag "--host <host>" help="Hostname for base URL" default="localhost"
+flag "--directory <path>" help="Directory to target"
+flag "--format <format>" help="Output format" {
+  choices "text" "json"
+  default "text"
+}
+flag "--json" help="Shortcut for --format json"
+flag "--no-tui" help="Disable ANSI styling"
+flag "--only <keys>" help="Comma-separated sections (e.g. tools,agents,config)"
+flag "--full" help="Include expanded data where available"
+flag "--limit <number>" help="Limit list size" default="10"
+flag "--tools-provider <string>" help="Provider ID for tool schemas"
+flag "--tools-model <string>" help="Model ID for tool schemas"
+flag "--help" help="Show this help"
+'''
 run = "bun ~/.config/opencode/scripts/opencode-doctor.ts"
 
 ["print:done"]
