@@ -66,7 +66,7 @@ git status  # now works on dotfiles
 
 | Task | Location | Notes |
 |------|----------|-------|
-| Add tracked file | `.dotfiles/.gitignore` | Add `!/path` exception first |
+| Add tracked file | Test with `git add -n` first | Only update `.dotfiles/.gitignore` if file is ignored |
 | Shell aliases | `.config/bash/aliases` | `.dotfiles` alias defined here |
 | Environment vars | `.config/bash/exports` | Shared by bash and zsh |
 | Tool-specific init | `.config/bash/init.d/` | One file per tool |
@@ -93,7 +93,10 @@ The repo ignores EVERYTHING by default, then allowlists tracked files:
 !/README.md
 ```
 
-**To add a new file**: Add `!/path/to/file` to `.dotfiles/.gitignore` BEFORE `git add`.
+**To add a new file**:
+1. Test if git will accept it: `git add -n <file>`
+2. If ignored, add `!/path/to/file` to `.dotfiles/.gitignore` and retry
+3. Many common directories already have allowlist patterns - check before adding specific file entries
 
 ### Shell Config Organization
 
@@ -117,7 +120,7 @@ Configs respect XDG base directories:
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
-- **DO NOT** add files without updating `.dotfiles/.gitignore` allowlist
+- **DO NOT** add files to `.gitignore` without first checking if they're actually ignored (`git check-ignore -v <file>`)
 - **DO NOT** use `git` commands without `.dotfiles` env vars set
 - **NEVER** commit machine-specific config to main (use `*.local` files or `local.d/`)
 - **NEVER** commit secrets (SSH keys, API tokens, credentials)
@@ -149,6 +152,15 @@ mise run install
 
 # Add new file (after updating .gitignore)
 .dotfiles git add path/to/file
+
+# Inspect OpenCode configuration and health
+mise run opencode:doctor
+
+# Specific sections only (health, config, providers, etc)
+mise run opencode:doctor -- --only health,config
+
+# JSON output for scripting
+mise run opencode:doctor -- --json
 ```
 
 ## CI/CD
