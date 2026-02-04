@@ -20,6 +20,7 @@
 !/.devcontainer/
 /.devcontainer/.*Marker
 !/.dotfiles/
+/.dotfiles/*
 !/.dotfiles/docs/
 !/.dotfiles/docs/*.md
 !/.github/
