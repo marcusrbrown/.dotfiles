@@ -152,6 +152,15 @@ mise run install
 
 # Add new file (after updating .gitignore)
 .dotfiles git add path/to/file
+
+# Inspect OpenCode configuration and health
+mise run opencode:doctor
+
+# Specific sections only (health, config, providers, etc)
+mise run opencode:doctor -- --only health,config
+
+# JSON output for scripting
+mise run opencode:doctor -- --json
 ```
 
 ## CI/CD
