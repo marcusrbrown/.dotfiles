@@ -17,14 +17,9 @@
 !/.claude/settings.json
 !/.claude/skills/
 !/.config/
-!/.config/opencode/
-!/.config/opencode/scripts/
-!/.config/opencode/scripts/opencode-doctor.test.ts
 !/.devcontainer/
 /.devcontainer/.*Marker
 !/.dotfiles/
-!/.dotfiles/.gitconfig
-!/.dotfiles/.gitignore
 !/.dotfiles/docs/
 !/.dotfiles/docs/*.md
 !/.github/
@@ -49,10 +44,10 @@
 !/.profile
 !/.vimrc
 !/.zshenv
+!/AGENTS.md
 !/Brewfile
 !/Library/
 /Library/*
 !/Library/LaunchAgents/
 /Library/LaunchAgents/*
 !/Library/LaunchAgents/dev.mrbro.environment.plist
-!/AGENTS.md
