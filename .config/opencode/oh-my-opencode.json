@@ -95,6 +95,7 @@
       "model": "google/antigravity-gemini-3-flash"
     }
   },
+  "disabled_agents": ["hephaestus"],
   "disabled_mcps": ["websearch", "context7", "grep_app"],
   "git_master": {
     "commit_footer": false,
