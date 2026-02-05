@@ -77,6 +77,11 @@ github = "zsh-users/zsh-completions"
 [plugins.zsh-better-npm-completion]
 github = "lukechilds/zsh-better-npm-completion"
 
+[plugins.brew-keeper]
+github = "thejustinwalsh/brew-keeper"
+use = ["brew-keeper.plugin.zsh"]
+apply = ["defer"]
+
 [plugins.history-search-multi-word]
 github = "zdharma/history-search-multi-word"
 
