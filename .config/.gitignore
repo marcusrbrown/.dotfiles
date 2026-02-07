@@ -1,4 +1,6 @@
 /aws/
+/brew-keeper/*
+!/brew-keeper/packages.txt
 /cody-ai/
 /configstore/
 /cups/
