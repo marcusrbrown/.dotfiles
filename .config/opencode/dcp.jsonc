@@ -1,15 +1,27 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json",
   // Enable or disable the plugin
   "enabled": true,
   // Enable debug logging to ~/.config/opencode/logs/dcp/
   "debug": false,
   // Notification display: "off", "minimal", or "detailed"
   "pruneNotification": "off",
-  // Protect from pruning for <turns> message turns
-  "turnProtection": {
+  // Notification type: "chat" (in-conversation) or "toast" (system toast)
+  "pruneNotificationType": "toast",
+  // Slash commands configuration
+  "commands": {
     "enabled": true,
+    // Additional tools to protect from pruning via commands (e.g., /dcp sweep)
+    "protectedTools": []
+  },
+  // Protect from pruning for <turns> message turns past tool invocation
+  "turnProtection": {
+    "enabled": false,
     "turns": 4
   },
+  // Protect file operations from pruning via glob patterns
+  // Patterns match tool parameters.filePath (e.g. read/write/edit)
+  "protectedFilePatterns": [],
   // LLM-driven context pruning tools
   "tools": {
     // Shared settings for all prune tools
@@ -17,27 +29,31 @@
       // Nudge the LLM to use prune tools (every <nudgeFrequency> tool results)
       "nudgeEnabled": true,
       "nudgeFrequency": 10,
+      // Token limit at which the model compresses session context
+      // to keep the model in the "smart zone" (not a hard limit)
+      // Accepts: number or "X%" (percentage of model's context window)
+      "contextLimit": 100000,
       // Additional tools to protect from pruning
-      "protectedTools": [
-        "task",
-        "todowrite",
-        "todoread",
-        "lsp_rename",
-        "lsp_code_action_resolve",
-        "session_read",
-        "session_write",
-        "session_search"
-      ]
-    },
-    // Removes tool content from context without preservation (for completed tasks or noise)
-    "discard": {
-      "enabled": true
+      "protectedTools": []
     },
     // Distills key findings into preserved knowledge before removing raw content
-    "extract": {
-      "enabled": false,
+    "distill": {
+      // Permission mode: "allow" (no prompt), "ask" (prompt), "deny" (tool not registered)
+      "permission": "allow",
       // Show distillation content as an ignored message notification
       "showDistillation": false
+    },
+    // Collapses a range of conversation content into a single summary
+    "compress": {
+      // Permission mode: "deny" (tool not registered), "ask" (prompt), "allow" (no prompt)
+      "permission": "deny",
+      // Show summary content as an ignored message notification
+      "showCompression": false
+    },
+    // Removes tool content from context without preservation (for completed tasks or noise)
+    "prune": {
+      // Permission mode: "allow" (no prompt), "ask" (prompt), "deny" (tool not registered)
+      "permission": "allow"
     }
   },
   // Automatic pruning strategies
@@ -48,9 +64,9 @@
       // Additional tools to protect from pruning
       "protectedTools": []
     },
-    // Prune write tool in`pu`ts when the file has been subsequently read
+    // Prune write tool inputs when the file has been subsequently read
     "supersedeWrites": {
-      "enabled": false
+      "enabled": true
     },
     // Prune tool inputs for errored tools after X turns
     "purgeErrors": {
