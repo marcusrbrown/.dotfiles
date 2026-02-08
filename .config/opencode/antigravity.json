@@ -2,5 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/NoeFabris/opencode-antigravity-auth/main/assets/antigravity.schema.json",
   "account_selection_strategy": "round-robin",
   "switch_on_first_rate_limit": true,
-  "pid_offset_enabled": true
+  "pid_offset_enabled": true,
+  "auto_update": false,
+  "cli_first": true
 }
