@@ -3,6 +3,7 @@
   "plugin": [
     "opencode-antigravity-auth@1.5.0-beta.0",
     "oh-my-opencode@3.4.0",
+    "@fro.bot/systematic@latest",
     "@franlol/opencode-md-table-formatter@latest"
   ],
   "provider": {
