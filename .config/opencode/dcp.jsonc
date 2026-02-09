@@ -39,7 +39,7 @@
     // Distills key findings into preserved knowledge before removing raw content
     "distill": {
       // Permission mode: "allow" (no prompt), "ask" (prompt), "deny" (tool not registered)
-      "permission": "allow",
+      "permission": "deny",
       // Show distillation content as an ignored message notification
       "showDistillation": false
     },

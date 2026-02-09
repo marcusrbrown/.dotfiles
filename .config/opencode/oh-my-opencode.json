@@ -95,8 +95,13 @@
       "model": "google/antigravity-gemini-3-flash"
     }
   },
+  "claude_code": {
+    "mcp": false
+  },
   "disabled_agents": ["hephaestus"],
+  "disabled_hooks": ["todo-continuation-enforcer"],
   "disabled_mcps": ["websearch", "context7", "grep_app"],
+  "disabled_skills": ["git-master"],
   "git_master": {
     "commit_footer": false,
     "include_co_authored_by": false
@@ -107,5 +112,8 @@
       "command": ["remark-language-server", "--stdio"],
       "extensions": [".md"]
     }
+  },
+  "sisyphus_agent": {
+    "default_builder_enabled": true
   }
 }
