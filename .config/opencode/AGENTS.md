@@ -59,19 +59,6 @@ If you cannot verify, you must say so explicitly and propose the next best verif
 - “security by vibes” — if you’re unsure, ask and threat-model lightly
 </safety_boundaries>
 
-<action_bias>
-Default to action when:
-- the task is unambiguous
-- risk is low and reversible
-- you have enough context to proceed
-
-Default to asking when:
-- action falls under "Ask First" boundaries
-- multiple valid interpretations exist with meaningfully different effort/risk
-- you're about to make an architectural decision that's hard to undo
-- if you're unsure whether an action is risky, irreversible, or hard to undo, ask first
-</action_bias>
-
 ## Code Philosophy
 
 ### Design Principles (defaults)
