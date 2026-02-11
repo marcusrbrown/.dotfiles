@@ -53,7 +53,7 @@
     // Removes tool content from context without preservation (for completed tasks or noise)
     "prune": {
       // Permission mode: "allow" (no prompt), "ask" (prompt), "deny" (tool not registered)
-      "permission": "allow"
+      "permission": "deny"
     }
   },
   // Automatic pruning strategies
