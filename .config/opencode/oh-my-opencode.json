@@ -7,12 +7,6 @@
       "variant": "max",
       "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_search` tool to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
-    // Autonomous Deep Worker - goal-oriented execution with GPT 5.2 Codex. Explores thoroughly before acting, uses explore/librarian agents for comprehensive context, completes tasks end-to-end. Inspired by AmpCode deep mode.
-    "hephaestus": {
-      "model": "github-copilot/gpt-5.2-codex",
-      "variant": "medium",
-      "prompt_append": "\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
-    },
     // Read-only consultation agent. High-IQ reasoning specialist for debugging hard problems and high-difficulty architecture design.
     "oracle": {
       "model": "github-copilot/gpt-5.2",
@@ -64,12 +58,12 @@
     },
     // Use ONLY for genuinely hard, logic-heavy tasks. Give clear goals only, not step-by-step instructions.
     "ultrabrain": {
-      "model": "github-copilot/gpt-5.2-codex",
+      "model": "github-copilot/gpt-5.3-codex",
       "variant": "xhigh"
     },
     // Goal-oriented autonomous problem-solving. Thorough research before action. For hairy problems requiring deep understanding.
     "deep": {
-      "model": "github-copilot/gpt-5.2-codex",
+      "model": "github-copilot/gpt-5.3-codex",
       "variant": "medium"
     },
     // Complex problem-solving with unconventional, creative approaches - beyond standard patterns
