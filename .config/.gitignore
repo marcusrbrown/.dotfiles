@@ -24,6 +24,8 @@
 /mcp/**/memory.json
 /NuGet/
 /opencode/plugins/superpowers.js
+/opencode/profiles/*
+!/opencode/profiles/default/
 /opencode/skills/superpowers
 /opencode/antigravity-accounts.json
 /pipedream/
