@@ -1,0 +1,10 @@
+{
+  "$schema": "https://ocx.kdco.dev/schemas/ocx.json",
+  "registries": {
+    "systematic": {
+      "url": "https://fro.bot/systematic"
+    }
+  },
+  "lockRegistries": false,
+  "skipCompatCheck": false
+}
