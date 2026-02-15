@@ -58,12 +58,12 @@
     },
     // Use ONLY for genuinely hard, logic-heavy tasks. Give clear goals only, not step-by-step instructions.
     "ultrabrain": {
-      "model": "github-copilot/gpt-5.3-codex",
+      "model": "github-copilot/gpt-5.2-codex",
       "variant": "xhigh"
     },
     // Goal-oriented autonomous problem-solving. Thorough research before action. For hairy problems requiring deep understanding.
     "deep": {
-      "model": "github-copilot/gpt-5.3-codex",
+      "model": "github-copilot/gpt-5.2-codex",
       "variant": "medium"
     },
     // Complex problem-solving with unconventional, creative approaches - beyond standard patterns

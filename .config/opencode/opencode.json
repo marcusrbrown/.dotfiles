@@ -1,8 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "opencode-antigravity-auth@1.5.0",
-    "oh-my-opencode@3.5.3",
+    "opencode-antigravity-auth@1.5.1",
+    "oh-my-opencode@3.5.4",
     "@fro.bot/systematic@latest",
     "@franlol/opencode-md-table-formatter@latest"
   ],
@@ -85,6 +85,6 @@
     }
   },
   "model": "google/antigravity-claude-opus-4-6-thinking",
-  "small_model": "google/gemini-3-flash-preview",
+  "small_model": "google/antigravity-gemini-3-flash",
   "theme": "catppuccin"
 }
