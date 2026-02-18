@@ -3,7 +3,7 @@
   "agents": {
     // Powerful AI orchestrator. Plans obsessively with todos, assesses search complexity before exploration, delegates strategically via category+skills combinations. Uses explore for internal code (parallel-friendly), librarian for external docs.
     "sisyphus": {
-      "model": "google/antigravity-claude-opus-4-6-thinking",
+      "model": "anthropic/claude-opus-4-6",
       "variant": "max",
       "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_search` tool to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
@@ -14,7 +14,7 @@
     },
     // Specialized codebase understanding agent for multi-repository analysis, searching remote codebases, retrieving official documentation, and finding implementation examples using GitHub CLI, Context7, and Web Search. MUST BE USED when users ask to look up code in remote repositories, explain library internals, or find usage examples in open source.
     "librarian": {
-      "model": "github-copilot/claude-sonnet-4.5"
+      "model": "anthropic/claude-sonnet-4-6"
     },
     // Contextual grep for codebases. Answers "Where is X?", "Which file has Y?", "Find the code that does Z". Fire multiple in parallel for broad searches. Specify thoroughness: "quick" for basic, "medium" for moderate, "very thorough" for comprehensive analysis.
     "explore": {
@@ -22,17 +22,17 @@
     },
     // Analyze media files (PDFs, images, diagrams) that require interpretation beyond raw text. Extracts specific information or summaries from documents, describes visual content. Use when you need analyzed/extracted data rather than literal file contents.
     "multimodal-looker": {
-      "model": "google/antigravity-gemini-3-flash"
+      "model": "github-copilot/gemini-3-flash-preview"
     },
     // Strategic planning agent - verbose, detailed plans with tables and file references.
     "prometheus": {
-      "model": "google/antigravity-claude-opus-4-6-thinking",
+      "model": "anthropic/claude-opus-4-6",
       "variant": "max",
       "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_search` tool to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
     // Pre-planning consultant that analyzes requests to identify hidden intentions, ambiguities, and AI failure points.
     "metis": {
-      "model": "google/antigravity-claude-opus-4-6-thinking",
+      "model": "anthropic/claude-opus-4-6",
       "variant": "max",
       "prompt_append": "\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
@@ -43,7 +43,7 @@
     },
     // Orchestrates work via delegate_task() to complete ALL tasks in a todo list until fully done.
     "atlas": {
-      "model": "google/antigravity-claude-sonnet-4-5-thinking",
+      "model": "anthropic/claude-sonnet-4-6",
       "prompt_append": "\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     }
   },
@@ -54,7 +54,7 @@
   "categories": {
     // Frontend, UI/UX, design, styling, animation
     "visual-engineering": {
-      "model": "google/antigravity-gemini-3-pro"
+      "model": "github-copilot/gemini-3-pro-preview"
     },
     // Use ONLY for genuinely hard, logic-heavy tasks. Give clear goals only, not step-by-step instructions.
     "ultrabrain": {
@@ -68,39 +68,43 @@
     },
     // Complex problem-solving with unconventional, creative approaches - beyond standard patterns
     "artistry": {
-      "model": "google/antigravity-gemini-3-pro",
+      "model": "github-copilot/gemini-3-pro-preview",
       "variant": "high"
     },
     // Trivial tasks - single file changes, typo fixes, simple modifications
     "quick": {
-      "model": "github-copilot/claude-haiku-4.5"
+      "model": "anthropic/claude-haiku-4-5"
     },
     // Tasks that don't fit other categories, low effort required
     "unspecified-low": {
-      "model": "google/antigravity-claude-sonnet-4-5-thinking"
+      "model": "anthropic/claude-sonnet-4-6"
     },
     // Tasks that don't fit other categories, high effort required
     "unspecified-high": {
-      "model": "google/antigravity-claude-opus-4-6-thinking",
+      "model": "anthropic/claude-opus-4-6",
       "variant": "max"
     },
     // Documentation, prose, technical writing
     "writing": {
-      "model": "google/antigravity-gemini-3-flash"
+      "model": "github-copilot/gemini-3-flash-preview"
     }
   },
   "claude_code": {
-    "mcp": false
+    "agents": false,
+    "commands": false,
+    "hooks": false,
+    "mcp": false,
+    "plugins": false,
+    "skills": false
   },
   "disabled_agents": ["hephaestus"],
-  "disabled_hooks": ["todo-continuation-enforcer"],
+  "disabled_hooks": ["keyword-detector", "todo-continuation-enforcer"],
   "disabled_mcps": ["websearch", "context7", "grep_app"],
   "disabled_skills": ["git-master"],
   "git_master": {
     "commit_footer": false,
     "include_co_authored_by": false
   },
-  "google_auth": false,
   "lsp": {
     "remark-language-server": {
       "command": ["remark-language-server", "--stdio"],
