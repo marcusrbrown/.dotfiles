@@ -98,17 +98,14 @@
     "skills": false
   },
   "disabled_agents": ["hephaestus"],
-  "disabled_hooks": ["keyword-detector", "todo-continuation-enforcer"],
+  "disabled_hooks": ["keyword-detector"],
   "disabled_mcps": ["websearch", "context7", "grep_app"],
+  "experimental": {
+    "disable_omo_env": true
+  },
   "git_master": {
     "commit_footer": false,
     "include_co_authored_by": false
-  },
-  "lsp": {
-    "remark-language-server": {
-      "command": ["remark-language-server", "--stdio"],
-      "extensions": [".md"]
-    }
   },
   "sisyphus_agent": {
     "default_builder_enabled": true
