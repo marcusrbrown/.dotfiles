@@ -98,7 +98,7 @@
     "skills": false
   },
   "disabled_agents": ["hephaestus"],
-  "disabled_hooks": ["keyword-detector"],
+  "disabled_hooks": ["keyword-detector", "no-sisyphus-gpt", "todo-continuation-enforcer"],
   "disabled_mcps": ["websearch", "context7", "grep_app"],
   "experimental": {
     "disable_omo_env": true
