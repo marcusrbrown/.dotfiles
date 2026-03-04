@@ -9,6 +9,11 @@
             "input": ["text", "image"],
             "output": ["text"]
           },
+          "limit": {
+            "context": 400000,
+            "input": 272000,
+            "output": 128000
+          },
           "variants": {
             "low": {
               "reasoningEffort": "low",
