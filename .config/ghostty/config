@@ -113,6 +113,3 @@ keybind = cmd+v=paste_from_clipboard
 
 # Clear screen
 keybind = cmd+k=clear_screen
-
-# Quick terminal
-keybind = cmd+ctrl+t=toggle_quick_terminal
