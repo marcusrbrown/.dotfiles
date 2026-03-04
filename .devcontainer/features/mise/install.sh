@@ -9,6 +9,10 @@ fi
 
 echo "(*) Installing mise-en-place..."
 
+# The mise installer downloads .tar.zst archives when GNU tar >= 1.31 is
+# detected, but tar shells out to the zstd binary which isn't pre-installed.
+apt-get update && apt-get install -y --no-install-recommends zstd && rm -rf /var/lib/apt/lists/*
+
 MISE_INSTALL_PATH=/usr/local/bin/mise
 curl https://mise.run | MISE_INSTALL_PATH="$MISE_INSTALL_PATH" sh
 
