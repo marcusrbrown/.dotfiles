@@ -1,6 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["oh-my-openagent@3.11.2", "@fro.bot/systematic@latest", "@franlol/opencode-md-table-formatter@latest"],
+  "plugin": [
+    "opencode-anthropic-oauth",
+    "oh-my-openagent@3.12.3",
+    "@fro.bot/systematic@latest",
+    "@franlol/opencode-md-table-formatter@latest"
+  ],
   "provider": {
     "github-copilot": {
       "models": {
