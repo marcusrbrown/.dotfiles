@@ -26,6 +26,7 @@ ast-grep = "0.40.5"
 "npm:opencode-ai" = "1.2.27"
 "npm:agent-browser" = "0.17.1"
 "npm:ocx" = "1.4.6"
+"npm:opencode-anthropic-oauth" = "0.1.1"
 
 # Language Servers
 "npm:pyright" = "1.1.408"
