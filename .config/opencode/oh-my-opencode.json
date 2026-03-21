@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     // Powerful AI orchestrator. Plans obsessively with todos, assesses search complexity before exploration, delegates strategically via category+skills combinations. Uses explore for internal code (parallel-friendly), librarian for external docs.
     "sisyphus": {
@@ -105,13 +105,12 @@
     "plugins": false,
     "skills": false
   },
-  "disabled_hooks": ["keyword-detector", "todo-continuation-enforcer"],
-  "disabled_mcps": ["websearch", "context7", "grep_app"],
+  "disabled_agents": ["atlas", "hephaestus"],
   "git_master": {
     "commit_footer": false,
     "include_co_authored_by": false
   },
   "sisyphus_agent": {
-    "default_builder_enabled": true
+    "disabled": true
   }
 }
