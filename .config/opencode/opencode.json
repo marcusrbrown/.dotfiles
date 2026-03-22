@@ -30,44 +30,5 @@
       "url": "https://mcp.exa.ai/mcp?exaApiKey={env:EXA_API_KEY}&tools=web_search_exa",
       "oauth": false
     }
-  },
-  "provider": {
-    "github-copilot": {
-      "models": {
-        "gpt-5.3-codex": {
-          "modalities": {
-            "input": ["text", "image"],
-            "output": ["text"]
-          },
-          "limit": {
-            "context": 400000,
-            "input": 272000,
-            "output": 128000
-          },
-          "variants": {
-            "low": {
-              "reasoningEffort": "low",
-              "reasoningSummary": "auto",
-              "include": ["reasoning.encrypted_content"]
-            },
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "include": ["reasoning.encrypted_content"]
-            },
-            "high": {
-              "reasoningEffort": "high",
-              "reasoningSummary": "auto",
-              "include": ["reasoning.encrypted_content"]
-            },
-            "xhigh": {
-              "reasoningEffort": "xhigh",
-              "reasoningSummary": "auto",
-              "include": ["reasoning.encrypted_content"]
-            }
-          }
-        }
-      }
-    }
   }
 }

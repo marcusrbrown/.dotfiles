@@ -106,11 +106,14 @@
     "skills": false
   },
   "disabled_agents": ["atlas", "hephaestus"],
+  "disabled_hooks": ["gpt-permission-continuation"],
   "git_master": {
     "commit_footer": false,
     "include_co_authored_by": false
   },
   "sisyphus_agent": {
-    "disabled": true
+    "default_builder_enabled": true,
+    "planner_enabled": false,
+    "replace_plan": false
   }
 }
