@@ -1,54 +1,44 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
-    // Powerful AI orchestrator. Plans obsessively with todos, assesses search complexity before exploration, delegates strategically via category+skills combinations. Uses explore for internal code (parallel-friendly), librarian for external docs.
     "sisyphus": {
       "model": "anthropic/claude-opus-4-6",
       "variant": "max",
       "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_search` tool to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
-    // Autonomous Deep Worker - goal-oriented execution with GPT 5.2 Codex. Explores thoroughly before acting, uses explore/librarian agents for comprehensive context, completes tasks end-to-end. Inspired by AmpCode deep mode.
     "hephaestus": {
       "model": "github-copilot/gpt-5.3-codex",
       "variant": "medium",
       "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_search` tool to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
-    // Read-only consultation agent. High-IQ reasoning specialist for debugging hard problems and high-difficulty architecture design.
     "oracle": {
       "model": "github-copilot/gpt-5.4",
       "variant": "high"
     },
-    // Specialized codebase understanding agent for multi-repository analysis, searching remote codebases, retrieving official documentation, and finding implementation examples using GitHub CLI, Context7, and Web Search. MUST BE USED when users ask to look up code in remote repositories, explain library internals, or find usage examples in open source.
     "librarian": {
       "model": "github-copilot/gemini-3-flash-preview"
     },
-    // Contextual grep for codebases. Answers "Where is X?", "Which file has Y?", "Find the code that does Z". Fire multiple in parallel for broad searches. Specify thoroughness: "quick" for basic, "medium" for moderate, "very thorough" for comprehensive analysis.
     "explore": {
       "model": "github-copilot/grok-code-fast-1"
     },
-    // Analyze media files (PDFs, images, diagrams) that require interpretation beyond raw text. Extracts specific information or summaries from documents, describes visual content. Use when you need analyzed/extracted data rather than literal file contents.
     "multimodal-looker": {
       "model": "github-copilot/gpt-5.4",
       "variant": "medium"
     },
-    // Strategic planning agent - verbose, detailed plans with tables and file references.
     "prometheus": {
       "model": "anthropic/claude-opus-4-6",
       "variant": "max",
       "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_search` tool to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
-    // Pre-planning consultant that analyzes requests to identify hidden intentions, ambiguities, and AI failure points.
     "metis": {
       "model": "anthropic/claude-opus-4-6",
       "variant": "max",
       "prompt_append": "\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
     },
-    // Expert reviewer for evaluating work plans against rigorous clarity, verifiability, and completeness standards.
     "momus": {
       "model": "github-copilot/gpt-5.4",
       "variant": "xhigh"
     },
-    // Orchestrates work via delegate_task() to complete ALL tasks in a todo list until fully done.
     "atlas": {
       "model": "anthropic/claude-sonnet-4-6",
       "prompt_append": "\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
@@ -59,40 +49,32 @@
     "provider": "agent-browser"
   },
   "categories": {
-    // Frontend, UI/UX, design, styling, animation
     "visual-engineering": {
       "model": "github-copilot/gemini-3.1-pro-preview",
       "variant": "high"
     },
-    // Use ONLY for genuinely hard, logic-heavy tasks. Give clear goals only, not step-by-step instructions.
     "ultrabrain": {
       "model": "github-copilot/gpt-5.3-codex",
       "variant": "xhigh"
     },
-    // Goal-oriented autonomous problem-solving. Thorough research before action. For hairy problems requiring deep understanding.
     "deep": {
       "model": "github-copilot/gpt-5.3-codex",
       "variant": "medium"
     },
-    // Complex problem-solving with unconventional, creative approaches - beyond standard patterns
     "artistry": {
       "model": "github-copilot/gemini-3.1-pro-preview",
       "variant": "high"
     },
-    // Trivial tasks - single file changes, typo fixes, simple modifications
     "quick": {
       "model": "anthropic/claude-haiku-4-5"
     },
-    // Tasks that don't fit other categories, low effort required
     "unspecified-low": {
       "model": "anthropic/claude-sonnet-4-6"
     },
-    // Tasks that don't fit other categories, high effort required
     "unspecified-high": {
       "model": "github-copilot/gpt-5.4",
       "variant": "high"
     },
-    // Documentation, prose, technical writing
     "writing": {
       "model": "github-copilot/gemini-3-flash-preview"
     }
@@ -103,10 +85,10 @@
     "hooks": false,
     "mcp": false,
     "plugins": false,
-    "skills": false
+    "skills": true
   },
   "disabled_agents": ["atlas", "hephaestus"],
-  "disabled_hooks": ["gpt-permission-continuation"],
+  "disabled_hooks": [],
   "git_master": {
     "commit_footer": false,
     "include_co_authored_by": false
