@@ -30,6 +30,14 @@
       automergeType: 'branch',
       dependencyDashboardApproval: true,
     },
+    {
+      description: ['Automerge unstable minor updates of some packages.'],
+      matchCurrentVersion: '/^v?0/',
+      matchPackageNames: ['agent-browser', 'opencode-anthropic-oauth'],
+      matchUpdateTypes: ['minor', 'patch'],
+      extends: ['github>bfra-me/renovate-config:automerge.json5#5.2.0'],
+      dependencyDashboardApproval: false,
+    },
   ],
   rebaseWhen: 'behind-base-branch',
 }
