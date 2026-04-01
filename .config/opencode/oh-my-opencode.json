@@ -88,7 +88,7 @@
     "skills": true
   },
   "disabled_agents": ["atlas", "hephaestus"],
-  "disabled_hooks": [],
+  "disabled_hooks": ["context-window-monitor", "preemptive-compaction", "anthropic-context-window-limit-recovery"],
   "git_master": {
     "commit_footer": false,
     "include_co_authored_by": false
