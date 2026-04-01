@@ -214,24 +214,82 @@ Key packages: `bat`, `fzf`, `ripgrep`, `lsd`, `fd`, `git-delta`, `starship`
 
 ## Devcontainer Development
 
-The `.devcontainer/` directory provides a complete development environment:
+The `.devcontainer/` directory provides a complete development environment with all tools pre-configured.
+
+### Container Quick Start
 
 ```bash
-# VS Code will prompt to reopen in container
+# VS Code: reopen in container
 code ~/
 
-# Or use GitHub Codespaces
-# Just open the repo in Codespaces
+# GitHub Codespaces: open the repo directly in Codespaces
+
+# CLI (requires @devcontainers/cli)
+devcontainer up --workspace-folder .
 ```
 
-### Custom Features
+### Published Image
 
-| Feature | Purpose |
-|---------|---------|
-| `dotfiles-dev` | Clones bare repo, sets up git config |
-| `mise` | Installs mise tool manager |
-| `sheldon` | Installs Sheldon plugin manager |
-| `keychain` | SSH/GPG agent management |
+A pre-built devcontainer image is published to GitHub Container Registry on every push to `main` and on tagged releases.
+
+```text
+ghcr.io/marcusrbrown/dotfiles-devcontainer:latest
+```
+
+Reference it in another project's `devcontainer.json`:
+
+```json
+{
+    "image": "ghcr.io/marcusrbrown/dotfiles-devcontainer:latest"
+}
+```
+
+The image includes devcontainer metadata labels, so consumers inherit the full configuration (features, settings, environment variables) without replicating the `devcontainer.json`.
+
+**Tags:**
+- `latest` — updated on every push to `main`
+- `vX.Y.Z` — pinned to specific releases
+
+### What's Included
+
+Built on [`mcr.microsoft.com/devcontainers/base`](https://github.com/devcontainers/images/tree/main/src/base-debian) with:
+
+| Tool | Source |
+|------|--------|
+| [mise](https://mise.jdx.dev/) | Custom feature — manages Node, Python, Rust, Go, Bun, Deno |
+| [Sheldon](https://github.com/rossmacarthur/sheldon) | Custom feature — Zsh plugin manager with deferred loading |
+| [keychain](https://github.com/funtoo/keychain) | Custom feature — SSH/GPG agent management |
+| [Starship](https://starship.rs/) | Installed by `dotfiles-dev` — cross-shell prompt |
+| [GitHub CLI](https://cli.github.com/) | Remote feature |
+| [Node.js](https://nodejs.org/) | Remote feature |
+| [ShellCheck](https://www.shellcheck.net/) | Remote feature |
+
+### Feature Architecture
+
+Four custom features in `.devcontainer/features/` handle the environment setup:
+
+```
+common-utils ─┬─► sheldon
+              ├─► keychain
+              │       │
+              └─► dotfiles-dev ──► mise
+                    (depends on sheldon, keychain, gh-cli)
+```
+
+- **`dotfiles-dev`** — Bootstrap feature. Generates a `post-create.sh` script that clones the bare dotfiles repo and checks out `main`. Depends on `common-utils`, `github-cli`, `sheldon`, and `keychain`.
+- **`mise`** — Depends on `dotfiles-dev`. Runs `mise install` post-create to install all configured tool versions.
+- **`sheldon`** — Installs the Sheldon Zsh plugin manager.
+- **`keychain`** — Installs keychain for SSH/GPG agent management from GitHub releases.
+
+### CI and Image Publishing
+
+The `main.yaml` workflow builds and publishes the devcontainer image using [`devcontainers/ci`](https://github.com/devcontainers/ci):
+
+- **Push to `main`**: builds the image, pushes to GHCR with `latest` tag
+- **Pull requests**: builds using `cacheFrom` for speed, does not push
+- **Releases**: pushes with the release version tag and `latest`
+
+The `cacheFrom` option pulls cached Docker layers from the published image, so subsequent builds skip network-dependent tool installs.
 
 ## Customization
 
