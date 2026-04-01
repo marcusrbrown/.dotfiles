@@ -4,7 +4,8 @@
     "opencode-anthropic-oauth",
     "oh-my-openagent@3.14.0",
     "@fro.bot/systematic@latest",
-    "@franlol/opencode-md-table-formatter@latest"
+    "@franlol/opencode-md-table-formatter@latest",
+    "@cortexkit/opencode-magic-context"
   ],
   "mcp": {
     "context7": {
@@ -30,5 +31,9 @@
       "url": "https://mcp.exa.ai/mcp?exaApiKey={env:EXA_API_KEY}&tools=web_search_exa",
       "oauth": false
     }
+  },
+  "compaction": {
+    "auto": false,
+    "prune": false
   }
 }

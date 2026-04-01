@@ -1,0 +1,18 @@
+{
+  "historian": {
+    "model": "anthropic/claude-sonnet-4-6"
+  },
+  "dreamer": {
+    "enabled": true,
+    "model": "anthropic/claude-sonnet-4-6"
+  },
+  "sidekick": {
+    "enabled": true,
+    "model": "opencode/gpt-5-nano"
+  },
+  "cache_ttl": {
+    "default": "5m",
+    "anthropic/claude-sonnet-4-6": "59m",
+    "anthropic/claude-opus-4-6": "59m"
+  }
+}
