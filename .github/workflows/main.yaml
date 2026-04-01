@@ -6,6 +6,8 @@ name: Main
     branches: [main]
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
+  release:
+    types: [published]
   workflow_dispatch:
 
 concurrency:
@@ -19,6 +21,9 @@ jobs:
   devcontainer-ci:
     name: Devcontainer CI
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     if: github.event_name != 'pull_request' || github.event.pull_request.draft != true
     steps:
       - name: Checkout
@@ -26,17 +31,26 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - id: devcontainer-ci
         name: Build and start devcontainer
-        uses: Wandalen/wretry.action@e68c23e6309f2871ca8ae4763e7629b9c258e1ea # v3.8.0
+        uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3.1900000417
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          attempt_limit: 3
-          attempt_delay: 20000
-          action: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3.1900000417
-          with: |
-            runCmd: 'devcontainer-info'
+          imageName: ghcr.io/marcusrbrown/dotfiles-devcontainer
+          imageTag: ${{ github.event_name == 'release' && format('{0},latest', github.event.release.tag_name) || 'latest' }}
+          cacheFrom: ghcr.io/marcusrbrown/dotfiles-devcontainer
+          eventFilterForPush: |
+            push
+            release
+          runCmd: devcontainer-info
 
       - if: always()
         name: Display devcontainer output
