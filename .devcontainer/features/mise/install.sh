@@ -16,6 +16,9 @@ apt-get update && apt-get install -y --no-install-recommends zstd && rm -rf /var
 MISE_INSTALL_PATH=/usr/local/bin/mise
 curl https://mise.run | MISE_INSTALL_PATH="$MISE_INSTALL_PATH" sh
 
+echo "(*) Installing uv (required by mise pipx backend)..."
+curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+
 # Validation and activation of mise taken from:
 # https://github.com/RouL/devcontainer-features/blob/2ba3812809d9c933cf459f1413e67f63a9a894e3/src/mise/install.sh
 eval "$(mise activate bash)"
@@ -24,7 +27,7 @@ mise doctor
 # Add mise activation to profile
 # TODO: Support other base OSes
 _mise_profile_path=/etc/profile.d/mise.sh
-tee "$_mise_profile_path" > /dev/null << 'EOF'
+tee "$_mise_profile_path" >/dev/null <<'EOF'
 if [ -n "$ZSH_VERSION" ]; then
    eval "$(mise activate zsh)"
 elif [ -n "$BASH_VERSION" ]; then
