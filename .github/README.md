@@ -8,6 +8,7 @@ A bare git repository for synchronizing shell configurations and development env
 ## Overview
 
 This repository uses a **bare git repository** pattern where:
+
 - `GIT_DIR` is set to `~/.dotfiles`
 - `GIT_WORK_TREE` is set to `$HOME`
 
@@ -150,6 +151,7 @@ echo 'alias work="cd ~/work"' > ~/.zshrc.local
 ### Shell Initialization
 
 **Bash**:
+
 1. `.bashrc` sources `.config/bash/main`
 2. `main` sets up paths, shell options, and sources:
    - `exports` - Environment variables
@@ -159,6 +161,7 @@ echo 'alias work="cd ~/work"' > ~/.zshrc.local
    - `local.d/*` - Machine-local overrides
 
 **Zsh**:
+
 1. `.zshenv` sources `.config/zsh/.zshenv`
 2. `.zshrc` uses Sheldon for plugin management with:
    - Deferred loading for better startup performance
@@ -169,14 +172,14 @@ echo 'alias work="cd ~/work"' > ~/.zshrc.local
 
 Configured tools in `.config/mise/config.toml`:
 
-| Tool | Purpose |
-|------|---------|
-| node | Node.js runtime |
-| python | Python runtime |
-| rust | Rust toolchain |
-| go | Go runtime |
-| bun | Fast JavaScript runtime |
-| deno | Secure JavaScript runtime |
+| Tool   | Purpose                   |
+| ------ | ------------------------- |
+| node   | Node.js runtime           |
+| python | Python runtime            |
+| rust   | Rust toolchain            |
+| go     | Go runtime                |
+| bun    | Fast JavaScript runtime   |
+| deno   | Secure JavaScript runtime |
 
 ```bash
 # Install all configured tools
@@ -200,6 +203,7 @@ Key plugins configured in `.config/sheldon/plugins.toml`:
 ### macOS Specific
 
 **Homebrew** (`Brewfile`):
+
 ```bash
 # Install all dependencies
 brew bundle install
@@ -208,6 +212,7 @@ brew bundle install
 Key packages: `bat`, `fzf`, `ripgrep`, `lsd`, `fd`, `git-delta`, `starship`
 
 **Homebrew Settings** (in exports):
+
 - Analytics disabled
 - No-quarantine for casks
 - Automatic cleanup enabled
@@ -240,13 +245,14 @@ Reference it in another project's `devcontainer.json`:
 
 ```json
 {
-    "image": "ghcr.io/marcusrbrown/dotfiles-devcontainer:latest"
+  "image": "ghcr.io/marcusrbrown/dotfiles-devcontainer:latest"
 }
 ```
 
 The image includes devcontainer metadata labels, so consumers inherit the full configuration (features, settings, environment variables) without replicating the `devcontainer.json`.
 
 **Tags:**
+
 - `latest` — updated on every push to `main`
 - `vX.Y.Z` — pinned to specific releases
 
@@ -254,15 +260,15 @@ The image includes devcontainer metadata labels, so consumers inherit the full c
 
 Built on [`mcr.microsoft.com/devcontainers/base`](https://github.com/devcontainers/images/tree/main/src/base-debian) with:
 
-| Tool | Source |
-|------|--------|
-| [mise](https://mise.jdx.dev/) | Custom feature — manages Node, Python, Rust, Go, Bun, Deno |
-| [Sheldon](https://github.com/rossmacarthur/sheldon) | Custom feature — Zsh plugin manager with deferred loading |
-| [keychain](https://github.com/funtoo/keychain) | Custom feature — SSH/GPG agent management |
-| [Starship](https://starship.rs/) | Installed by `dotfiles-dev` — cross-shell prompt |
-| [GitHub CLI](https://cli.github.com/) | Remote feature |
-| [Node.js](https://nodejs.org/) | Remote feature |
-| [ShellCheck](https://www.shellcheck.net/) | Remote feature |
+| Tool                                                | Source                                                     |
+| --------------------------------------------------- | ---------------------------------------------------------- |
+| [mise](https://mise.jdx.dev/)                       | Custom feature — manages Node, Python, Rust, Go, Bun, Deno |
+| [Sheldon](https://github.com/rossmacarthur/sheldon) | Custom feature — Zsh plugin manager with deferred loading  |
+| [keychain](https://github.com/funtoo/keychain)      | Custom feature — SSH/GPG agent management                  |
+| [Starship](https://starship.rs/)                    | Installed by `dotfiles-dev` — cross-shell prompt           |
+| [GitHub CLI](https://cli.github.com/)               | Remote feature                                             |
+| [Node.js](https://nodejs.org/)                      | Remote feature                                             |
+| [ShellCheck](https://www.shellcheck.net/)           | Remote feature                                             |
 
 ### Feature Architecture
 
@@ -317,6 +323,7 @@ apply = ["defer"]  # Optional: defer loading
 ### Privacy-Focused Defaults
 
 The configuration disables telemetry where possible:
+
 - `HOMEBREW_NO_ANALYTICS=1`
 - `PLATFORMIO_SETTING_ENABLE_TELEMETRY=No`
 - `VIBE_TOOLS_NO_TELEMETRY=1`

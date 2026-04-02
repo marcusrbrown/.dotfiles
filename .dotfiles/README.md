@@ -39,6 +39,7 @@ alias .dotfiles='GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME'
 ### `.gitconfig`
 
 Extends the local Git configuration with settings specific to the dotfiles repository:
+
 - Sets `core.excludesFile` to use this directory's `.gitignore`
 - Configures `status.showUntrackedFiles = no` to hide untracked home directory files
 
@@ -84,6 +85,7 @@ Knowledge base for AI agents working with this repository.
 ## Directory Layout
 
 The bare repository at `~/.dotfiles` contains git metadata. When commands like `.dotfiles git status` run, Git uses:
+
 - `GIT_DIR=$HOME/.dotfiles` - Location of the repository metadata
 - `GIT_WORK_TREE=$HOME` - Working directory (your home directory)
 
@@ -92,6 +94,7 @@ This allows seamless tracking of dotfiles without symlinks or special tooling.
 ## Machine-Local Configuration
 
 Files and directories matching these patterns are gitignored:
+
 - `*.local` - E.g., `~/.zshrc.local`
 - `local.d/` directories - E.g., `~/.config/bash/local.d/`
 
@@ -147,6 +150,7 @@ mkdir -p ~/.dotfiles-backup
 ## Security
 
 **Never commit to this repository:**
+
 - API keys, tokens, or credentials
 - Private SSH keys
 - Database connection strings
