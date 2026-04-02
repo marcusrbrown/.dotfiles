@@ -5,7 +5,8 @@
     "oh-my-openagent@3.14.0",
     "@fro.bot/systematic@latest",
     "@franlol/opencode-md-table-formatter@latest",
-    "@cortexkit/opencode-magic-context"
+    "@cortexkit/aft-opencode@latest",
+    "@cortexkit/opencode-magic-context@latest"
   ],
   "mcp": {
     "context7": {
@@ -35,5 +36,8 @@
   "compaction": {
     "auto": false,
     "prune": false
+  },
+  "experimental": {
+    "openTelemetry": false
   }
 }
