@@ -89,10 +89,8 @@
   },
   "disabled_agents": ["atlas", "hephaestus"],
   "disabled_hooks": ["context-window-monitor", "preemptive-compaction", "anthropic-context-window-limit-recovery"],
-  "git_master": {
-    "commit_footer": false,
-    "include_co_authored_by": false
-  },
+  "disabled_skills": ["git-master"],
+  "hashline_edit": true,
   "sisyphus_agent": {
     "default_builder_enabled": true,
     "planner_enabled": false,
