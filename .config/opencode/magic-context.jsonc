@@ -14,5 +14,10 @@
     "default": "5m",
     "anthropic/claude-sonnet-4-6": "59m",
     "anthropic/claude-opus-4-6": "59m"
+  },
+  "execute_threshold_percentage": {
+    "default": 65,
+    "anthropic/claude-sonnet-4-6": 40,
+    "anthropic/claude-opus-4-6": 40
   }
 }
