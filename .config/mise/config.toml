@@ -16,7 +16,7 @@ ast-grep = "0.40.5"
  # shfmt
 "aqua:mvdan/sh" = "3.13.0"
 
-"npm:typescript" = "5.9.3"
+"npm:typescript" = "6.0.2"
 "npm:vibe-tools" = "0.63.3"
 "npm:playwright" = "1.59.0"
 "npm:puppeteer" = "24.40.0"
