@@ -1,0 +1,374 @@
+---
+name: Fro Bot
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, edited]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, review_requested]
+  schedule:
+    - cron: '30 15 * * *'
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: Custom prompt for the Fro Bot agent
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: >-
+    fro-bot-${{
+      github.event.issue.number ||
+      github.event.pull_request.number ||
+      github.run_id
+    }}
+  cancel-in-progress: false
+
+env:
+  PR_REVIEW_PROMPT: |
+    You are reviewing a pull request for marcusrbrown/.dotfiles — a bare git
+    dotfiles repo (GIT_DIR=~/.dotfiles, GIT_WORK_TREE=~/) that syncs shell
+    and dev configs across machines.
+    Read AGENTS.md for full project conventions before reviewing.
+
+    This repo has an allowlist .gitignore pattern: everything is ignored by
+    default, then specific paths are un-ignored. Changes to .dotfiles/.gitignore
+    affect what CAN be tracked. Verify new files are properly allowlisted.
+
+    Focus your review on:
+    - Correctness: will this config break shell startup or tool initialization?
+    - Portability: does this work on both macOS and Linux (devcontainer)?
+    - Security: no secrets, credentials, API keys, or PII in tracked files.
+      Machine-specific config belongs in *.local files or local.d/ (gitignored).
+    - Convention compliance:
+      * Shell init scripts in .config/bash/init.d/ use numbered prefixes
+      * Machine-local overrides go in .config/bash/local.d/ (not committed)
+      * Shared env vars live in .config/bash/exports (sourced by bash and zsh)
+      * XDG compliance: configs use ~/.config, ~/.local/share, ~/.cache
+      * GPG signing enabled on commits
+      * LaunchAgents use dev.mrbro.* prefix
+    - Devcontainer impact: will this break the devcontainer build or features?
+
+    Skip formatting nits — Prettier handles that via mise tasks.
+
+    Do NOT push commits, modify code, or create branches. Review only.
+    Use inline comments for file-specific issues. Reserve the review body
+    for the structured summary below.
+
+    You MUST structure your review using exactly these headings:
+    ## Verdict: [PASS | CONDITIONAL | REJECT]
+    CONDITIONAL = can merge after addressing the listed blocking issues.
+    ### Blocking issues
+    ### Non-blocking concerns
+    ### Security check
+    Verify no secrets, credentials, tokens, or machine-specific paths leaked.
+    ### Risk assessment (LOW/MED/HIGH) + rationale
+    Evaluate likelihood of breaking shell startup, tool init, or devcontainer.
+    If a section has no items, write "None" under the heading.
+    Do not omit any heading.
+
+  SCHEDULE_PROMPT: |
+    Perform daily maintenance and autohealing for marcusrbrown/.dotfiles — a
+    bare git dotfiles repo (GIT_DIR=~/.dotfiles, GIT_WORK_TREE=~/) that
+    syncs shell and dev tool configs across machines. It uses a devcontainer
+    for CI, mise for tool management, and sheldon for zsh plugins.
+    Read AGENTS.md for full project conventions before making changes.
+
+    EXECUTION MODEL
+    Analyze all categories independently, but perform write actions serially.
+    Do not keep multiple branches checked out at once. Complete one mutation,
+    return to a clean working tree, then continue.
+
+    DEDUPLICATION (applies to ALL categories)
+    Before creating any new PR or issue, search for an existing open
+    bot-authored PR/issue for the same root cause. Reuse or update the
+    existing item instead of creating a duplicate.
+
+    SCOPE CAP
+    If the smallest safe fix is not clearly minimal and reversible (e.g.,
+    broad refactor, changing shell init order, or multi-file edit), do not
+    auto-heal it. Open or update an issue and log it under "Needs Human
+    Attention". Dotfiles changes affect every shell session — be cautious.
+
+    DEPENDENCY OWNERSHIP
+    Renovate owns dependency/version bumps (configured via
+    marcusrbrown/renovate-config preset). This includes mise tool versions,
+    devcontainer features, and GitHub Actions. You may change versions only
+    when remediating a confirmed security advisory or repairing an existing
+    update PR. Do not create non-security version-bump PRs.
+
+    1. ERRORED PRs
+       Find open PRs with failing CI checks. Skip dependency/security update
+       PRs here; handle them only in category 2.
+       Only fix PRs whose head branch is in this repository, writable by
+       this token, and authored by a trusted source (repository
+       owner/collaborator with write access, or an approved automation bot
+       such as Renovate/Dependabot). If author trust cannot be established,
+       skip the PR and log it under "Needs Human Attention".
+       If the PR touches workflows, automation prompts, or shell init
+       scripts (.bashrc, .zshenv, .config/bash/main, .config/zsh/),
+       do not run commands from that branch. Skip it and log why.
+       For each fixable PR:
+       a. Check out the PR branch.
+       b. Read the failing check logs to diagnose the root cause.
+       c. Fix the issue (devcontainer build failures, formatting errors,
+          mise install failures).
+       d. Commit with a clear message and push to the PR branch.
+       e. Comment on the PR explaining what failed and what was fixed.
+
+    2. SECURITY
+       Review Dependabot/Renovate alerts and open PRs for vulnerable deps.
+       - If a security update PR exists but has conflicts or failures,
+         fix and push to that PR branch.
+       - For unaddressed critical/high advisories with no existing PR,
+         create a new PR with the remediation.
+       - Do NOT bulk-update unrelated deps in a security PR.
+
+       Additionally, scan tracked files for accidental secret exposure:
+       - Search for patterns: API keys, tokens, passwords, private keys,
+         hardcoded IPs/hostnames that look internal.
+       - Check .config/bash/exports for values that should be in local.d/.
+       - Verify .ssh/config doesn't contain credentials (only structure).
+       If any secrets are found, create an issue immediately with severity
+       "critical" — do NOT include the secret value in the issue body.
+
+       If security advisory/alert data is unavailable to the token or CLI,
+       skip the advisory check and note "security alerts unavailable" under
+       "Needs Human Attention". Do not guess.
+
+    3. CONFIG QUALITY & REPO HYGIENE
+       This category is primarily report-only. Focus on things only a
+       code-aware agent can catch:
+       - Verify the devcontainer builds: check the most recent Main
+         workflow run. If it failed, diagnose from logs.
+       - Check .dotfiles/.gitignore for consistency: are there allowlist
+         entries for files that no longer exist? Are there tracked files
+         that probably shouldn't be (large binaries, generated files)?
+       - Scan for stale TODO/FIXME/HACK annotations older than 90 days
+         (use git blame). Collect them into a single issue or update an
+         existing "Stale TODOs" issue.
+       - Verify convention compliance:
+         * Shell init scripts in .config/bash/init.d/ use numbered prefixes
+           for ordering.
+         * No machine-specific values in committed files (IPs, hostnames,
+           usernames that aren't "mrbrown" or generic).
+         * LaunchAgents use dev.mrbro.* label prefix.
+         * Mise tasks in .config/mise/tasks/ follow naming conventions.
+         * .config/bash/aliases uses `command_exists` guard for optional
+           tools.
+       - Check that AGENTS.md accurately reflects the current directory
+         structure. If drift is found, open a PR with corrections.
+       Report findings but put actual fixes into category 4.
+
+    4. DEVELOPER EXPERIENCE
+       Ensure consistent formatting and static analysis.
+       Run prettier checks on applicable files (yaml, json, markdown).
+       Fix any failures.
+       Open a PR for all fixes — never commit directly to the default
+       branch. Group related formatting fixes into a single PR.
+
+    5. DEVCONTAINER & CI HEALTH
+       Verify the development environment infrastructure:
+       - Check the most recent Main workflow run on the default branch.
+         If it failed, diagnose the root cause from logs and open an issue.
+       - Verify devcontainer features in .devcontainer/features/ have
+         valid install.sh scripts (shellcheck if available).
+       - Check that .devcontainer/devcontainer.json references only
+         existing local features and valid remote features.
+       - Verify mise config (.config/mise/config.toml) references
+         tools that are installable (no typos, no yanked versions).
+       Report findings as issues only for this category. Do NOT modify
+       devcontainer or CI config files.
+
+    6. CROSS-PROJECT PROGRESSIVE IMPROVEMENT
+       This category is strictly observation-only. Survey marcusrbrown repos
+       to identify opportunities for progressive improvement across the
+       portfolio. Use `gh` CLI for all queries.
+
+       Scope: Only repos owned by marcusrbrown (not forks, not archived).
+       Run: `gh repo list marcusrbrown --no-archived --source -L 50 --json name,defaultBranchRef,pushedAt`
+
+       For each active repo (pushed within 90 days), check:
+       a. CI health: `gh run list -R marcusrbrown/{repo} -b {default_branch} -L 3 --json conclusion`
+          Flag repos with 2+ consecutive failures on the default branch.
+       b. Fro Bot workflow presence: check if `.github/workflows/fro-bot.yaml`
+          exists. Flag repos without one.
+       c. AGENTS.md presence: check if `AGENTS.md` exists at repo root.
+          Flag repos without one.
+       d. Security alerts: `gh api repos/marcusrbrown/{repo}/vulnerability-alerts`
+          Flag repos with unaddressed critical/high advisories.
+          If the API is unavailable for a repo, note "alerts unavailable"
+          and continue.
+       e. Stale PRs: `gh pr list -R marcusrbrown/{repo} --json number,title,updatedAt -L 10`
+          Flag PRs with no activity >14 days.
+       f. Action version drift: if fro-bot.yaml exists, check the
+          `fro-bot/agent@` version. Flag repos using a version older than
+          this repo's pinned version.
+
+       Hard boundaries for this category:
+       - NEVER modify other repositories. Observation only.
+       - NEVER open PRs, issues, or comments in other repositories.
+       - NEVER clone or check out other repositories.
+       - All findings go into the summary issue in THIS repository only.
+       - If `gh` queries fail for a repo (permissions, rate limits), skip
+         it and note why.
+
+       Purpose: Create a single dashboard of portfolio health so Marcus
+       can prioritize which repos to improve next.
+
+    Hard boundaries:
+    - Never force-push, rewrite history, or delete branches.
+    - Never push directly to the default branch. Direct pushes are allowed
+      only to an existing non-default PR branch you are repairing under
+      category 1 or category 2.
+    - Never merge PRs, submit reviews/approvals, close/reopen PRs or
+      issues, or modify branch protection. This workflow may only push
+      fixes, open/update PRs, open/update issues, and comment on PRs when
+      a fix was pushed.
+    - Never modify secrets, org settings, environments, or branch
+      protection.
+    - Never make checks pass by disabling tests, deleting failing
+      assertions, weakening lint rules, or editing workflows/configuration
+      only to suppress failures.
+    - Do not modify .github/workflows/, shell init files (.bashrc, .zshenv,
+      .config/bash/main, .config/zsh/), devcontainer config, or automation
+      prompt files unless the failing run is caused by a genuine bug in
+      that file, the change is narrowly scoped, and the summary explains
+      why.
+    - If the smallest safe fix would weaken a guardrail or change shell
+      behavior, skip it and log it under "Needs Human Attention".
+    - Cross-project monitoring (category 6) MUST NOT modify other repos.
+    - Do not create multiple summary issues.
+
+    Dotfiles conventions (MUST follow for changes):
+    - Allowlist .gitignore: everything ignored by default, specific paths
+      un-ignored. New files must be allowlisted in .dotfiles/.gitignore.
+    - Shell config organization: init.d/ with numbered prefixes, local.d/
+      for machine-specific (never committed), shared exports in
+      .config/bash/exports.
+    - XDG compliance: ~/.config, ~/.local/share, ~/.cache.
+    - GPG signing on commits.
+    - `command_exists` guard for optional tool aliases/init.
+    - No secrets, credentials, or machine-specific values in tracked files.
+
+    OUTPUT FORMAT — SINGLE SUMMARY ISSUE
+    After completing all work, find an existing open issue titled
+    "Daily Maintenance Report — YYYY-MM-DD" (using today's UTC date).
+    If it exists, update its body. If not, create it.
+
+    The issue body MUST use this structure. If a section has no rows, do
+    not emit an empty table — write "None." directly under that heading.
+
+    ## Daily Maintenance Report — YYYY-MM-DD (UTC)
+
+    ### Errored PRs
+    | PR | Failure | Fix | Status |
+    | --- | --- | --- | --- |
+    | #N | [root cause] | [what was fixed] | ✅ Fixed / ⚠️ Needs review |
+
+    ### Security
+    | Advisory / PR | Severity | Action Taken |
+    | --- | --- | --- |
+    | [advisory or #N] | Critical/High/Medium | [fix pushed / PR created / skipped] |
+
+    ### Config Quality & Repo Hygiene
+    | Check | Result | Action |
+    | --- | --- | --- |
+    | Devcontainer build | ✅ Pass / ❌ Fail | [run link or details] |
+    | .gitignore consistency | ✅ Clean / ⚠️ Stale entries | [details or #N] |
+    | Stale TODOs | N found | [#N or None] |
+    | Convention compliance | ✅ Clean / ⚠️ Issues | [details or #N] |
+    | AGENTS.md accuracy | ✅ Current / ⚠️ Drifted | [#N or None] |
+    | Secret scan | ✅ Clean / 🚨 Found | [#N or None] |
+
+    ### Developer Experience
+    - [list of each PR or commit-sized fix with summary link]
+
+    ### Devcontainer & CI Health
+    | Check | Status | Details |
+    | --- | --- | --- |
+    | Main workflow (latest) | ✅ Pass / ❌ Fail | [run link] |
+    | Feature install scripts | ✅ Valid / ⚠️ Issues | [details] |
+    | devcontainer.json refs | ✅ Valid / ⚠️ Broken | [details] |
+    | Mise tool versions | ✅ Installable / ⚠️ Issues | [details] |
+
+    ### Cross-Project Health
+    | Repo | CI | Fro Bot | AGENTS.md | Alerts | Stale PRs |
+    | --- | --- | --- | --- | --- | --- |
+    | [repo] | ✅/❌ | ✅/❌ [version] | ✅/❌ | N alerts | N stale |
+
+    ### Needs Human Attention
+    - [items that could not be auto-fixed, with context]
+
+    Do NOT create multiple issues. Do NOT comment on individual issues.
+    Produce exactly one summary issue per run.
+
+jobs:
+  fro-bot:
+    name: Fro Bot
+    runs-on: ubuntu-latest
+    if: >-
+      (
+        github.event.pull_request == null ||
+        (
+          !github.event.pull_request.head.repo.fork &&
+          !endsWith(github.event.pull_request.user.login || '', '[bot]')
+        )
+      ) && (
+        (
+          github.event_name == 'issues' &&
+          !endsWith(github.event.issue.user.login || '', '[bot]') &&
+          (github.event.issue.user.login || '') != 'fro-bot'
+        ) ||
+        (
+          github.event_name == 'pull_request' &&
+          !endsWith(github.event.pull_request.user.login || '', '[bot]') &&
+          (github.event.pull_request.user.login || '') != 'fro-bot'
+        ) ||
+        github.event_name == 'schedule' ||
+        github.event_name == 'workflow_dispatch' ||
+        (
+          (github.event_name == 'issue_comment' ||
+           github.event_name == 'pull_request_review_comment') &&
+          contains(github.event.comment.body || '', '@fro-bot') &&
+          (github.event.comment.user.login || '') != 'fro-bot' &&
+          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || '')
+        )
+      )
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          ref: >-
+            ${{
+              (github.event.issue.pull_request && format('refs/pull/{0}/head', github.event.issue.number))
+              || github.event.pull_request.head.sha
+              || ''
+            }}
+          token: ${{ secrets.FRO_BOT_PAT }}
+
+      - name: Run Fro Bot
+        uses: fro-bot/agent@c61d02125648bbc7fec4860b511db781ca513396 # v0.36.2
+        env:
+          OPENCODE_PROMPT_ARTIFACT: 'true'
+          PROMPT: >-
+            ${{
+              (github.event_name == 'workflow_dispatch' && (github.event.inputs.prompt || ''))
+              || (github.event_name == 'schedule' && env.SCHEDULE_PROMPT)
+              || (github.event_name == 'pull_request' && env.PR_REVIEW_PROMPT)
+              || ''
+            }}
+        with:
+          auth-json: ${{ secrets.OPENCODE_AUTH_JSON }}
+          github-token: ${{ secrets.FRO_BOT_PAT }}
+          model: ${{ vars.FRO_BOT_MODEL }}
+          omo-providers: ${{ secrets.OMO_PROVIDERS }}
+          prompt: ${{ env.PROMPT }}
+          timeout: 0
