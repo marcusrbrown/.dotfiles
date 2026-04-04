@@ -1,6 +1,6 @@
 ---
 description: "Enforces strict modular code architecture: SRP, no monolithic index.ts, 200 LOC hard limit"
-paths: ["**/*.ts", "**/*.tsx"]
+paths: '**/*.ts,**/*.tsx,**/package.json'
 ---
 
 <MANDATORY_ARCHITECTURE_RULE severity="BLOCKING" priority="HIGHEST">
