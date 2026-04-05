@@ -168,7 +168,11 @@ env:
 
     4. DEVELOPER EXPERIENCE
        Ensure consistent formatting and static analysis.
-       Run prettier checks on applicable files (yaml, json, markdown).
+       Run `mise run format` to check formatting with prettier.
+       This uses the configured command:
+         prettier --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .github
+       Which targets ONLY .devcontainer/, .dotfiles/, and .github/ —
+       NOT AI agent directories (.claude/, .config/opencode/, etc).
        Fix any failures.
        Open a PR for all fixes — never commit directly to the default
        branch. Group related formatting fixes into a single PR.
