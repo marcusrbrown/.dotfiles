@@ -4,7 +4,9 @@
 
 /.claude/
 /.config/cursor/
-/.config/opencode/
+!/.config/opencode/
+/.config/opencode/*
+!/.config/opencode/**/*.json?
 
 # AI-generated knowledge base
 /AGENTS.md
