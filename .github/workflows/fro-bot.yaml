@@ -11,7 +11,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, review_requested]
   schedule:
-    - cron: "30 15 * * *"
+    - cron: '30 15 * * *'
   workflow_dispatch:
     inputs:
       prompt:
@@ -361,7 +361,7 @@ jobs:
       - name: Run Fro Bot
         uses: fro-bot/agent@c61d02125648bbc7fec4860b511db781ca513396 # v0.36.2
         env:
-          OPENCODE_PROMPT_ARTIFACT: "true"
+          OPENCODE_PROMPT_ARTIFACT: 'true'
           PROMPT: >-
             ${{
               (github.event_name == 'workflow_dispatch' && (github.event.inputs.prompt || ''))
