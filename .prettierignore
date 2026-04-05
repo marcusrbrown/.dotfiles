@@ -1,0 +1,15 @@
+# AI agent configuration files - not formatted
+# These directories contain files maintained by AI agents (Claude Code, Cursor, OpenCode)
+# and should not be auto-formatted to preserve agent-specific formatting.
+
+/.claude/
+/.config/cursor/
+/.config/opencode/
+
+# AI-generated knowledge base
+/AGENTS.md
+
+# Git internal directories
+/.dotfiles/logs/
+/.dotfiles/objects/
+/.dotfiles/refs/
