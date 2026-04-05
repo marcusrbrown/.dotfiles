@@ -30,7 +30,8 @@ ast-grep = "0.40.5"
 "npm:agent-browser" = "0.24.1"
 "npm:ocx" = "2.0.5"
 "npm:opencode-anthropic-oauth" = "0.4.2"
-"npm:@cortexkit/opencode-magic-context" = "0.6.2"
+"npm:@cortexkit/opencode-magic-context" = "0.7.0"
+"npm:@cortexkit/aft-opencode" = "0.8.2"
 
 # Language Servers
 "npm:pyright" = "1.1.408"

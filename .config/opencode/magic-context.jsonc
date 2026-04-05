@@ -19,5 +19,12 @@
     "default": 65,
     "anthropic/claude-sonnet-4-6": 40,
     "anthropic/claude-opus-4-6": 40
+  },
+  "experimental": {
+    "pin_key_files": {
+      "enabled": true,
+      "token_budget": 10000,
+      "min_reads": 4
+    }
   }
 }
