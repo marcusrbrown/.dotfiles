@@ -26,11 +26,11 @@ ast-grep = "0.40.5"
 "npm:rimraf" = "6.1.3"
 "npm:tsx" = "4.21.0"
 "npm:@anthropic-ai/claude-code" = "2.1.90"
-"npm:opencode-ai" = "1.3.13"
+"npm:opencode-ai" = "1.3.15"
 "npm:agent-browser" = "0.23.4"
 "npm:ocx" = "2.0.4"
 "npm:opencode-anthropic-oauth" = "0.4.2"
-"npm:@cortexkit/opencode-magic-context" = "0.5.2"
+"npm:@cortexkit/opencode-magic-context" = "0.6.1"
 
 # Language Servers
 "npm:pyright" = "1.1.408"
