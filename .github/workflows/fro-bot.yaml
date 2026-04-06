@@ -166,16 +166,25 @@ env:
          structure. If drift is found, open a PR with corrections.
        Report findings but put actual fixes into category 4.
 
-    4. DEVELOPER EXPERIENCE
-       Ensure consistent formatting and static analysis.
-       Run `mise run format` to check formatting with prettier.
-       This uses the configured command:
-         prettier --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .github
-       Which targets ONLY .devcontainer/, .dotfiles/, and .github/ —
-       NOT AI agent directories (.claude/, .config/opencode/, etc).
-       Fix any failures.
-       Open a PR for all fixes — never commit directly to the default
-       branch. Group related formatting fixes into a single PR.
+4. DEVELOPER EXPERIENCE
+        Ensure consistent formatting and static analysis.
+        Run `mise run format` to check formatting with prettier.
+        
+        CRITICAL: The prettier config is located at `.dotfiles/.prettierrc.yaml`
+        (note: in the `.dotfiles/` directory, not root).
+        
+        ALWAYS use: `npx --yes prettier --config .dotfiles/.prettierrc.yaml --write [files]`
+        NEVER run: `npx --yes prettier --write` (without the --config flag)
+        
+        The mise task runs:
+          prettier --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .github
+        
+        Which targets ONLY .devcontainer/, .dotfiles/, and .github/ —
+        NOT AI agent directories (.claude/, .config/opencode/, etc).
+        
+        Fix any failures.
+        Open a PR for all fixes — never commit directly to the default
+        branch. Group related formatting fixes into a single PR.
 
     5. DEVCONTAINER & CI HEALTH
        Verify the development environment infrastructure:

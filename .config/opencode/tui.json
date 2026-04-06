@@ -1,7 +1,5 @@
 {
   "$schema": "https://opencode.ai/tui.json",
   "theme": "catppuccin",
-  "plugin": [
-    "@cortexkit/opencode-magic-context@latest"
-  ]
+  "plugin": ["@cortexkit/opencode-magic-context@latest"]
 }
