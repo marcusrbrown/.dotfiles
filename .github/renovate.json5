@@ -7,11 +7,11 @@
       description: 'Update _VERSION variables in the global Mise config file.',
       managerFilePatterns: ['/(^|/)\\.?mise\\.toml$/', '/(^|/)\\.?mise/config\\.toml$/'],
       matchStrings: [
-        '# renovate: datasource=(?<datasource>[a-z-.]+?)(?: depName=(?<depName>.+?))?(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+?.+?_VERSION=(?<currentValue>.+?)\\s',
+        '# renovate: datasource=(?<datasource>[a-z-.]+?)(?: depName=(?<depName>.+?))?(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+?.+?_VERSION=(?<currentValue>.+?)\\s'
       ],
       depTypeTemplate: 'devDependencies',
-      versioningTemplate: '{{#if versioning}}{{versioning}}{{else}}semver{{/if}}',
-    },
+      versioningTemplate: '{{#if versioning}}{{versioning}}{{else}}semver{{/if}}'
+    }
   ],
   ignorePresets: ['mergeConfidence:age-confidence-badges', 'mergeConfidence:all-badges'],
   packageRules: [
@@ -19,7 +19,7 @@
       description: 'Enable patch updates for some managers.',
       matchManagers: ['devcontainer', 'dockerfile', 'docker-compose', 'mise'],
       matchUpdateTypes: ['patch'],
-      enabled: true,
+      enabled: true
     },
     {
       description: 'Disable digest pinning for base images',
@@ -28,7 +28,7 @@
       // Troubleshooting
       // pinDigests: false,
       automergeType: 'branch',
-      dependencyDashboardApproval: true,
+      dependencyDashboardApproval: true
     },
     {
       description: ['Automerge unstable minor updates of some packages.'],
@@ -36,8 +36,9 @@
       matchPackageNames: ['@cortexkit/opencode-magic-context', 'agent-browser', 'opencode-anthropic-oauth'],
       matchUpdateTypes: ['minor', 'patch'],
       extends: ['github>bfra-me/renovate-config:automerge.json5#5.2.1'],
-      dependencyDashboardApproval: false,
-    },
+      dependencyDashboardApproval: false
+    }
   ],
-  rebaseWhen: 'behind-base-branch',
+  prCreation: 'immediate',
+  rebaseWhen: 'behind-base-branch'
 }
