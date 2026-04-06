@@ -6,7 +6,7 @@
 /.config/cursor/
 !/.config/opencode/
 /.config/opencode/*
-!/.config/opencode/**/*.json?
+!/.config/opencode/**/*.json*
 
 # AI-generated knowledge base
 /AGENTS.md
