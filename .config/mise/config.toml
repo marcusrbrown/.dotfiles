@@ -14,7 +14,7 @@ go = "1.26.1"
 ast-grep = "0.40.5"
 
  # shfmt
-"aqua:mvdan/sh" = "3.13.0"
+"aqua:mvdan/sh" = "3.13.1"
 
 "npm:typescript" = "6.0.2"
 "npm:vibe-tools" = "0.63.3"
