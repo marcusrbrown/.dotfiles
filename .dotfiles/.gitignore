@@ -7,6 +7,7 @@
 *.zwc
 
 # Include the contents of the repository
+!/.agents/
 !/.claude/
 /.claude/*
 !/.claude/agents/
