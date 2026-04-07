@@ -1,12 +1,14 @@
 ---
 globs:
+  - '!.agents/**'
+  - '.agents/skills/**/*.md'
   - '!.claude/**'
   - '!.cursorrules'
   - '!.cursor/rules/**'
   - '!**/node_modules'
   - '!.specstory/**'
   - '!.ai/**'
-  - '!AGENTS.md'
-  - '!CLAUDE.md'
+  - '!**/AGENTS.md'
+  - '!**/CLAUDE.md'
   - '!.opencode/**'
   - '!.config/opencode/**'

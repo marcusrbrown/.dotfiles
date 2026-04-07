@@ -1,0 +1,33 @@
+{
+  "version": 3,
+  "skills": {
+    "microsoft-foundry": {
+      "source": "microsoft/azure-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/microsoft/azure-skills.git",
+      "skillPath": ".github/plugins/azure-skills/skills/microsoft-foundry/SKILL.md",
+      "skillFolderHash": "5e0c2d401c82021e1d180c89cf3233ddfbb5fbc9",
+      "installedAt": "2026-03-23T20:50:54.654Z",
+      "updatedAt": "2026-03-23T20:50:54.654Z"
+    },
+    "test-driven-development": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/obra/superpowers.git",
+      "skillPath": "skills/test-driven-development/SKILL.md",
+      "skillFolderHash": "98904a7d8e0e04b9bd46220b9b17298f45fe0b72",
+      "installedAt": "2026-04-07T06:24:49.000Z",
+      "updatedAt": "2026-04-07T06:24:49.000Z"
+    },
+    "writing-skills": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/obra/superpowers.git",
+      "skillPath": "skills/writing-skills/SKILL.md",
+      "skillFolderHash": "80e8c7d3be99d55d5d76c9516cc45a1e7f48f281",
+      "installedAt": "2026-04-07T06:18:29.000Z",
+      "updatedAt": "2026-04-07T06:18:29.000Z"
+    }
+  },
+  "dismissed": {}
+}
