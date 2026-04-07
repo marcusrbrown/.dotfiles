@@ -1,4 +1,4 @@
-# Copilot Coding Agent Hooks Reference
+# Copilot Cloud Agent Hooks Reference
 
 ## Config File
 
