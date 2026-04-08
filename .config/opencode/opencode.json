@@ -2,11 +2,11 @@
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
     "opencode-anthropic-oauth",
-    "oh-my-openagent@3.15.2",
+    "oh-my-openagent@3.15.3",
     "@fro.bot/systematic@latest",
     "@franlol/opencode-md-table-formatter@latest",
-    "@cortexkit/aft-opencode@0.9.0",
-    "@cortexkit/opencode-magic-context@0.7.3"
+    "@cortexkit/aft-opencode@0.9.1",
+    "@cortexkit/opencode-magic-context@0.7.4"
   ],
   "mcp": {
     "context7": {
