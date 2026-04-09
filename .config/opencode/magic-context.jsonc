@@ -26,6 +26,10 @@
       "enabled": true,
       "token_budget": 10000,
       "min_reads": 4
+    },
+    "user_memories": {
+      "enabled": true,
+      "promotion_threshold": 3
     }
   }
 }
