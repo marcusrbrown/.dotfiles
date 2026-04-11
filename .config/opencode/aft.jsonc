@@ -1,3 +1,4 @@
 {
-  "experimental_search_index": true
+  "experimental_search_index": true,
+  "experimental_semantic_search": true
 }
