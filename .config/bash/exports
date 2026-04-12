@@ -355,6 +355,11 @@ export AZURE_CONFIG_DIR="$XDG_DATA_HOME"/azure
 
 export VIBE_TOOLS_NO_TELEMETRY=1
 
+# OMO (oh-my-openagent)
+
+export OMO_SEND_ANONYMOUS_TELEMETRY=0
+export OMO_DISABLE_POSTHOG=1
+
 # ASDF
 
 if command_exists asdf; then
