@@ -31,6 +31,11 @@
       dependencyDashboardApproval: true
     },
     {
+      description: 'Disable updates for Claude Code npm package.',
+      matchPackageNames: ['@anthropic-ai/claude-code'],
+      enabled: false
+    },
+    {
       description: ['Automerge unstable minor updates of some packages.'],
       matchCurrentVersion: '/^v?0/',
       matchPackageNames: [
