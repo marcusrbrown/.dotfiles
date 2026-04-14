@@ -9,7 +9,7 @@
   },
   "sidekick": {
     "enabled": true,
-    "model": "opencode/gpt-5-nano"
+    "model": "github-copilot/gpt-5-mini"
   },
   "cache_ttl": {
     "default": "5m",
@@ -30,6 +30,7 @@
     "user_memories": {
       "enabled": true,
       "promotion_threshold": 3
-    }
+    },
+    "compaction_markers": true
   }
 }
