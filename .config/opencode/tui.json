@@ -3,6 +3,6 @@
   "theme": "catppuccin",
   "plugin": [
     "@cortexkit/opencode-magic-context@0.9.0",
-    "@cortexkit/aft-opencode@0.12.2"
+    "@cortexkit/aft-opencode@0.13.0"
   ]
 }

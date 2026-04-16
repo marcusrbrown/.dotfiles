@@ -87,9 +87,23 @@
     "plugins": false,
     "skills": true
   },
-  "disabled_agents": ["atlas", "hephaestus"],
-  "disabled_hooks": ["context-window-monitor", "preemptive-compaction", "anthropic-context-window-limit-recovery"],
-  "disabled_skills": ["git-master"],
+  "disabled_agents": [
+    "atlas",
+    "hephaestus"
+  ],
+  "disabled_hooks": [
+    "context-window-monitor",
+    "preemptive-compaction",
+    "anthropic-context-window-limit-recovery"
+  ],
+  "disabled_skills": [
+    "git-master"
+  ],
+  "git_master": {
+    "commit_footer": false,
+    "include_co_authored_by": false,
+    "git_env_prefix": "GIT_MASTER=1"
+  },
   "hashline_edit": true,
   "sisyphus_agent": {
     "default_builder_enabled": true,
