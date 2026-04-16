@@ -94,7 +94,9 @@
   "disabled_hooks": [
     "context-window-monitor",
     "preemptive-compaction",
-    "anthropic-context-window-limit-recovery"
+    "anthropic-context-window-limit-recovery",
+    "keyword-detector",
+    "todo-continuation-enforcer"
   ],
   "disabled_skills": [
     "git-master"
