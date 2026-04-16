@@ -160,8 +160,6 @@
       "Bash(rm -rf /)",
       "Bash(rm -rf ~)",
       "Bash(rm -rf /*)",
-      "Bash(sudo:*passwd*)",
-      "Bash(sudo:*shadow*)",
       "Bash(sudo chmod 777:*)",
       "Bash(sudo chown:*)",
       "Bash(sudo -i:*)",
@@ -211,5 +209,6 @@
   "statusLine": {
     "type": "command",
     "command": "bun x ccusage@latest statusline"
-  }
+  },
+  "model": "sonnet"
 }

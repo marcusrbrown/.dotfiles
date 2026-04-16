@@ -95,8 +95,7 @@
     "context-window-monitor",
     "preemptive-compaction",
     "anthropic-context-window-limit-recovery",
-    "keyword-detector",
-    "todo-continuation-enforcer"
+    "keyword-detector"
   ],
   "disabled_skills": [
     "git-master"
