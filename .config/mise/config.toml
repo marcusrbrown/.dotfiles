@@ -30,7 +30,7 @@ ast-grep = "0.40.5"
 "npm:agent-browser" = "0.25.4"
 "npm:skills" = "1.5.0"
 "npm:ocx" = "2.0.6"
-"npm:@cortexkit/opencode-magic-context" = "0.9.1"
+"npm:@cortexkit/opencode-magic-context" = "0.10.0"
 "npm:@cortexkit/aft-opencode" = "0.13.0"
 "npm:@marcusrbrown/infra" = "latest"
 

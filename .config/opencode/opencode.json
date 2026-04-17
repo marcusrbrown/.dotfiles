@@ -5,7 +5,7 @@
     "oh-my-openagent@3.17.4",
     "@fro.bot/systematic@latest",
     "@franlol/opencode-md-table-formatter@latest",
-    "@cortexkit/opencode-magic-context@0.9.1",
+    "@cortexkit/opencode-magic-context@0.10.0",
     "@cortexkit/aft-opencode@0.13.0"
   ],
   "mcp": {
