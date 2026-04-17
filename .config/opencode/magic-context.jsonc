@@ -32,5 +32,6 @@
       "promotion_threshold": 3
     }
   },
-  "compaction_markers": true
+  "compaction_markers": true,
+  "ctx_reduce_enabled": false
 }
