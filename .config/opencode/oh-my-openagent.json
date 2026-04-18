@@ -110,6 +110,7 @@
     "include_co_authored_by": false,
     "git_env_prefix": "GIT_MASTER=1"
   },
+  "hashline_edit": true,
   "sisyphus_agent": {
     "default_builder_enabled": true,
     "planner_enabled": false,
