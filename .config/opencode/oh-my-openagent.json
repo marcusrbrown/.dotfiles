@@ -3,13 +3,11 @@
   "agents": {
     "sisyphus": {
       "model": "anthropic/claude-opus-4-7",
-      "variant": "max",
-      "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_search` tool to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
+      "variant": "xhigh"
     },
     "hephaestus": {
       "model": "github-copilot/gpt-5.4",
-      "variant": "medium",
-      "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_search` tool to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
+      "variant": "medium"
     },
     "oracle": {
       "model": "github-copilot/gpt-5.4",
@@ -27,21 +25,18 @@
     },
     "prometheus": {
       "model": "anthropic/claude-opus-4-7",
-      "variant": "max",
-      "prompt_append": "---\n\n## Session Management (MANDATORY)\nAt the start of the session or before investigating any issue:\n1. Use the `session_search` tool to find relevant prior sessions for this project\n2. Use the `session_read` tool to review prior work if found\n3. Avoid repeating investigation already completed in previous sessions\n\nBefore completing:\n1. Ensure your session contains a summary of work done\n2. Include key decisions, findings, and outcomes\n3. This summary will be searchable in future agent runs\n\n---\n\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
+      "variant": "xhigh"
     },
     "metis": {
       "model": "anthropic/claude-opus-4-7",
-      "variant": "max",
-      "prompt_append": "\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
+      "variant": "xhigh"
     },
     "momus": {
       "model": "github-copilot/gpt-5.4",
       "variant": "xhigh"
     },
     "atlas": {
-      "model": "anthropic/claude-sonnet-4-6",
-      "prompt_append": "\nALWAYS USE THE QUESTION TOOL IF YOU NEED TO ASK USER."
+      "model": "anthropic/claude-sonnet-4-6"
     }
   },
   "auto_update": false,
@@ -73,7 +68,7 @@
     },
     "unspecified-high": {
       "model": "anthropic/claude-opus-4-7",
-      "variant": "max"
+      "variant": "xhigh"
     },
     "writing": {
       "model": "github-copilot/gemini-3-flash-preview"
