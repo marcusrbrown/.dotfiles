@@ -30,8 +30,8 @@ ast-grep = "0.40.5"
 "npm:agent-browser" = "0.26.0"
 "npm:skills" = "1.5.1"
 "npm:ocx" = "2.0.6"
-"npm:@cortexkit/opencode-magic-context" = "0.10.1"
-"npm:@cortexkit/aft-opencode" = "0.13.0"
+"npm:@cortexkit/opencode-magic-context" = "0.11.0"
+"npm:@cortexkit/aft-opencode" = "0.13.1"
 "npm:@marcusrbrown/infra" = "latest"
 
 # Language Servers
