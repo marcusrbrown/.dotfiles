@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/cortexkit/opencode-magic-context/refs/heads/master/assets/magic-context.schema.json",
   "historian": {
-    "model": "github-copilot/claude-sonnet-4.6",
+    "model": "github-copilot/gpt-5.4",
     "fallback_models": ["anthropic/claude-sonnet-4-6"]
   },
   "dreamer": {
@@ -37,8 +37,10 @@
     }
   },
   "history_budget_percentage": 0.21,
+  "historian_timeout_ms": 420000,
   "memory": {
     "injection_budget_tokens": 20000
   },
-  "compaction_markers": true
+  "compaction_markers": true,
+  "auto_drop_tool_age": 50
 }
