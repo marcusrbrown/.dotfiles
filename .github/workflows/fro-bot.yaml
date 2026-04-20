@@ -123,24 +123,25 @@ env:
        e. Comment on the PR explaining what failed and what was fixed.
 
     2. SECURITY
-       Review Dependabot/Renovate alerts and open PRs for vulnerable deps.
+       Review open PRs labeled as security/dependency fixes for failures.
        - If a security update PR exists but has conflicts or failures,
          fix and push to that PR branch.
-       - For unaddressed critical/high advisories with no existing PR,
-         create a new PR with the remediation.
        - Do NOT bulk-update unrelated deps in a security PR.
 
-       Additionally, scan tracked files for accidental secret exposure:
+       Do NOT attempt to query Dependabot/vulnerability-alert APIs. Fro Bot's
+       PAT is a collaborator token on user-owned repos, and GitHub restricts
+       security-alert endpoints to repo owners on personal repos (always 404).
+       Marcus receives Dependabot notifications directly as the repo owner.
+       Omit any "Vulnerability alerts" row from the Security table and do
+       not add a "security alerts unavailable" entry to Needs Human Attention.
+
+       Scan tracked files for accidental secret exposure:
        - Search for patterns: API keys, tokens, passwords, private keys,
          hardcoded IPs/hostnames that look internal.
        - Check .config/bash/exports for values that should be in local.d/.
        - Verify .ssh/config doesn't contain credentials (only structure).
        If any secrets are found, create an issue immediately with severity
        "critical" — do NOT include the secret value in the issue body.
-
-       If security advisory/alert data is unavailable to the token or CLI,
-       skip the advisory check and note "security alerts unavailable" under
-       "Needs Human Attention". Do not guess.
 
     3. CONFIG QUALITY & REPO HYGIENE
        This category is primarily report-only. Focus on things only a
@@ -214,15 +215,15 @@ env:
           exists. Flag repos without one.
        c. AGENTS.md presence: check if `AGENTS.md` exists at repo root.
           Flag repos without one.
-       d. Security alerts: `gh api repos/marcusrbrown/{repo}/vulnerability-alerts`
-          Flag repos with unaddressed critical/high advisories.
-          If the API is unavailable for a repo, note "alerts unavailable"
-          and continue.
-       e. Stale PRs: `gh pr list -R marcusrbrown/{repo} --json number,title,updatedAt -L 10`
+       d. Stale PRs: `gh pr list -R marcusrbrown/{repo} --json number,title,updatedAt -L 10`
           Flag PRs with no activity >14 days.
-       f. Action version drift: if fro-bot.yaml exists, check the
+       e. Action version drift: if fro-bot.yaml exists, check the
           `fro-bot/agent@` version. Flag repos using a version older than
           this repo's pinned version.
+
+       Do NOT check security/vulnerability alerts cross-project. Fro Bot's
+       PAT cannot access those endpoints on user-owned repos (404 by design).
+       Omit any "Alerts" column from the Cross-Project Health table.
 
        Hard boundaries for this category:
        - NEVER modify other repositories. Observation only.
@@ -312,9 +313,9 @@ env:
     | Mise tool versions | ✅ Installable / ⚠️ Issues | [details] |
 
     ### Cross-Project Health
-    | Repo | CI | Fro Bot | AGENTS.md | Alerts | Stale PRs |
-    | --- | --- | --- | --- | --- | --- |
-    | [repo] | ✅/❌ | ✅/❌ [version] | ✅/❌ | N alerts | N stale |
+    | Repo | CI | Fro Bot | AGENTS.md | Stale PRs |
+    | --- | --- | --- | --- | --- |
+    | [repo] | ✅/❌ | ✅/❌ [version] | ✅/❌ | N stale |
 
     ### Needs Human Attention
     - [items that could not be auto-fixed, with context]
