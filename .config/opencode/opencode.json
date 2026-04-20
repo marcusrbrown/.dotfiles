@@ -6,7 +6,7 @@
     "@fro.bot/systematic@latest",
     "@franlol/opencode-md-table-formatter@latest",
     "@cortexkit/opencode-magic-context@0.12.0",
-    "@cortexkit/aft-opencode@0.13.1"
+    "@cortexkit/aft-opencode@0.14.0"
   ],
   "mcp": {
     "context7": {
