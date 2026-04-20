@@ -84,8 +84,6 @@ __form_paths () {
 
 __set_path PATH ".:$(__form_paths bin sbin)"
 __set_path LD_LIBRARY_PATH "$(__form_paths lib)"
-# TODO: Needs mingw path fixup
-#__set_path CLASSPATH "."
 __set_path CDPATH ".:$HOME/git:$HOME/hg:$HOME/svn:$HOME"
 
 
@@ -127,7 +125,6 @@ if [ -n "$REMOTE" ]; then
   # Fix the terminal when shelling in from MSYS or Cygwin.
   case "$TERM" in
     msys*)
-      # TODO: Make sure the host isn't MSYS or Cygwin.
       export TERM=xterm
       ;;
   esac

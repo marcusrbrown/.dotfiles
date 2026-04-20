@@ -118,7 +118,6 @@ set suffixes=.bak,~,.swp,.o,.info,.aux,.log,.dvi,.bbl,.blg,.brf,.cb,.ind,.idx,.i
 set tags=tags;/
 
 
-" TODO: Make this a bit more robust / check terminal types, etc.
 set t_Co=256
 
 syntax on
@@ -282,7 +281,6 @@ if has('gui_running')
   " Enable visual and modeless autoselect (to clipboard and the "* register).
   set guioptions+=aA
 
-  " TODO: Create highlights for the n-v-c modes, and for the insert modes.
   set guicursor=n-v-c:hor15-Cursor
   set guicursor+=i-ci:hor15-Cursor
   set guicursor+=r-cr:ver25-Cursor

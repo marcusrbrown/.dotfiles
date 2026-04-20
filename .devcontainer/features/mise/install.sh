@@ -24,8 +24,8 @@ curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin s
 eval "$(mise activate bash)"
 mise doctor
 
-# Add mise activation to profile
-# TODO: Support other base OSes
+# Add mise activation to profile.
+# Assumes a Debian-family profile path; revisit if Alpine/Fedora support is needed.
 _mise_profile_path=/etc/profile.d/mise.sh
 tee "$_mise_profile_path" >/dev/null <<'EOF'
 if [ -n "$ZSH_VERSION" ]; then
