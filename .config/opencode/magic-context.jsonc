@@ -41,6 +41,5 @@
   "memory": {
     "injection_budget_tokens": 20000
   },
-  "compaction_markers": true,
-  "ctx_reduce_enabled": false
+  "compaction_markers": true
 }
