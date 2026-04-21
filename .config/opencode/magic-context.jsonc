@@ -26,8 +26,8 @@
     "anthropic/claude-opus-4-7": 40
   },
   "execute_threshold_tokens": {
-    "github-copilot/claude-opus-4.7": 112000,
-    "github-copilot/claude-sonnet-4.6": 105000,
+    "github-copilot/claude-opus-4.7": 88000,
+    "github-copilot/claude-sonnet-4.6": 95000,
     "github-copilot/gpt-5.4": 140000,
     "github-copilot/gpt-5.3-codex": 210000
   },
