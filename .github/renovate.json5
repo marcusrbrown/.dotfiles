@@ -31,8 +31,8 @@
       dependencyDashboardApproval: true
     },
     {
-      description: 'Disable updates for Claude Code npm package.',
-      matchPackageNames: ['@anthropic-ai/claude-code'],
+      description: 'Disable updates for manually managed npm packages.',
+      matchPackageNames: ['@anthropic-ai/claude-code', 'opencode-ai'],
       enabled: false
     },
     {
