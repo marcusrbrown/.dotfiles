@@ -40,7 +40,8 @@
     "user_memories": {
       "enabled": true,
       "promotion_threshold": 3
-    }
+    },
+    "temporal_awareness": true
   },
   "history_budget_percentage": 0.15,
   "historian_timeout_ms": 420000,
