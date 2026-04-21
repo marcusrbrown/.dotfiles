@@ -2,8 +2,8 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": {
-      "model": "anthropic/claude-opus-4-6",
-      "variant": "max"
+      "model": "github-copilot/claude-opus-4.7",
+      "variant": "medium"
     },
     "hephaestus": {
       "model": "github-copilot/gpt-5.4",
@@ -23,20 +23,13 @@
       "model": "github-copilot/gpt-5.4",
       "variant": "medium"
     },
-    "prometheus": {
-      "model": "anthropic/claude-opus-4-6",
-      "variant": "max"
-    },
     "metis": {
-      "model": "anthropic/claude-opus-4-6",
-      "variant": "max"
+      "model": "github-copilot/claude-opus-4.7",
+      "variant": "medium"
     },
     "momus": {
       "model": "github-copilot/gpt-5.4",
       "variant": "xhigh"
-    },
-    "atlas": {
-      "model": "anthropic/claude-sonnet-4-6"
     }
   },
   "auto_update": false,
@@ -64,11 +57,11 @@
       "model": "github-copilot/gpt-5.4-mini"
     },
     "unspecified-low": {
-      "model": "anthropic/claude-sonnet-4-6"
+      "model": "github-copilot/claude-sonnet-4.6"
     },
     "unspecified-high": {
-      "model": "anthropic/claude-opus-4-6",
-      "variant": "max"
+      "model": "github-copilot/claude-opus-4.7",
+      "variant": "medium"
     },
     "writing": {
       "model": "github-copilot/gemini-3-flash-preview"
@@ -95,6 +88,7 @@
     "comment-checker",
     "directory-readme-injector",
     "keyword-detector",
+    "todo-continuation-enforcer",
     "write-existing-file-guard"
   ],
   "disabled_skills": [
