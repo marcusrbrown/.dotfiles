@@ -25,6 +25,12 @@
     "anthropic/claude-opus-4-6": 40,
     "anthropic/claude-opus-4-7": 40
   },
+  "execute_threshold_tokens": {
+    "github-copilot/claude-opus-4.7": 112000,
+    "github-copilot/claude-sonnet-4.6": 105000,
+    "github-copilot/gpt-5.4": 140000,
+    "github-copilot/gpt-5.3-codex": 210000
+  },
   "experimental": {
     "pin_key_files": {
       "enabled": true,
@@ -36,11 +42,11 @@
       "promotion_threshold": 3
     }
   },
-  "history_budget_percentage": 0.21,
+  "history_budget_percentage": 0.15,
   "historian_timeout_ms": 420000,
   "memory": {
-    "injection_budget_tokens": 20000
+    "injection_budget_tokens": 6000
   },
   "compaction_markers": true,
-  "auto_drop_tool_age": 50
+  "auto_drop_tool_age": 30
 }
