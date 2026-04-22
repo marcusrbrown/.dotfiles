@@ -44,6 +44,9 @@ ast-grep = "0.40.5"
 [task_config]
 includes = ["tasks/dotfiles.toml", "tasks/_mise.toml"]
 
+[env]
+UV_SYSTEM_CERTS = "true"
+
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
 
