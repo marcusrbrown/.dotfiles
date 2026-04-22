@@ -7,7 +7,16 @@
   "dreamer": {
     "enabled": true,
     "model": "github-copilot/claude-sonnet-4.6",
-    "fallback_models": ["anthropic/claude-sonnet-4-6"]
+    "fallback_models": ["anthropic/claude-sonnet-4-6"],
+    "user_memories": {
+      "enabled": true,
+      "promotion_threshold": 3
+    },
+    "pin_key_files": {
+      "enabled": true,
+      "token_budget": 20000,
+      "min_reads": 4
+    }
   },
   "sidekick": {
     "enabled": true,
@@ -32,14 +41,15 @@
     "github-copilot/gpt-5.3-codex": 210000
   },
   "experimental": {
-    "pin_key_files": {
+    "auto_search": {
       "enabled": true,
-      "token_budget": 20000,
-      "min_reads": 4
+      "min_prompt_chars": 20,
+      "score_threshold": 0.55
     },
-    "user_memories": {
+    "git_commit_indexing": {
       "enabled": true,
-      "promotion_threshold": 3
+      "since_days": 365,
+      "max_commits": 2000
     },
     "temporal_awareness": true
   },
