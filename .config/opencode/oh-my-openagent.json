@@ -14,7 +14,7 @@
       "variant": "high"
     },
     "librarian": {
-      "model": "opencode-go/minimax-m2.7"
+      "model": "github-copilot/claude-haiku-4.5"
     },
     "explore": {
       "model": "github-copilot/grok-code-fast-1"
