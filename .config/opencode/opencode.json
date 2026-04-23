@@ -5,8 +5,8 @@
     "oh-my-openagent@3.17.4",
     "@fro.bot/systematic@latest",
     "@franlol/opencode-md-table-formatter@latest",
-    "@cortexkit/opencode-magic-context@0.14.0",
-    "@cortexkit/aft-opencode@0.14.1"
+    "@cortexkit/opencode-magic-context@0.14.2",
+    "@cortexkit/aft-opencode@0.15.1"
   ],
   "mcp": {
     "context7": {
@@ -33,6 +33,7 @@
       "oauth": false
     }
   },
+  "model": "opencode-go/kimi-k2.6",
   "compaction": {
     "auto": false,
     "prune": false
