@@ -356,6 +356,26 @@ jobs:
         )
       )
     steps:
+      - name: Close stale daily reports
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ secrets.FRO_BOT_PAT }}
+        run: |
+          cutoff=$(date -u -d '3 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null \
+                   || date -u -v-3d '+%Y-%m-%dT%H:%M:%SZ')
+          gh issue list -R "$GITHUB_REPOSITORY" \
+            --author fro-bot \
+            --state open \
+            --search "Daily Maintenance Report in:title" \
+            --json number,title,createdAt \
+            --jq ".[] | select(.createdAt < \"$cutoff\") | .number" \
+          | while read -r num; do
+              gh issue close "$num" -R "$GITHUB_REPOSITORY" \
+                --reason "not planned" \
+                --comment "Auto-closed: daily report older than 3 days."
+              echo "Closed #$num"
+            done
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
