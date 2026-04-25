@@ -1,14 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
-    "sisyphus": {
-      "model": "anthropic/claude-opus-4-6",
-      "variant": "max"
-    },
-    "hephaestus": {
-      "model": "github-copilot/gpt-5.4",
-      "variant": "medium"
-    },
     "oracle": {
       "model": "github-copilot/gpt-5.4",
       "variant": "high"
@@ -24,7 +16,7 @@
       "variant": "medium"
     },
     "metis": {
-      "model": "anthropic/claude-opus-4-6",
+      "model": "anthropic/claude-opus-4-7",
       "variant": "max"
     },
     "momus": {
@@ -60,7 +52,7 @@
       "model": "anthropic/claude-sonnet-4-6"
     },
     "unspecified-high": {
-      "model": "anthropic/claude-opus-4-6",
+      "model": "anthropic/claude-opus-4-7",
       "variant": "max"
     },
     "writing": {
@@ -77,7 +69,8 @@
   },
   "disabled_agents": [
     "atlas",
-    "hephaestus"
+    "hephaestus",
+    "sisyphus"
   ],
   "disabled_hooks": [
     "context-window-monitor",
@@ -99,10 +92,5 @@
     "include_co_authored_by": false,
     "git_env_prefix": "GIT_MASTER=1"
   },
-  "hashline_edit": true,
-  "sisyphus_agent": {
-    "default_builder_enabled": true,
-    "planner_enabled": false,
-    "replace_plan": false
-  }
+  "hashline_edit": true
 }
