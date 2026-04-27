@@ -1,4 +1,5 @@
 {
+  "restrict_to_project_root": false,
   "experimental_search_index": true,
   "experimental_semantic_search": true
 }
