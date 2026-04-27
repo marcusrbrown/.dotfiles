@@ -5,6 +5,16 @@ description: Use when delegating coding work to GitHub Copilot CLI from another 
 
 # GitHub Copilot CLI
 
+## OpenCode plugin: prefer when available
+
+If your tool catalog includes `copilot_delegate`, `copilot_output`, and `copilot_cancel` — provided by [`opencode-copilot-delegate`](https://github.com/marcusrbrown/opencode-copilot-delegate) — **prefer those tools** for Copilot CLI delegation from OpenCode. They:
+
+- Spawn the subprocess for you, parse JSONL output, and inject a completion notification back into the OpenCode session.
+- Track running tasks by id: `copilot_output(task_id)` retrieves results (with optional blocking), `copilot_cancel(task_id)` aborts and reaps the process tree.
+- Discover available `--agent` values from `~/.copilot/agents/`, `<repo>/.github/agents/`, and Copilot CLI builtins.
+
+See the plugin README for tool argument schemas and behavior. **The rest of this skill is the bash-subprocess fallback** — use it when the plugin isn't installed (other agents, scripts, CI without the plugin), when you need direct shell control, or when delegating from outside OpenCode entirely.
+
 ## Overview
 
 Two CLIs with confusingly similar names — never conflate:
