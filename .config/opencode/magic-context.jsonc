@@ -51,10 +51,7 @@
       "since_days": 365,
       "max_commits": 2000
     },
-    "temporal_awareness": true,
-    "caveman_text_compression": {
-      "enabled": true
-    }
+    "temporal_awareness": true
   },
   "history_budget_percentage": 0.15,
   "historian_timeout_ms": 420000,
@@ -62,6 +59,5 @@
     "injection_budget_tokens": 6000
   },
   "compaction_markers": true,
-  "auto_drop_tool_age": 30,
-  "ctx_reduce_enabled": false
+  "auto_drop_tool_age": 30
 }
