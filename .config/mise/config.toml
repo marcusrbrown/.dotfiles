@@ -47,6 +47,8 @@ includes = ["tasks/dotfiles.toml", "tasks/_mise.toml"]
 
 [env]
 UV_SYSTEM_CERTS = "true"
+NPM_TOKEN = "{{ env.NPM_TOKEN | default(value='') }}"
+_.file = [{ path = "{{ env.HOME }}/.config/mise/.env.local", redact = true }]
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
