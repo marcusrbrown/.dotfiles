@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+#MISE description="Install all tools managed by mise"
+exec mise install

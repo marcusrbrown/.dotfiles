@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Install dotfiles"
+#MISE depends=["mise:tools:install", "print:done"]
+:
