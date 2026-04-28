@@ -72,7 +72,7 @@ git status  # now works on dotfiles
 | Prompt | `.config/starship.toml` | Starship; installed via devcontainer feature |
 | Git settings | `.config/git/config` | GPG signing on, rebase defaults, autoStash |
 | Mise tool versions | `.config/mise/config.toml` | Node, Python, Rust, etc. — `nvm` is disabled |
-| Mise tasks | `.config/mise/tasks/{dotfiles,_mise}.toml` | `format`, `install`, `opencode:doctor` |
+| Mise tasks | `.config/mise/tasks/` | File-based shebang scripts; subdirs map to `:` (e.g. `mise/tools/install` -> `mise:tools:install`); auto-discovered, no `task_config.includes` needed |
 | Brewfile | `Brewfile` | macOS apps + casks + mas + 140+ vscode extensions |
 | Claude Code agents/rules | `.claude/agents/`, `.claude/rules/` | Custom agent + rule definitions |
 | OpenCode config | `.config/opencode/` | Has own AGENTS.md (collaboration system prompt) |
@@ -153,7 +153,6 @@ Repo ignores EVERYTHING by default, allowlists tracked paths in `.dotfiles/.giti
 - **DO NOT** run `git` commands without `.dotfiles` env vars set
 - **NEVER** commit machine-specific values (use `*.local` files or `local.d/`)
 - **NEVER** commit secrets (SSH keys, API tokens, credentials)
-- **DO NOT** hardcode `~/` or `$HOME` in `.config/mise/config.toml` `task_config.includes` — mise doesn't expand them; relative paths (`tasks/dotfiles.toml`) resolve against the config dir
 
 ## DEVCONTAINER SETUP
 
@@ -191,7 +190,7 @@ mise run opencode:doctor -- --json            # Scriptable output
 ## NOTES
 
 - **Fro Bot security alerts (by design, not bug)**: `FRO_BOT_PAT` is a collaborator-level token. GitHub restricts `/vulnerability-alerts` and `/dependabot/alerts` endpoints to repo owners on personal (user-owned) repos, regardless of token scope or collaborator role. Personal repos have no granular collaborator roles (only "Collaborator", which is effectively write access — Admin/Maintain/Triage exist only for org-owned repos). Marcus receives Dependabot notifications directly as the owner; Fro Bot's daily report intentionally omits this section (PR #1442).
-- **mise `task_config.includes` portability**: this field doesn't expand `~`/`$HOME`/`{{config_root}}`/`{{xdg_config_home}}`. Use relative paths (`tasks/dotfiles.toml`); they resolve against the config file's directory.
+- **mise `task_config.includes` portability**: this field doesn't expand `~`/`$HOME`/`{{config_root}}`/`{{xdg_config_home}}` and silently ignores relative paths in global config (`project_root` is `None`). Avoid it entirely — use file-based shebang tasks under `.config/mise/tasks/` instead (auto-discovered, no expansion needed).
 - **Broken cache-clean LaunchAgent**: `~/Library/LaunchAgents/dev.mrbro.cache-clean.plist` references a nonexistent path. Sunday 4AM cleanup does not run. Plist is not tracked in dotfiles. Manual cleanup: `brew cleanup --prune=all`, `uv cache clean`, `mise prune`.
 - **Disk monitoring**: macOS root FS occasionally hits ENOSPC (seen with <300MB free on a 926GB disk). pnpm rename errors are the canary. Run cleanup when tight.
 - **`command_exists` guard**: used throughout `.config/bash/init.d/` and `.config/bash/aliases` for conditional tool setup — required pattern.

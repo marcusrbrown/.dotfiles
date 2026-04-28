@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="List outdated tools (including major bumps)"
+#MISE silent=true
+exec mise outdated --bump

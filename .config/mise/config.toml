@@ -42,9 +42,6 @@ ast-grep = "0.40.5"
 
 "github:mazznoer/lolcrab" = "0.4.1"
 
-[task_config]
-includes = ["tasks/dotfiles.toml", "tasks/_mise.toml"]
-
 [env]
 UV_SYSTEM_CERTS = "true"
 NPM_TOKEN = "{{ env.NPM_TOKEN | default(value='') }}"

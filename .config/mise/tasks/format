@@ -1,0 +1,4 @@
+#!/bin/sh -x
+#MISE description="Format dotfiles"
+#MISE dir="{{cwd}}"
+prettier --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .github
