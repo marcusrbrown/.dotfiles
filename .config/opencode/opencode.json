@@ -3,7 +3,7 @@
   "plugin": [
     "@ex-machina/opencode-anthropic-auth@1.8.0",
     "oh-my-openagent@3.17.6",
-    "opencode-copilot-delegate@0.3.0",
+    "opencode-copilot-delegate@0.6.0",
     "@fro.bot/systematic@latest",
     "@franlol/opencode-md-table-formatter@latest",
     "@cortexkit/opencode-magic-context@0.15.7",
