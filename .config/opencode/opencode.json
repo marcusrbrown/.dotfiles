@@ -33,6 +33,23 @@
       "oauth": false
     }
   },
+  "agent": {
+    "build": {
+      "model": "anthropic/claude-opus-4-7",
+      "variant": "xhigh"
+    },
+    "plan": {
+      "model": "anthropic/claude-opus-4-7",
+      "variant": "xhigh"
+    },
+    "general": {
+      "model": "github-copilot/gpt-5.4",
+      "variant": "xhigh"
+    },
+    "explore": {
+      "model": "github-copilot/gpt-5.4-mini"
+    }
+  },
   "model": "opencode-go/kimi-k2.6",
   "compaction": {
     "auto": false,
