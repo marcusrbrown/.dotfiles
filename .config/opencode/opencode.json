@@ -35,11 +35,11 @@
   },
   "agent": {
     "build": {
-      "model": "anthropic/claude-opus-4-7",
+      "model": "github-copilot/gpt-5.4",
       "variant": "xhigh"
     },
     "plan": {
-      "model": "anthropic/claude-opus-4-7",
+      "model": "github-copilot/gpt-5.4",
       "variant": "xhigh"
     },
     "general": {
