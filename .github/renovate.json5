@@ -32,7 +32,7 @@
         Package: '[`{{{replace "^ghcr\\.io/devcontainers/features/" "" depName}}}`](https://github.com/devcontainers/features/tree/main/src/{{{replace "^ghcr\\.io/devcontainers/features/" "" depName}}})'
       },
       sourceUrl: 'https://github.com/devcontainers/features',
-      changelogUrl: 'https://github.com/devcontainers/features/blob/main/src/{{{replace "^ghcr\\.io/devcontainers/features/" "" depName}}}/NOTES.md'
+      changelogUrl: 'https://github.com/devcontainers/features/releases/tag/feature_{{{replace "^ghcr\\.io/devcontainers/features/" "" depName}}}_{{{newVersion}}}'
     },
     {
       description: 'Disable digest pinning for base images',
