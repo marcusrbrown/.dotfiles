@@ -32,14 +32,11 @@
     "default": 65,
     "anthropic/claude-sonnet-4-6": 40,
     "anthropic/claude-opus-4-6": 40,
-    "anthropic/claude-opus-4-7": 40,
-    "github-copilot/gpt-5.4": 35,
-    "github-copilot/gpt-5.5": 35
+    "anthropic/claude-opus-4-7": 40
   },
   "execute_threshold_tokens": {
     "github-copilot/claude-opus-4.7": 80000,
-    "github-copilot/claude-sonnet-4.6": 95000,
-    "github-copilot/gpt-5.3-codex": 210000
+    "github-copilot/claude-sonnet-4.6": 95000
   },
   "experimental": {
     "auto_search": {
