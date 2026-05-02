@@ -22,6 +22,19 @@
       enabled: true
     },
     {
+      description: 'Surface devcontainer feature release notes and clean up PR copy.',
+      matchManagers: ['devcontainer'],
+      matchDepTypes: ['feature'],
+      matchPackageNames: ['/^ghcr\\.io\/devcontainers\/features\//'],
+      commitMessageTopic: 'devcontainer feature {{{replace "^ghcr\\.io/devcontainers/features/" "" depName}}}',
+      prBodyColumns: ['Package', 'Type', 'Update', 'Change', 'References'],
+      prBodyDefinitions: {
+        Package: '[`{{{replace "^ghcr\\.io/devcontainers/features/" "" depName}}}`](https://github.com/devcontainers/features/tree/main/src/{{{replace "^ghcr\\.io/devcontainers/features/" "" depName}}})'
+      },
+      sourceUrl: 'https://github.com/devcontainers/features',
+      changelogUrl: 'https://github.com/devcontainers/features/blob/main/src/{{{replace "^ghcr\\.io/devcontainers/features/" "" depName}}}/NOTES.md'
+    },
+    {
       description: 'Disable digest pinning for base images',
       matchFileNames: ['.devcontainer/Dockerfile', '**/devcontainer.json'],
       matchPackageNames: ['mcr.microsoft.com/devcontainers/base'],
