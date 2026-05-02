@@ -34,14 +34,6 @@
     }
   },
   "agent": {
-    "build": {
-      "model": "github-copilot/gpt-5.4",
-      "variant": "xhigh"
-    },
-    "plan": {
-      "model": "github-copilot/gpt-5.4",
-      "variant": "xhigh"
-    },
     "general": {
       "model": "github-copilot/gpt-5.4",
       "variant": "high"
