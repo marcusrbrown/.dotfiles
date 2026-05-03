@@ -12,6 +12,11 @@ fi
 # ~/.dotfiles is a bare Git repo with the work directory set to ~
 alias .dotfiles='GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME'
 
+# Launch OpenCode rooted at the dotfiles bare-repo dir to avoid AFT plugin
+# `configure` timeouts caused by ripgrep walking macOS-sandboxed paths under
+# $HOME (~/Library/*, FileProvider iCloud mounts).
+alias dotfiles-opencode='cd "$HOME/.dotfiles" && GIT_DIR="$HOME/.dotfiles" GIT_WORK_TREE="$HOME" opencode'
+
 LSCMD='ls'
 if [[ "$HOST_OS" == "darwin" ]]; then
   # https://www.gnu.org/software/coreutils/
