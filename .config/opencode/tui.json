@@ -2,7 +2,8 @@
   "$schema": "https://opencode.ai/tui.json",
   "theme": "catppuccin",
   "plugin": [
+    "opencode-copilot-delegate@0.10.1",
     "@cortexkit/opencode-magic-context@0.15.7",
-    "@cortexkit/aft-opencode@0.17.3"
+    "@cortexkit/aft-opencode@0.18.4"
   ]
 }
