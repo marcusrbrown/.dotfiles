@@ -6,7 +6,8 @@
     "@fro.bot/systematic@latest",
     "@franlol/opencode-md-table-formatter@latest",
     "@cortexkit/opencode-magic-context@0.15.7",
-    "@cortexkit/aft-opencode@0.18.4"
+    "@cortexkit/aft-opencode@0.18.4",
+    "oh-my-opencode-slim@1.0.6"
   ],
   "mcp": {
     "context7": {
@@ -35,11 +36,10 @@
   },
   "agent": {
     "general": {
-      "model": "github-copilot/gpt-5.4",
-      "variant": "high"
+      "disable": true
     },
     "explore": {
-      "model": "github-copilot/gpt-5.4-mini"
+      "disable": true
     }
   },
   "model": "opencode-go/kimi-k2.6",
@@ -49,5 +49,6 @@
   },
   "experimental": {
     "openTelemetry": false
-  }
+  },
+  "lsp": true
 }
