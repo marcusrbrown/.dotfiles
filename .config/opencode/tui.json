@@ -4,6 +4,7 @@
   "plugin": [
     "opencode-copilot-delegate@0.10.1",
     "@cortexkit/opencode-magic-context@0.15.7",
-    "@cortexkit/aft-opencode@0.18.4"
+    "@cortexkit/aft-opencode@0.18.4",
+    "oh-my-opencode-slim"
   ]
 }

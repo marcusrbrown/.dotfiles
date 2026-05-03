@@ -47,7 +47,6 @@ git status  # now works on dotfiles
 │   ├── starship.toml    # Prompt
 │   └── ghostty/, bat/, gh/, ... # Other tool configs
 ├── .agents/             # Global AI-skill bus (cross-platform)
-│   ├── .skill-lock.json # Tracks global skills (writing-skills, TDD, etc.)
 │   └── skills/          # Loadable by Claude Code, OpenCode, etc.
 ├── .claude/             # Claude Code: agents/, rules/, commands/, settings.json
 ├── .devcontainer/       # Devcontainer + custom features (dotfiles-dev, mise, sheldon, keychain)
@@ -76,7 +75,7 @@ git status  # now works on dotfiles
 | Brewfile | `Brewfile` | macOS apps + casks + mas + 140+ vscode extensions |
 | Claude Code agents/rules | `.claude/agents/`, `.claude/rules/` | Custom agent + rule definitions |
 | OpenCode config | `.config/opencode/` | Has own AGENTS.md (collaboration system prompt) |
-| Global agent skills | `.agents/skills/` | Cross-platform skill bus; lock at `.agents/.skill-lock.json` |
+| Global agent skills | `.agents/skills/` | Cross-platform skill bus; active lockfile at `~/.local/state/skills/.skill-lock.json` (XDG state, not tracked) |
 | Devcontainer features | `.devcontainer/features/` | dotfiles-dev, mise, sheldon, keychain |
 | CI workflows | `.github/workflows/` | main, fro-bot, renovate, update-repo-settings |
 | Repo settings (auto-applied) | `.github/settings.yml` | Branch protection, status checks; synced daily |
@@ -195,4 +194,4 @@ mise run opencode:doctor -- --json            # Scriptable output
 - **Disk monitoring**: macOS root FS occasionally hits ENOSPC (seen with <300MB free on a 926GB disk). pnpm rename errors are the canary. Run cleanup when tight.
 - **`command_exists` guard**: used throughout `.config/bash/init.d/` and `.config/bash/aliases` for conditional tool setup — required pattern.
 - **OpenCode AGENTS.md** at `.config/opencode/AGENTS.md` is NOT a structural index — it's the primary collaboration system prompt for OpenCode sessions. Don't repurpose it for directory documentation.
-- **`.agents/skills/` is the cross-platform skill bus**: skills here load into both Claude Code and OpenCode. Tracked via `.agents/.skill-lock.json`.
+- **`.agents/skills/` is the cross-platform skill bus**: skills here load into both Claude Code and OpenCode. The active `skills` CLI lockfile is `~/.local/state/skills/.skill-lock.json` (XDG state, untracked); `~/.agents/.skill-lock.json` was a legacy path and is no longer used.
