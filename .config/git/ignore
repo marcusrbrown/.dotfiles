@@ -45,3 +45,34 @@ tags
 .devcontainer/.*Marker
 
 **/.claude/settings.local.json
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Credential-shape safety net (cross-repo, applies via core.excludesfile).
+# The dotfiles bare repo overrides core.excludesfile to .dotfiles/.gitignore,
+# so these rules do NOT protect dotfiles itself — dotfiles relies on its
+# allowlist + gitleaks pre-commit hook for the same coverage.
+# Pair with `gitleaks detect --source <repo>` for content-based scanning.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Env file variants (plain `.env` already covered above; carve out documented examples)
+**/.env.*
+!**/.env.example
+!**/.env.template
+!**/.env.sample
+
+# Auth/credential by name
+**/*secret*
+**/*token*
+**/*credential*
+**/*password*
+**/auth.json
+
+# Common key file extensions
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/id_rsa
+**/id_rsa.*
+**/id_ed25519
+**/id_ed25519.*

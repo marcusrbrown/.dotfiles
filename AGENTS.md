@@ -97,6 +97,22 @@ Repo ignores EVERYTHING by default, allowlists tracked paths in `.dotfiles/.giti
 1. Try `git add -n <file>` first
 2. If ignored, add `!/path/to/file` to `.dotfiles/.gitignore` and retry
 
+### Defense-in-Depth Layers
+
+The dotfiles allowlist is the primary defense. Two cross-repo backstops catch what slips through anywhere on the machine:
+
+1. **Name-based safety net** — `~/.config/git/ignore` (XDG global gitignore) catches credential-shape names (`**/.env.*`, `**/*secret*`, `**/*.pem`, `**/id_rsa*`, etc.) in **every repo on the machine**. Carves out `**/.env.example`, `**/.env.template`, `**/.env.sample` so documented templates stay tracked. Note: the dotfiles bare repo overrides `core.excludesfile` to `.dotfiles/.gitignore`, so this file does NOT protect dotfiles itself — dotfiles relies on its allowlist + gitleaks for the same coverage. AI-tool noise dirs (`**/sessions/`, `**/transcripts/`, `**/history.jsonl`) stay in `.dotfiles/.gitignore` because they're too false-positive-prone globally.
+2. **By-content scanning** — `gitleaks` (installed via `aqua:gitleaks/gitleaks` in `~/.config/mise/config.toml`) runs as a local pre-commit hook at `~/.config/git/hooks/pre-commit`. Blocks commits containing detected secrets in any repo where the hook is activated. Bypass with `git commit --no-verify` for known false positives.
+
+**One-time hook activation** (per machine, dotfiles bare repo):
+```bash
+git --git-dir=$HOME/.dotfiles config core.hooksPath $HOME/.config/git/hooks
+```
+
+**When adding a new AI tool**: extend the allowlist for the tool's content dirs, trust the global ignore + gitleaks to catch credential-shaped files, run `gitleaks detect --source $HOME --no-git` once on first commit to verify nothing leaked.
+
+**False-positive workaround**: The global patterns `**/*secret*` and `**/*.key` are intentionally broad — they catch obvious credentials but also legitimately-named files (`secret.ts`, `secret-manager.ts`, registry/layout `.key` files, `gpg.key`, etc.). When working on a non-dotfiles repo where a legitimate file matches, add a project-local negation in that repo's `.gitignore`: `!secret.ts` or `!path/to/file.key`. Working-tree gitignore patterns take precedence over the global ignore, so the negation always wins.
+
 ### Shell Config Organization
 
 - **Bash entry**: `.bashrc` → `.config/bash/main` → `functions` → `aliases` → `init.d/*` (alphabetical) → `local.d/*`

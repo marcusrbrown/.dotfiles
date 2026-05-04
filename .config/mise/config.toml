@@ -15,6 +15,7 @@ ast-grep = "0.42.1"
 
  # shfmt
 "aqua:mvdan/sh" = "3.13.1"
+"aqua:gitleaks/gitleaks" = "8.30.1"
 
 "npm:typescript" = "6.0.3"
 "npm:vibe-tools" = "0.63.3"
