@@ -11,6 +11,19 @@
       ],
       depTypeTemplate: 'devDependencies',
       versioningTemplate: '{{#if versioning}}{{versioning}}{{else}}semver{{/if}}'
+    },
+    {
+      customType: 'regex',
+      description: 'Update pinned npm plugin versions in OpenCode config files.',
+      managerFilePatterns: [
+        '/(^|/)\\.config/opencode/opencode\\.json$/',
+        '/(^|/)\\.config/opencode/tui\\.json$/'
+      ],
+      matchStrings: [
+        '"(?<depName>(?:@[a-z0-9-~][a-z0-9-._~]*/)?[a-z0-9-~][a-z0-9-._~]*)@(?<currentValue>\\d+\\.\\d+\\.\\d+(?:[-+][a-z0-9.-]+)?)"'
+      ],
+      datasourceTemplate: 'npm',
+      versioningTemplate: 'npm'
     }
   ],
   ignorePresets: ['mergeConfidence:age-confidence-badges', 'mergeConfidence:all-badges'],
@@ -54,11 +67,14 @@
       matchPackageNames: [
         '@cortexkit/aft-opencode',
         '@cortexkit/opencode-magic-context',
+        '@ex-machina/opencode-anthropic-auth',
+        '@franlol/opencode-md-table-formatter',
         'agent-browser',
-        'opencode-anthropic-oauth'
+        'opencode-copilot-delegate'
       ],
       matchUpdateTypes: ['minor', 'patch'],
       extends: ['github>bfra-me/renovate-config:automerge.json5#5.2.1'],
+      groupName: null,
       dependencyDashboardApproval: false
     }
   ],
