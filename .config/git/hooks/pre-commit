@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Block commits containing detected secrets.
+# Bypass with `git commit --no-verify` when needed.
+#
+# Setup (one-time per machine):
+#   git --git-dir=$HOME/.dotfiles config core.hooksPath $HOME/.config/git/hooks
+#
+# Provided by `aqua:gitleaks/gitleaks` in ~/.config/mise/config.toml.
+
+set -euo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "warning: gitleaks not found on PATH; skipping pre-commit secret scan" >&2
+  echo "         install via: mise install aqua:gitleaks/gitleaks" >&2
+  exit 0
+fi
+
+exec gitleaks protect --staged --redact --verbose
