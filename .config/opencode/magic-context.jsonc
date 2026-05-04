@@ -51,7 +51,7 @@
     },
     "temporal_awareness": true,
     "caveman_text_compression": {
-      "enabled": true
+      "enabled": false
     }
   },
   "history_budget_percentage": 0.15,

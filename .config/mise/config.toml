@@ -33,7 +33,7 @@ ast-grep = "0.42.1"
 "npm:skills" = "1.5.3"
 "npm:ocx" = "2.0.7"
 "npm:@cortexkit/opencode-magic-context" = "0.15.7"
-"npm:@cortexkit/aft" = "0.18.4"
+"npm:@cortexkit/aft" = "0.19.0"
 "npm:@marcusrbrown/infra" = "latest"
 
 # Language Servers
