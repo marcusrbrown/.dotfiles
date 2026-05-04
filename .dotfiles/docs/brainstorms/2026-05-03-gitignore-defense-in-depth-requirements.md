@@ -67,6 +67,7 @@ Append to the bottom of `.dotfiles/.gitignore` (after all `!/path` allowlist rul
 ```
 
 **Verification:**
+
 - `git check-ignore -v` against `.config/opencode/.env` returns the safety-net pattern as the matching rule
 - Existing tracked files (none currently match these patterns; `git ls-files | grep` confirmed empty before merge) remain unaffected
 
@@ -81,6 +82,7 @@ Add to `~/.config/mise/config.toml` under `[tools]`:
 (or pinned version if other mise tools follow that convention — verify during planning)
 
 **Verification:**
+
 - `mise install` succeeds
 - `gitleaks version` resolves after shell reload
 - `gitleaks detect --source $HOME --no-git` runs against the working tree (smoke test, not a hard gate)
@@ -105,11 +107,13 @@ git --git-dir=$HOME/.dotfiles config core.hooksPath $HOME/.dotfiles/hooks
 ```
 
 **Policy:**
+
 - Block on any finding
 - `git commit --no-verify` bypasses (standard escape hatch)
 - No `.gitleaks.toml` allowlist file (defer until first false positive)
 
 **Verification:**
+
 - Stage a file containing `AKIA[A-Z0-9]{16}`-shaped fake AWS key → commit aborts with gitleaks output
 - `git commit --no-verify` succeeds against the same staged file
 - Stage a clean diff → commit succeeds normally
@@ -143,13 +147,13 @@ once on first commit to verify nothing leaked.
 
 ## Risks and Mitigations
 
-| Risk                                                 | Mitigation                                                                                                                          |
-| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Safety net blocks a legitimate config file           | Audit `git ls-files` against the patterns before merge (open question 3). Carve out exceptions only with documented justification.  |
+| Risk                                                  | Mitigation                                                                                                                               |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Safety net blocks a legitimate config file            | Audit `git ls-files` against the patterns before merge (open question 3). Carve out exceptions only with documented justification.       |
 | `gitleaks protect --staged` is slow on large diffs    | Acceptable — local-only, runs on commit not push. If it becomes a problem, switch to `--max-target-megabytes` or scope to changed files. |
-| Pre-commit hook bypassed and forgotten               | `gitleaks detect` available manually for periodic audits. CI integration deferred but available as a future safety upgrade.         |
-| Hook installation missed on a new machine            | Document the install command in `AGENTS.md`. Optionally add a `mise run security:setup` task in a future iteration.                  |
-| AGENTS.md drift relative to actual `.gitignore` state  | Fro Bot's daily AGENTS.md drift check catches this. Same mechanism that caught the lockfile-path drift on PR #1553.                  |
+| Pre-commit hook bypassed and forgotten                | `gitleaks detect` available manually for periodic audits. CI integration deferred but available as a future safety upgrade.              |
+| Hook installation missed on a new machine             | Document the install command in `AGENTS.md`. Optionally add a `mise run security:setup` task in a future iteration.                      |
+| AGENTS.md drift relative to actual `.gitignore` state | Fro Bot's daily AGENTS.md drift check catches this. Same mechanism that caught the lockfile-path drift on PR #1553.                      |
 
 ## Out of Scope (Explicit)
 
