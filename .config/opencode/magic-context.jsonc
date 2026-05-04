@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/cortexkit/opencode-magic-context/refs/heads/master/assets/magic-context.schema.json",
   "historian": {
-    "model": "github-copilot/gpt-5.4",
-    "fallback_models": ["anthropic/claude-sonnet-4-6"]
+    "model": "anthropic/claude-sonnet-4-6",
+    "fallback_models": ["github-copilot/claude-sonnet-4.6"]
   },
   "dreamer": {
     "enabled": true,
-    "model": "github-copilot/claude-sonnet-4.6",
-    "fallback_models": ["anthropic/claude-sonnet-4-6"],
+    "model": "anthropic/claude-sonnet-4-6",
+    "fallback_models": ["github-copilot/claude-sonnet-4.6"],
     "user_memories": {
       "enabled": true,
       "promotion_threshold": 3
@@ -49,7 +49,10 @@
       "since_days": 365,
       "max_commits": 2000
     },
-    "temporal_awareness": true
+    "temporal_awareness": true,
+    "caveman_text_compression": {
+      "enabled": true
+    }
   },
   "history_budget_percentage": 0.15,
   "historian_timeout_ms": 420000,
@@ -57,5 +60,6 @@
     "injection_budget_tokens": 6000
   },
   "compaction_markers": true,
-  "auto_drop_tool_age": 30
+  "auto_drop_tool_age": 30,
+  "ctx_reduce_enabled": false
 }
