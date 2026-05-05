@@ -3,8 +3,8 @@
   "theme": "catppuccin",
   "plugin": [
     "opencode-copilot-delegate@0.11.0",
-    "@cortexkit/opencode-magic-context@0.15.7",
-    "@cortexkit/aft-opencode@0.19.0",
+    "@cortexkit/opencode-magic-context@0.16.3",
+    "@cortexkit/aft-opencode@0.19.3",
     "oh-my-opencode-slim@1.0.6"
   ]
 }

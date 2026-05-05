@@ -6,24 +6,17 @@
       "orchestrator": {
         "model": "github-copilot/gpt-5.4",
         "variant": "xhigh",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!context7"
-        ]
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "github-copilot/gpt-5.4",
         "variant": "high",
-        "skills": [
-          "simplify"
-        ],
+        "skills": ["simplify"],
         "mcps": []
       },
       "council": {
-        "model": "github-copilot/gpt-5.4",
+        "model": "github-copilot/gpt-5.5",
         "variant": "high",
         "skills": [],
         "mcps": []
@@ -31,12 +24,7 @@
       "librarian": {
         "model": "github-copilot/claude-haiku-4.5",
         "skills": [],
-        "mcps": [
-          "websearch",
-          "context7",
-          "grep_app",
-          "tavily"
-        ]
+        "mcps": ["websearch", "context7", "grep_app", "tavily"]
       },
       "explorer": {
         "model": "github-copilot/grok-code-fast-1",
@@ -46,9 +34,7 @@
       "designer": {
         "model": "github-copilot/gemini-3.1-pro-preview",
         "variant": "high",
-        "skills": [
-          "agent-browser"
-        ],
+        "skills": ["agent-browser"],
         "mcps": []
       },
       "fixer": {
@@ -61,24 +47,17 @@
       "orchestrator": {
         "model": "anthropic/claude-opus-4-7",
         "variant": "xhigh",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!context7"
-        ]
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "github-copilot/gpt-5.4",
         "variant": "high",
-        "skills": [
-          "simplify"
-        ],
+        "skills": ["simplify"],
         "mcps": []
       },
       "council": {
-        "model": "anthropic/claude-opus-4-7",
+        "model": "github-copilot/gpt-5.5",
         "variant": "high",
         "skills": [],
         "mcps": []
@@ -86,12 +65,7 @@
       "librarian": {
         "model": "anthropic/claude-haiku-4-5",
         "skills": [],
-        "mcps": [
-          "websearch",
-          "context7",
-          "grep_app",
-          "tavily"
-        ]
+        "mcps": ["websearch", "context7", "grep_app", "tavily"]
       },
       "explorer": {
         "model": "github-copilot/gpt-5.4-mini",
@@ -102,9 +76,7 @@
       "designer": {
         "model": "github-copilot/gemini-3.1-pro-preview",
         "variant": "high",
-        "skills": [
-          "agent-browser"
-        ],
+        "skills": ["agent-browser"],
         "mcps": []
       },
       "fixer": {
@@ -116,21 +88,14 @@
     },
     "opencode-go": {
       "orchestrator": {
-        "model": "opencode-go/glm-5.1",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!context7"
-        ]
+        "model": "opencode-go/kimi-k2.6",
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "opencode-go/deepseek-v4-pro",
         "variant": "max",
-        "skills": [
-          "simplify"
-        ],
+        "skills": ["simplify"],
         "mcps": []
       },
       "council": {
@@ -142,12 +107,7 @@
       "librarian": {
         "model": "opencode-go/minimax-m2.7",
         "skills": [],
-        "mcps": [
-          "websearch",
-          "context7",
-          "grep_app",
-          "tavily"
-        ]
+        "mcps": ["websearch", "context7", "grep_app", "tavily"]
       },
       "explorer": {
         "model": "opencode-go/minimax-m2.7",
@@ -157,14 +117,11 @@
       "designer": {
         "model": "opencode-go/kimi-k2.6",
         "variant": "medium",
-        "skills": [
-          "agent-browser"
-        ],
+        "skills": ["agent-browser"],
         "mcps": []
       },
       "fixer": {
         "model": "opencode-go/deepseek-v4-flash",
-        "variant": "high",
         "skills": [],
         "mcps": []
       }
@@ -175,15 +132,13 @@
     "presets": {
       "default": {
         "alpha": {
-          "model": "anthropic/claude-sonnet-4-6",
-          "variant": "high"
+          "model": "anthropic/claude-opus-4-6"
         },
         "beta": {
-          "model": "github-copilot/gemini-3.1-pro-preview",
-          "variant": "high"
+          "model": "github-copilot/gemini-3.1-pro-preview"
         },
         "gamma": {
-          "model": "opencode-go/kimi-k2.6"
+          "model": "github-copilot/gpt-5.4-mini"
         }
       }
     }

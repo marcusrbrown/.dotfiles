@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/cortexkit/opencode-magic-context/refs/heads/master/assets/magic-context.schema.json",
+  "$schema": "https://raw.githubusercontent.com/cortexkit/magic-context/master/assets/magic-context.schema.json",
   "historian": {
     "model": "anthropic/claude-sonnet-4-6",
     "fallback_models": ["github-copilot/claude-sonnet-4.6"]
@@ -61,5 +61,9 @@
   },
   "compaction_markers": true,
   "auto_drop_tool_age": 30,
-  "ctx_reduce_enabled": false
+  "ctx_reduce_enabled": false,
+  "system_prompt_injection": {
+    "enabled": true,
+    "skip_signatures": ["You are the Council agent — a multi-LLM"]
+  }
 }
