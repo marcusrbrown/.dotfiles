@@ -30,9 +30,9 @@
   },
   "execute_threshold_percentage": {
     "default": 65,
-    "anthropic/claude-sonnet-4-6": 40,
-    "anthropic/claude-opus-4-6": 40,
-    "anthropic/claude-opus-4-7": 40
+    "anthropic/claude-sonnet-4-6": 55,
+    "anthropic/claude-opus-4-6": 55,
+    "anthropic/claude-opus-4-7": 55
   },
   "execute_threshold_tokens": {
     "github-copilot/claude-opus-4.7": 80000,
