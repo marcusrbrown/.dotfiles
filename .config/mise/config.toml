@@ -10,7 +10,7 @@ rust = "1.95.0"
 cargo-binstall = "1.19.1"
 zig = "0.15.2"
 zls = "0.16.0"
-go = "1.26.2"
+go = "1.26.3"
 ast-grep = "0.42.1"
 
  # shfmt
