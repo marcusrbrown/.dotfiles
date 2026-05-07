@@ -1,5 +1,12 @@
 {
   "restrict_to_project_root": false,
   "search_index": true,
-  "semantic_search": true
+  "semantic_search": true,
+  "experimental": {
+    "bash": {
+      "rewrite": true,
+      "compress": true,
+      "background": true
+    }
+  }
 }
