@@ -51,16 +51,13 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "github-copilot/gpt-5.4",
+        "model": "openai/gpt-5.5-fast",
         "variant": "high",
         "skills": ["simplify"],
         "mcps": []
       },
       "council": {
-        "model": "github-copilot/gpt-5.5",
-        "variant": "high",
-        "skills": [],
-        "mcps": []
+        "model": "openai/gpt-5.5-fast"
       },
       "librarian": {
         "model": "anthropic/claude-haiku-4-5",
@@ -75,7 +72,6 @@
       },
       "designer": {
         "model": "github-copilot/gemini-3.1-pro-preview",
-        "variant": "high",
         "skills": ["agent-browser"],
         "mcps": []
       },
@@ -85,6 +81,20 @@
         "skills": [],
         "mcps": []
       }
+    },
+    "openai": {
+      "orchestrator": { "model": "openai/gpt-5.5-fast", "skills": ["*"], "mcps": ["*", "!context7"] },
+      "oracle": { "model": "openai/gpt-5.5-fast", "variant": "high", "skills": [], "mcps": [] },
+      "council": { "model": "openai/gpt-5.5-fast" },
+      "librarian": {
+        "model": "openai/gpt-5.3-codex-spark",
+        "variant": "low",
+        "skills": [],
+        "mcps": ["websearch", "context7", "grep_app", "tavily"]
+      },
+      "explorer": { "model": "openai/gpt-5.3-codex-spark", "variant": "low", "skills": [], "mcps": [] },
+      "designer": { "model": "github-copilot/gemini-3.1-pro-preview", "skills": ["agent-browser"], "mcps": [] },
+      "fixer": { "model": "opencode-go/deepseek-v4-flash", "variant": "high", "skills": [], "mcps": [] }
     },
     "opencode-go": {
       "orchestrator": {
