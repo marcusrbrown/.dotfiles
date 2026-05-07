@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/cortexkit/magic-context/master/assets/magic-context.schema.json",
   "historian": {
-    "model": "anthropic/claude-sonnet-4-6",
-    "fallback_models": ["github-copilot/claude-sonnet-4.6"]
+    "model": "openai/gpt-5.4",
+    "fallback_models": ["anthropic/claude-sonnet-4-6", "github-copilot/claude-sonnet-4.6"]
   },
   "dreamer": {
     "enabled": true,
@@ -20,7 +20,7 @@
   },
   "sidekick": {
     "enabled": true,
-    "model": "github-copilot/gpt-5.4-mini"
+    "model": "openai/gpt-5.4-mini-fast"
   },
   "cache_ttl": {
     "default": "5m",
@@ -61,7 +61,6 @@
   },
   "compaction_markers": true,
   "auto_drop_tool_age": 30,
-  "ctx_reduce_enabled": false,
   "system_prompt_injection": {
     "enabled": true,
     "skip_signatures": ["You are the Council agent — a multi-LLM"]
