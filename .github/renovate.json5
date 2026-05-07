@@ -15,10 +15,7 @@
     {
       customType: 'regex',
       description: 'Update pinned npm plugin versions in OpenCode config files.',
-      managerFilePatterns: [
-        '/(^|/)\\.config/opencode/opencode\\.json$/',
-        '/(^|/)\\.config/opencode/tui\\.json$/'
-      ],
+      managerFilePatterns: ['/(^|/)\\.config/opencode/opencode\\.json$/', '/(^|/)\\.config/opencode/tui\\.json$/'],
       matchStrings: [
         '"(?<depName>(?:@[a-z0-9-~][a-z0-9-._~]*/)?[a-z0-9-~][a-z0-9-._~]*)@(?<currentValue>\\d+\\.\\d+\\.\\d+(?:[-+][a-z0-9.-]+)?)"'
       ],
