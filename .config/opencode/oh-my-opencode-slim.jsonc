@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@1.0.6/oh-my-opencode-slim.schema.json",
-  "preset": "mixed",
+  "preset": "openai",
   "presets": {
     "copilot": {
       "orchestrator": {
@@ -92,7 +92,7 @@
         "skills": [],
         "mcps": ["websearch", "context7", "grep_app", "tavily"]
       },
-      "explorer": { "model": "openai/gpt-5.3-codex-spark", "variant": "low", "skills": [], "mcps": [] },
+      "explorer": { "model": "github-copilot/gpt-5.4-mini", "variant": "low", "skills": [], "mcps": [] },
       "designer": { "model": "github-copilot/gemini-3.1-pro-preview", "skills": ["agent-browser"], "mcps": [] },
       "fixer": { "model": "opencode-go/deepseek-v4-flash", "variant": "high", "skills": [], "mcps": [] }
     },
