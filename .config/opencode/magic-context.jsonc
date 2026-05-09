@@ -1,13 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/cortexkit/magic-context/master/assets/magic-context.schema.json",
   "historian": {
-    "model": "openai/gpt-5.4",
+    "model": "openai/gpt-5.4-fast",
     "fallback_models": ["anthropic/claude-sonnet-4-6", "github-copilot/claude-sonnet-4.6"]
   },
   "dreamer": {
     "enabled": true,
     "model": "anthropic/claude-sonnet-4-6",
     "fallback_models": ["github-copilot/claude-sonnet-4.6"],
+    "schedule": "00:00-08:00",
     "user_memories": {
       "enabled": true,
       "promotion_threshold": 3

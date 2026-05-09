@@ -33,7 +33,7 @@ ast-grep = "0.42.1"
 "npm:skills" = "1.5.3"
 "npm:ocx" = "2.0.9"
 "npm:@cortexkit/magic-context" = "0.17.2"
-"npm:@cortexkit/aft" = "0.19.6"
+"npm:@cortexkit/aft" = "0.20.0"
 "npm:@cortexkit/opencode-anthropic-auth" = "1.0.0"
 "npm:@marcusrbrown/infra" = "latest"
 
