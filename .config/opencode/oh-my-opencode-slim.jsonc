@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@1.0.6/oh-my-opencode-slim.schema.json",
-  "preset": "openai",
+  "preset": "mixed",
   "presets": {
     "copilot": {
       "orchestrator": {
@@ -87,7 +87,7 @@
       "oracle": { "model": "openai/gpt-5.5-fast", "variant": "high", "skills": [], "mcps": [] },
       "council": { "model": "openai/gpt-5.5-fast" },
       "librarian": {
-        "model": "openai/gpt-5.3-codex-spark",
+        "model": "openai/gpt-5.3-codex",
         "variant": "low",
         "skills": [],
         "mcps": ["websearch", "context7", "grep_app", "tavily"]
