@@ -4,8 +4,7 @@
   "presets": {
     "copilot": {
       "orchestrator": {
-        "model": "openai/gpt-5.5",
-        "variant": "high",
+        "model": "openai/gpt-5.5-fast",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
@@ -46,7 +45,6 @@
     "mixed": {
       "orchestrator": {
         "model": "anthropic/claude-opus-4-7",
-        "variant": "xhigh",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
