@@ -32,6 +32,7 @@
 /opencode/package-lock.json
 /opencode/oh-my-openagent.json.*
 /pipedream/
+/pnpm/config.yaml
 /pnpm/rc
 /raycast/
 /robomongo/
