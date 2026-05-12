@@ -180,11 +180,11 @@ if command_exists pnpm; then
         ensure_dir "$XDG_DATA_HOME"/pnpm/global
         ensure_dir "$XDG_STATE_HOME"/pnpm
 
-        if [ -n "$PNPM_HOME" ]; then
-            prepend_to_path "$PNPM_HOME"
-        else
-            prepend_to_path "$XDG_DATA_HOME/pnpm"
+        if [ -z "$PNPM_HOME" ]; then
+            PNPM_HOME="$XDG_DATA_HOME"/pnpm
         fi
+
+        prepend_to_path "$PNPM_HOME"/bin
 
         # See https://pnpm.io/npmrc
         pnpm config set --global cache-dir "$XDG_CACHE_HOME/pnpm"
