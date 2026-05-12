@@ -184,7 +184,6 @@ if command_exists pnpm; then
             PNPM_HOME="$XDG_DATA_HOME"/pnpm
         fi
 
-        export PNPM_HOME
         prepend_to_path "$PNPM_HOME"/bin
 
         # See https://pnpm.io/npmrc
@@ -198,6 +197,8 @@ if command_exists pnpm; then
     if [ -z "$PNPM_HOME" ] || [ ! -d "$PNPM_HOME" ]; then
         configure_pnpm_dirs
     fi
+
+    export PNPM_HOME
 
     unset -f configure_pnpm_dirs
 fi
