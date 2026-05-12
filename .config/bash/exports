@@ -184,11 +184,11 @@ if command_exists pnpm; then
             PNPM_HOME="$XDG_DATA_HOME"/pnpm
         fi
 
+        export PNPM_HOME
         prepend_to_path "$PNPM_HOME"/bin
 
         # See https://pnpm.io/npmrc
         pnpm config set --global cache-dir "$XDG_CACHE_HOME/pnpm"
-        pnpm config set --global global-bin-dir "$XDG_DATA_HOME/pnpm"
         pnpm config set --global global-dir "$XDG_DATA_HOME/pnpm/global"
         pnpm config set --global state-dir "$XDG_STATE_HOME/pnpm"
         pnpm config set --global store-dir "$XDG_DATA_HOME/pnpm/store"
