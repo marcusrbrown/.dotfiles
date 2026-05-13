@@ -19,7 +19,7 @@
   },
   "agents": {
     "systematic-implementer": {
-      "model": "anthropic/claude-sonnet-4-6"
+      "model": "github-copilot/claude-sonnet-4.6"
     }
   }
 }
