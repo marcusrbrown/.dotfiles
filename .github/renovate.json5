@@ -1,6 +1,6 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
-  extends: ['github>marcusrbrown/renovate-config#5.0.1', 'github>sanity-io/renovate-config:semantic-commit-type'],
+  extends: ['github>marcusrbrown/renovate-config#5.2.0', 'github>sanity-io/renovate-config:semantic-commit-type'],
   customManagers: [
     {
       customType: 'regex',
@@ -55,16 +55,16 @@
     },
     {
       description: 'Disable updates for manually managed npm packages.',
-      matchPackageNames: ['@anthropic-ai/claude-code', 'opencode-ai'],
+      matchPackageNames: ['@anthropic-ai/claude-code'],
       enabled: false
     },
     {
       description: ['Automerge unstable minor updates of some packages.'],
       matchCurrentVersion: '/^v?0/',
       matchPackageNames: [
-        '@cortexkit/aft-opencode',
-        '@cortexkit/opencode-magic-context',
-        '@ex-machina/opencode-anthropic-auth',
+        '@cortexkit/aft*',
+        '@cortexkit/*magic-context',
+        'fro-bot/agent',
         '@franlol/opencode-md-table-formatter',
         'agent-browser',
         'opencode-copilot-delegate'
