@@ -150,8 +150,7 @@
         "mcps": []
       },
       "fixer": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "variant": "high",
+        "model": "github-copilot/claude-sonnet-4.6",
         "skills": [],
         "mcps": []
       }
