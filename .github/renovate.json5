@@ -55,7 +55,7 @@
     },
     {
       description: 'Disable updates for manually managed npm packages.',
-      matchPackageNames: ['@anthropic-ai/claude-code'],
+      matchPackageNames: ['@anthropic-ai/claude-code', 'opencode-ai'],
       enabled: false
     },
     {
