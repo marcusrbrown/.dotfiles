@@ -178,7 +178,7 @@ Key flows:
 
 ## Implementation Units
 
-- [ ] **Unit 1: Configure admin-agent MCP server (SaseQ/discord-mcp pinned)**
+- [x] **Unit 1: Configure admin-agent MCP server (SaseQ/discord-mcp pinned)**
 
 **Goal:** Make the Discord MCP server available in OpenCode sessions for one-shot server-admin tasks. Pin to a specific commit-SHA. Document fallback.
 
@@ -217,7 +217,7 @@ Key flows:
 
 ---
 
-- [ ] **Unit 2: Run the Phase 0 audit (read-only) + archive the 3 original channels**
+- [x] **Unit 2: Run the Phase 0 audit (read-only) + archive the 3 original channels**
 
 **Goal:** Produce the inventory report + offline archive that gates the restructure.
 
@@ -253,7 +253,7 @@ Key flows:
 
 ---
 
-- [ ] **Unit 3: Enable Community Mode + design + create new project-organized channel layout**
+- [x] **Unit 3: Enable Community Mode + design + create new project-organized channel layout**
 
 **Goal:** Restructure channels into the project-organized layout, per audit recommendations.
 
@@ -292,7 +292,7 @@ Key flows:
 
 ---
 
-- [ ] **Unit 4: Create per-project roles + apply channel permission overrides**
+- [x] **Unit 4: Create per-project roles + apply channel permission overrides**
 
 **Goal:** Implement R7's role hierarchy. Per-project access via channel overrides becomes the primary gate (R16).
 
@@ -388,7 +388,7 @@ Key flows:
 
 ---
 
-- [ ] **Unit 7: Draft + publish AI disclosure document (pinned)**
+- [x] **Unit 7: Draft + publish AI disclosure document (pinned)**
 
 **Goal:** R13 + R14. Disclosure-before-intent.
 
