@@ -11,7 +11,7 @@ origin: .dotfiles/docs/brainstorms/2026-05-18-discord-server-revival-requirement
 
 **Target repo:** This plan spans three repos. Most work lives outside `.dotfiles` itself:
 - `.dotfiles` (this repo) — the plan document, OpenCode MCP server configuration for the admin-agent path, runbooks (under `.dotfiles/docs/`)
-- `fro-bot/agent` (https://github.com/fro-bot/agent, local `~/src/github.com/fro-bot/agent/`) — code change to `packages/gateway/` (intent-posture flip only; R20/R21 enforcement deferred to a follow-up plan owned by `fro-bot/agent`)
+- `fro-bot/agent` (https://github.com/fro-bot/agent) — code change to `packages/gateway/` (intent-posture flip only; R20/R21 enforcement deferred to a follow-up plan owned by `fro-bot/agent`)
 - `marcusrbrown/infra` (parallel work in progress) — gateway-app deployment (out of scope here, sequenced via dependency)
 
 All file paths in the plan are repo-relative to their respective repo. The plan document and dotfiles changes live in `.dotfiles`.
@@ -61,12 +61,17 @@ This plan implements requirements **R1–R24** from the origin document. Critica
 
 ### Relevant Code and Patterns
 
-- `~/src/github.com/fro-bot/agent/packages/gateway/src/discord/client.ts:10-14` — `DEFAULT_INTENTS` includes `MessageContent` + `GuildMembers` by default. R22 flips this to opt-in.
-- `~/src/github.com/fro-bot/agent/packages/gateway/src/main.ts:48-111` — daemon entrypoint, slash-command registration, login flow.
-- `~/src/github.com/fro-bot/agent/packages/gateway/src/discord/mentions.ts` — mention handling pattern (relevant to R21's mention-only restriction).
-- `~/src/github.com/fro-bot/agent/packages/gateway/AGENTS.md:49-53` — secret loading pattern `${NAME}_FILE` then `process.env[name]`.
-- `~/src/github.com/fro-bot/agent/deploy/compose.yaml:16-40` — Docker Compose secret wiring (for `infra` to mirror).
-- `~/.dotfiles/docs/2026-04-01-001-feat-devcontainer-ci-publishing-plan.md` — prior plan in this repo; matches the `docs/<date>-NNN-<type>-<name>-plan.md` filename convention.
+In `fro-bot/agent` (paths repo-relative to that repo's root):
+
+- `packages/gateway/src/discord/client.ts:10-14` — `DEFAULT_INTENTS` includes `MessageContent` + `GuildMembers` by default. R22 flips this to opt-in.
+- `packages/gateway/src/main.ts:48-111` — daemon entrypoint, slash-command registration, login flow.
+- `packages/gateway/src/discord/mentions.ts` — mention handling pattern (relevant to R21's mention-only restriction).
+- `packages/gateway/AGENTS.md:49-53` — secret loading pattern `${NAME}_FILE` then `process.env[name]`.
+- `deploy/compose.yaml:16-40` — Docker Compose secret wiring (for `infra` to mirror).
+
+In `.dotfiles` (this repo):
+
+- `docs/2026-04-01-001-feat-devcontainer-ci-publishing-plan.md` — prior plan; matches the `docs/<date>-NNN-<type>-<name>-plan.md` filename convention (which this plan supersedes by moving plans into `docs/plans/`).
 
 ### Institutional Learnings
 
@@ -261,7 +266,7 @@ Key flows:
 - Update: `.dotfiles/docs/runbooks/discord-admin-agent.md` — add a "channel inventory" section listing the new layout, populated at execution.
 
 **Approach:**
-- Enumerate active projects from local sources Marcus already maintains (likely `~/src/github.com/marcusrbrown/*` + a curated subset). Marcus confirms the final project list before channel creation.
+- Enumerate active projects from Marcus's curated list (drawn from his local source tree under `marcusrbrown` plus a curated subset). Marcus confirms the final project list before channel creation.
 - Enable Community Mode (R5). This unlocks AutoMod + Onboarding + Forums + Insights.
 - Before any mutation: gateway daemon is offline (R17's maintenance lock — Phase 1 happens entirely with the daemon down; deploy from `infra` is sequenced after Phase 1).
 - **Pre-mutation state revalidation:** At the start of Unit 3 execution, the admin agent re-enumerates current server state and compares it to the state recorded in the Unit 2 audit report. If channels, roles, members, or permissions have materially changed since the audit, halt and surface the delta to Marcus before proceeding. This catches between-approval interventions (another client, automation, or accidental change).
@@ -592,7 +597,7 @@ Key flows:
 ## Sources & References
 
 - **Origin document:** [.dotfiles/docs/brainstorms/2026-05-18-discord-server-revival-requirements.md](brainstorms/2026-05-18-discord-server-revival-requirements.md)
-- Related repo (gateway code): https://github.com/fro-bot/agent (local: `~/src/github.com/fro-bot/agent/`)
+- Related repo (gateway code): https://github.com/fro-bot/agent
 - Related repo (gateway hosting, Phase 2): https://github.com/marcusrbrown/infra (parallel work in progress)
 - MCP server (default candidate): https://github.com/SaseQ/discord-mcp
 - Discord platform docs:
