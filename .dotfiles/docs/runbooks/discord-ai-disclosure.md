@@ -1,6 +1,6 @@
 ---
-title: AI Disclosure — Solidarity Discord Server
-audience: Members and prospective members of the Solidarity Discord server
+title: AI Disclosure — Fronomenal Discord Server
+audience: Members and prospective members of the Fronomenal Discord server
 last-updated: 2026-05-18
 canonical-source: docs/runbooks/discord-ai-disclosure.md (this file)
 publication-target: pinned message in a public-readable server channel (Unit 7)
@@ -8,9 +8,9 @@ related-plan: docs/plans/2026-05-18-001-feat-discord-server-revival-plan.md
 related-brainstorm: docs/brainstorms/2026-05-18-discord-server-revival-requirements.md
 ---
 
-# AI + Bot Disclosure — Solidarity
+# AI + Bot Disclosure — Fronomenal
 
-This document is the canonical disclosure for AI and bot activity in the [Solidarity Discord server](https://discord.com/channels/223846469327650816). It is reviewed and approved by the server owner (Marcus R. Brown) and pinned in a public-readable channel before any new member joins.
+This document is the canonical disclosure for AI and bot activity in the [Fronomenal Discord server](https://discord.com/channels/223846469327650816). It is reviewed and approved by the server owner (Marcus R. Brown) and pinned in a public-readable channel before any new member joins.
 
 If you are reading this in the dotfiles repository, this is the version-controlled source. The pinned in-server version is canonical for member-facing disclosure; both are kept in sync.
 
@@ -23,9 +23,12 @@ If you are reading this in the dotfiles repository, this is the version-controll
 
 ## Bots operating in the server
 
-| Bot | Application ID | Type | Role | Owner |
-|---|---|---|---|---|
-| `Fro Bot#4027` | `1505811646956830781` | Discord application bot | `@Fro Bot` (managed) | Marcus R. Brown |
+**`Fro Bot#4027`**
+
+- Application ID: `1505811646956830781`
+- Type: Discord application bot
+- Role: `@Fro Bot` (managed)
+- Owner: Marcus R. Brown
 
 No other bots are currently in the server. If additional bots are added, this disclosure will be updated before they join.
 
@@ -33,11 +36,20 @@ No other bots are currently in the server. If additional bots are added, this di
 
 Discord requires "privileged intents" to be explicitly granted by the bot owner. Each intent expands the data the bot sees beyond the public default. The intents currently enabled on `Fro Bot`'s application are:
 
-| Intent | Status | Enabled on | What it exposes | Why |
-|---|---|---|---|---|
-| `GUILD_MEMBERS` (Server Members) | ✅ ON | 2026-05-18 | Roster: usernames, IDs, join dates, role assignments — same data any guild member sees in the member list UI | Required by the chosen MCP server (`SaseQ/discord-mcp@v1.0.0`) — bot cannot start without it. This intent is part of the admin-agent path; gateway-daemon use also relies on it. |
-| `MessageContent` | ✅ ON | 2026-05-18 | The plain-text body of messages in any channel the bot can read | Required to archive historic channel content during the Phase 0 audit (Unit 2 of the revival plan). Without it, Discord redacts the `content` field for bots. |
-| `PRESENCE` | ⛔ OFF | — | Per-member online status changes | Not requested. Bot does not need to know who is online. |
+**`GUILD_MEMBERS` (Server Members)** — ✅ ON since 2026-05-18
+
+- Exposes: Roster — usernames, IDs, join dates, role assignments. Same data any guild member sees in the member list UI.
+- Why: Required by the chosen MCP server (`SaseQ/discord-mcp@v1.0.0`) — bot cannot start without it. This intent is part of the admin-agent path; gateway-daemon use also relies on it.
+
+**`MessageContent`** — ✅ ON since 2026-05-18
+
+- Exposes: The plain-text body of messages in any channel the bot can read.
+- Why: Required to archive historic channel content during the Phase 0 audit (Unit 2 of the revival plan). Without it, Discord redacts the `content` field for bots.
+
+**`PRESENCE`** — ⛔ OFF
+
+- Exposes: Per-member online status changes.
+- Why: Not requested. Bot does not need to know who is online.
 
 ## Historical timing note
 
