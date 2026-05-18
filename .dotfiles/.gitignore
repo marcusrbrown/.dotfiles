@@ -16,6 +16,8 @@
  !/.claude/rules/
 !/.claude/settings.json
 !/.config/
+/.config/bash/local.d/*
+!/.config/bash/local.d/.gitkeep
 !/.devcontainer/
 /.devcontainer/.*Marker
 !/.dotfiles/
