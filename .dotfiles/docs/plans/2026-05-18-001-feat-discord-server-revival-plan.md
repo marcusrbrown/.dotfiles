@@ -397,7 +397,7 @@ Key flows:
 **Dependencies:** Unit 3 (cross-cutting channels exist for pinning), Unit 4 (role policy declared; referenced in disclosure). **Unit 6's Welcome Screen depends on this unit landing first** to avoid a disclosure-gap window.
 
 **Files:**
-- Create: `.dotfiles/docs/disclosures/discord-ai-disclosure.md` — canonical version of the disclosure document, tracked in dotfiles. Marcus posts the rendered content in the server's pinned channel.
+- Create: `.dotfiles/docs/runbooks/discord-ai-disclosure.md` — canonical version of the disclosure document, tracked in dotfiles. Marcus posts the rendered content in the server's pinned channel.
 - The canonical version is the source of truth; future revisions update both the file and the pinned message.
 
 **Approach:**
@@ -420,7 +420,7 @@ Key flows:
 - Integration: The disclosure references the dotfiles runbook for the admin-agent's data-handling policy.
 
 **Verification:**
-- File at `.dotfiles/docs/disclosures/discord-ai-disclosure.md` is tracked.
+- File at `.dotfiles/docs/runbooks/discord-ai-disclosure.md` is tracked.
 - A pinned message exists in the server matching the file's content as of the post date.
 - The disclosure covers all 7 scope items listed above.
 - **R26 freshness procedure:** A short section in the disclosure file lists the gateway intents and LLM providers it currently covers, dated. This makes drift between live config and disclosure visually obvious in `git diff` and in the server's pinned message.
@@ -584,13 +584,14 @@ Key flows:
 | Out-of-order PR merges across 3 repos cause docs/code/deploy mismatch | R27 release-order discipline (Unit 9 first, dotfiles second, infra last). |
 | Unit 9 tests accidentally hit live Discord | Test isolation guard in Unit 9 verification: tests refuse to start unless token is a known-fake placeholder. |
 | R15c type-confirm is procedural, not technical (MCP server cannot enforce typed confirmation) | Documented as procedural control in R15c clarification. Acceptable for one-shot admin-agent use; not suitable for autonomous tooling. |
+| Privileged intent enabled before disclosure shipped (documented 2026-05-18 deviation: `GUILD_MEMBERS` for MCP startup; `MessageContent` for audit content) | R12 revised post-execution to split MCP-required from disclosure-gated intents. Mitigation going forward: new-member onboarding is gated on disclosure doc landing in the server (Unit 7 prerequisite). No new privileged intents will be enabled before disclosure is current. Disclosure ships in this same PR as `docs/runbooks/discord-ai-disclosure.md`. |
 
 ## Documentation / Operational Notes
 
 - 2 runbooks land in `.dotfiles/docs/runbooks/`: `discord-admin-agent.md` (includes the Token handoff pointer section per Unit 11), `discord-permission-drift-check.md`. `discord-add-new-project.md` is a future iteration (deferred from this plan). The canonical token-lifecycle runbook lives in `marcusrbrown/infra`, not here.
-- 1 disclosure doc at `.dotfiles/docs/disclosures/discord-ai-disclosure.md`.
+- 1 disclosure doc at `.dotfiles/docs/runbooks/discord-ai-disclosure.md`.
 - 1 plan + 1 brainstorm + 1 `.gitignore` update + 1 Unit-9 PR (in `fro-bot/agent`) = 4 + (2 runbooks + 1 disclosure) = 7 tracked artifacts across 2 repos from this work. The third repo (`marcusrbrown/infra`) owns its own token-lifecycle runbook + deployment artifacts; not counted here.
-- `.dotfiles/.gitignore` may need an allowlist entry for `docs/runbooks/` and `docs/disclosures/` if they don't already match the existing pattern. Verify at execution; force-add (`git add -f`) is the known escape hatch for first-time subdir adds (same quirk that bit `docs/brainstorms/` and `docs/plans/`).
+- `.dotfiles/.gitignore` already allowlists `docs/runbooks/` (per PR #1654). The disclosure doc lives under that existing allowlist; no separate `docs/disclosures/` path is used.
 - `.dotfiles` commit messages follow `type(scope): description` convention.
 - This plan does NOT add Renovate / CI / changelog automation to the runbooks. Out of scope.
 
