@@ -498,7 +498,7 @@ Key flows:
 
 ---
 
-- [ ] **Unit 10: Migrate `#fro-bot` channel under the new layout (preserve webhook continuity)**
+- [x] **Unit 10: Migrate `#fro-bot` channel under the new layout (preserve webhook continuity)**
 
 **Goal:** R4. The `#fro-bot` GitHub Actions integration must keep working through the restructure.
 
