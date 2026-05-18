@@ -26,6 +26,8 @@
 !/.dotfiles/docs/brainstorms/*.md
 !/.dotfiles/docs/plans/
 !/.dotfiles/docs/plans/*.md
+!/.dotfiles/docs/runbooks/
+!/.dotfiles/docs/runbooks/*.md
 !/.github/
 !/.ssh/
 /.ssh/*
