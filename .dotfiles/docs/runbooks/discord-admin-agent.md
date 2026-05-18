@@ -10,6 +10,7 @@ mcp-server: saseq/discord-mcp:1.0.0 (commit 6725bce7ed057a2d9485473f04b3e56a2eee
 The **admin-agent path** is an ephemeral OpenCode session that uses the [SaseQ/discord-mcp](https://github.com/SaseQ/discord-mcp) MCP server to perform one-shot server-admin tasks against Marcus's Discord server. It is **distinct from** the Fro Bot gateway daemon (which runs persistently and is owned by `fro-bot/agent` + `marcusrbrown/infra`).
 
 This runbook covers:
+
 - **Pin + provenance** — version, image source, review record
 - **Preflight** — verifying the environment before starting an admin-agent session
 - **Token sourcing** — how `DISCORD_TOKEN` reaches the MCP container
@@ -23,17 +24,17 @@ This runbook covers:
 
 ## Pin + provenance
 
-| Field | Value |
-|-------|-------|
-| `pinned_image` | `saseq/discord-mcp:1.0.0` |
-| `pinned_sha` | `6725bce7ed057a2d9485473f04b3e56a2eee775e` |
-| `source_repo` | https://github.com/SaseQ/discord-mcp |
-| `release_date` | 2026-03-16 |
-| `platform_limitation` | arm64-only on Docker Hub at v1.0.0 — Apple Silicon machines (this one) are fine; x86_64 hosts won't pull |
-| `reviewed_at` | 2026-05-18 |
-| `reviewed_by` | Marcus R. Brown |
-| `next_review_trigger` | Before every write-capable admin session AND quarterly while configured |
-| `provenance_verdict` | Safe to use (no security advisories; no security-themed open issues; README documents tooling clearly; v1.0.0 tagged release) |
+| Field                 | Value                                                                                                                         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `pinned_image`        | `saseq/discord-mcp:1.0.0`                                                                                                     |
+| `pinned_sha`          | `6725bce7ed057a2d9485473f04b3e56a2eee775e`                                                                                    |
+| `source_repo`         | https://github.com/SaseQ/discord-mcp                                                                                          |
+| `release_date`        | 2026-03-16                                                                                                                    |
+| `platform_limitation` | arm64-only on Docker Hub at v1.0.0 — Apple Silicon machines (this one) are fine; x86_64 hosts won't pull                      |
+| `reviewed_at`         | 2026-05-18                                                                                                                    |
+| `reviewed_by`         | Marcus R. Brown                                                                                                               |
+| `next_review_trigger` | Before every write-capable admin session AND quarterly while configured                                                       |
+| `provenance_verdict`  | Safe to use (no security advisories; no security-themed open issues; README documents tooling clearly; v1.0.0 tagged release) |
 
 Re-review consists of (a) checking the upstream repo for new security advisories or maintainer changes, (b) scanning recent commits for red flags, (c) confirming the pinned SHA is not behind a relevant security fix. Update `reviewed_at` and bump the pin if anything material changes; freeze MCP use and fall back to direct REST if upstream changed hands, was archived, or has unexplained privileged-surface changes.
 
@@ -134,21 +135,21 @@ The dotfiles' `.gitignore` allowlist + `~/.config/git/ignore` global-credential-
 
 SaseQ/discord-mcp v1.0.0 exposes these tool categories. Read-only-safe tools are marked ✅; write-capable tools are marked ⚠️.
 
-| Category | Read-only ✅ | Write-capable ⚠️ |
-|---|---|---|
-| Server info | `get_server_info` | — |
-| User | `get_user_id_by_name`, `read_private_messages` | `send_private_message`, `edit_private_message`, `delete_private_message` |
-| Message | `read_messages` | `send_message`, `edit_message`, `delete_message`, `add_reaction`, `remove_reaction` |
-| Channel | `find_channel`, `list_channels`, `get_channel_info` | `create_text_channel`, `edit_text_channel`, `delete_channel`, `move_channel` |
-| Category | `find_category`, `list_channels_in_category` | `create_category`, `delete_category` |
-| Webhook | `list_webhooks` | `create_webhook`, `delete_webhook`, `send_webhook_message` |
-| Role | `list_roles` | `create_role`, `edit_role`, `delete_role`, `assign_role`, `remove_role` |
-| Moderation | `get_bans` | `kick_member`, `ban_member`, `unban_member`, `timeout_member`, `remove_timeout`, `set_nickname` |
-| Voice/Stage | — | `create_voice_channel`, `create_stage_channel`, `edit_voice_channel`, `move_member`, `disconnect_member`, `modify_voice_state` |
-| Scheduled events | `list_guild_scheduled_events`, `get_guild_scheduled_event_users` | `create_guild_scheduled_event`, `edit_guild_scheduled_event`, `delete_guild_scheduled_event` |
-| Channel permissions | `list_channel_permission_overwrites` | `upsert_role_channel_permissions`, `upsert_member_channel_permissions`, `delete_channel_permission_overwrite` |
-| Invites | `list_invites`, `get_invite_details` | `create_invite`, `delete_invite` |
-| Emoji | `list_emojis`, `get_emoji_details` | `create_emoji`, `edit_emoji`, `delete_emoji` |
+| Category            | Read-only ✅                                                     | Write-capable ⚠️                                                                                                               |
+| ------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Server info         | `get_server_info`                                                | —                                                                                                                              |
+| User                | `get_user_id_by_name`, `read_private_messages`                   | `send_private_message`, `edit_private_message`, `delete_private_message`                                                       |
+| Message             | `read_messages`                                                  | `send_message`, `edit_message`, `delete_message`, `add_reaction`, `remove_reaction`                                            |
+| Channel             | `find_channel`, `list_channels`, `get_channel_info`              | `create_text_channel`, `edit_text_channel`, `delete_channel`, `move_channel`                                                   |
+| Category            | `find_category`, `list_channels_in_category`                     | `create_category`, `delete_category`                                                                                           |
+| Webhook             | `list_webhooks`                                                  | `create_webhook`, `delete_webhook`, `send_webhook_message`                                                                     |
+| Role                | `list_roles`                                                     | `create_role`, `edit_role`, `delete_role`, `assign_role`, `remove_role`                                                        |
+| Moderation          | `get_bans`                                                       | `kick_member`, `ban_member`, `unban_member`, `timeout_member`, `remove_timeout`, `set_nickname`                                |
+| Voice/Stage         | —                                                                | `create_voice_channel`, `create_stage_channel`, `edit_voice_channel`, `move_member`, `disconnect_member`, `modify_voice_state` |
+| Scheduled events    | `list_guild_scheduled_events`, `get_guild_scheduled_event_users` | `create_guild_scheduled_event`, `edit_guild_scheduled_event`, `delete_guild_scheduled_event`                                   |
+| Channel permissions | `list_channel_permission_overwrites`                             | `upsert_role_channel_permissions`, `upsert_member_channel_permissions`, `delete_channel_permission_overwrite`                  |
+| Invites             | `list_invites`, `get_invite_details`                             | `create_invite`, `delete_invite`                                                                                               |
+| Emoji               | `list_emojis`, `get_emoji_details`                               | `create_emoji`, `edit_emoji`, `delete_emoji`                                                                                   |
 
 For the Phase 0 audit (plan Unit 2), only the ✅ read-only tools are needed. The agent should be explicitly instructed to use only those tools during audit; this is the procedural enforcement of plan R15a + R23.
 
@@ -172,23 +173,23 @@ This section is the **declared policy** that the permission-drift detector (Unit
 
 ### Roles
 
-| Role | Position | Members declared | Owner | Project status |
-| --- | --- | --- | --- | --- |
-| `@admin` | 9 | server owner only | server owner | active |
-| `Fro Bot` (managed) | 3 | applied automatically by Discord when the bot joins | server owner | active — admin-agent + future gateway-daemon paths |
-| `@<project>-collab` (e.g. `poly-collab`) | below `@admin`, above `@everyone` | every active collaborator on the named project | server owner (default) | active when the project is active; retired during drift cleanup when the project is archived |
-| `@<project>-viewer` (e.g. `poly-viewer`) | below the matching `-collab` role | optional; read-only outside collaborators | server owner (default) | tracks the matching `-collab` role's lifecycle |
+| Role                                     | Position                          | Members declared                                    | Owner                  | Project status                                                                               |
+| ---------------------------------------- | --------------------------------- | --------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------- |
+| `@admin`                                 | 9                                 | server owner only                                   | server owner           | active                                                                                       |
+| `Fro Bot` (managed)                      | 3                                 | applied automatically by Discord when the bot joins | server owner           | active — admin-agent + future gateway-daemon paths                                           |
+| `@<project>-collab` (e.g. `poly-collab`) | below `@admin`, above `@everyone` | every active collaborator on the named project      | server owner (default) | active when the project is active; retired during drift cleanup when the project is archived |
+| `@<project>-viewer` (e.g. `poly-viewer`) | below the matching `-collab` role | optional; read-only outside collaborators           | server owner (default) | tracks the matching `-collab` role's lifecycle                                               |
 
 Historic collaboration roles inherited from the server's pre-revival state (positions 4-8 in this server) — 0 declared members; project status: retired. Removal deferred to drift cleanup.
 
 ### Category overrides
 
-| Category | Override target | Effect |
-| --- | --- | --- |
-| `Server Info` | (none) | inherits `@everyone` defaults — public-readable |
-| `Cross-cutting` | (none) | inherits `@everyone` defaults — public-readable |
-| `Operations` | `@everyone` deny ViewChannel; `@Fro Bot` allow ViewChannel + ManageChannels + ManageRoles + ManageWebhooks + ReadMessageHistory | admin-only |
-| `<project>` | `@everyone` deny ViewChannel; `@<project>-collab` allow ViewChannel + SendMessages + ReadMessageHistory; `@<project>-viewer` allow ViewChannel + ReadMessageHistory and deny SendMessages; `@Fro Bot` allow ViewChannel + ManageChannels + ReadMessageHistory | per-project restricted |
+| Category        | Override target                                                                                                                                                                                                                                               | Effect                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `Server Info`   | (none)                                                                                                                                                                                                                                                        | inherits `@everyone` defaults — public-readable |
+| `Cross-cutting` | (none)                                                                                                                                                                                                                                                        | inherits `@everyone` defaults — public-readable |
+| `Operations`    | `@everyone` deny ViewChannel; `@Fro Bot` allow ViewChannel + ManageChannels + ManageRoles + ManageWebhooks + ReadMessageHistory                                                                                                                               | admin-only                                      |
+| `<project>`     | `@everyone` deny ViewChannel; `@<project>-collab` allow ViewChannel + SendMessages + ReadMessageHistory; `@<project>-viewer` allow ViewChannel + ReadMessageHistory and deny SendMessages; `@Fro Bot` allow ViewChannel + ManageChannels + ReadMessageHistory | per-project restricted                          |
 
 ### Channel-level overrides
 
@@ -201,6 +202,7 @@ Every change to this table is paired with the matching Discord state mutation in
 ## Token handoff (pointer to `marcusrbrown/infra`)
 
 The **canonical token-lifecycle runbook** lives in [`marcusrbrown/infra`](https://github.com/marcusrbrown/infra), not here. That repo owns:
+
 - Host-side token-file storage path + ownership + filesystem permissions
 - Rotation procedure (Developer Portal regeneration → secret update → daemon reload)
 - Emergency revocation path

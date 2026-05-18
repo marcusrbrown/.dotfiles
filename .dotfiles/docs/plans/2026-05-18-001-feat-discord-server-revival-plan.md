@@ -10,6 +10,7 @@ origin: .dotfiles/docs/brainstorms/2026-05-18-discord-server-revival-requirement
 # Discord Server Revival — Project-Organized Workspace + Gateway Host
 
 **Target repo:** This plan spans three repos. Most work lives outside `.dotfiles` itself:
+
 - `.dotfiles` (this repo) — the plan document, OpenCode MCP server configuration for the admin-agent path, runbooks (under `.dotfiles/docs/`)
 - `fro-bot/agent` (https://github.com/fro-bot/agent) — code change to `packages/gateway/` (intent-posture flip only; R20/R21 enforcement deferred to a follow-up plan owned by `fro-bot/agent`)
 - `marcusrbrown/infra` (parallel work in progress) — gateway-app deployment (out of scope here, sequenced via dependency)
@@ -100,9 +101,9 @@ In `.dotfiles` (this repo):
 
 ### Resolved During Planning
 
-- *Where does the MCP server run for the admin agent?* — In an OpenCode session via stdio or HTTP transport on Marcus's machine. No long-running daemon. Pinned commit SHA.
-- *Where does the offline archive of the 3 channels live?* — Local to Marcus's machine outside the dotfiles repo. Path resolved at execution. NOT in dotfiles (memory hygiene).
-- *Does R22's intent-posture flip block this plan's Phase 1?* — No. Phase 1 (server restructure) is independent of the gateway intent posture. R22 only blocks Phase 2 (the `infra` deployment).
+- _Where does the MCP server run for the admin agent?_ — In an OpenCode session via stdio or HTTP transport on Marcus's machine. No long-running daemon. Pinned commit SHA.
+- _Where does the offline archive of the 3 channels live?_ — Local to Marcus's machine outside the dotfiles repo. Path resolved at execution. NOT in dotfiles (memory hygiene).
+- _Does R22's intent-posture flip block this plan's Phase 1?_ — No. Phase 1 (server restructure) is independent of the gateway intent posture. R22 only blocks Phase 2 (the `infra` deployment).
 
 ### Deferred to Implementation
 
@@ -117,7 +118,7 @@ In `.dotfiles` (this repo):
 
 ## High-Level Technical Design
 
-> *This illustrates the intended approach and is directional guidance for review, not implementation specification. The implementing agent should treat it as context, not code to reproduce.*
+> _This illustrates the intended approach and is directional guidance for review, not implementation specification. The implementing agent should treat it as context, not code to reproduce._
 
 ```
                     ┌─────────────────────────────────────────────────────────────┐
@@ -170,6 +171,7 @@ In `.dotfiles` (this repo):
 ```
 
 Key flows:
+
 1. **Audit (F1):** Admin agent runs R1's read-only enumeration. Output goes to a report Marcus reviews before any mutation.
 2. **Archive (F1 cont.):** Admin agent exports the 3 original channels to local markdown. Verified offline before Phase 1.
 3. **Restructure (F2):** Admin agent applies channel + role changes via R15b/c discipline with explicit confirmations. Gateway daemon stays offline throughout (R17).
@@ -187,10 +189,12 @@ Key flows:
 **Dependencies:** None (entry point of the plan)
 
 **Files:**
+
 - Create or modify: `.config/opencode/opencode.json` — add MCP server entry with pinned image/SHA (decided at execution)
 - Create: `.dotfiles/docs/runbooks/discord-admin-agent.md` — how to start an OpenCode session with the Discord MCP server attached, expected capabilities, and the direct-REST fallback procedure
 
 **Approach:**
+
 - Pin `SaseQ/discord-mcp` at the `v1.0.0` release (commit `6725bce7ed057a2d9485473f04b3e56a2eee775e`, released 2026-03-16). Verified at deepening time: no `SECURITY.md`, no published advisories, no security-themed open issues, README documents both HTTP (recommended) and stdio transports clearly. Provenance verdict: safe to use with normal scrutiny.
 - If a newer tagged release exists at execution time, re-pin to that release after a quick provenance check (recent commits for red flags, maintainer identity, repo not archived).
 - Fall back to `hanweg/mcp-discord` or direct Discord REST calls if provenance review surfaces issues.
@@ -202,15 +206,18 @@ Key flows:
 - Capture the "no token, read-only audit only" mode where applicable (some MCP tools may work without a token for certain enumerate operations).
 
 **Patterns to follow:**
+
 - Existing MCP servers in `.config/opencode/opencode.json` (if any) — match config shape.
 - Plugin pinning convention from PR #1554 (Renovate `customManager` watches `package@semver` in plugin arrays).
 
 **Test scenarios:**
+
 - Happy path: Start an OpenCode session with the MCP server attached; the agent can call `list_channels` (or equivalent) and return the live server's channel inventory.
 - Error path: Invalid token → MCP server reports an auth error; admin agent surfaces it instead of silently retrying.
 - Edge case: MCP server unavailable (Docker not running, image not pulled) → admin agent detects the failure and announces the direct-REST fallback path.
 
 **Verification:**
+
 - A fresh OpenCode session can attach the MCP server and enumerate the server state.
 - The runbook is in `.dotfiles/docs/runbooks/discord-admin-agent.md` and tracked in dotfiles via the existing `!/.dotfiles/docs/*.md` allowlist (or `runbooks/` if added).
 - The MCP server's pin is human-readable in `opencode.json`.
@@ -226,10 +233,12 @@ Key flows:
 **Dependencies:** Unit 1
 
 **Files:**
+
 - Create: `<archive-path>/2026-05-XX-discord-server-audit-report.md` (path outside dotfiles, resolved at execution)
 - Create: `<archive-path>/general.md`, `<archive-path>/internal.md`, `<archive-path>/team.md`, `<archive-path>/fro-bot.md` (the 4 active channels' content as plain text)
 
 **Approach:**
+
 - Single OpenCode session with admin agent + Discord MCP server. Marcus prompts the agent to enumerate the server state.
 - Audit MUST be read-only per R15a + R23: every Discord API call is logged; the agent halts and reports if it encounters a write-capable tool or a rate-limit response.
 - Output format for the report: per-channel section with name, ID, last message timestamp, member count with access, integration listings, webhook listings. Role inventory with member counts. Member list with join dates.
@@ -238,15 +247,18 @@ Key flows:
 - Per R19, the admin agent does NOT echo raw archive content into terminal logs; writes only to the archive file path.
 
 **Patterns to follow:**
+
 - The `<archive-path>` is documented in the runbook from Unit 1; do not hardcode in this plan.
 
 **Test scenarios:**
+
 - Happy path: Audit completes; report + 4 archive files exist; report shows expected channel/role/member counts.
 - Error path (R23): Discord rate-limits mid-audit → admin agent halts, surfaces partial state to Marcus, does NOT continue.
 - Error path: Channel content too large for a single archive file → admin agent splits into dated parts (one per month) rather than truncating.
 - Integration: The archive contains the `#fro-bot` integration's message history (so the audit captures the integration's behavior before any structural change).
 
 **Verification:**
+
 - Audit report exists and Marcus has reviewed it.
 - 4 archive files exist; spot-check confirms message ordering + author + timestamps are intact.
 - No Discord-state mutation occurred (audit log shows only GET-equivalent operations).
@@ -262,10 +274,12 @@ Key flows:
 **Dependencies:** Unit 2 (audit completed + approved)
 
 **Files:**
+
 - No code files in any repo. All work is server-state via Discord MCP.
 - Update: `.dotfiles/docs/runbooks/discord-admin-agent.md` — add a "channel inventory" section listing the new layout, populated at execution.
 
 **Approach:**
+
 - Enumerate active projects from Marcus's curated list (drawn from his local source tree under `marcusrbrown` plus a curated subset). Marcus confirms the final project list before channel creation.
 - Enable Community Mode (R5). This unlocks AutoMod + Onboarding + Forums + Insights.
 - Before any mutation: gateway daemon is offline (R17's maintenance lock — Phase 1 happens entirely with the daemon down; deploy from `infra` is sequenced after Phase 1).
@@ -276,16 +290,19 @@ Key flows:
 - Per R15b, every channel creation/rename is per-action confirmed.
 
 **Patterns to follow:**
+
 - Per-project channels can be grouped under a `📂 Projects` category; cross-cutting under a `📌 General` category.
 - Channel topic strings (1-2 sentences) populated at creation time.
 
 **Test scenarios:**
+
 - Happy path: New channels exist with correct names and topics; categories are organized.
 - Edge case: A project name conflicts with an existing or reserved channel name → admin agent prompts Marcus to disambiguate before creating.
 - Error path: Discord rate-limits mid-restructure → admin agent halts, leaves the server in a documented partial state, surfaces the recovery path.
 - Integration: Original channels are renamed (not deleted), preserving message history during Phase 1.
 
 **Verification:**
+
 - Server has the new layout; the audit report's "current state" no longer matches (proves the restructure happened).
 - Original 3 channels are either archived (renamed) or removed per Marcus's approved approach.
 - Community Mode is enabled.
@@ -301,10 +318,12 @@ Key flows:
 **Dependencies:** Unit 3
 
 **Files:**
+
 - No code files. All work is server-state via Discord MCP.
 - Update: `.dotfiles/docs/runbooks/discord-admin-agent.md` — add a "role + permission policy" section documenting the declared policy that R20's drift detection will compare against.
 
 **Approach:**
+
 - Create roles per project: `@<project>-collab` for every active project (full post + agent-invocation permission within the project's channel(s)). Optional `@<project>-viewer` for read-only outside access on public-readable project channels.
 - Cross-cutting channels use `@everyone` defaults (no per-channel role gate).
 - Apply channel permission overrides: for each project channel, deny `@everyone` view + grant the relevant `@<project>-collab` (and optionally `@<project>-viewer`).
@@ -314,15 +333,18 @@ Key flows:
 - **Role lifecycle hygiene:** Every project role has an owner (Marcus by default) and a project status (active / dormant / retired). When a project is retired or archived, its `@<project>-collab` and `@<project>-viewer` roles are removed (or renamed to `@archive-<project>-collab`) during the next permission-drift check (Unit 8). This prevents role sprawl and keeps the declared-policy table in the runbook accurate.
 
 **Patterns to follow:**
+
 - Role color convention: muted colors for `-collab`, even more muted for `-viewer`. Marcus's preference.
 - Role position: project roles below `@Admin` but above `@everyone`; viewer roles below collab roles.
 
 **Test scenarios:**
+
 - Happy path: For each project, the `@<project>-collab` role exists, the channel exists, and a member assigned the role can view + post in the channel while `@everyone` cannot.
 - Edge case: A member who currently lacks any project role should land in `@everyone` and see only cross-cutting channels.
 - Integration: The declared policy table in the runbook matches the effective Discord permissions for at least one sample project (verified manually).
 
 **Verification:**
+
 - All declared roles exist with the documented permissions.
 - The runbook's policy table is the source of truth and is committed alongside the role changes (next commit in this branch).
 
@@ -337,10 +359,12 @@ Key flows:
 **Dependencies:** Unit 3 (Community Mode + mod-logs channel exist)
 
 **Files:**
+
 - No code files.
 - Update: `.dotfiles/docs/runbooks/discord-admin-agent.md` — add an "AutoMod policy" section documenting the rules and the alert routing.
 
 **Approach:**
+
 - Enable "Commonly Flagged Words" rule.
 - Add a custom keyword rule for any project-specific terms Marcus wants to block (likely empty at first).
 - Enable "Block Mention Spam" rule. Threshold tuned at execution (likely 5–7 mentions per message).
@@ -349,11 +373,13 @@ Key flows:
 - Per R15b, every rule creation is per-action confirmed.
 
 **Test scenarios:**
+
 - Happy path: A message containing 7+ mentions is auto-deleted and an alert appears in `#mod-logs`.
 - Edge case: Marcus posts a high-mention message (e.g., notifying multiple roles) — AutoMod fires; Marcus exempts `@Admin` from the rule via Discord's rule exception mechanism.
 - Verification: A message with no triggers passes cleanly with no `#mod-logs` noise.
 
 **Verification:**
+
 - Three rules are active: commonly-flagged-words, custom-keywords (possibly empty), block-mention-spam.
 - Alert routing to `#mod-logs` is confirmed via test message.
 
@@ -368,21 +394,25 @@ Key flows:
 **Dependencies:** Unit 4 (roles exist) + Unit 5 (cross-cutting channels in place) + **Unit 7 (disclosure published before Welcome Screen references it — prevents a gap window where a public member could join, complete onboarding, and not yet see the disclosure)**
 
 **Files:**
+
 - No code files.
 - Update: `.dotfiles/docs/runbooks/discord-admin-agent.md` — add an "Onboarding" section documenting the choice set + fallback.
 
 **Approach:**
+
 - Discord Onboarding has a minimum role-choice set requirement (typically ≥3). Choose 3 low-stakes options like "Interested in [project A]", "Interested in [project B]", "Just looking around (no role)" — none of which grant project-collab access (collab roles are assigned by Marcus, not via self-service).
 - Members who select "just looking" or skip lands in `@everyone` with read-only access to cross-cutting channels (R9's `@Visitor`-equivalent fallback). No separate `@Visitor` role unless Marcus prefers it.
 - The Welcome Screen has 3-4 sentences pointing to `#announcements`, `#general`, and the disclosure document (once Unit 7 lands).
 - Per R15b, Onboarding setup is per-action confirmed.
 
 **Test scenarios:**
+
 - Happy path: A test alt account joins the server, completes Onboarding picking one option, and sees the expected channel set.
 - Edge case: Alt account skips Onboarding entirely → lands in `@everyone` cross-cutting view; can re-trigger Onboarding via Discord's re-entry mechanism.
 - Edge case: Alt account picks "Interested in [project A]" but is NOT a collaborator → does not get `@<project A>-collab`; sees only cross-cutting channels.
 
 **Verification:**
+
 - Onboarding is enabled and a test member can complete it.
 - The fallback state is documented in the runbook and matches real behavior.
 
@@ -397,10 +427,12 @@ Key flows:
 **Dependencies:** Unit 3 (cross-cutting channels exist for pinning), Unit 4 (role policy declared; referenced in disclosure). **Unit 6's Welcome Screen depends on this unit landing first** to avoid a disclosure-gap window.
 
 **Files:**
+
 - Create: `.dotfiles/docs/runbooks/discord-ai-disclosure.md` — canonical version of the disclosure document, tracked in dotfiles. Marcus posts the rendered content in the server's pinned channel.
 - The canonical version is the source of truth; future revisions update both the file and the pinned message.
 
 **Approach:**
+
 - Draft the disclosure covering:
   - The bot itself (Fro Bot gateway daemon, what it is, who operates it)
   - Intents declared (`Guilds` baseline; `MessageContent` + `GuildMembers` opt-in per-deploy)
@@ -415,11 +447,13 @@ Key flows:
 - **R25 hygiene:** No real Discord message bodies appear in the canonical disclosure file or any tracked runbook example. Synthetic example messages only. The disclosure names the LLM providers actively used **at the time of launch** by the gateway daemon and the admin-agent session, and links/describes their retention + training policies. Future provider changes trigger a disclosure-review prerequisite per R26 (not absorbed as standing scope here).
 
 **Test scenarios:**
+
 - Happy path: Disclosure document file exists and is committed; pinned message in server matches the file content.
 - Edge case: Disclosure scope misses an intent the gateway later activates → caught by R12's "must reference specific intents being used" clause; disclosure update is a prerequisite for the intent change.
 - Integration: The disclosure references the dotfiles runbook for the admin-agent's data-handling policy.
 
 **Verification:**
+
 - File at `.dotfiles/docs/runbooks/discord-ai-disclosure.md` is tracked.
 - A pinned message exists in the server matching the file's content as of the post date.
 - The disclosure covers all 7 scope items listed above.
@@ -436,9 +470,11 @@ Key flows:
 **Dependencies:** Unit 4 (declared policy exists)
 
 **Files:**
+
 - Create: `.dotfiles/docs/runbooks/discord-permission-drift-check.md` — manual procedure for now; can be automated later.
 
 **Approach:**
+
 - The runbook describes a manual or scripted check that:
   - Enumerates current per-channel role grants via Discord MCP (or direct REST).
   - Compares against the declared policy table in `discord-admin-agent.md`.
@@ -448,10 +484,12 @@ Key flows:
 - Per R15a, the drift check is read-only.
 
 **Test scenarios:**
+
 - Happy path: Run the drift check; output matches declared policy exactly; "no drift" report.
 - Error injection: Marcus temporarily grants `@everyone` view on a `@<project>-collab`-only channel → next drift check flags the deviation.
 
 **Verification:**
+
 - Runbook is committed.
 - A test deviation is detected by the runbook procedure.
 
@@ -466,22 +504,26 @@ Key flows:
 **Dependencies:** Unit 7 (disclosure scope known; informs the policy declaration). Independent of Units 3-6 (the gateway is offline during Phase 1, so the code change can happen in parallel with server restructure if convenient).
 
 **Files (target repo: `fro-bot/agent`):**
+
 - Modify: `packages/gateway/src/discord/client.ts:10-15` — `DEFAULT_INTENTS` (currently includes `Guilds`, `GuildMessages`, `MessageContent`, `GuildMembers`) becomes opt-in. New config field selects which intents to enable; defaults to `Guilds` + `GuildMessages` only (the non-privileged set needed for slash commands + mention reception). Configuration loaded via the existing `readSecret` / `readOptionalSecret` pattern in `packages/gateway/src/config.ts:20-101`.
 - Modify or create: `packages/gateway/src/discord/client.test.ts` — test that the opt-in baseline is `Guilds` + `GuildMessages` and that privileged intents are added only when explicitly configured.
 - Update: `packages/gateway/AGENTS.md` — document the new intent-configuration knob.
 
 **Approach:**
+
 - Single commit / single PR: flip `DEFAULT_INTENTS` to the non-privileged baseline (`Guilds` + `GuildMessages`) and add a config knob (env var or config field) that opt-in adds `MessageContent` and/or `GuildMembers`.
 - The configuration shape mirrors the existing `readSecret` / `readOptionalSecret` pattern in `packages/gateway/src/config.ts:20-101`. No new schema framework introduced.
 - This PR does NOT implement channel-policy enforcement, refusal patterns, rate limits, or drift refusal — those are scope-split to a follow-up plan owned by `fro-bot/agent`. The intent flip is the minimum handoff boundary that lets disclosure (Unit 7) and `infra` deployment proceed.
 - Bounded implementation work suitable for delegation to `@fixer` once the PR is opened.
 
 **Patterns to follow:**
+
 - Existing gateway config-loader pattern in `packages/gateway/src/config.ts:20-101` (`readSecret()` / `readOptionalSecret()` — `${NAME}_FILE` precedence then `process.env[name]`). Mirror this shape for the new intent-config field. No new schema framework (per `packages/gateway/AGENTS.md:34-45` which explicitly excludes structured-schema loaders at this scope).
 - Test colocation convention: `*.test.ts` next to implementation file. See existing `packages/gateway/src/config.test.ts` as a model.
 - Effect 3.x composition layer per `packages/gateway/AGENTS.md:1-4`.
 
 **Test scenarios:**
+
 - Happy path: Gateway boots with the non-privileged baseline (`Guilds` + `GuildMessages`) only, unless config explicitly opts in to privileged intents.
 - Happy path: Gateway boots with `MessageContent` opt-in via config; the intent appears in the running `Client` constructor's intents array.
 - Happy path: Gateway boots with `GuildMembers` opt-in via config (same shape).
@@ -489,8 +531,8 @@ Key flows:
 - Error path: Config value malformed (typo in intent name) → loader fails to start with a clear error; does not silently default to permissive.
 - Integration: Test isolation MUST prevent live-Discord contact — see "Test isolation guard" in the verification section. Tests use a fake token; runtime asserts that no real network call to `discord.com` / `gateway.discord.gg` is attempted during the test suite.
 
-
 **Verification:**
+
 - `packages/gateway/src/discord/client.ts` `DEFAULT_INTENTS` constant contains only the non-privileged baseline (`Guilds` + `GuildMessages`); `MessageContent` and `GuildMembers` are opt-in via configuration.
 - Tests pass for all 6 scenarios above.
 - README/AGENTS notes mention the new config knob.
@@ -507,21 +549,25 @@ Key flows:
 **Dependencies:** Unit 3 (new layout exists)
 
 **Files:**
+
 - No code files in `.dotfiles`.
 - Potentially modify `fro-bot/.github` repo's workflow files if the webhook URL must change (verified at execution; likely no change needed if the channel is renamed in place).
 
 **Approach:**
+
 - Default plan: leave `#fro-bot` in place at the same channel ID. Rename it if needed for naming consistency under the new layout (e.g., `#ops-notifications`). Discord webhooks are bound to channel ID, not name, so rename is safe.
 - R4's no-delete clause is hard: the channel MUST NOT be deleted. If a category move is needed, do it without delete/recreate.
 - If for some reason the channel must be recreated (extremely unlikely): create the new channel + new webhook FIRST, dual-post for one workflow cycle to confirm continuity, then update the source repo's workflow secret/config, then delete the old channel.
 - The audit from Unit 2 already captured the channel's content + integration behavior, so any recreation has a fallback snapshot.
 
 **Test scenarios:**
+
 - Happy path: The next scheduled `fro-bot/.github` workflow run posts to the (renamed or unmoved) channel; no missed messages.
 - Edge case: Channel is moved to a different category — webhook continues to work (channel ID unchanged).
 - Recovery: If a webhook break is detected, follow the recreate-with-dual-post procedure in R4.
 
 **Verification:**
+
 - A workflow run from `fro-bot/.github` posts a message in the channel after the restructure.
 
 ---
@@ -535,17 +581,21 @@ Key flows:
 **Dependencies:** Unit 9 (gateway intent posture flipped before `infra` deploys)
 
 **Files:**
+
 - Update: `.dotfiles/docs/runbooks/discord-admin-agent.md` — add a short "Token handoff" section: where the canonical token-lifecycle runbook lives in `marcusrbrown/infra`, what the handoff contract is (the gateway-side `${NAME}_FILE` interface), and a placeholder URL to update once `infra` lands the runbook.
 
 **Approach:**
+
 - This unit is intentionally thin. The full token lifecycle (storage path, file ownership/permissions, rotation, emergency revocation, in-flight interaction handling during rotation) is owned by `infra` and lives in that repo.
 - The dotfiles pointer ensures admin-agent sessions can find the canonical runbook without re-deriving it.
 - When `infra` lands the runbook, update the pointer to a working URL.
 
 **Test scenarios:**
+
 - This unit produces a pointer note, not a deployable artifact. Verification = the note exists and Marcus can navigate from it to `infra`'s canonical runbook (once that exists).
 
 **Verification:**
+
 - `.dotfiles/docs/runbooks/discord-admin-agent.md` has a "Token handoff" section.
 - If `infra`'s canonical runbook is not yet landed at execution time, the section is committed with a `TODO: update URL when infra lands the runbook` marker.
 
@@ -563,28 +613,28 @@ Key flows:
 
 ## Risks & Dependencies
 
-| Risk | Mitigation |
-|------|------------|
-| Discord MCP server (`SaseQ/discord-mcp`) has a hidden bug that mutates state during the audit | R23's audit fail-closed rule + R15a's verified read-only capability set. R24 documents the direct-REST fallback if the MCP server is untrustworthy. |
-| Channel rename mid-restructure breaks the `#fro-bot` webhook | R4's no-delete clause + AE1. Default plan keeps the channel in place; rename is webhook-safe. |
-| Concurrent admin-agent + gateway mutations cause race | R17's single-writer rule. Gateway is offline during Phase 1. Reconciliation step before re-enable. |
-| Permission drift erodes the `@<project>-collab` security boundary silently | R20's drift-detection runbook (Unit 8) + gateway-side refusal on drift (Unit 9). |
-| Prompt injection in public-readable channels coerces the bot into privileged action | R21's minimum envelope (mention-only/slash-only in non-collab channels, rate limit, refusal patterns, mod-logs alerts). Final tuning is gateway-side ADR. |
-| Disclosure scope misses what the admin agent does with message bodies | R13's expanded scope (Unit 7) explicitly covers admin-agent processing per R19. |
-| `infra`'s gateway-app deploy stalls; Phase 2 unblocks late | R22 + Phase 1 are independent of Phase 2. The server modernization is valuable on its own even if the gateway lands later. |
-| Bot token leak | R18's lifecycle runbook (Unit 11). File permissions + rotation + revocation documented before `infra` deploys. |
-| MCP server supply chain compromise (first use) | R24's pinned commit SHA + provenance review. Direct-REST fallback path documented. |
-| Sandbox boundary accidentally includes production data during pre-disclosure intent testing | KD wording sharpened ("Disclosure-before-production-intent" — synthetic data only, non-production server, non-production bot token, no real members, no copied archives). Pre-disclosure testing against the revived server is explicitly forbidden. |
+| Risk                                                                                                                                                                      | Mitigation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Discord MCP server (`SaseQ/discord-mcp`) has a hidden bug that mutates state during the audit                                                                             | R23's audit fail-closed rule + R15a's verified read-only capability set. R24 documents the direct-REST fallback if the MCP server is untrustworthy.                                                                                                                                                                                                                                                                                                                                                                          |
+| Channel rename mid-restructure breaks the `#fro-bot` webhook                                                                                                              | R4's no-delete clause + AE1. Default plan keeps the channel in place; rename is webhook-safe.                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Concurrent admin-agent + gateway mutations cause race                                                                                                                     | R17's single-writer rule. Gateway is offline during Phase 1. Reconciliation step before re-enable.                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Permission drift erodes the `@<project>-collab` security boundary silently                                                                                                | R20's drift-detection runbook (Unit 8) + gateway-side refusal on drift (Unit 9).                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Prompt injection in public-readable channels coerces the bot into privileged action                                                                                       | R21's minimum envelope (mention-only/slash-only in non-collab channels, rate limit, refusal patterns, mod-logs alerts). Final tuning is gateway-side ADR.                                                                                                                                                                                                                                                                                                                                                                    |
+| Disclosure scope misses what the admin agent does with message bodies                                                                                                     | R13's expanded scope (Unit 7) explicitly covers admin-agent processing per R19.                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `infra`'s gateway-app deploy stalls; Phase 2 unblocks late                                                                                                                | R22 + Phase 1 are independent of Phase 2. The server modernization is valuable on its own even if the gateway lands later.                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Bot token leak                                                                                                                                                            | R18's lifecycle runbook (Unit 11). File permissions + rotation + revocation documented before `infra` deploys.                                                                                                                                                                                                                                                                                                                                                                                                               |
+| MCP server supply chain compromise (first use)                                                                                                                            | R24's pinned commit SHA + provenance review. Direct-REST fallback path documented.                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Sandbox boundary accidentally includes production data during pre-disclosure intent testing                                                                               | KD wording sharpened ("Disclosure-before-production-intent" — synthetic data only, non-production server, non-production bot token, no real members, no copied archives). Pre-disclosure testing against the revived server is explicitly forbidden.                                                                                                                                                                                                                                                                         |
 | MCP server pin becomes stale OR upstream trust changes after first use (security fixes land but pin stays frozen; maintainer transfer; repo archival; behavioral changes) | Before each privileged admin-agent session, re-check the pinned SHA against upstream security fixes/releases, maintainer/repo ownership, archive status, and recent commits. If upstream changed hands, was archived, has unexplained privileged-surface changes, or the pin is behind a relevant security fix, freeze MCP use and either re-pin after review or use direct Discord REST fallback. Runbook records `pinned_sha`, `source_repo`, `reviewed_at`, `reviewed_by`, next review trigger. Quarterly review minimum. |
-| Real Discord message content lands in dotfiles-tracked docs/examples (privacy faceplant) | R25 (added during deepening): synthetic examples only in disclosure + runbooks. Pre-commit gitleaks hook does NOT catch this — discipline + review only. |
-| HTTP transport preflight fails on Marcus's host (port collision, Docker missing, etc.) | Unit 1 preflight check; fall back to stdio with same admin-agent capabilities. |
-| Server state changes between Unit 2 approval and Unit 3 execution (another client, automation) | Unit 3 pre-mutation revalidation step (R-15a-style read-only enumeration before any write). |
-| Onboarding Welcome Screen references disclosure document that doesn't exist yet | Unit 6 sequenced AFTER Unit 7 (disclosure published first). |
-| Disclosure goes stale relative to running gateway (intent flag flipped without disclosure update) | R26 disclosure-freshness procedure (procedural at launch; automated drift detection deferred). |
-| Out-of-order PR merges across 3 repos cause docs/code/deploy mismatch | R27 release-order discipline (Unit 9 first, dotfiles second, infra last). |
-| Unit 9 tests accidentally hit live Discord | Test isolation guard in Unit 9 verification: tests refuse to start unless token is a known-fake placeholder. |
-| R15c type-confirm is procedural, not technical (MCP server cannot enforce typed confirmation) | Documented as procedural control in R15c clarification. Acceptable for one-shot admin-agent use; not suitable for autonomous tooling. |
-| Privileged intent enabled before disclosure shipped (documented 2026-05-18 deviation: `GUILD_MEMBERS` for MCP startup; `MessageContent` for audit content) | R12 revised post-execution to split MCP-required from disclosure-gated intents. Mitigation going forward: new-member onboarding is gated on disclosure doc landing in the server (Unit 7 prerequisite). No new privileged intents will be enabled before disclosure is current. Disclosure ships in this same PR as `docs/runbooks/discord-ai-disclosure.md`. |
+| Real Discord message content lands in dotfiles-tracked docs/examples (privacy faceplant)                                                                                  | R25 (added during deepening): synthetic examples only in disclosure + runbooks. Pre-commit gitleaks hook does NOT catch this — discipline + review only.                                                                                                                                                                                                                                                                                                                                                                     |
+| HTTP transport preflight fails on Marcus's host (port collision, Docker missing, etc.)                                                                                    | Unit 1 preflight check; fall back to stdio with same admin-agent capabilities.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Server state changes between Unit 2 approval and Unit 3 execution (another client, automation)                                                                            | Unit 3 pre-mutation revalidation step (R-15a-style read-only enumeration before any write).                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Onboarding Welcome Screen references disclosure document that doesn't exist yet                                                                                           | Unit 6 sequenced AFTER Unit 7 (disclosure published first).                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Disclosure goes stale relative to running gateway (intent flag flipped without disclosure update)                                                                         | R26 disclosure-freshness procedure (procedural at launch; automated drift detection deferred).                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Out-of-order PR merges across 3 repos cause docs/code/deploy mismatch                                                                                                     | R27 release-order discipline (Unit 9 first, dotfiles second, infra last).                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Unit 9 tests accidentally hit live Discord                                                                                                                                | Test isolation guard in Unit 9 verification: tests refuse to start unless token is a known-fake placeholder.                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| R15c type-confirm is procedural, not technical (MCP server cannot enforce typed confirmation)                                                                             | Documented as procedural control in R15c clarification. Acceptable for one-shot admin-agent use; not suitable for autonomous tooling.                                                                                                                                                                                                                                                                                                                                                                                        |
+| Privileged intent enabled before disclosure shipped (documented 2026-05-18 deviation: `GUILD_MEMBERS` for MCP startup; `MessageContent` for audit content)                | R12 revised post-execution to split MCP-required from disclosure-gated intents. Mitigation going forward: new-member onboarding is gated on disclosure doc landing in the server (Unit 7 prerequisite). No new privileged intents will be enabled before disclosure is current. Disclosure ships in this same PR as `docs/runbooks/discord-ai-disclosure.md`.                                                                                                                                                                |
 
 ## Documentation / Operational Notes
 
