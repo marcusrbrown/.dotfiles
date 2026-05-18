@@ -29,6 +29,7 @@ This runbook covers:
 | `pinned_sha` | `6725bce7ed057a2d9485473f04b3e56a2eee775e` |
 | `source_repo` | https://github.com/SaseQ/discord-mcp |
 | `release_date` | 2026-03-16 |
+| `platform_limitation` | arm64-only on Docker Hub at v1.0.0 — Apple Silicon machines (this one) are fine; x86_64 hosts won't pull |
 | `reviewed_at` | 2026-05-18 |
 | `reviewed_by` | Marcus R. Brown |
 | `next_review_trigger` | Before every write-capable admin session AND quarterly while configured |
@@ -40,7 +41,7 @@ Re-review consists of (a) checking the upstream repo for new security advisories
 
 ## Preflight
 
-Run these checks before starting an admin-agent OpenCode session. Each check is non-mutating.
+Run these checks before starting an admin-agent OpenCode session. Each check is non-mutating. The default flow assumes macOS with Rancher Desktop; on Linux or in a devcontainer, ensure `docker` is reachable however your environment provides it, and substitute the macOS Keychain step (Token sourcing → Option A) with a `chmod 600` plaintext env file (Option B).
 
 ```bash
 # 1. Docker daemon reachable (Rancher Desktop must be running on this machine)
