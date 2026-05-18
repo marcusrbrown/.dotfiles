@@ -130,7 +130,7 @@ The dotfiles' `.gitignore` allowlist + `~/.config/git/ignore` global-credential-
 
 ---
 
-## Capability surface (50 tools)
+## Capability surface (65 tools)
 
 SaseQ/discord-mcp v1.0.0 exposes these tool categories. Read-only-safe tools are marked ✅; write-capable tools are marked ⚠️.
 
@@ -165,6 +165,38 @@ The MCP server does not enforce typed confirmation independent of the OpenCode s
 When in doubt, do the dry-run version first. The agent can `list_channels` before `delete_channel`, `list_roles` before `delete_role`, etc.
 
 ---
+
+## Role + permission policy (declared)
+
+This section is the **declared policy** that the permission-drift detector (Unit 8) compares against the live Discord state. Every role or override mutation must update this section in the same PR; the drift detector reads this as its source of truth.
+
+### Roles
+
+| Role | Position | Members declared | Owner | Project status |
+| --- | --- | --- | --- | --- |
+| `@admin` | 9 | server owner only | server owner | active |
+| `Fro Bot` (managed) | 3 | applied automatically by Discord when the bot joins | server owner | active — admin-agent + future gateway-daemon paths |
+| `@<project>-collab` (e.g. `poly-collab`) | below `@admin`, above `@everyone` | every active collaborator on the named project | server owner (default) | active when the project is active; retired during drift cleanup when the project is archived |
+| `@<project>-viewer` (e.g. `poly-viewer`) | below the matching `-collab` role | optional; read-only outside collaborators | server owner (default) | tracks the matching `-collab` role's lifecycle |
+
+Historic collaboration roles inherited from the server's pre-revival state (positions 4-8 in this server) — 0 declared members; project status: retired. Removal deferred to drift cleanup.
+
+### Category overrides
+
+| Category | Override target | Effect |
+| --- | --- | --- |
+| `Server Info` | (none) | inherits `@everyone` defaults — public-readable |
+| `Cross-cutting` | (none) | inherits `@everyone` defaults — public-readable |
+| `Operations` | `@everyone` deny ViewChannel; `@Fro Bot` allow ViewChannel + ManageChannels + ManageRoles + ManageWebhooks + ReadMessageHistory | admin-only |
+| `<project>` | `@everyone` deny ViewChannel; `@<project>-collab` allow ViewChannel + SendMessages + ReadMessageHistory; `@<project>-viewer` allow ViewChannel + ReadMessageHistory and deny SendMessages; `@Fro Bot` allow ViewChannel + ManageChannels + ReadMessageHistory | per-project restricted |
+
+### Channel-level overrides
+
+Inherited from category overrides unless explicitly noted. As of the most recent restructure, no per-channel overrides exist above the category baseline.
+
+### Update protocol
+
+Every change to this table is paired with the matching Discord state mutation in the same PR. The drift detector halts and surfaces the delta when the live state diverges from this declared policy. If a mutation lands without updating this table, that's a process miss to catch in the next drift run.
 
 ## Token handoff (pointer to `marcusrbrown/infra`)
 
