@@ -16,6 +16,8 @@
  !/.claude/rules/
 !/.claude/settings.json
 !/.config/
+/.config/bash/local.d/*
+!/.config/bash/local.d/.gitkeep
 !/.devcontainer/
 /.devcontainer/.*Marker
 !/.dotfiles/
@@ -26,6 +28,8 @@
 !/.dotfiles/docs/brainstorms/*.md
 !/.dotfiles/docs/plans/
 !/.dotfiles/docs/plans/*.md
+!/.dotfiles/docs/runbooks/
+!/.dotfiles/docs/runbooks/*.md
 !/.github/
 !/.ssh/
 /.ssh/*
