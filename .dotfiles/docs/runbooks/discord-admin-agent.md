@@ -194,6 +194,10 @@ Historic collaboration roles inherited from the server's pre-revival state (posi
 
 Inherited from category overrides unless explicitly noted. As of the most recent restructure, no per-channel overrides exist above the category baseline.
 
+### `#fro-bot` placement
+
+`#fro-bot` is the GitHub Actions integration channel that receives webhook posts from `fro-bot/agent`. It lives under the `Cross-cutting` category (public-readable, inherits `@everyone` defaults), not `Operations`. This is intentional: the channel is an activity feed any collaborator should be able to read, not an admin-only surface. The Discord webhook bound to channel id `1496350231158063288` survives category moves (webhooks key on channel id, not name or parent), and was verified post-restructure by observing two webhook posts arriving in the channel after the move.
+
 ### Update protocol
 
 Every change to this table is paired with the matching Discord state mutation in the same PR. The drift detector halts and surfaces the delta when the live state diverges from this declared policy. If a mutation lands without updating this table, that's a process miss to catch in the next drift run.
