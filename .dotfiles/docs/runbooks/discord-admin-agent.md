@@ -240,6 +240,49 @@ Updates to this section follow the same protocol as the channel-permission polic
 
 ---
 
+## Onboarding policy (declared)
+
+This section is the **declared Onboarding + Welcome Screen policy** for the server. Both surfaces require Community Mode (✅ already on).
+
+### Welcome Screen
+
+| Field | Value |
+| --- | --- |
+| `enabled` | `true` |
+| `description` | `Marcus's projects. Read #welcome first for the AI/bot disclosure.` (65 chars; max 140) |
+| `welcome_channels` | 5 entries (max 5): `#welcome`, `#rules`, `#announcements`, `#general`, `#fro-bot` |
+
+The Welcome Screen renders on the invite-page splash before the new member finalizes joining. It points first at `#welcome` because that channel holds the pinned AI/bot disclosure — the disclosure is therefore reachable in one click from the first contact surface, satisfying R7's "disclosure precedes any data-exposing interaction".
+
+### Onboarding
+
+| Field | Value |
+| --- | --- |
+| `enabled` | `false` (gated — see below) |
+| `mode` | `0` (`ONBOARDING_DEFAULT`) |
+| `default_channel_ids` | 6 channels: `#rules`, `#welcome`, `#announcements`, `#general`, `#fro-bot`, voice `General` |
+| `prompts` | 1 prompt: `"What brings you to Fronomenal?"` (`single_select=true`, `required=false`, `in_onboarding=true`) |
+| prompt options | `"Interested in poly"` (routes to `#general`) and `"Just looking around"` (routes to `#welcome`) |
+| role grants from prompts | **None.** Neither option assigns a role. Per R7 + plan Unit 4, `@<project>-collab` roles are server-owner-assigned only; the prompts route members to channels they can already see, not to elevated access. |
+
+#### Why Onboarding is currently disabled
+
+Discord requires `default_channel_ids` to contain **at least 7 channels** when `enabled: true`, and at least 5 of those 7 must allow `@everyone` to View + Send messages. The server currently has 6 public-readable channels (the 5 in the Welcome Screen plus the voice `General`). Onboarding is fully configured but `enabled: false` until either (a) a 7th public channel exists, or (b) the policy is updated to count a different shape.
+
+The configured prompt + options are already saved; only the `enabled` flag is gated. When a 7th public channel lands, flipping `enabled: true` is a single API call with no other changes required.
+
+#### Fallback (`@everyone` view)
+
+R9's `@Visitor`-equivalent fallback is satisfied by Discord defaults: a member who declines or skips Onboarding lands in `@everyone` and inherits read access to all channels under categories without `@everyone deny ViewChannel`. In this server that means: `Server Info`, `Cross-cutting` (and the contents of those categories). The admin-only categories (`Operations`, `poly`) remain hidden by their existing overrides. No separate `@Visitor` role is created; the `@everyone` baseline IS the fallback.
+
+#### Trigger verification
+
+Per Discord's design, server owners and Admin/Manage-Server holders bypass the Onboarding flow on their own joins. Live end-to-end Onboarding verification ("a test member completes Onboarding and lands in the expected channel set") is deferred to the first non-Admin user join, the same trigger point as the AutoMod verification deferral noted in Unit 8 of the revival plan.
+
+Updates to this section follow the same protocol as the channel-permission policy above: every Onboarding or Welcome Screen mutation is paired with the matching update here in the same PR. See ["Update protocol" under "Role + permission policy"](#update-protocol) for the canonical wording.
+
+---
+
 ## Token handoff (pointer to `marcusrbrown/infra`)
 
 The **canonical token-lifecycle runbook** lives in [`marcusrbrown/infra`](https://github.com/marcusrbrown/infra), not here. That repo owns:
