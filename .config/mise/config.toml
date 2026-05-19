@@ -39,10 +39,7 @@ ast-grep = "0.42.2"
 
 # Language Servers
 "npm:pyright" = "1.1.409"
-"npm:remark-language-server" = "3.0.0"
 "npm:typescript-language-server" = "5.2.0"
-
-"github:mazznoer/lolcrab" = "0.4.1"
 
 [env]
 UV_SYSTEM_CERTS = "true"
