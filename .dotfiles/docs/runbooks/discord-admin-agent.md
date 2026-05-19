@@ -10,6 +10,7 @@ mcp-server: saseq/discord-mcp:1.0.0 (commit 6725bce7ed057a2d9485473f04b3e56a2eee
 The **admin-agent path** is an ephemeral OpenCode session that uses the [SaseQ/discord-mcp](https://github.com/SaseQ/discord-mcp) MCP server to perform one-shot server-admin tasks against Marcus's Discord server. It is **distinct from** the Fro Bot gateway daemon (which runs persistently and is owned by `fro-bot/agent` + `marcusrbrown/infra`).
 
 This runbook covers:
+
 - **Pin + provenance** — version, image source, review record
 - **Preflight** — verifying the environment before starting an admin-agent session
 - **Token sourcing** — how `DISCORD_TOKEN` reaches the MCP container
@@ -23,17 +24,17 @@ This runbook covers:
 
 ## Pin + provenance
 
-| Field | Value |
-|-------|-------|
-| `pinned_image` | `saseq/discord-mcp:1.0.0` |
-| `pinned_sha` | `6725bce7ed057a2d9485473f04b3e56a2eee775e` |
-| `source_repo` | https://github.com/SaseQ/discord-mcp |
-| `release_date` | 2026-03-16 |
-| `platform_limitation` | arm64-only on Docker Hub at v1.0.0 — Apple Silicon machines (this one) are fine; x86_64 hosts won't pull |
-| `reviewed_at` | 2026-05-18 |
-| `reviewed_by` | Marcus R. Brown |
-| `next_review_trigger` | Before every write-capable admin session AND quarterly while configured |
-| `provenance_verdict` | Safe to use (no security advisories; no security-themed open issues; README documents tooling clearly; v1.0.0 tagged release) |
+| Field                 | Value                                                                                                                         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `pinned_image`        | `saseq/discord-mcp:1.0.0`                                                                                                     |
+| `pinned_sha`          | `6725bce7ed057a2d9485473f04b3e56a2eee775e`                                                                                    |
+| `source_repo`         | https://github.com/SaseQ/discord-mcp                                                                                          |
+| `release_date`        | 2026-03-16                                                                                                                    |
+| `platform_limitation` | arm64-only on Docker Hub at v1.0.0 — Apple Silicon machines (this one) are fine; x86_64 hosts won't pull                      |
+| `reviewed_at`         | 2026-05-18                                                                                                                    |
+| `reviewed_by`         | Marcus R. Brown                                                                                                               |
+| `next_review_trigger` | Before every write-capable admin session AND quarterly while configured                                                       |
+| `provenance_verdict`  | Safe to use (no security advisories; no security-themed open issues; README documents tooling clearly; v1.0.0 tagged release) |
 
 Re-review consists of (a) checking the upstream repo for new security advisories or maintainer changes, (b) scanning recent commits for red flags, (c) confirming the pinned SHA is not behind a relevant security fix. Update `reviewed_at` and bump the pin if anything material changes; freeze MCP use and fall back to direct REST if upstream changed hands, was archived, or has unexplained privileged-surface changes.
 
@@ -134,21 +135,21 @@ The dotfiles' `.gitignore` allowlist + `~/.config/git/ignore` global-credential-
 
 SaseQ/discord-mcp v1.0.0 exposes these tool categories. Read-only-safe tools are marked ✅; write-capable tools are marked ⚠️.
 
-| Category | Read-only ✅ | Write-capable ⚠️ |
-|---|---|---|
-| Server info | `get_server_info` | — |
-| User | `get_user_id_by_name`, `read_private_messages` | `send_private_message`, `edit_private_message`, `delete_private_message` |
-| Message | `read_messages` | `send_message`, `edit_message`, `delete_message`, `add_reaction`, `remove_reaction` |
-| Channel | `find_channel`, `list_channels`, `get_channel_info` | `create_text_channel`, `edit_text_channel`, `delete_channel`, `move_channel` |
-| Category | `find_category`, `list_channels_in_category` | `create_category`, `delete_category` |
-| Webhook | `list_webhooks` | `create_webhook`, `delete_webhook`, `send_webhook_message` |
-| Role | `list_roles` | `create_role`, `edit_role`, `delete_role`, `assign_role`, `remove_role` |
-| Moderation | `get_bans` | `kick_member`, `ban_member`, `unban_member`, `timeout_member`, `remove_timeout`, `set_nickname` |
-| Voice/Stage | — | `create_voice_channel`, `create_stage_channel`, `edit_voice_channel`, `move_member`, `disconnect_member`, `modify_voice_state` |
-| Scheduled events | `list_guild_scheduled_events`, `get_guild_scheduled_event_users` | `create_guild_scheduled_event`, `edit_guild_scheduled_event`, `delete_guild_scheduled_event` |
-| Channel permissions | `list_channel_permission_overwrites` | `upsert_role_channel_permissions`, `upsert_member_channel_permissions`, `delete_channel_permission_overwrite` |
-| Invites | `list_invites`, `get_invite_details` | `create_invite`, `delete_invite` |
-| Emoji | `list_emojis`, `get_emoji_details` | `create_emoji`, `edit_emoji`, `delete_emoji` |
+| Category            | Read-only ✅                                                     | Write-capable ⚠️                                                                                                               |
+| ------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Server info         | `get_server_info`                                                | —                                                                                                                              |
+| User                | `get_user_id_by_name`, `read_private_messages`                   | `send_private_message`, `edit_private_message`, `delete_private_message`                                                       |
+| Message             | `read_messages`                                                  | `send_message`, `edit_message`, `delete_message`, `add_reaction`, `remove_reaction`                                            |
+| Channel             | `find_channel`, `list_channels`, `get_channel_info`              | `create_text_channel`, `edit_text_channel`, `delete_channel`, `move_channel`                                                   |
+| Category            | `find_category`, `list_channels_in_category`                     | `create_category`, `delete_category`                                                                                           |
+| Webhook             | `list_webhooks`                                                  | `create_webhook`, `delete_webhook`, `send_webhook_message`                                                                     |
+| Role                | `list_roles`                                                     | `create_role`, `edit_role`, `delete_role`, `assign_role`, `remove_role`                                                        |
+| Moderation          | `get_bans`                                                       | `kick_member`, `ban_member`, `unban_member`, `timeout_member`, `remove_timeout`, `set_nickname`                                |
+| Voice/Stage         | —                                                                | `create_voice_channel`, `create_stage_channel`, `edit_voice_channel`, `move_member`, `disconnect_member`, `modify_voice_state` |
+| Scheduled events    | `list_guild_scheduled_events`, `get_guild_scheduled_event_users` | `create_guild_scheduled_event`, `edit_guild_scheduled_event`, `delete_guild_scheduled_event`                                   |
+| Channel permissions | `list_channel_permission_overwrites`                             | `upsert_role_channel_permissions`, `upsert_member_channel_permissions`, `delete_channel_permission_overwrite`                  |
+| Invites             | `list_invites`, `get_invite_details`                             | `create_invite`, `delete_invite`                                                                                               |
+| Emoji               | `list_emojis`, `get_emoji_details`                               | `create_emoji`, `edit_emoji`, `delete_emoji`                                                                                   |
 
 For the Phase 0 audit (plan Unit 2), only the ✅ read-only tools are needed. The agent should be explicitly instructed to use only those tools during audit; this is the procedural enforcement of plan R15a + R23.
 
@@ -172,23 +173,23 @@ This section is the **declared policy** that the permission-drift detector (Unit
 
 ### Roles
 
-| Role | Position | Members declared | Owner | Project status |
-| --- | --- | --- | --- | --- |
-| `@admin` | 9 | server owner only | server owner | active |
-| `Fro Bot` (managed) | 3 | applied automatically by Discord when the bot joins | server owner | active — admin-agent + future gateway-daemon paths |
-| `@<project>-collab` (e.g. `poly-collab`) | below `@admin`, above `@everyone` | every active collaborator on the named project | server owner (default) | active when the project is active; retired during drift cleanup when the project is archived |
-| `@<project>-viewer` (e.g. `poly-viewer`) | below the matching `-collab` role | optional; read-only outside collaborators | server owner (default) | tracks the matching `-collab` role's lifecycle |
+| Role                                     | Position                          | Members declared                                    | Owner                  | Project status                                                                               |
+| ---------------------------------------- | --------------------------------- | --------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------- |
+| `@admin`                                 | 9                                 | server owner only                                   | server owner           | active                                                                                       |
+| `Fro Bot` (managed)                      | 3                                 | applied automatically by Discord when the bot joins | server owner           | active — admin-agent + future gateway-daemon paths                                           |
+| `@<project>-collab` (e.g. `poly-collab`) | below `@admin`, above `@everyone` | every active collaborator on the named project      | server owner (default) | active when the project is active; retired during drift cleanup when the project is archived |
+| `@<project>-viewer` (e.g. `poly-viewer`) | below the matching `-collab` role | optional; read-only outside collaborators           | server owner (default) | tracks the matching `-collab` role's lifecycle                                               |
 
 Historic collaboration roles inherited from the server's pre-revival state (positions 4-8 in this server) — 0 declared members; project status: retired. Removal deferred to drift cleanup.
 
 ### Category overrides
 
-| Category | Override target | Effect |
-| --- | --- | --- |
-| `Server Info` | (none) | inherits `@everyone` defaults — public-readable |
-| `Cross-cutting` | (none) | inherits `@everyone` defaults — public-readable |
-| `Operations` | `@everyone` deny ViewChannel; `@Fro Bot` allow ViewChannel + ManageChannels + ManageRoles + ManageWebhooks + ReadMessageHistory | admin-only |
-| `<project>` | `@everyone` deny ViewChannel; `@<project>-collab` allow ViewChannel + SendMessages + ReadMessageHistory; `@<project>-viewer` allow ViewChannel + ReadMessageHistory and deny SendMessages; `@Fro Bot` allow ViewChannel + ManageChannels + ReadMessageHistory | per-project restricted |
+| Category        | Override target                                                                                                                                                                                                                                               | Effect                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `Server Info`   | (none)                                                                                                                                                                                                                                                        | inherits `@everyone` defaults — public-readable |
+| `Cross-cutting` | (none)                                                                                                                                                                                                                                                        | inherits `@everyone` defaults — public-readable |
+| `Operations`    | `@everyone` deny ViewChannel; `@Fro Bot` allow ViewChannel + ManageChannels + ManageRoles + ManageWebhooks + ReadMessageHistory                                                                                                                               | admin-only                                      |
+| `<project>`     | `@everyone` deny ViewChannel; `@<project>-collab` allow ViewChannel + SendMessages + ReadMessageHistory; `@<project>-viewer` allow ViewChannel + ReadMessageHistory and deny SendMessages; `@Fro Bot` allow ViewChannel + ManageChannels + ReadMessageHistory | per-project restricted                          |
 
 ### Channel-level overrides
 
@@ -210,10 +211,10 @@ This section is the **declared AutoMod policy** that the drift detector (Unit 8)
 
 ### Active rules
 
-| Rule name | Trigger type | Configuration | Actions | Exempt roles | Exempt channels |
-| --- | --- | --- | --- | --- | --- |
-| `Block Mention Spam` | `MENTION_SPAM` (5) | `mention_total_limit=7`, `mention_raid_protection_enabled=true` | BLOCK with custom message `"Message blocked by Fronomenal AutoMod (mention spam)."`; SEND_ALERT to `#mod-logs` | `@admin` | `#mod-logs` |
-| `Commonly Flagged Words` | `KEYWORD_PRESET` (4) | `presets=[1,2,3]` (PROFANITY, SEXUAL_CONTENT, SLURS), `allow_list=[]` | BLOCK with custom message `"Message blocked by Fronomenal AutoMod (commonly-flagged words)."`; SEND_ALERT to `#mod-logs` | `@admin` | `#mod-logs` |
+| Rule name                | Trigger type         | Configuration                                                         | Actions                                                                                                                  | Exempt roles | Exempt channels |
+| ------------------------ | -------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ | --------------- |
+| `Block Mention Spam`     | `MENTION_SPAM` (5)   | `mention_total_limit=7`, `mention_raid_protection_enabled=true`       | BLOCK with custom message `"Message blocked by Fronomenal AutoMod (mention spam)."`; SEND_ALERT to `#mod-logs`           | `@admin`     | `#mod-logs`     |
+| `Commonly Flagged Words` | `KEYWORD_PRESET` (4) | `presets=[1,2,3]` (PROFANITY, SEXUAL_CONTENT, SLURS), `allow_list=[]` | BLOCK with custom message `"Message blocked by Fronomenal AutoMod (commonly-flagged words)."`; SEND_ALERT to `#mod-logs` | `@admin`     | `#mod-logs`     |
 
 The custom-keyword rule referenced in the Phase 2 plan is intentionally not yet created. It will be added when an actual keyword pattern needs to be blocked; the drift detector treats its absence as expected until then.
 
@@ -246,23 +247,23 @@ This section is the **declared Onboarding + Welcome Screen policy** for the serv
 
 ### Welcome Screen
 
-| Field | Value |
-| --- | --- |
-| `enabled` | `true` |
-| `description` | `Marcus's projects. Read #welcome first for the AI/bot disclosure.` (65 chars; max 140) |
-| `welcome_channels` | 5 entries (max 5): `#welcome`, `#rules`, `#announcements`, `#general`, `#fro-bot` |
+| Field              | Value                                                                                   |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| `enabled`          | `true`                                                                                  |
+| `description`      | `Marcus's projects. Read #welcome first for the AI/bot disclosure.` (65 chars; max 140) |
+| `welcome_channels` | 5 entries (max 5): `#welcome`, `#rules`, `#announcements`, `#general`, `#fro-bot`       |
 
 The Welcome Screen renders on the invite-page splash before the new member finalizes joining. It points first at `#welcome` because that channel holds the pinned AI/bot disclosure — the disclosure is therefore reachable in one click from the first contact surface, satisfying R7's "disclosure precedes any data-exposing interaction".
 
 ### Onboarding
 
-| Field | Value |
-| --- | --- |
-| `enabled` | `false` (gated — see below) |
-| `mode` | `0` (`ONBOARDING_DEFAULT`) |
-| `default_channel_ids` | 6 channels: `#rules`, `#welcome`, `#announcements`, `#general`, `#fro-bot`, voice `General` |
-| `prompts` | 1 prompt: `"What brings you to Fronomenal?"` (`single_select=true`, `required=false`, `in_onboarding=true`) |
-| prompt options | `"Interested in poly"` (routes to `#general`) and `"Just looking around"` (routes to `#welcome`) |
+| Field                    | Value                                                                                                                                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `enabled`                | `false` (gated — see below)                                                                                                                                                                                  |
+| `mode`                   | `0` (`ONBOARDING_DEFAULT`)                                                                                                                                                                                   |
+| `default_channel_ids`    | 6 channels: `#rules`, `#welcome`, `#announcements`, `#general`, `#fro-bot`, voice `General`                                                                                                                  |
+| `prompts`                | 1 prompt: `"What brings you to Fronomenal?"` (`single_select=true`, `required=false`, `in_onboarding=true`)                                                                                                  |
+| prompt options           | `"Interested in poly"` (routes to `#general`) and `"Just looking around"` (routes to `#welcome`)                                                                                                             |
 | role grants from prompts | **None.** Neither option assigns a role. Per R7 + plan Unit 4, `@<project>-collab` roles are server-owner-assigned only; the prompts route members to channels they can already see, not to elevated access. |
 
 #### Why Onboarding is currently disabled
@@ -294,10 +295,10 @@ The **canonical token-lifecycle runbook** lives in [`marcusrbrown/infra`](https:
 
 ### Where to find the canonical doc
 
-| State | Read from |
-| --- | --- |
+| State                             | Read from                                                                                                                                                                             |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Today (no standalone runbook yet) | [`apps/gateway/AGENTS.md`](https://github.com/marcusrbrown/infra/blob/main/apps/gateway/AGENTS.md) covers the deployment-time token setup as part of the gateway stack documentation. |
-| Future (standalone runbook lands) | The canonical token-lifecycle runbook in `marcusrbrown/infra` will be linked here. |
+| Future (standalone runbook lands) | The canonical token-lifecycle runbook in `marcusrbrown/infra` will be linked here.                                                                                                    |
 
 > 📌 **TODO** (plan Unit 11): Once a dedicated `docs/runbooks/discord-token-lifecycle.md` (or equivalent) exists in `marcusrbrown/infra`, replace this paragraph with the direct URL. The trigger is the next PR in `infra` that creates a standalone token-lifecycle runbook; the marker exists so a future review or audit of this section catches the missing link.
 
@@ -305,9 +306,9 @@ The **canonical token-lifecycle runbook** lives in [`marcusrbrown/infra`](https:
 
 The dotfiles-side admin-agent path and the production gateway daemon consume the **same Discord bot token** through different channels:
 
-| Consumer | Channel | Lifecycle |
-| --- | --- | --- |
-| Admin-agent (this runbook) | `DISCORD_TOKEN` env var, sourced from macOS Keychain on this machine | Ephemeral per OpenCode session |
+| Consumer                              | Channel                                                                                                                                                                                                                                      | Lifecycle                                                      |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Admin-agent (this runbook)            | `DISCORD_TOKEN` env var, sourced from macOS Keychain on this machine                                                                                                                                                                         | Ephemeral per OpenCode session                                 |
 | Gateway daemon (`marcusrbrown/infra`) | `${NAME}_FILE` precedence then `process.env[name]` pattern (see [`packages/gateway/src/config.ts:20-101`](https://github.com/fro-bot/agent/blob/main/packages/gateway/src/config.ts) in the upstream pinned at `apps/gateway/upstream.json`) | Long-running, file-backed, rotated via `infra` deploy pipeline |
 
 Both consumers point at the same Discord application — the token bound to bot user `Fro Bot#4027` (application id [`1505811646956830781`](https://discord.com/developers/applications/1505811646956830781)). Rotating the token in the Developer Portal invalidates BOTH consumers simultaneously; the rotation procedure in `infra` must therefore coordinate or accept brief admin-agent unavailability during the rotation window.
