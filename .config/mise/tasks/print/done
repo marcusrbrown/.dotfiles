@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#MISE description="Print an animated DONE message"
+#MISE description="Print a DONE message"
 #MISE hide=true
 #MISE silent=true
-echo DONE | figlet | lolcrab -a --speed 1 --duration 1 --gradient warm
+echo DONE | figlet
