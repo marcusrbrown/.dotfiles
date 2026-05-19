@@ -286,16 +286,33 @@ Updates to this section follow the same protocol as the channel-permission polic
 ## Token handoff (pointer to `marcusrbrown/infra`)
 
 The **canonical token-lifecycle runbook** lives in [`marcusrbrown/infra`](https://github.com/marcusrbrown/infra), not here. That repo owns:
+
 - Host-side token-file storage path + ownership + filesystem permissions
 - Rotation procedure (Developer Portal regeneration → secret update → daemon reload)
 - Emergency revocation path
 - Handling of in-flight Discord interactions during rotation
 
-When `marcusrbrown/infra` lands the runbook, update this section with the URL:
+### Where to find the canonical doc
 
-> 📌 **TODO:** Update with the canonical token-lifecycle runbook URL once `marcusrbrown/infra` ships it. Reference: plan Unit 11.
+| State | Read from |
+| --- | --- |
+| Today (no standalone runbook yet) | [`apps/gateway/AGENTS.md`](https://github.com/marcusrbrown/infra/blob/main/apps/gateway/AGENTS.md) covers the deployment-time token setup as part of the gateway stack documentation. |
+| Future (standalone runbook lands) | The canonical token-lifecycle runbook in `marcusrbrown/infra` will be linked here. |
 
-The dotfiles-side admin-agent path uses the bot token only for read-mostly audit work; the production deploy (gateway daemon) consumes the same token via `infra`'s deploy pipeline. Same token, different consumers.
+> 📌 **TODO** (plan Unit 11): Once a dedicated `docs/runbooks/discord-token-lifecycle.md` (or equivalent) exists in `marcusrbrown/infra`, replace this paragraph with the direct URL. The trigger is the next PR in `infra` that creates a standalone token-lifecycle runbook; the marker exists so a future review or audit of this section catches the missing link.
+
+### Handoff contract
+
+The dotfiles-side admin-agent path and the production gateway daemon consume the **same Discord bot token** through different channels:
+
+| Consumer | Channel | Lifecycle |
+| --- | --- | --- |
+| Admin-agent (this runbook) | `DISCORD_TOKEN` env var, sourced from macOS Keychain on this machine | Ephemeral per OpenCode session |
+| Gateway daemon (`marcusrbrown/infra`) | `${NAME}_FILE` precedence then `process.env[name]` pattern (see [`packages/gateway/src/config.ts:20-101`](https://github.com/fro-bot/agent/blob/main/packages/gateway/src/config.ts) in the upstream pinned at `apps/gateway/upstream.json`) | Long-running, file-backed, rotated via `infra` deploy pipeline |
+
+Both consumers point at the same Discord application — the token bound to bot user `Fro Bot#4027` (application id [`1505811646956830781`](https://discord.com/developers/applications/1505811646956830781)). Rotating the token in the Developer Portal invalidates BOTH consumers simultaneously; the rotation procedure in `infra` must therefore coordinate or accept brief admin-agent unavailability during the rotation window.
+
+The dotfiles-side admin-agent path uses the bot token only for read-mostly audit work; the production deploy (gateway daemon) consumes the same token via `infra`'s deploy pipeline. Same token, different consumers, single source of truth (the Discord Developer Portal).
 
 ---
 
