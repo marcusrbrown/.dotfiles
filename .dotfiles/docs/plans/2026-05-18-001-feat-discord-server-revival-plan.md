@@ -328,7 +328,7 @@ Key flows:
 
 ---
 
-- [ ] **Unit 5: Configure AutoMod baseline + alert routing**
+- [x] **Unit 5: Configure AutoMod baseline + alert routing**
 
 **Goal:** Enable Discord-native moderation. No third-party bot.
 
@@ -454,6 +454,8 @@ Key flows:
 **Verification:**
 - Runbook is committed.
 - A test deviation is detected by the runbook procedure.
+
+**Deferred from Unit 5:** AutoMod end-to-end trigger verification was deferred from Unit 5 because Discord exempts server owners from AutoMod by design (see the AutoMod policy section of the admin-agent runbook). The drift-check runbook must include a one-time check that runs when the first non-Admin user joins the server: post a triggering message from that account, confirm the alert lands in `#mod-logs`, and record the verification date in the runbook. Without this hook, the deferred trigger test risks silently dropping.
 
 ---
 
