@@ -328,7 +328,7 @@ Key flows:
 
 ---
 
-- [ ] **Unit 5: Configure AutoMod baseline + alert routing**
+- [x] **Unit 5: Configure AutoMod baseline + alert routing**
 
 **Goal:** Enable Discord-native moderation. No third-party bot.
 

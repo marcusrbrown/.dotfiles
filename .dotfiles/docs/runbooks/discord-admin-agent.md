@@ -202,6 +202,46 @@ Inherited from category overrides unless explicitly noted. As of the most recent
 
 Every change to this table is paired with the matching Discord state mutation in the same PR. The drift detector halts and surfaces the delta when the live state diverges from this declared policy. If a mutation lands without updating this table, that's a process miss to catch in the next drift run.
 
+---
+
+## AutoMod policy (declared)
+
+This section is the **declared AutoMod policy** that the drift detector (Unit 8) compares against the live Discord rule set. Every rule mutation must update this section in the same PR.
+
+### Active rules
+
+| Rule name | Trigger type | Configuration | Actions | Exempt roles | Exempt channels |
+| --- | --- | --- | --- | --- | --- |
+| `Block Mention Spam` | `MENTION_SPAM` (5) | `mention_total_limit=7`, `mention_raid_protection_enabled=true` | BLOCK with custom message `"Message blocked by Fronomenal AutoMod (mention spam)."`; SEND_ALERT to `#mod-logs` | `@admin` | `#mod-logs` |
+| `Commonly Flagged Words` | `KEYWORD_PRESET` (4) | `presets=[1,2,3]` (PROFANITY, SEXUAL_CONTENT, SLURS), `allow_list=[]` | BLOCK with custom message `"Message blocked by Fronomenal AutoMod (commonly-flagged words)."`; SEND_ALERT to `#mod-logs` | `@admin` | `#mod-logs` |
+
+The custom-keyword rule referenced in the Phase 2 plan is intentionally not yet created. It will be added when an actual keyword pattern needs to be blocked; the drift detector treats its absence as expected until then.
+
+### Action and trigger reference
+
+- BLOCK_MESSAGE (`type=1`): deletes the offending message before it's posted, optionally surfaces a custom message to the author (max 150 chars).
+- SEND_ALERT_MESSAGE (`type=2`): posts a `[message blocked]` event embed to the configured alert channel; metadata includes the original author, channel, and trigger phrase preview.
+- KEYWORD_PRESET (`trigger_type=4`) presets: `1`=PROFANITY, `2`=SEXUAL_CONTENT, `3`=SLURS.
+- MENTION_SPAM (`trigger_type=5`) counts **unique** role and user mentions per message (`@everyone` and `@here` count as one each).
+
+### Exemptions
+
+Server owners, members with the `Administrator` permission, members with the `Manage Server` permission, bots, and webhooks are **always** exempt from AutoMod evaluation. This is a Discord platform behavior, not a configuration choice. `exempt_roles` in this policy is additive on top of that platform baseline; in this server `@admin` is in `exempt_roles` to make the policy explicit when audited even though the holder is already implicitly exempt as the server owner.
+
+### Why alert-channel routing requires the Discord UI
+
+When creating an AutoMod rule with a `SEND_ALERT_MESSAGE` action via the API, Discord requires the requesting bot to have `ViewChannel` + `SendMessages` permissions on the target alert channel as **channel-level explicit overrides**. Category-level inheritance does not satisfy this check; the API returns `400 INVALID_AUTO_MODERATION_CHANNEL_FLAG_ACTION_ACCESS`. Since `#mod-logs` lives in the admin-only `Operations` category and `@Fro Bot`'s allow set is granted at the category level, alert routing must be configured via Server Settings → AutoMod → click into the rule → enable "Send Alert" → choose `#mod-logs`. The server owner's UI session is not subject to this constraint.
+
+### Verification approach
+
+The plan's literal acceptance criterion ("Marcus posts a triggering message; alert lands in `#mod-logs`") cannot be exercised by the server owner because Discord exempts owners from AutoMod by design. Unit 5 is verified instead by **configuration assertion**: each live rule's `trigger_type`, `trigger_metadata`, `actions`, `exempt_roles`, and `exempt_channels` are compared against the declared policy table above. End-to-end trigger verification is deferred to whenever a non-Admin user first joins the server (R7 onboarding path); the drift detector flags it as a one-time check during that onboarding.
+
+### Update protocol
+
+Every change to this table is paired with the matching Discord rule mutation in the same PR. The drift detector halts and surfaces the delta when the live rules diverge from this declared policy.
+
+---
+
 ## Token handoff (pointer to `marcusrbrown/infra`)
 
 The **canonical token-lifecycle runbook** lives in [`marcusrbrown/infra`](https://github.com/marcusrbrown/infra), not here. That repo owns:
