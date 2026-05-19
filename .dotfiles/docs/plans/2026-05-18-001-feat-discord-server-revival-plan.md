@@ -427,7 +427,7 @@ Key flows:
 
 ---
 
-- [ ] **Unit 8: Permission-drift detection runbook**
+- [x] **Unit 8: Permission-drift detection runbook**
 
 **Goal:** R20's drift detection. Periodic check that effective channel permissions match the declared policy from Unit 4.
 
