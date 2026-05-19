@@ -359,7 +359,7 @@ Key flows:
 
 ---
 
-- [ ] **Unit 6: Configure minimal Onboarding + `@Visitor` fallback**
+- [x] **Unit 6: Configure minimal Onboarding + `@Visitor` fallback**
 
 **Goal:** R9's minimal Onboarding. Members who decline all choices land in a documented fallback state.
 
