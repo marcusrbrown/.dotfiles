@@ -236,9 +236,7 @@ When creating an AutoMod rule with a `SEND_ALERT_MESSAGE` action via the API, Di
 
 The plan's literal acceptance criterion ("Marcus posts a triggering message; alert lands in `#mod-logs`") cannot be exercised by the server owner because Discord exempts owners from AutoMod by design. Unit 5 is verified instead by **configuration assertion**: each live rule's `trigger_type`, `trigger_metadata`, `actions`, `exempt_roles`, and `exempt_channels` are compared against the declared policy table above. End-to-end trigger verification is deferred to whenever a non-Admin user first joins the server (R7 onboarding path); the drift detector flags it as a one-time check during that onboarding.
 
-### Update protocol
-
-Every change to this table is paired with the matching Discord rule mutation in the same PR. The drift detector halts and surfaces the delta when the live rules diverge from this declared policy.
+Updates to this section follow the same protocol as the channel-permission policy above: every rule mutation is paired with the matching update here in the same PR. See ["Update protocol" under "Role + permission policy"](#update-protocol) for the canonical wording.
 
 ---
 
