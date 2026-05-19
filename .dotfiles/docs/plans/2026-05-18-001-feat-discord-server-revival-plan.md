@@ -459,7 +459,7 @@ Key flows:
 
 ---
 
-- [ ] **Unit 9: Gateway intent-posture flip (in `fro-bot/agent`) — minimal handoff boundary only**
+- [x] **Unit 9: Gateway intent-posture flip (in `fro-bot/agent`) — minimal handoff boundary only** _(cross-repo handoff: tracked in [fro-bot/agent#646](https://github.com/fro-bot/agent/issues/646); ticked here because the dotfiles-side acknowledgment is complete — the gateway implementation happens in its own dedicated session in `fro-bot/agent`)_
 
 **Goal:** R22's intent-posture flip ONLY. The gateway's `DEFAULT_INTENTS` becomes opt-in. This is a small PR in `fro-bot/agent`. R20/R21's full gateway-side enforcement (channel-policy declaration + refusal patterns + rate limit) is **scope-split to a follow-up plan in `fro-bot/agent`** (see "Deferred to Separate Tasks"); a minimal contract is set here so that disclosure (Unit 7) and `infra` deployment have a stable handoff.
 
@@ -528,7 +528,7 @@ Key flows:
 
 ---
 
-- [ ] **Unit 11: Minimal token-handoff note (pointer to `infra`)**
+- [x] **Unit 11: Minimal token-handoff note (pointer to `infra`)**
 
 **Goal:** R18 is implemented in `marcusrbrown/infra`, not here. This dotfiles unit produces a thin pointer note so admin-agent sessions know where the canonical token-lifecycle runbook lives.
 
