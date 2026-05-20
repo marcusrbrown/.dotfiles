@@ -497,7 +497,7 @@ Key flows:
 
 ---
 
-- [x] **Unit 9: Gateway intent-posture flip (in `fro-bot/agent`) — minimal handoff boundary only** _(cross-repo handoff: tracked in [fro-bot/agent#646](https://github.com/fro-bot/agent/issues/646); ticked here because the dotfiles-side acknowledgment is complete — the gateway implementation happens in its own dedicated session in `fro-bot/agent`)_
+- [x] **Unit 9: Gateway intent-posture flip (in `fro-bot/agent`) — minimal handoff boundary only** _(shipped: [fro-bot/agent#651](https://github.com/fro-bot/agent/pull/651) flipped `DEFAULT_INTENTS` to non-privileged by default; [fro-bot/agent#652](https://github.com/fro-bot/agent/pull/652) plumbed `DISCORD_PRIVILEGED_INTENTS` through the gateway compose pipeline so privileged intents are opt-in via host-side config; tracker [fro-bot/agent#646](https://github.com/fro-bot/agent/issues/646) closed)_
 
 **Goal:** R22's intent-posture flip ONLY. The gateway's `DEFAULT_INTENTS` becomes opt-in. This is a small PR in `fro-bot/agent`. R20/R21's full gateway-side enforcement (channel-policy declaration + refusal patterns + rate limit) is **scope-split to a follow-up plan in `fro-bot/agent`** (see "Deferred to Separate Tasks"); a minimal contract is set here so that disclosure (Unit 7) and `infra` deployment have a stable handoff.
 

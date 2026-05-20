@@ -193,7 +193,13 @@ Historic collaboration roles inherited from the server's pre-revival state (posi
 
 ### Channel-level overrides
 
-Inherited from category overrides unless explicitly noted. As of the most recent restructure, no per-channel overrides exist above the category baseline.
+Inherited from category overrides unless explicitly noted. As of the most recent restructure, one redundant per-channel override exists:
+
+| Channel | Override | Status |
+| --- | --- | --- |
+| `#poly` | `@everyone deny ViewChannel` (allow=`0`, deny=`1024`) | **Redundant — byte-for-byte duplicate of the parent `poly` category's `@everyone` override.** Behaviorally a no-op (effective permissions are identical to plain inheritance). |
+
+Cleanup deferred: removing the override requires `ManageRoles` on `#poly` itself, which the bot's category-level grant does not satisfy (Discord's per-channel permission-mutation check doesn't honor inheritance for `ManageRoles`). Options: (a) grant `@Fro Bot` an explicit channel-level `ManageRoles` override on `#poly`, then delete the redundant `@everyone` override, then remove the temporary `ManageRoles` grant; (b) remove it via the Discord UI (server owner is not subject to the per-channel permission-mutation check); (c) leave as-is and treat as documented expected drift. The drift detector (Unit 8) reads this section as authoritative and will classify the override as **informational, not actionable** as long as it's listed here.
 
 ### `#fro-bot` placement
 
@@ -310,6 +316,16 @@ The dotfiles-side admin-agent path and the production gateway daemon consume the
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | Admin-agent (this runbook)            | `DISCORD_TOKEN` env var, sourced from macOS Keychain on this machine                                                                                                                                                                         | Ephemeral per OpenCode session                                 |
 | Gateway daemon (`marcusrbrown/infra`) | `${NAME}_FILE` precedence then `process.env[name]` pattern (see [`packages/gateway/src/config.ts:20-101`](https://github.com/fro-bot/agent/blob/main/packages/gateway/src/config.ts) in the upstream pinned at `apps/gateway/upstream.json`) | Long-running, file-backed, rotated via `infra` deploy pipeline |
+
+### Additional gateway-side knobs
+
+Since [fro-bot/agent#651](https://github.com/fro-bot/agent/pull/651) and [fro-bot/agent#652](https://github.com/fro-bot/agent/pull/652) (May 2026), the gateway no longer hard-codes Discord intents — they're opt-in via host-side config:
+
+| Env var | Default | Purpose |
+| --- | --- | --- |
+| `DISCORD_PRIVILEGED_INTENTS` | unset (non-privileged baseline: `Guilds` + `GuildMessages`) | Comma-separated list of privileged intents to additionally request (e.g., `GUILD_MEMBERS,MESSAGE_CONTENT`). Must match what's enabled in the Discord Developer Portal for the bot, otherwise the gateway refuses to connect with `DISALLOWED_INTENTS`. |
+
+This is a gateway-only concern — the admin-agent path always requests its own intents directly at MCP-server startup. The handoff contract is: the production gateway runs with the **minimum** intent set sufficient for its declared capabilities, and any expansion goes through a documented `DISCORD_PRIVILEGED_INTENTS` change in `marcusrbrown/infra`.
 
 Both consumers point at the same Discord application — the token bound to bot user `Fro Bot#4027` (application id [`1505811646956830781`](https://discord.com/developers/applications/1505811646956830781)). Rotating the token in the Developer Portal invalidates BOTH consumers simultaneously; the rotation procedure in `infra` must therefore coordinate or accept brief admin-agent unavailability during the rotation window.
 
