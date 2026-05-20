@@ -97,9 +97,9 @@ A separate problem motivates the timing: Marcus's `fro-bot/agent` codebase ships
 **Cross-cutting**
 
 - R15. Admin-agent action discipline. Three rules:
-    - **R15a.** Read-only actions (Phase 0 audit, F1) require no per-action confirmation but MUST be performed with a verified read-only capability set; the admin agent MUST refuse to invoke any tool whose capability surface includes write/mutate operations during the audit phase.
-    - **R15b.** Reversible mutations (renames, role creation, permission grants) require explicit per-action confirmation from Marcus before execution.
-    - **R15c.** Irreversible actions (channel deletion, role deletion, member removal, message bulk-delete) MUST name the specific irreversible effect in the confirmation prompt before execution, AND require Marcus to type-confirm rather than checkbox-confirm.
+  - **R15a.** Read-only actions (Phase 0 audit, F1) require no per-action confirmation but MUST be performed with a verified read-only capability set; the admin agent MUST refuse to invoke any tool whose capability surface includes write/mutate operations during the audit phase.
+  - **R15b.** Reversible mutations (renames, role creation, permission grants) require explicit per-action confirmation from Marcus before execution.
+  - **R15c.** Irreversible actions (channel deletion, role deletion, member removal, message bulk-delete) MUST name the specific irreversible effect in the confirmation prompt before execution, AND require Marcus to type-confirm rather than checkbox-confirm.
 - R16. The Fro Bot gateway's channel-scoped behavior is enforced at the Discord permission level (channel overrides), not solely in bot code. Bot code may rely on channel ID matching as defense-in-depth, but the primary gate is permission overrides.
 
 **Operational safety + hardening (cross-cutting additions)**
@@ -118,22 +118,28 @@ A separate problem motivates the timing: Marcus's `fro-bot/agent` codebase ships
 ## Acceptance Examples
 
 **AE1 — Covers R4** (behavioral-conditional: integration preservation):
-> *When* the restructure renames the `#fro-bot` channel, *then* the GitHub Actions notification posted from `fro-bot/.github` on the next workflow run appears in the renamed channel with no missing messages. If the webhook URL must be regenerated, the regeneration and the workflow update land in a single coordinated change.
+
+> _When_ the restructure renames the `#fro-bot` channel, _then_ the GitHub Actions notification posted from `fro-bot/.github` on the next workflow run appears in the renamed channel with no missing messages. If the webhook URL must be regenerated, the regeneration and the workflow update land in a single coordinated change.
 
 **AE2 — Covers R10, R12** (behavioral-conditional: minimum-permission scoping):
-> *When* the gateway bot is invited to the server with the production OAuth URL, *then* a Discord audit-log check confirms the bot has only the documented minimum permissions (no `Administrator`, no `Manage Server`), and Developer Portal shows only the intents declared in `packages/gateway/src/discord/client.ts`.
+
+> _When_ the gateway bot is invited to the server with the production OAuth URL, _then_ a Discord audit-log check confirms the bot has only the documented minimum permissions (no `Administrator`, no `Manage Server`), and Developer Portal shows only the intents declared in `packages/gateway/src/discord/client.ts`.
 
 **AE3 — Covers R12, R13, R14** (behavioral-conditional, forward-looking after the 2026-05-18 deviation):
-> *Given* the disclosure doc has been authored and pinned, *when* any new member joins the server (i.e., any member beyond Marcus + bot present on 2026-05-18) OR any additional privileged intent is enabled beyond the current `GUILD_MEMBERS` + `MessageContent`, *then* the disclosure already exists, is current, and references the specific intents being used. The historical state (`GUILD_MEMBERS` + `MessageContent` enabled on 2026-05-18 before disclosure shipped) is a documented one-time deviation; no further intent changes happen before disclosure is current.
+
+> _Given_ the disclosure doc has been authored and pinned, _when_ any new member joins the server (i.e., any member beyond Marcus + bot present on 2026-05-18) OR any additional privileged intent is enabled beyond the current `GUILD_MEMBERS` + `MessageContent`, _then_ the disclosure already exists, is current, and references the specific intents being used. The historical state (`GUILD_MEMBERS` + `MessageContent` enabled on 2026-05-18 before disclosure shipped) is a documented one-time deviation; no further intent changes happen before disclosure is current.
 
 **AE4 — Covers R17** (behavioral-conditional: maintenance-lock):
-> *When* the admin agent begins any structural-change operation (F2 steps), *then* the gateway daemon is paused or placed in read-only mode before the first Discord-state mutation, and a reconciliation step runs before the daemon resumes normal operation.
+
+> _When_ the admin agent begins any structural-change operation (F2 steps), _then_ the gateway daemon is paused or placed in read-only mode before the first Discord-state mutation, and a reconciliation step runs before the daemon resumes normal operation.
 
 **AE5 — Covers R20** (behavioral-conditional: permission-drift refusal):
-> *When* the gateway detects that a channel's effective permissions deviate from the policy declared in R7 (e.g., `@everyone` accidentally has view access to a `@<project>-collab`-only channel), *then* the gateway refuses any privileged action in that channel and posts an alert to the mod-logs channel until Marcus reconciles the permissions.
+
+> _When_ the gateway detects that a channel's effective permissions deviate from the policy declared in R7 (e.g., `@everyone` accidentally has view access to a `@<project>-collab`-only channel), _then_ the gateway refuses any privileged action in that channel and posts an alert to the mod-logs channel until Marcus reconciles the permissions.
 
 **AE6 — Covers R21** (behavioral-conditional: prompt-injection envelope):
-> *When* a non-collab user mentions the gateway in a channel readable by non-collab roles and attempts to coerce a privileged action (e.g., "post this message to a different channel", "call this external API"), *then* the gateway refuses the privileged action, responds with a documented refusal message, and logs the refused attempt to the mod-logs channel.
+
+> _When_ a non-collab user mentions the gateway in a channel readable by non-collab roles and attempts to coerce a privileged action (e.g., "post this message to a different channel", "call this external API"), _then_ the gateway refuses the privileged action, responds with a documented refusal message, and logs the refused attempt to the mod-logs channel.
 
 ---
 
@@ -153,6 +159,7 @@ A separate problem motivates the timing: Marcus's `fro-bot/agent` codebase ships
 ## Scope Boundaries
 
 **In scope:**
+
 - Audit + archive of current server state (admin agent path)
 - Channel restructure into project-organized layout (Community Mode + per-project channels/categories + cross-cutting channels)
 - Per-project role hierarchy (`@<project>-collab`, optional `@<project>-viewer`)
@@ -164,6 +171,7 @@ A separate problem motivates the timing: Marcus's `fro-bot/agent` codebase ships
 - Documentation: channel topics, pinned messages, disclosure, mod policy, "how to add a new project" runbook
 
 **Out of scope (deferred or owned elsewhere):**
+
 - Gateway daemon hosting decision → owned by `marcusrbrown/infra`
 - New gateway features beyond what `packages/gateway/` ships → owned by `fro-bot/agent`
 - Dedicated public Q&A channel for the bot — removed from scope; Q&A happens inside project channels where collaborators have consented to the bot's presence
@@ -210,4 +218,3 @@ A separate problem motivates the timing: Marcus's `fro-bot/agent` codebase ships
 - `@thejustinwalsh` joins per-project (which projects?) rather than as a global tier.
 - Whether the archive of the 3 private channels lives in `marcusrbrown/poly`-style private docs vault or somewhere else; not in dotfiles.
 - Tuning of prompt-injection envelope beyond R21's minimum (output filtering specifics, exact rate-limit thresholds, refusal-message wording). Defer to gateway-side ADR.
-

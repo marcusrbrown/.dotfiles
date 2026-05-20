@@ -65,6 +65,7 @@ Expected shape (per declared policy):
 **Compare against:** the Roles table in `discord-admin-agent.md` § "Role + permission policy".
 
 **Common drift cases:**
+
 - A role was added without updating the runbook → file the addition or remove the role.
 - A role's position changed → fix position via PATCH or re-document the new position.
 - A retired role gained a member → either retire the member or re-classify the role as active.
@@ -86,18 +87,19 @@ curl -sS -H "Authorization: Bot $DISCORD_TOKEN" -H "User-Agent: $UA" \
 
 For each override, decode the `allow` and `deny` integers against Discord's permission bit reference:
 
-| Bit | Value | Permission |
-| --- | --- | --- |
-| 10 | `0x400` | `VIEW_CHANNEL` |
-| 11 | `0x800` | `SEND_MESSAGES` |
-| 16 | `0x10000` | `READ_MESSAGE_HISTORY` |
-| 4 | `0x10` | `MANAGE_CHANNELS` |
-| 28 | `0x10000000` | `MANAGE_ROLES` |
-| 29 | `0x20000000` | `MANAGE_WEBHOOKS` |
+| Bit | Value        | Permission             |
+| --- | ------------ | ---------------------- |
+| 10  | `0x400`      | `VIEW_CHANNEL`         |
+| 11  | `0x800`      | `SEND_MESSAGES`        |
+| 16  | `0x10000`    | `READ_MESSAGE_HISTORY` |
+| 4   | `0x10`       | `MANAGE_CHANNELS`      |
+| 28  | `0x10000000` | `MANAGE_ROLES`         |
+| 29  | `0x20000000` | `MANAGE_WEBHOOKS`      |
 
 **Compare against:** the Category overrides table in `discord-admin-agent.md` § "Role + permission policy".
 
 **Common drift cases:**
+
 - New category exists without a row in the declared policy → add the row or delete the category.
 - A category's override shape (allow + deny ints) doesn't match the row → either fix Discord or re-document.
 - An override targets a role not in the declared role set → that's a role-drift carried through to permissions.
@@ -114,6 +116,7 @@ curl -sS -H "Authorization: Bot $DISCORD_TOKEN" -H "User-Agent: $UA" \
 **Compare against:** the Channel-level overrides paragraph in `discord-admin-agent.md` § "Role + permission policy", which currently declares "Inherited from category overrides unless explicitly noted. As of the most recent restructure, no per-channel overrides exist above the category baseline."
 
 **Common drift cases:**
+
 - A channel has overrides that duplicate the category's — usually harmless redundancy; document or remove. (Example: `#poly` carries an inherited `@everyone` deny ViewChannel that duplicates its category override. The shape is identical to the category's, so behavior is correct, but the runbook should call out the duplication when it appears so a future reader understands the per-channel row is intentional or removable.)
 - A channel has overrides that contradict the category — this is real drift; investigate immediately.
 - A new per-channel override appeared without being declared → add the row or remove the override.
@@ -139,6 +142,7 @@ For each declared rule, verify:
 - `exempt_channels` contains `#mod-logs`'s id
 
 **Common drift cases:**
+
 - A new rule appeared owned by Discord's `automod` user (id `1008776202191634432`) — Discord's built-in baseline. Bots can't edit or delete these (returns 404). Toggling the rule in the UI reclaims ownership; from then on the bot owns it and the runbook covers it.
 - A rule's threshold was loosened via the UI without runbook update → tighten back via PATCH or re-document.
 - Alert routing was removed → re-add via UI (SEND_ALERT_MESSAGE actions require channel-level explicit View+Send on the alert channel; the bot's category-level grant doesn't satisfy this check, so this stays UI-only).
@@ -160,6 +164,7 @@ curl -sS -H "Authorization: Bot $DISCORD_TOKEN" -H "User-Agent: $UA" \
 **Compare against:** `discord-admin-agent.md` § "Onboarding policy".
 
 **Common drift cases:**
+
 - A welcome channel was added or removed (max 5 entries) → re-document or re-PATCH.
 - An Onboarding prompt or option text was changed → re-document or re-PUT.
 - `enabled: true` flipped on without the policy being updated to reflect a 7-channel `default_channel_ids` → review whether the new shape is intentional.
@@ -182,6 +187,7 @@ curl -sS -H "Authorization: Bot $DISCORD_TOKEN" -H "User-Agent: $UA" \
 **Compare against:** the bot's intended tuned-mask state. Production posture is `Manage Channels + Manage Roles + Manage Webhooks + Manage Server + View Channels + Read Message History` and NOT `Administrator`. If `Administrator` is on (bit 3, `0x8`), that's drift from a one-shot grant that wasn't revoked.
 
 **Common drift cases:**
+
 - `Administrator` bit set → revoke once the operation that needed it is done; document the temporary grant if it's still required.
 - A perm was removed that the bot needs → re-invite with the correct mask.
 
