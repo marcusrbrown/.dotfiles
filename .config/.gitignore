@@ -28,6 +28,7 @@
 /opencode/profiles/*
 !/opencode/profiles/default/
 /opencode/skills/superpowers
+/opencode/anthropic-auth.json
 /opencode/antigravity-accounts.json
 /opencode/package-lock.json
 /opencode/oh-my-openagent.json.*

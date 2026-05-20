@@ -11,7 +11,7 @@ cargo-binstall = "1.19.1"
 zig = "0.15.2"
 zls = "0.16.0"
 go = "1.26.3"
-ast-grep = "0.42.2"
+ast-grep = "0.42.3"
 
  # shfmt
 "aqua:mvdan/sh" = "3.13.1"
@@ -32,9 +32,6 @@ ast-grep = "0.42.2"
 "npm:agent-browser" = "0.27.0"
 "npm:skills" = "1.5.7"
 "npm:ocx" = "2.0.11"
-"npm:@cortexkit/magic-context" = "0.21.1"
-"npm:@cortexkit/aft" = "0.26.4"
-"npm:@cortexkit/opencode-anthropic-auth" = "1.1.2"
 "npm:@marcusrbrown/infra" = "latest"
 
 # Language Servers

@@ -67,6 +67,7 @@
         'fro-bot/agent',
         '@franlol/opencode-md-table-formatter',
         'agent-browser',
+        'ast-grep',
         'opencode-copilot-delegate'
       ],
       matchUpdateTypes: ['minor', 'patch'],
