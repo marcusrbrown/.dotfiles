@@ -195,8 +195,8 @@ Historic collaboration roles inherited from the server's pre-revival state (posi
 
 Inherited from category overrides unless explicitly noted. As of the most recent restructure, one redundant per-channel override exists:
 
-| Channel | Override | Status |
-| --- | --- | --- |
+| Channel | Override                                              | Status                                                                                                                                                                         |
+| ------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `#poly` | `@everyone deny ViewChannel` (allow=`0`, deny=`1024`) | **Redundant — byte-for-byte duplicate of the parent `poly` category's `@everyone` override.** Behaviorally a no-op (effective permissions are identical to plain inheritance). |
 
 Cleanup deferred: removing the override requires `ManageRoles` on `#poly` itself, which the bot's category-level grant does not satisfy (Discord's per-channel permission-mutation check doesn't honor inheritance for `ManageRoles`). Options: (a) grant `@Fro Bot` an explicit channel-level `ManageRoles` override on `#poly`, then delete the redundant `@everyone` override, then remove the temporary `ManageRoles` grant; (b) remove it via the Discord UI (server owner is not subject to the per-channel permission-mutation check); (c) leave as-is and treat as documented expected drift. The drift detector (Unit 8) reads this section as authoritative and will classify the override as **informational, not actionable** as long as it's listed here.
@@ -301,10 +301,10 @@ The **canonical token-lifecycle runbook** lives in [`marcusrbrown/infra`](https:
 
 ### Where to find the canonical doc
 
-| Topic | Read from |
-| --- | --- |
-| Token lifecycle (rotation, emergency revocation, in-flight handling, audit surfaces, dual-consumer coupling with this runbook) | [`marcusrbrown/infra/docs/runbooks/discord-token-lifecycle.md`](https://github.com/marcusrbrown/infra/blob/main/docs/runbooks/discord-token-lifecycle.md) |
-| Gateway deploy mechanics (secret-file storage layout, `${NAME}_FILE` precedence, registration poll cadence, secrets-checksum lifecycle) | [`marcusrbrown/infra/apps/gateway/AGENTS.md`](https://github.com/marcusrbrown/infra/blob/main/apps/gateway/AGENTS.md) |
+| Topic                                                                                                                                   | Read from                                                                                                                                                 |
+| --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Token lifecycle (rotation, emergency revocation, in-flight handling, audit surfaces, dual-consumer coupling with this runbook)          | [`marcusrbrown/infra/docs/runbooks/discord-token-lifecycle.md`](https://github.com/marcusrbrown/infra/blob/main/docs/runbooks/discord-token-lifecycle.md) |
+| Gateway deploy mechanics (secret-file storage layout, `${NAME}_FILE` precedence, registration poll cadence, secrets-checksum lifecycle) | [`marcusrbrown/infra/apps/gateway/AGENTS.md`](https://github.com/marcusrbrown/infra/blob/main/apps/gateway/AGENTS.md)                                     |
 
 The infra runbook treats this dotfiles-side admin-agent path as a co-equal consumer of the Discord bot token — its rotation procedure tells the operator to update both the macOS Keychain (this runbook, Token sourcing → Option A) **and** the GitHub Environment secret in `marcusrbrown/infra` (so the gateway daemon re-materializes the token on next deploy) in the same operator sweep. The dual-consumer coupling is the reason this dotfiles runbook exists separately from the infra one.
 
@@ -321,8 +321,8 @@ The dotfiles-side admin-agent path and the production gateway daemon consume the
 
 Since [fro-bot/agent#651](https://github.com/fro-bot/agent/pull/651) and [fro-bot/agent#652](https://github.com/fro-bot/agent/pull/652) (May 2026), the gateway no longer hard-codes Discord intents — they're opt-in via host-side config:
 
-| Env var | Default | Purpose |
-| --- | --- | --- |
+| Env var                      | Default                                                     | Purpose                                                                                                                                                                                                                                                |
+| ---------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `DISCORD_PRIVILEGED_INTENTS` | unset (non-privileged baseline: `Guilds` + `GuildMessages`) | Comma-separated list of privileged intents to additionally request (e.g., `GUILD_MEMBERS,MESSAGE_CONTENT`). Must match what's enabled in the Discord Developer Portal for the bot, otherwise the gateway refuses to connect with `DISALLOWED_INTENTS`. |
 
 This is a gateway-only concern — the admin-agent path always requests its own intents directly at MCP-server startup. The handoff contract is: the production gateway runs with the **minimum** intent set sufficient for its declared capabilities, and any expansion goes through a documented `DISCORD_PRIVILEGED_INTENTS` change in `marcusrbrown/infra`.
