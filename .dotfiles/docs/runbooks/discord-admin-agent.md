@@ -301,12 +301,12 @@ The **canonical token-lifecycle runbook** lives in [`marcusrbrown/infra`](https:
 
 ### Where to find the canonical doc
 
-| State                             | Read from                                                                                                                                                                             |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Today (no standalone runbook yet) | [`apps/gateway/AGENTS.md`](https://github.com/marcusrbrown/infra/blob/main/apps/gateway/AGENTS.md) covers the deployment-time token setup as part of the gateway stack documentation. |
-| Future (standalone runbook lands) | The canonical token-lifecycle runbook in `marcusrbrown/infra` will be linked here.                                                                                                    |
+| Topic | Read from |
+| --- | --- |
+| Token lifecycle (rotation, emergency revocation, in-flight handling, audit surfaces, dual-consumer coupling with this runbook) | [`marcusrbrown/infra/docs/runbooks/discord-token-lifecycle.md`](https://github.com/marcusrbrown/infra/blob/main/docs/runbooks/discord-token-lifecycle.md) |
+| Gateway deploy mechanics (secret-file storage layout, `${NAME}_FILE` precedence, registration poll cadence, secrets-checksum lifecycle) | [`marcusrbrown/infra/apps/gateway/AGENTS.md`](https://github.com/marcusrbrown/infra/blob/main/apps/gateway/AGENTS.md) |
 
-> 📌 **TODO** (plan Unit 11): Once a dedicated `docs/runbooks/discord-token-lifecycle.md` (or equivalent) exists in `marcusrbrown/infra`, replace this paragraph with the direct URL. The trigger is the next PR in `infra` that creates a standalone token-lifecycle runbook; the marker exists so a future review or audit of this section catches the missing link.
+The infra runbook treats this dotfiles-side admin-agent path as a co-equal consumer of the Discord bot token — its rotation procedure tells the operator to update both the macOS Keychain (this runbook, Token sourcing → Option A) **and** the GitHub Environment secret in `marcusrbrown/infra` (so the gateway daemon re-materializes the token on next deploy) in the same operator sweep. The dual-consumer coupling is the reason this dotfiles runbook exists separately from the infra one.
 
 ### Handoff contract
 

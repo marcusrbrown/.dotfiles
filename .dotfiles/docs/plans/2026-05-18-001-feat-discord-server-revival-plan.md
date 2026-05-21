@@ -601,6 +601,8 @@ Key flows:
 - `.dotfiles/docs/runbooks/discord-admin-agent.md` has a "Token handoff" section.
 - If `infra`'s canonical runbook is not yet landed at execution time, the section is committed with a `TODO: update URL when infra lands the runbook` marker.
 
+**Status (2026-05-20):** `marcusrbrown/infra` PR #284 landed [`docs/runbooks/discord-token-lifecycle.md`](https://github.com/marcusrbrown/infra/blob/main/docs/runbooks/discord-token-lifecycle.md). The TODO marker in `.dotfiles/docs/runbooks/discord-admin-agent.md` has been replaced with the live link as part of post-deployment runbook cleanup.
+
 ---
 
 ## System-Wide Impact
