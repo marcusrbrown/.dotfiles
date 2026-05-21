@@ -61,10 +61,6 @@ tags
 !**/.env.sample
 
 # Auth/credential by name
-**/*secret*
-**/*token*
-**/*credential*
-**/*password*
 **/auth.json
 
 # Common key file extensions
