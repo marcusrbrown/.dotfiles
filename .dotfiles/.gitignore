@@ -67,3 +67,7 @@
 **/sessions/
 **/transcripts/
 **/history.jsonl
+
+# Ollama distillation script
+!/.config/opencode/scripts/ollama-distill.ts
+!/.config/opencode/scripts/ollama-distill.test.ts
