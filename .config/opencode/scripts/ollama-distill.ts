@@ -59,7 +59,7 @@ export class ReadOnlyVerificationError extends Error {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TRUNCATION_LIMIT = 60_000;
+const TRUNCATION_LIMIT = 120_000;
 const TRUNCATION_MARKER = "\n\n[... transcript truncated for context limit]";
 const BUSY_RETRY_ATTEMPTS = 3;
 const BUSY_RETRY_DELAY_MS = 100;
@@ -411,7 +411,7 @@ export async function selectSessions(
     db
       .query<SessionRow, [number, number]>(
         `SELECT id, time_updated FROM session
-         WHERE time_updated > ? AND parent_id IS NULL
+         WHERE time_updated > ? AND parent_id IS NULL AND (project_id IS NULL OR project_id <> 'global')
          ORDER BY time_updated ASC
          LIMIT ?`
       )
@@ -1210,10 +1210,13 @@ export async function main(
 
       await appendRunLog(logPath, record);
 
-      // Fix #1: Advance cursor only to the end of the contiguous successful prefix
-      if (cursorAdvanceTo > (cursor.last_run_timestamp ?? 0)) {
-        await saveCursor(stateDir, { last_run_timestamp: cursorAdvanceTo });
-      }
+      // Always write a cursor at the end of a normal-mode run to prevent bootstrap deadlock.
+      // If ≥1 session succeeded contiguously from the start, advance to the last success.
+      // If zero sessions succeeded, write the window floor so the next run retries the same
+      // window rather than re-bootstrapping from scratch.
+      const windowFloor = cursor.last_run_timestamp ?? (Date.now() - SEVEN_DAYS_MS);
+      const nextCursor = cursorAdvanceTo > windowFloor ? cursorAdvanceTo : windowFloor;
+      await saveCursor(stateDir, { last_run_timestamp: nextCursor });
 
       return success ? 0 : 1;
     } finally {
