@@ -159,12 +159,12 @@ describe("extractTranscript", () => {
 
   // ─── Test 3: Truncation ─────────────────────────────────────────────────────
 
-  test("truncation: content exceeding 60K chars is truncated with marker", async () => {
+  test("truncation: content exceeding 120K chars is truncated with marker", async () => {
     const db = createFixtureDb();
     const sid = "sess-3";
 
-    // Create a message with text that exceeds 60K chars
-    const bigText = "x".repeat(61_000);
+    // Create a message with text that exceeds 120K chars
+    const bigText = "x".repeat(121_000);
     const m1 = insertMessage(db, sid, "user", 1000, "msg-1");
     insertPart(db, m1, sid, "text", bigText, 1001, "p-1");
 
@@ -180,11 +180,11 @@ describe("extractTranscript", () => {
 
   // ─── Test 3b: Fix #3 — Truncation keeps prefix ─────────────────────────────
 
-  test("Fix #3: single 100K-char part yields prefix + marker (not just marker)", async () => {
+  test("Fix #3: single 200K-char part yields prefix + marker (not just marker)", async () => {
     const db = createFixtureDb();
     const sid = "sess-3b";
 
-    const bigText = "A".repeat(100_000);
+    const bigText = "A".repeat(200_000);
     const m1 = insertMessage(db, sid, "user", 1000, "msg-1");
     insertPart(db, m1, sid, "text", bigText, 1001, "p-1");
 
@@ -195,8 +195,8 @@ describe("extractTranscript", () => {
     // Should have substantial prefix content (not just the marker)
     const markerIdx = transcript.indexOf("[... transcript truncated for context limit]");
     expect(markerIdx).toBeGreaterThan(1000); // at least 1000 chars of original content
-    // Total length should be close to 60K (not 100K)
-    expect(transcript.length).toBeLessThanOrEqual(60_100); // 60K + marker length
+    // Total length should be close to 120K (not 200K)
+    expect(transcript.length).toBeLessThanOrEqual(120_100); // 120K + marker length
 
     db.close();
   });
@@ -585,6 +585,48 @@ describe("selectSessions", () => {
     const result = await selectSessions(db, 5000, 50);
     expect(result.sessions.length).toBe(0);
     expect(result.max_processed_time_updated).toBe(5000);
+    db.close();
+  });
+
+  test("project_id filter: sessions with project_id='global' are excluded", async () => {
+    const db = new Database(":memory:");
+    db.exec(`
+      CREATE TABLE session (
+        id TEXT PRIMARY KEY,
+        project_id TEXT,
+        parent_id TEXT,
+        time_created INTEGER,
+        time_updated INTEGER
+      );
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+
+    // Insert 3 sessions: one global (should be excluded), two real project sessions
+    for (const [id, projectId, timeUpdated] of [
+      ["sess-global", "global", 1001],
+      ["sess-abc123", "abc123", 1002],
+      ["sess-def456", "def456", 1003],
+    ] as [string, string, number][]) {
+      db.run(
+        "INSERT INTO session (id, project_id, parent_id, time_created, time_updated) VALUES (?, ?, NULL, ?, ?)",
+        [id, projectId, timeUpdated, timeUpdated]
+      );
+      const msgId = id + "-msg";
+      db.run("INSERT INTO message (id, session_id, time_created, data) VALUES (?, ?, ?, ?)", [
+        msgId, id, timeUpdated, JSON.stringify({ role: "user" }),
+      ]);
+      db.run("INSERT INTO part (id, message_id, session_id, time_created, data) VALUES (?, ?, ?, ?, ?)", [
+        id + "-part", msgId, id, timeUpdated, JSON.stringify({ type: "text", text: "hello" }),
+      ]);
+    }
+
+    const result = await selectSessions(db, 0, 50);
+    expect(result.sessions.length).toBe(2);
+    const ids = result.sessions.map((s) => s.id);
+    expect(ids).toContain("sess-abc123");
+    expect(ids).toContain("sess-def456");
+    expect(ids).not.toContain("sess-global");
     db.close();
   });
 });
@@ -1153,6 +1195,61 @@ describe("main", () => {
     }
   });
 
+  test("Fix #2 cursor floor: no cursor + all sessions fail → cursor.json written at bootstrap floor", async () => {
+    const stateDir = join(tmpdir(), "distill-test-floor-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-floor-" + Math.random().toString(36).slice(2) + ".db");
+    const runStart = Date.now();
+    const now = runStart;
+    createFileDb(dbPath, [
+      { id: "ses_fl1", timeUpdated: now - 5 * 24 * 3600 * 1000, text: "session one" },
+      { id: "ses_fl2", timeUpdated: now - 4 * 24 * 3600 * 1000, text: "session two" },
+    ]);
+
+    // No cursor file exists — bootstrap default is 7 days ago
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) {
+        return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      }
+      if (urlStr.includes("/api/chat")) {
+        return new Response("Internal Server Error", { status: 500, statusText: "Internal Server Error" });
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1); // all failed → non-zero exit
+
+      // (a) cursor.json must be written even though zero sessions succeeded
+      const cursorPath = join(stateDir, "cursor.json");
+      expect(existsSync(cursorPath)).toBe(true);
+
+      // (b) its last_run_timestamp equals the bootstrap floor (7 days ago ± 5s tolerance)
+      const cursor = JSON.parse(readFileSync(cursorPath, "utf8"));
+      const sevenDaysMs = 7 * 24 * 3600 * 1000;
+      const expectedFloor = runStart - sevenDaysMs;
+      expect(cursor.last_run_timestamp).toBeGreaterThanOrEqual(expectedFloor - 5000);
+      expect(cursor.last_run_timestamp).toBeLessThanOrEqual(expectedFloor + 5000);
+
+      // (c) a second run reads that cursor and uses it as the recency window start
+      //     (i.e., sessions from before the floor are not re-selected)
+      //     We verify by checking the cursor value is used: insert a session older than
+      //     the floor and confirm it would not be selected on next run.
+      //     Simplest proxy: the cursor timestamp is close to 7d ago, not 0 or "now".
+      expect(cursor.last_run_timestamp).toBeGreaterThan(runStart - sevenDaysMs - 10_000);
+      expect(cursor.last_run_timestamp).toBeLessThan(runStart - sevenDaysMs + 10_000);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
   test("partial success: 2nd Ollama call fails → returns 1, JSONL errors has 1 entry", async () => {
     const stateDir = join(tmpdir(), "distill-test-partial-" + Math.random().toString(36).slice(2));
     const dbPath = join(tmpdir(), "distill-test-partial-" + Math.random().toString(36).slice(2) + ".db");
@@ -1285,7 +1382,7 @@ describe("main", () => {
     }
   });
 
-  test("Fix #1: first session fails → cursor does not advance at all", async () => {
+  test("Fix #1: first session fails → cursor written at window floor (not advanced)", async () => {
     const stateDir = join(tmpdir(), "distill-test-cursor-fix1b-" + Math.random().toString(36).slice(2));
     const dbPath = join(tmpdir(), "distill-test-cursor-fix1b-" + Math.random().toString(36).slice(2) + ".db");
     const now = Date.now();
@@ -1297,7 +1394,7 @@ describe("main", () => {
       { id: "ses_f2", timeUpdated: s2Time, text: "session two" },
     ]);
 
-    // Pre-write a cursor so we can verify it doesn't change
+    // Pre-write a cursor so we can verify it stays at the floor
     mkdirSync(stateDir, { recursive: true });
     const initialCursorTs = s1Time - 1000;
     writeFileSync(join(stateDir, "cursor.json"), JSON.stringify({ last_run_timestamp: initialCursorTs }));
@@ -1323,7 +1420,8 @@ describe("main", () => {
       const code = await main(["bun", "script.ts"], () => {}, () => {});
       expect(code).toBe(1);
 
-      // Cursor should NOT have advanced
+      // Cursor must be written (Fix #2: always write cursor), but at the window floor
+      // (initialCursorTs), not advanced to any session's time_updated
       const cursor = JSON.parse(readFileSync(join(stateDir, "cursor.json"), "utf8"));
       expect(cursor.last_run_timestamp).toBe(initialCursorTs);
     } finally {
