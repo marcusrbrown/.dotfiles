@@ -896,7 +896,7 @@ describe("main", () => {
       expect(content).toContain("ses_outtest");
 
       // JSONL records mode: session
-      const logPath = join(stateDir, "run.jsonl");
+      const logPath = join(stateDir, "runs.jsonl");
       if (existsSync(logPath)) {
         const line = readFileSync(logPath, "utf8").trim().split("\n").pop()!;
         const record = JSON.parse(line);
@@ -977,7 +977,7 @@ describe("main", () => {
       expect(code).toBe(1); // any error → non-zero
 
       // JSONL should record the error
-      const logPath = join(stateDir, "run.jsonl");
+      const logPath = join(stateDir, "runs.jsonl");
       expect(existsSync(logPath)).toBe(true);
       const line = readFileSync(logPath, "utf8").trim().split("\n").pop()!;
       const record = JSON.parse(line);

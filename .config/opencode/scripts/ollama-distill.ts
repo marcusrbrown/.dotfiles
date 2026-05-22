@@ -714,7 +714,7 @@ export async function main(
       process.env.OLLAMA_DISTILL_STATE_DIR ??
       join(homedir(), ".local/state/ollama-distill");
 
-    const logPath = join(stateDir, "run.jsonl");
+    const logPath = join(stateDir, "runs.jsonl");
 
     // ── --session mode (non-mutating) ────────────────────────────────────────
     if (args.session) {
@@ -942,7 +942,7 @@ function findOpenCodeDb(): string | null {
     return process.env.OPENCODE_DB_PATH;
   }
   const xdgData = process.env.XDG_DATA_HOME ?? join(homedir(), ".local/share");
-  const candidate = join(xdgData, "opencode", "db.sqlite");
+  const candidate = join(xdgData, "opencode", "opencode.db");
   if (existsSync(candidate)) return candidate;
   return null;
 }
