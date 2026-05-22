@@ -14,6 +14,9 @@ import {
   callOllama,
   writeReport,
   appendRunLog,
+  parseArgs,
+  checkOllamaReachable,
+  main,
   type ExtractStats,
   type RunRecord,
 } from "./ollama-distill.ts";
@@ -660,5 +663,359 @@ describe("appendRunLog", () => {
     expect(lines).toHaveLength(2);
     expect(JSON.parse(lines[1]).sessions_read).toBe(2);
     if (existsSync(logPath)) unlinkSync(logPath);
+  });
+});
+
+// ─── Unit 3 Tests ─────────────────────────────────────────────────────────────
+
+// ── Fixture helpers for main() integration tests ──────────────────────────────
+
+/** Create a file-based DB with valid schema + some sessions for main() tests. */
+function createFileDb(dbPath: string, sessions: Array<{ id: string; timeUpdated: number; text: string }>): void {
+  const db = new Database(dbPath);
+  db.exec(`
+    CREATE TABLE session (
+      id TEXT PRIMARY KEY,
+      project_id TEXT,
+      parent_id TEXT,
+      time_created INTEGER,
+      time_updated INTEGER
+    );
+    CREATE TABLE message (
+      id TEXT PRIMARY KEY,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+    CREATE TABLE part (
+      id TEXT PRIMARY KEY,
+      message_id TEXT,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+  `);
+  for (const s of sessions) {
+    db.run(
+      "INSERT INTO session (id, project_id, parent_id, time_created, time_updated) VALUES (?, NULL, NULL, ?, ?)",
+      [s.id, s.timeUpdated, s.timeUpdated]
+    );
+    const msgId = s.id + "-msg";
+    db.run("INSERT INTO message (id, session_id, time_created, data) VALUES (?, ?, ?, ?)", [
+      msgId, s.id, s.timeUpdated, JSON.stringify({ role: "user" }),
+    ]);
+    db.run("INSERT INTO part (id, message_id, session_id, time_created, data) VALUES (?, ?, ?, ?, ?)", [
+      s.id + "-part", msgId, s.id, s.timeUpdated, JSON.stringify({ type: "text", text: s.text }),
+    ]);
+  }
+  db.close();
+}
+
+/** Mock fetch for Ollama: health OK + chat response. */
+function mockOllamaOk(content = "## Insight\n\nSome durable insight."): typeof globalThis.fetch {
+  return async (url: string | URL | Request, _init?: RequestInit) => {
+    const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+    if (urlStr.includes("/api/tags")) {
+      return new Response(JSON.stringify({ models: [] }), { status: 200 });
+    }
+    if (urlStr.includes("/api/chat")) {
+      return new Response(JSON.stringify({ message: { content } }), { status: 200 });
+    }
+    throw new Error(`Unexpected URL: ${urlStr}`);
+  };
+}
+
+/** Mock fetch for Ollama: health fails. */
+function mockOllamaDown(): typeof globalThis.fetch {
+  return async () => {
+    throw new Error("ECONNREFUSED");
+  };
+}
+
+// ── parseArgs tests ───────────────────────────────────────────────────────────
+
+describe("parseArgs", () => {
+  test("happy path: --since=ISO + --out parses correctly", () => {
+    const args = parseArgs(["--since=2026-05-15", "--out=/tmp/r.md"]);
+    expect(args.out).toBe("/tmp/r.md");
+    expect(args.since).toBeDefined();
+    // 2026-05-15T00:00:00Z in epoch ms
+    expect(args.since).toBe(new Date("2026-05-15T00:00:00.000Z").getTime());
+    expect(args.extractOnly).toBe(false);
+    expect(args.help).toBe(false);
+    expect(args.unknownFlag).toBeUndefined();
+  });
+
+  test("--since formats: 7d, ISO date, epoch ms all parse", () => {
+    const before = Date.now();
+    const rel = parseArgs(["--since=7d"]);
+    const after = Date.now();
+    expect(rel.since).toBeGreaterThanOrEqual(before - 7 * 24 * 3600 * 1000 - 100);
+    expect(rel.since).toBeLessThanOrEqual(after - 7 * 24 * 3600 * 1000 + 100);
+
+    const iso = parseArgs(["--since=2026-05-15"]);
+    expect(iso.since).toBe(new Date("2026-05-15T00:00:00.000Z").getTime());
+
+    const epochMs = parseArgs(["--since=1747267200000"]);
+    expect(epochMs.since).toBe(1747267200000);
+  });
+
+  test("--help flag sets help: true", () => {
+    const args = parseArgs(["--help"]);
+    expect(args.help).toBe(true);
+  });
+
+  test("unknown flag captured in unknownFlag", () => {
+    const args = parseArgs(["--foo=bar"]);
+    expect(args.unknownFlag).toBe("--foo=bar");
+  });
+
+  test("--session and --extract-only parse correctly", () => {
+    const args = parseArgs(["--session=ses_abc123", "--extract-only"]);
+    expect(args.session).toBe("ses_abc123");
+    expect(args.extractOnly).toBe(true);
+  });
+});
+
+// ── checkOllamaReachable tests ────────────────────────────────────────────────
+
+describe("checkOllamaReachable", () => {
+  test("returns ok: true when /api/tags responds 200", async () => {
+    globalThis.fetch = async () => new Response(JSON.stringify({ models: [] }), { status: 200 });
+    try {
+      const result = await checkOllamaReachable();
+      expect(result.ok).toBe(true);
+      expect(result.error).toBeUndefined();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("returns ok: false when fetch throws (connection refused)", async () => {
+    globalThis.fetch = async () => { throw new Error("ECONNREFUSED"); };
+    try {
+      const result = await checkOllamaReachable();
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("ECONNREFUSED");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
+// ── main() integration tests ──────────────────────────────────────────────────
+
+describe("main", () => {
+  test("--help: returns 0 and prints usage to stdout", async () => {
+    const written: string[] = [];
+    const code = await main(["bun", "script.ts", "--help"], (s) => written.push(s), () => {});
+    expect(code).toBe(0);
+    expect(written.join("")).toContain("ollama-distill");
+    expect(written.join("")).toContain("--since");
+  });
+
+  test("unknown flag: returns 1 and prints usage to stderr", async () => {
+    const written: string[] = [];
+    const code = await main(["bun", "script.ts", "--unknown-flag=xyz"], () => {}, (s) => written.push(s));
+    expect(code).toBe(1);
+    expect(written.join("")).toContain("Unknown flag");
+  });
+
+  test("no ollama: normal mode returns 1 with actionable stderr message", async () => {
+    const stateDir = join(tmpdir(), "distill-test-noollama-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-noollama-" + Math.random().toString(36).slice(2) + ".db");
+    createFileDb(dbPath, [{ id: "sess-1", timeUpdated: 1000, text: "hello" }]);
+
+    const stderrLines: string[] = [];
+    globalThis.fetch = mockOllamaDown();
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, (s) => stderrLines.push(s));
+      expect(code).toBe(1);
+      const stderr = stderrLines.join("");
+      expect(stderr).toContain("ollama serve");
+      expect(stderr).toContain("127.0.0.1:11434");
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("--session non-mutating: cursor file not created, output to stdout", async () => {
+    const stateDir = join(tmpdir(), "distill-test-session-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-session-" + Math.random().toString(36).slice(2) + ".db");
+    createFileDb(dbPath, [{ id: "ses_test123", timeUpdated: 2000, text: "session content here" }]);
+
+    const stdoutLines: string[] = [];
+    globalThis.fetch = mockOllamaOk();
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts", "--session=ses_test123"], (s) => stdoutLines.push(s), () => {});
+      expect(code).toBe(0);
+
+      // Cursor must NOT be created (non-mutating)
+      expect(existsSync(join(stateDir, "cursor.json"))).toBe(false);
+
+      // Output should contain the session block
+      const stdout = stdoutLines.join("");
+      expect(stdout).toContain("ses_test123");
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("--session + --out: writes to file, JSONL records mode: session", async () => {
+    const stateDir = join(tmpdir(), "distill-test-session-out-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-session-out-" + Math.random().toString(36).slice(2) + ".db");
+    const outPath = join(tmpdir(), "distill-session-out-" + Math.random().toString(36).slice(2) + ".md");
+    createFileDb(dbPath, [{ id: "ses_outtest", timeUpdated: 3000, text: "output test content" }]);
+
+    globalThis.fetch = mockOllamaOk("## Session Insight\n\nSpecific detail here.");
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(
+        ["bun", "script.ts", "--session=ses_outtest", `--out=${outPath}`],
+        () => {}, () => {}
+      );
+      expect(code).toBe(0);
+
+      // File written to --out path
+      expect(existsSync(outPath)).toBe(true);
+      const content = readFileSync(outPath, "utf8");
+      expect(content).toContain("ses_outtest");
+
+      // JSONL records mode: session
+      const logPath = join(stateDir, "run.jsonl");
+      if (existsSync(logPath)) {
+        const line = readFileSync(logPath, "utf8").trim().split("\n").pop()!;
+        const record = JSON.parse(line);
+        expect(record.mode).toBe("session");
+      }
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+      if (existsSync(outPath)) unlinkSync(outPath);
+    }
+  });
+
+  test("bootstrap on first run: cursor file created after normal mode success", async () => {
+    const stateDir = join(tmpdir(), "distill-test-bootstrap-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-bootstrap-" + Math.random().toString(36).slice(2) + ".db");
+    // Sessions with time_updated far in the past so they're selected by the default 7d cursor
+    const now = Date.now();
+    createFileDb(dbPath, [
+      { id: "ses_boot1", timeUpdated: now - 3 * 24 * 3600 * 1000, text: "bootstrap session" },
+    ]);
+
+    globalThis.fetch = mockOllamaOk();
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(0);
+
+      // Cursor file must be created
+      const cursorPath = join(stateDir, "cursor.json");
+      expect(existsSync(cursorPath)).toBe(true);
+      const cursor = JSON.parse(readFileSync(cursorPath, "utf8"));
+      expect(typeof cursor.last_run_timestamp).toBe("number");
+      expect(cursor.last_run_timestamp).toBeGreaterThan(0);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("partial success: 2nd Ollama call fails → returns 1, JSONL errors has 1 entry", async () => {
+    const stateDir = join(tmpdir(), "distill-test-partial-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-partial-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+    createFileDb(dbPath, [
+      { id: "ses_p1", timeUpdated: now - 5 * 24 * 3600 * 1000, text: "session one" },
+      { id: "ses_p2", timeUpdated: now - 4 * 24 * 3600 * 1000, text: "session two" },
+      { id: "ses_p3", timeUpdated: now - 3 * 24 * 3600 * 1000, text: "session three" },
+    ]);
+
+    let chatCallCount = 0;
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) {
+        return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      }
+      if (urlStr.includes("/api/chat")) {
+        chatCallCount++;
+        if (chatCallCount === 2) {
+          // 2nd call fails
+          return new Response("Internal Server Error", { status: 500, statusText: "Internal Server Error" });
+        }
+        return new Response(JSON.stringify({ message: { content: "## Insight\n\nGood content." } }), { status: 200 });
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1); // any error → non-zero
+
+      // JSONL should record the error
+      const logPath = join(stateDir, "run.jsonl");
+      expect(existsSync(logPath)).toBe(true);
+      const line = readFileSync(logPath, "utf8").trim().split("\n").pop()!;
+      const record = JSON.parse(line);
+      expect(record.success).toBe(false);
+      expect(record.errors.length).toBeGreaterThanOrEqual(1);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("schema error: DB missing column → main returns 1", async () => {
+    const stateDir = join(tmpdir(), "distill-test-schema-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-schema-" + Math.random().toString(36).slice(2) + ".db");
+
+    // Create DB missing session.parent_id
+    const db = new Database(dbPath);
+    db.exec(`
+      CREATE TABLE session (id TEXT PRIMARY KEY, project_id TEXT, time_created INTEGER, time_updated INTEGER);
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+    db.close();
+
+    globalThis.fetch = mockOllamaOk();
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
   });
 });

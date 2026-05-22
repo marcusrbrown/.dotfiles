@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 import { Database } from "bun:sqlite";
 import { mkdirSync, renameSync, existsSync, appendFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
+import { homedir } from "node:os";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -543,4 +544,411 @@ export async function appendRunLog(logPath: string, record: RunRecord): Promise<
   mkdirSync(dirname(logPath), { recursive: true });
   const line = JSON.stringify(record) + "\n";
   appendFileSync(logPath, line, "utf8");
+}
+
+// ─── CLI: Flag Parser ─────────────────────────────────────────────────────────
+
+export type ParsedArgs = {
+  since?: number;       // epoch ms
+  session?: string;
+  out?: string;
+  extractOnly: boolean;
+  help: boolean;
+  unknownFlag?: string;
+};
+
+/**
+ * Parse CLI argv (pass Bun.argv.slice(2) or the raw Bun.argv — we skip the
+ * first two elements internally).
+ */
+export function parseArgs(argv: string[]): ParsedArgs {
+  // Skip interpreter + script path if argv looks like Bun.argv (starts with bun path)
+  const args = argv[0]?.includes("bun") || argv[0]?.endsWith(".ts") || argv[0]?.endsWith(".js")
+    ? argv.slice(2)
+    : argv;
+
+  const result: ParsedArgs = { extractOnly: false, help: false };
+
+  for (const arg of args) {
+    if (arg === "--help" || arg === "-h") {
+      result.help = true;
+      continue;
+    }
+    if (arg === "--extract-only") {
+      result.extractOnly = true;
+      continue;
+    }
+    if (arg.startsWith("--since=")) {
+      result.since = parseSince(arg.slice("--since=".length));
+      continue;
+    }
+    if (arg.startsWith("--session=")) {
+      result.session = arg.slice("--session=".length);
+      continue;
+    }
+    if (arg.startsWith("--out=")) {
+      result.out = arg.slice("--out=".length);
+      continue;
+    }
+    if (arg.startsWith("--")) {
+      result.unknownFlag = arg;
+      break;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Parse --since value. Accepts:
+ * - "7d", "30d" → relative days
+ * - "2026-05-15" → ISO date (start of day UTC)
+ * - "1747267200000" → epoch ms (>1_000_000_000_000)
+ */
+function parseSince(value: string): number {
+  // Relative: Nd
+  const relMatch = /^(\d+)d$/.exec(value);
+  if (relMatch) {
+    const days = parseInt(relMatch[1], 10);
+    return Date.now() - days * 24 * 3600 * 1000;
+  }
+
+  // Epoch ms: large integer
+  const asNum = Number(value);
+  if (!isNaN(asNum) && asNum > 1_000_000_000_000) {
+    return asNum;
+  }
+
+  // ISO date: YYYY-MM-DD
+  const isoMatch = /^\d{4}-\d{2}-\d{2}$/.exec(value);
+  if (isoMatch) {
+    return new Date(value + "T00:00:00.000Z").getTime();
+  }
+
+  // Fallback: try Date.parse
+  const parsed = Date.parse(value);
+  if (!isNaN(parsed)) return parsed;
+
+  // Can't parse — return 0 (will select all sessions)
+  return 0;
+}
+
+// ─── CLI: Usage Text ──────────────────────────────────────────────────────────
+
+const USAGE = `ollama-distill — Distill recent OpenCode sessions into a Markdown report.
+
+USAGE:
+  ollama-distill [OPTIONS]
+  mise run distill [OPTIONS]
+
+OPTIONS:
+  --since=<value>     Recency filter override. Accepts: '7d', '2026-05-15', or epoch ms.
+                      Cursor still advances after success.
+  --session=<id>      Process exactly one session (non-mutating: skips cursor read/write,
+                      writes to stdout unless --out provided).
+  --out=<path>        Override report destination (or stdout target in --session mode).
+  --extract-only      Print extracted transcript(s) to stdout; skip Ollama call.
+                      Useful for debugging the extractor.
+  --help              Show this message.
+
+EXAMPLES:
+  mise run distill                          # normal run; reads cursor, writes today's report
+  mise run distill --since=7d               # backfill the last 7 days
+  mise run distill --session=ses_xxx        # debug one session, output to stdout
+  mise run distill --session=ses_xxx --out=/tmp/x.md
+  mise run distill --extract-only --session=ses_xxx  # see extracted transcript only
+
+OLLAMA REQUIREMENTS:
+  - \`ollama serve\` must be running locally at 127.0.0.1:11434
+  - \`qwen3:8b\` model must be pulled (ollama pull qwen3:8b)
+`;
+
+// ─── CLI: Ollama Health Check ─────────────────────────────────────────────────
+
+const OLLAMA_TAGS_URL = "http://127.0.0.1:11434/api/tags";
+
+export async function checkOllamaReachable(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const response = await fetch(OLLAMA_TAGS_URL, {
+      signal: AbortSignal.timeout(2000),
+    });
+    if (response.ok) {
+      return { ok: true };
+    }
+    return { ok: false, error: `HTTP ${response.status}: ${response.statusText}` };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: msg };
+  }
+}
+
+// ─── CLI: Main Entry ──────────────────────────────────────────────────────────
+
+const MODEL = "qwen3:8b";
+
+type WriteStream = (s: string) => void;
+
+export async function main(
+  argv: string[] = Bun.argv,
+  stdout: WriteStream = (s) => process.stdout.write(s),
+  stderr: WriteStream = (s) => process.stderr.write(s)
+): Promise<number> {
+  const startMs = Date.now();
+
+  try {
+    const args = parseArgs(argv);
+
+    // --help
+    if (args.help) {
+      stdout(USAGE);
+      return 0;
+    }
+
+    // Unknown flag
+    if (args.unknownFlag) {
+      stderr(`Unknown flag: ${args.unknownFlag}\n\n${USAGE}`);
+      return 1;
+    }
+
+    const stateDir =
+      process.env.OLLAMA_DISTILL_STATE_DIR ??
+      join(homedir(), ".local/state/ollama-distill");
+
+    const logPath = join(stateDir, "run.jsonl");
+
+    // ── --session mode (non-mutating) ────────────────────────────────────────
+    if (args.session) {
+      const sessionId = args.session;
+
+      // Find the OpenCode DB
+      const dbPath = findOpenCodeDb();
+      if (!dbPath) {
+        stderr("Could not locate OpenCode SQLite database.\n");
+        return 1;
+      }
+
+      let db: Database;
+      try {
+        db = openDatabase(dbPath);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        stderr(`Failed to open database: ${msg}\n`);
+        return 1;
+      }
+
+      let extractResult: { transcript: string; stats: ExtractStats };
+      try {
+        extractResult = await extractTranscript(db, sessionId);
+      } catch (err) {
+        db.close();
+        const msg = err instanceof Error ? err.message : String(err);
+        stderr(`Failed to extract transcript for ${sessionId}: ${msg}\n`);
+        return 1;
+      }
+      db.close();
+
+      const { transcript } = extractResult;
+
+      // --extract-only: skip Ollama
+      if (args.extractOnly) {
+        if (args.out) {
+          await Bun.write(args.out, transcript + "\n");
+        } else {
+          stdout(transcript + "\n");
+        }
+        return 0;
+      }
+
+      // Health check (unless --extract-only)
+      const health = await checkOllamaReachable();
+      if (!health.ok) {
+        stderr(
+          `ollama serve not reachable at 127.0.0.1:11434. Start it with: ollama serve &\n(${health.error})\n`
+        );
+        return 1;
+      }
+
+      const ollamaResult = await callOllama(transcript, MODEL);
+      const durationMs = Date.now() - startMs;
+
+      const record: RunRecord = {
+        ts: new Date().toISOString(),
+        ts_ms: Date.now(),
+        duration_ms: durationMs,
+        mode: "session",
+        model: MODEL,
+        sessions_read: 1,
+        report_blocks_generated: ollamaResult.error ? 0 : 1,
+        report_path: args.out ?? "stdout",
+        success: !ollamaResult.error,
+        errors: ollamaResult.error
+          ? [{ session_id: sessionId, phase: "ollama", message: ollamaResult.error }]
+          : [],
+      };
+
+      await appendRunLog(logPath, record);
+
+      if (ollamaResult.error) {
+        stderr(`Ollama error for ${sessionId}: ${ollamaResult.error}\n`);
+        return 1;
+      }
+
+      const output = `### Session ${sessionId}\n\n${ollamaResult.output}\n`;
+      if (args.out) {
+        await Bun.write(args.out, output);
+      } else {
+        stdout(output);
+      }
+
+      return 0;
+    }
+
+    // ── Normal mode ──────────────────────────────────────────────────────────
+
+    // Health check (always in normal mode)
+    const health = await checkOllamaReachable();
+    if (!health.ok) {
+      stderr(
+        `ollama serve not reachable at 127.0.0.1:11434. Start it with: ollama serve &\n(${health.error})\n`
+      );
+      return 1;
+    }
+
+    // Load cursor
+    const cursor = await loadCursor(stateDir);
+    // --since overrides cursor for this run only (cursor still advances after success)
+    const effectiveTimestamp = args.since !== undefined ? args.since : cursor.last_run_timestamp;
+
+    // Open DB
+    const dbPath = findOpenCodeDb();
+    if (!dbPath) {
+      stderr("Could not locate OpenCode SQLite database.\n");
+      return 1;
+    }
+
+    let db: Database;
+    try {
+      db = openDatabase(dbPath);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      stderr(`Failed to open database: ${msg}\n`);
+      return 1;
+    }
+
+    let selectionResult: SelectionResult;
+    try {
+      selectionResult = await selectSessions(db, effectiveTimestamp);
+    } catch (err) {
+      db.close();
+      const msg = err instanceof Error ? err.message : String(err);
+      stderr(`Failed to select sessions: ${msg}\n`);
+      return 1;
+    }
+    db.close();
+
+    const { sessions, max_processed_time_updated } = selectionResult;
+
+    // 0 sessions: no-op success
+    if (sessions.length === 0) {
+      stderr("no new sessions to distill\n");
+      const durationMs = Date.now() - startMs;
+      const record: RunRecord = {
+        ts: new Date().toISOString(),
+        ts_ms: Date.now(),
+        duration_ms: durationMs,
+        mode: "normal",
+        model: MODEL,
+        sessions_read: 0,
+        report_blocks_generated: 0,
+        report_path: "",
+        success: true,
+        errors: [],
+      };
+      await appendRunLog(logPath, record);
+      return 0;
+    }
+
+    // --extract-only: emit transcripts to stdout, skip Ollama
+    if (args.extractOnly) {
+      for (const s of sessions) {
+        stdout(`=== Session ${s.id} ===\n${s.transcript}\n\n`);
+      }
+      return 0;
+    }
+
+    // Process sessions through Ollama
+    const sessionResults: SessionResult[] = [];
+    const errors: RunError[] = [];
+
+    for (const s of sessions) {
+      const ollamaResult = await callOllama(s.transcript, MODEL);
+      if (ollamaResult.error) {
+        errors.push({ session_id: s.id, phase: "ollama", message: ollamaResult.error });
+        stderr(`Warning: Ollama error for ${s.id}: ${ollamaResult.error}\n`);
+        continue;
+      }
+      sessionResults.push({
+        sessionId: s.id,
+        title: `Session ${s.id.slice(0, 20)}`,
+        ollamaOutput: ollamaResult.output,
+      });
+    }
+
+    // Write report
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const reportPath = args.out ?? join(stateDir, "reports", `${dateStr}.md`);
+
+    if (sessionResults.length > 0) {
+      await writeReport(reportPath, sessionResults);
+    }
+
+    const durationMs = Date.now() - startMs;
+    const success = errors.length === 0;
+
+    const record: RunRecord = {
+      ts: new Date().toISOString(),
+      ts_ms: Date.now(),
+      duration_ms: durationMs,
+      mode: "normal",
+      model: MODEL,
+      sessions_read: sessions.length,
+      report_blocks_generated: sessionResults.length,
+      report_path: sessionResults.length > 0 ? reportPath : "",
+      success,
+      errors,
+    };
+
+    await appendRunLog(logPath, record);
+
+    // Advance cursor (only in normal mode, only on at least partial success)
+    await saveCursor(stateDir, { last_run_timestamp: max_processed_time_updated });
+
+    return success ? 0 : 1;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    stderr(`Fatal error: ${msg}\n`);
+    return 1;
+  }
+}
+
+// ─── DB Path Discovery ────────────────────────────────────────────────────────
+
+/**
+ * Locate the OpenCode SQLite database.
+ * Checks OPENCODE_DB_PATH env first (for testability), then the default XDG location.
+ */
+function findOpenCodeDb(): string | null {
+  if (process.env.OPENCODE_DB_PATH) {
+    return process.env.OPENCODE_DB_PATH;
+  }
+  const xdgData = process.env.XDG_DATA_HOME ?? join(homedir(), ".local/share");
+  const candidate = join(xdgData, "opencode", "db.sqlite");
+  if (existsSync(candidate)) return candidate;
+  return null;
+}
+
+// ─── Entry Point ──────────────────────────────────────────────────────────────
+
+if (import.meta.main) {
+  main().then((code) => process.exit(code));
 }
