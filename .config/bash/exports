@@ -365,6 +365,10 @@ export OMO_DISABLE_POSTHOG=1
 
 export OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true
 
+# Ollama — short keep-alive so models unload after each on-demand run
+# (Default is 5m; on 16GB this holds a ~5GB model resident long after use.)
+export OLLAMA_KEEP_ALIVE=30s
+
 # ASDF
 
 if command_exists asdf; then

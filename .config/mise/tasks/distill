@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Run local Ollama distillation against recent OpenCode sessions; writes Markdown report to ~/.local/state/ollama-distill/reports/"
+#MISE dir="{{cwd}}"
+set -euo pipefail
+exec bun run "$HOME/.config/opencode/scripts/ollama-distill.ts" "$@"

@@ -30,6 +30,8 @@
 !/.dotfiles/docs/plans/*.md
 !/.dotfiles/docs/runbooks/
 !/.dotfiles/docs/runbooks/*.md
+!/.dotfiles/docs/solutions/
+!/.dotfiles/docs/solutions/*.md
 !/.github/
 !/.ssh/
 /.ssh/*
@@ -67,3 +69,8 @@
 **/sessions/
 **/transcripts/
 **/history.jsonl
+
+# Ollama distillation pipeline
+!/.config/opencode/scripts/ollama-distill.ts
+!/.config/opencode/scripts/ollama-distill.test.ts
+!/.config/mise/tasks/distill

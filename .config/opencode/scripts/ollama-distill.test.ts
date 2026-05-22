@@ -1,0 +1,1445 @@
+import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { Database } from "bun:sqlite";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { unlinkSync, existsSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import {
+  openDatabase,
+  extractTranscript,
+  SchemaError,
+  ReadOnlyVerificationError,
+  loadCursor,
+  saveCursor,
+  selectSessions,
+  callOllama,
+  writeReport,
+  appendRunLog,
+  parseArgs,
+  checkOllamaReachable,
+  main,
+  withSqliteBusyRetry,
+  acquireLock,
+  releaseLock,
+  type ExtractStats,
+  type RunRecord,
+} from "./ollama-distill.ts";
+
+// Save original fetch so we can restore it after each Ollama test
+const originalFetch = globalThis.fetch;
+
+// ─── Fixture helpers ──────────────────────────────────────────────────────────
+
+/** Create a minimal in-memory DB with the required schema. */
+function createFixtureDb(): Database {
+  const db = new Database(":memory:");
+  db.exec(`
+    CREATE TABLE session (
+      id TEXT PRIMARY KEY,
+      project_id TEXT,
+      parent_id TEXT,
+      time_created INTEGER,
+      time_updated INTEGER
+    );
+    CREATE TABLE message (
+      id TEXT PRIMARY KEY,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+    CREATE TABLE part (
+      id TEXT PRIMARY KEY,
+      message_id TEXT,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+  `);
+  return db;
+}
+
+/** Insert a message row and return its id. */
+function insertMessage(
+  db: Database,
+  sessionId: string,
+  role: string,
+  timeCreated: number,
+  id: string
+): string {
+  db.run("INSERT INTO message (id, session_id, time_created, data) VALUES (?, ?, ?, ?)", [
+    id,
+    sessionId,
+    timeCreated,
+    JSON.stringify({ role }),
+  ]);
+  return id;
+}
+
+/** Insert a part row. */
+function insertPart(
+  db: Database,
+  messageId: string,
+  sessionId: string,
+  type: string,
+  text: string | null,
+  timeCreated: number,
+  id: string,
+  rawData?: string
+): void {
+  const data =
+    rawData !== undefined
+      ? rawData
+      : text !== null
+        ? JSON.stringify({ type, text })
+        : JSON.stringify({ type });
+  db.run(
+    "INSERT INTO part (id, message_id, session_id, time_created, data) VALUES (?, ?, ?, ?, ?)",
+    [id, messageId, sessionId, timeCreated, data]
+  );
+}
+
+// ─── Test 1: Happy path ───────────────────────────────────────────────────────
+
+describe("extractTranscript", () => {
+  test("happy path: 3 messages with one text part each → 3 labeled lines in order", async () => {
+    const db = createFixtureDb();
+    const sid = "sess-1";
+
+    const m1 = insertMessage(db, sid, "user", 1000, "msg-1");
+    const m2 = insertMessage(db, sid, "assistant", 2000, "msg-2");
+    const m3 = insertMessage(db, sid, "user", 3000, "msg-3");
+
+    insertPart(db, m1, sid, "text", "Hello there", 1001, "p-1");
+    insertPart(db, m2, sid, "text", "Hi! How can I help?", 2001, "p-2");
+    insertPart(db, m3, sid, "text", "Tell me about SQLite", 3001, "p-3");
+
+    const { transcript, stats } = await extractTranscript(db, sid);
+
+    const lines = transcript.split("\n");
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toBe("USER: Hello there");
+    expect(lines[1]).toBe("ASSISTANT: Hi! How can I help?");
+    expect(lines[2]).toBe("USER: Tell me about SQLite");
+
+    expect(stats.messages).toBe(3);
+    expect(stats.text_parts).toBe(3);
+    expect(stats.reasoning_parts).toBe(0);
+    expect(stats.skipped_parts).toBe(0);
+    expect(stats.truncated).toBe(false);
+
+    db.close();
+  });
+
+  // ─── Test 2: Mixed part types ───────────────────────────────────────────────
+
+  test("mixed part types: text + reasoning emit lines; tool/step-start are skipped", async () => {
+    const db = createFixtureDb();
+    const sid = "sess-2";
+
+    const m1 = insertMessage(db, sid, "assistant", 1000, "msg-1");
+    insertPart(db, m1, sid, "text", "Here is my answer", 1001, "p-1");
+    insertPart(db, m1, sid, "reasoning", "Let me think...", 1002, "p-2");
+    insertPart(db, m1, sid, "tool", null, 1003, "p-3");
+    insertPart(db, m1, sid, "step-start", null, 1004, "p-4");
+
+    const { transcript, stats } = await extractTranscript(db, sid);
+
+    const lines = transcript.split("\n");
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toBe("ASSISTANT: Here is my answer");
+    expect(lines[1]).toBe("ASSISTANT [reasoning]: Let me think...");
+
+    expect(stats.text_parts).toBe(1);
+    expect(stats.reasoning_parts).toBe(1);
+    expect(stats.skipped_parts).toBe(2);
+    expect(stats.skipped_types).toContain("tool");
+    expect(stats.skipped_types).toContain("step-start");
+
+    db.close();
+  });
+
+  // ─── Test 3: Truncation ─────────────────────────────────────────────────────
+
+  test("truncation: content exceeding 60K chars is truncated with marker", async () => {
+    const db = createFixtureDb();
+    const sid = "sess-3";
+
+    // Create a message with text that exceeds 60K chars
+    const bigText = "x".repeat(61_000);
+    const m1 = insertMessage(db, sid, "user", 1000, "msg-1");
+    insertPart(db, m1, sid, "text", bigText, 1001, "p-1");
+
+    const { transcript, stats } = await extractTranscript(db, sid);
+
+    expect(stats.truncated).toBe(true);
+    expect(transcript).toContain("[... transcript truncated for context limit]");
+    // The transcript should be shorter than the original content
+    expect(transcript.length).toBeLessThan(bigText.length);
+
+    db.close();
+  });
+
+  // ─── Test 3b: Fix #3 — Truncation keeps prefix ─────────────────────────────
+
+  test("Fix #3: single 100K-char part yields prefix + marker (not just marker)", async () => {
+    const db = createFixtureDb();
+    const sid = "sess-3b";
+
+    const bigText = "A".repeat(100_000);
+    const m1 = insertMessage(db, sid, "user", 1000, "msg-1");
+    insertPart(db, m1, sid, "text", bigText, 1001, "p-1");
+
+    const { transcript, stats } = await extractTranscript(db, sid);
+
+    expect(stats.truncated).toBe(true);
+    expect(transcript).toContain("[... transcript truncated for context limit]");
+    // Should have substantial prefix content (not just the marker)
+    const markerIdx = transcript.indexOf("[... transcript truncated for context limit]");
+    expect(markerIdx).toBeGreaterThan(1000); // at least 1000 chars of original content
+    // Total length should be close to 60K (not 100K)
+    expect(transcript.length).toBeLessThanOrEqual(60_100); // 60K + marker length
+
+    db.close();
+  });
+
+  // ─── Test 4: Read-only verification ────────────────────────────────────────
+
+  test("read-only verification: openDatabase with mode=ro throws on CREATE TEMP TABLE", async () => {
+    // Create a real file-based DB so we can open it with mode=ro URI
+    const dbPath = join(tmpdir(), `ollama-distill-test-ro-${Date.now()}.db`);
+
+    // Bootstrap the DB with required schema
+    const setup = new Database(dbPath);
+    setup.exec(`
+      CREATE TABLE session (id TEXT PRIMARY KEY, project_id TEXT, parent_id TEXT, time_created INTEGER, time_updated INTEGER);
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+    setup.close();
+
+    // openDatabase should succeed (schema is valid) and the probe should throw internally
+    // but be caught — meaning the DB opens fine in read-only mode.
+    // The key assertion: if we manually try CREATE TEMP TABLE on the opened DB, it throws.
+    const db = openDatabase(dbPath);
+
+    // Verify the connection is truly read-only by attempting a write
+    expect(() => {
+      db.exec("INSERT INTO session (id) VALUES ('test')");
+    }).toThrow();
+
+    db.close();
+    if (existsSync(dbPath)) unlinkSync(dbPath);
+  });
+
+  // ─── Test 5: Schema missing column ─────────────────────────────────────────
+
+  test("schema missing column: SchemaError thrown with missing column name", async () => {
+    const dbPath = join(tmpdir(), `ollama-distill-test-schema-${Date.now()}.db`);
+
+    // Create DB missing session.parent_id
+    const setup = new Database(dbPath);
+    setup.exec(`
+      CREATE TABLE session (id TEXT PRIMARY KEY, project_id TEXT, time_created INTEGER, time_updated INTEGER);
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+    setup.close();
+
+    expect(() => openDatabase(dbPath)).toThrow(SchemaError);
+
+    try {
+      openDatabase(dbPath);
+    } catch (err) {
+      expect(err).toBeInstanceOf(SchemaError);
+      expect((err as SchemaError).message).toContain("parent_id");
+    }
+
+    if (existsSync(dbPath)) unlinkSync(dbPath);
+  });
+
+  // ─── Test 6: SQLITE_BUSY retry ─────────────────────────────────────────────
+
+  test("SQLITE_BUSY retry: succeeds after 2 busy errors", async () => {
+    const db = createFixtureDb();
+    const sid = "sess-6";
+
+    const m1 = insertMessage(db, sid, "user", 1000, "msg-1");
+    insertPart(db, m1, sid, "text", "Hello", 1001, "p-1");
+
+    // Monkey-patch db.query to simulate SQLITE_BUSY twice then succeed
+    let callCount = 0;
+    const originalQuery = db.query.bind(db);
+
+    // We'll wrap extractTranscript by intercepting at the db.query level
+    // Since we can't easily mock bun:sqlite internals, we test the retry logic
+    // by creating a wrapper that tracks attempts via a counter in the closure.
+    let retryCount = 0;
+
+    // Create a proxy-like wrapper around the db that throws SQLITE_BUSY twice
+    const mockDb = new Proxy(db, {
+      get(target, prop) {
+        if (prop === "query") {
+          return (sql: string) => {
+            const stmt = originalQuery(sql);
+            const originalAll = stmt.all.bind(stmt);
+            return new Proxy(stmt, {
+              get(stmtTarget, stmtProp) {
+                if (stmtProp === "all") {
+                  return (...args: unknown[]) => {
+                    callCount++;
+                    if (callCount <= 2) {
+                      retryCount++;
+                      const err = new Error("SQLITE_BUSY: database is locked");
+                      throw err;
+                    }
+                    return originalAll(...(args as Parameters<typeof originalAll>));
+                  };
+                }
+                return (stmtTarget as Record<string | symbol, unknown>)[stmtProp];
+              },
+            });
+          };
+        }
+        return (target as Record<string | symbol, unknown>)[prop];
+      },
+    });
+
+    const { transcript, stats } = await extractTranscript(mockDb as unknown as Database, sid);
+
+    expect(retryCount).toBe(2);
+    expect(transcript).toContain("USER: Hello");
+    expect(stats.text_parts).toBe(1);
+
+    db.close();
+  });
+
+  // ─── Test 7: JSON decode failure ───────────────────────────────────────────
+
+  test("JSON decode failure: malformed part data is skipped, extraction continues", async () => {
+    const db = createFixtureDb();
+    const sid = "sess-7";
+
+    const m1 = insertMessage(db, sid, "user", 1000, "msg-1");
+    // Good part
+    insertPart(db, m1, sid, "text", "Good part", 1001, "p-1");
+    // Malformed JSON part
+    insertPart(db, m1, sid, "text", null, 1002, "p-2", "{ this is not valid json !!!");
+    // Another good part
+    insertPart(db, m1, sid, "text", "Another good part", 1003, "p-3");
+
+    const { transcript, stats } = await extractTranscript(db, sid);
+
+    const lines = transcript.split("\n");
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toBe("USER: Good part");
+    expect(lines[1]).toBe("USER: Another good part");
+
+    expect(stats.text_parts).toBe(2);
+    expect(stats.skipped_parts).toBe(1);
+    expect(stats.skipped_types).toContain("malformed_json");
+
+    db.close();
+  });
+
+  // ─── Test 10: Fix #10 — malformed part.data skipped, run succeeds ──────────
+
+  test("Fix #10: malformed part.data row is skipped; other rows still appear in transcript", async () => {
+    const db = createFixtureDb();
+    const sid = "sess-10";
+
+    const m1 = insertMessage(db, sid, "user", 1000, "msg-1");
+    insertPart(db, m1, sid, "text", "Valid content", 1001, "p-1");
+    // Insert a part with completely invalid JSON
+    insertPart(db, m1, sid, "text", null, 1002, "p-2", "not-json-at-all");
+    insertPart(db, m1, sid, "text", "Also valid", 1003, "p-3");
+
+    const { transcript, stats } = await extractTranscript(db, sid);
+
+    expect(transcript).toContain("Valid content");
+    expect(transcript).toContain("Also valid");
+    expect(stats.skipped_parts).toBe(1);
+    expect(stats.skipped_types).toContain("malformed_json");
+
+    db.close();
+  });
+});
+
+// ─── openDatabase tests ───────────────────────────────────────────────────────
+
+describe("openDatabase", () => {
+  let dbPath: string;
+
+  beforeAll(() => {
+    dbPath = join(tmpdir(), `ollama-distill-test-open-${Date.now()}.db`);
+    const setup = new Database(dbPath);
+    setup.exec(`
+      CREATE TABLE session (id TEXT PRIMARY KEY, project_id TEXT, parent_id TEXT, time_created INTEGER, time_updated INTEGER);
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+    setup.close();
+  });
+
+  afterAll(() => {
+    if (existsSync(dbPath)) unlinkSync(dbPath);
+  });
+
+  test("opens valid DB successfully", () => {
+    const db = openDatabase(dbPath);
+    expect(db).toBeDefined();
+    db.close();
+  });
+
+  test("opened DB rejects write operations", () => {
+    const db = openDatabase(dbPath);
+    expect(() => {
+      db.exec("INSERT INTO session (id) VALUES ('x')");
+    }).toThrow();
+    db.close();
+  });
+});
+
+// ─── withSqliteBusyRetry tests ────────────────────────────────────────────────
+
+describe("withSqliteBusyRetry", () => {
+  // Fix #4: Test the extracted retry helper directly
+  test("Fix #4: retries on SQLITE_BUSY and succeeds on 3rd attempt", async () => {
+    let callCount = 0;
+    const result = await withSqliteBusyRetry(() => {
+      callCount++;
+      if (callCount < 3) {
+        throw new Error("SQLITE_BUSY: database is locked");
+      }
+      return "success";
+    }, 3, 0);
+
+    expect(result).toBe("success");
+    expect(callCount).toBe(3);
+  });
+
+  test("Fix #4: throws after exhausting all attempts", async () => {
+    let callCount = 0;
+    await expect(
+      withSqliteBusyRetry(() => {
+        callCount++;
+        throw new Error("SQLITE_BUSY: database is locked");
+      }, 3, 0)
+    ).rejects.toThrow("SQLITE_BUSY");
+    expect(callCount).toBe(3);
+  });
+
+  test("Fix #4: non-SQLITE_BUSY errors are not retried", async () => {
+    let callCount = 0;
+    await expect(
+      withSqliteBusyRetry(() => {
+        callCount++;
+        throw new Error("some other error");
+      }, 3, 0)
+    ).rejects.toThrow("some other error");
+    expect(callCount).toBe(1);
+  });
+});
+
+// ─── Unit 2 Tests ─────────────────────────────────────────────────────────────
+
+// ── Fixture helpers for session selection ────────────────────────────────────
+
+function createSelectionDb(): Database {
+  const db = new Database(":memory:");
+  db.exec(`
+    CREATE TABLE session (
+      id TEXT PRIMARY KEY,
+      project_id TEXT,
+      parent_id TEXT,
+      time_created INTEGER,
+      time_updated INTEGER
+    );
+    CREATE TABLE message (
+      id TEXT PRIMARY KEY,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+    CREATE TABLE part (
+      id TEXT PRIMARY KEY,
+      message_id TEXT,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+  `);
+  return db;
+}
+
+function insertSession(db: Database, id: string, timeUpdated: number, parentId: string | null = null): void {
+  db.run(
+    "INSERT INTO session (id, project_id, parent_id, time_created, time_updated) VALUES (?, NULL, ?, ?, ?)",
+    [id, parentId, timeUpdated, timeUpdated]
+  );
+}
+
+function insertSessionWithText(db: Database, id: string, timeUpdated: number, text: string): void {
+  insertSession(db, id, timeUpdated);
+  const msgId = id + "-msg";
+  db.run("INSERT INTO message (id, session_id, time_created, data) VALUES (?, ?, ?, ?)", [
+    msgId, id, timeUpdated, JSON.stringify({ role: "user" }),
+  ]);
+  db.run("INSERT INTO part (id, message_id, session_id, time_created, data) VALUES (?, ?, ?, ?, ?)", [
+    id + "-part", msgId, id, timeUpdated, JSON.stringify({ type: "text", text }),
+  ]);
+}
+
+// ── Cursor tests ─────────────────────────────────────────────────────────────
+
+describe("loadCursor / saveCursor", () => {
+  test("bootstrap: missing cursor file returns ~7 days ago timestamp", async () => {
+    const stateDir = join(tmpdir(), "ollama-distill-cursor-test-" + Math.random().toString(36).slice(2));
+    const before = Date.now();
+    const cursor = await loadCursor(stateDir);
+    const after = Date.now();
+
+    expect(cursor.last_run_timestamp).not.toBeNull();
+    const ts = cursor.last_run_timestamp!;
+    const sevenDaysMs = 7 * 24 * 3600 * 1000;
+    // Should be approximately now - 7d (within 5s tolerance)
+    expect(ts).toBeGreaterThanOrEqual(before - sevenDaysMs - 5000);
+    expect(ts).toBeLessThanOrEqual(after - sevenDaysMs + 5000);
+  });
+
+  test("round-trip: saveCursor then loadCursor returns exact value", async () => {
+    const stateDir = join(tmpdir(), "ollama-distill-cursor-rt-" + Math.random().toString(36).slice(2));
+    const cursor = { last_run_timestamp: 1234567890123 };
+    await saveCursor(stateDir, cursor);
+    const loaded = await loadCursor(stateDir);
+    expect(loaded.last_run_timestamp).toBe(1234567890123);
+  });
+
+  test("atomic write: .tmp file without rename → next load returns old cursor", async () => {
+    const stateDir = join(tmpdir(), "ollama-distill-cursor-atomic-" + Math.random().toString(36).slice(2));
+    mkdirSync(stateDir, { recursive: true });
+
+    // Write a known cursor first
+    await saveCursor(stateDir, { last_run_timestamp: 9999 });
+
+    // Simulate interrupted write: write .tmp but don't rename
+    writeFileSync(join(stateDir, "cursor.json.tmp"), JSON.stringify({ last_run_timestamp: 42 }) + "\n");
+
+    // Load should return the old cursor (9999), not the .tmp value (42)
+    const loaded = await loadCursor(stateDir);
+    expect(loaded.last_run_timestamp).toBe(9999);
+  });
+});
+
+// ── Session selection tests ───────────────────────────────────────────────────
+
+describe("selectSessions", () => {
+  test("count cap: 75 sessions → selectSessions returns 50", async () => {
+    const db = createSelectionDb();
+    for (let i = 0; i < 75; i++) {
+      insertSessionWithText(db, `sess-${i}`, 1000 + i, "short text");
+    }
+    const result = await selectSessions(db, 0, 50);
+    expect(result.sessions.length).toBe(50);
+    expect(result.max_processed_time_updated).toBe(1049); // 50th session time_updated
+    db.close();
+  });
+
+  test("byte cap: stops before accumulating byte cap of transcript chars", async () => {
+    const db = createSelectionDb();
+    // Each session ~40KB of text (under 60K truncation limit)
+    // With a 100KB cap, should stop after ~2-3 sessions
+    const chunkText = "x".repeat(40_000);
+    for (let i = 0; i < 10; i++) {
+      insertSessionWithText(db, `sess-${i}`, 1000 + i, chunkText);
+    }
+    const result = await selectSessions(db, 0, 50, 100_000);
+    // Should stop well before 10 sessions (40K chars each, cap 100K → stops at 2-3)
+    expect(result.sessions.length).toBeLessThan(10);
+    expect(result.sessions.length).toBeGreaterThan(0);
+    db.close();
+  });
+
+  test("cursor advance: second call with advanced cursor selects remaining sessions", async () => {
+    const db = createSelectionDb();
+    for (let i = 0; i < 75; i++) {
+      insertSessionWithText(db, `sess-${i}`, 1000 + i, "short text");
+    }
+
+    // First call: selects 50
+    const first = await selectSessions(db, 0, 50);
+    expect(first.sessions.length).toBe(50);
+
+    // Second call with advanced cursor: selects remaining 25
+    const second = await selectSessions(db, first.max_processed_time_updated, 50);
+    expect(second.sessions.length).toBe(25);
+
+    // No overlap
+    const firstIds = new Set(first.sessions.map((s) => s.id));
+    for (const s of second.sessions) {
+      expect(firstIds.has(s.id)).toBe(false);
+    }
+    db.close();
+  });
+
+  test("zero sessions: max_processed_time_updated returns lastRunTimestamp unchanged", async () => {
+    const db = createSelectionDb();
+    const result = await selectSessions(db, 5000, 50);
+    expect(result.sessions.length).toBe(0);
+    expect(result.max_processed_time_updated).toBe(5000);
+    db.close();
+  });
+});
+
+// ── Ollama client tests ───────────────────────────────────────────────────────
+
+describe("callOllama", () => {
+  test("happy path: mocked fetch returns content → callOllama returns output + duration", async () => {
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ message: { content: "## Block\n\nSome insight." } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("## Block\n\nSome insight.");
+      expect(result.error).toBeUndefined();
+      expect(result.durationMs).toBeGreaterThanOrEqual(0);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("network error: mocked fetch throws → returns error string", async () => {
+    globalThis.fetch = async () => {
+      throw new Error("ECONNREFUSED");
+    };
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("");
+      expect(result.error).toContain("ECONNREFUSED");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("empty response: Ollama returns 200 with empty content → error: 'empty response'", async () => {
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ message: { content: "" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("");
+      expect(result.error).toBe("empty response");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("non-2xx response: returns HTTP error string", async () => {
+    globalThis.fetch = async () =>
+      new Response("Service Unavailable", { status: 503, statusText: "Service Unavailable" });
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("");
+      expect(result.error).toContain("503");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("timeout: AbortSignal.timeout fires → returns timeout error", async () => {
+    // We can't easily test the 300s timeout, but we can verify the error path
+    // by mocking fetch to throw a TimeoutError
+    globalThis.fetch = async () => {
+      const err = new Error("The operation was aborted due to timeout");
+      err.name = "TimeoutError";
+      throw err;
+    };
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("");
+      expect(result.error).toContain("timeout");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  // Fix #9: malformed response shape
+  test("Fix #9: response missing message field → returns malformed-response error, not crash", async () => {
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ choices: [{ text: "something" }] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("");
+      expect(result.error).toContain("malformed-response");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("Fix #9: response with message but no content field → returns malformed-response error", async () => {
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ message: { role: "assistant" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("");
+      expect(result.error).toContain("malformed-response");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
+// ── Report writer tests ───────────────────────────────────────────────────────
+
+describe("writeReport", () => {
+  test("new file: creates header + blocks", async () => {
+    const reportPath = join(tmpdir(), "ollama-distill-report-" + Math.random().toString(36).slice(2) + ".md");
+    await writeReport(reportPath, [
+      { sessionId: "sess-abc", title: "My Session", ollamaOutput: "## Insight\n\nSome text." },
+    ]);
+    const content = readFileSync(reportPath, "utf8");
+    expect(content).toContain("# Distillation Report");
+    expect(content).toContain("### My Session (sess-abc)");
+    expect(content).toContain("## Insight");
+    if (existsSync(reportPath)) unlinkSync(reportPath);
+  });
+
+  test("append: existing file gets separator + new blocks", async () => {
+    const reportPath = join(tmpdir(), "ollama-distill-report-append-" + Math.random().toString(36).slice(2) + ".md");
+    // First write
+    await writeReport(reportPath, [
+      { sessionId: "sess-1", title: "First", ollamaOutput: "## First insight." },
+    ]);
+    // Second write (append)
+    await writeReport(reportPath, [
+      { sessionId: "sess-2", title: "Second", ollamaOutput: "## Second insight." },
+    ]);
+    const content = readFileSync(reportPath, "utf8");
+    expect(content).toContain("---");
+    expect(content).toContain("## Run at");
+    expect(content).toContain("### First (sess-1)");
+    expect(content).toContain("### Second (sess-2)");
+    if (existsSync(reportPath)) unlinkSync(reportPath);
+  });
+
+  // Fix #8: atomic write preserves pre-existing content
+  test("Fix #8: pre-existing report content is preserved after atomic append", async () => {
+    const reportPath = join(tmpdir(), "ollama-distill-report-atomic-" + Math.random().toString(36).slice(2) + ".md");
+    // Pre-populate with known content
+    writeFileSync(reportPath, "# Pre-existing content\n\nOld data here.\n");
+
+    await writeReport(reportPath, [
+      { sessionId: "sess-new", title: "New Session", ollamaOutput: "## New insight." },
+    ]);
+
+    const content = readFileSync(reportPath, "utf8");
+    expect(content).toContain("Pre-existing content");
+    expect(content).toContain("Old data here");
+    expect(content).toContain("New Session");
+    expect(content).toContain("New insight");
+    if (existsSync(reportPath)) unlinkSync(reportPath);
+  });
+});
+
+// ── JSONL run log tests ───────────────────────────────────────────────────────
+
+describe("appendRunLog", () => {
+  test("partial failure: RunRecord with errors[] writes valid JSON with success: false", async () => {
+    const logPath = join(tmpdir(), "ollama-distill-log-" + Math.random().toString(36).slice(2) + ".jsonl");
+    const record: RunRecord = {
+      ts: new Date().toISOString(),
+      ts_ms: Date.now(),
+      duration_ms: 1234,
+      mode: "normal",
+      model: "qwen3:8b",
+      sessions_read: 3,
+      report_blocks_generated: 2,
+      report_path: "/tmp/report.md",
+      success: false,
+      errors: [{ session_id: "sess-x", phase: "ollama", message: "ECONNREFUSED" }],
+    };
+    await appendRunLog(logPath, record);
+    const line = readFileSync(logPath, "utf8").trim();
+    const parsed = JSON.parse(line);
+    expect(parsed.success).toBe(false);
+    expect(parsed.errors).toHaveLength(1);
+    expect(parsed.errors[0].session_id).toBe("sess-x");
+    expect(parsed.model).toBe("qwen3:8b");
+    if (existsSync(logPath)) unlinkSync(logPath);
+  });
+
+  test("multiple appends: each call adds a new line", async () => {
+    const logPath = join(tmpdir(), "ollama-distill-log-multi-" + Math.random().toString(36).slice(2) + ".jsonl");
+    const base: RunRecord = {
+      ts: new Date().toISOString(),
+      ts_ms: Date.now(),
+      duration_ms: 100,
+      mode: "normal",
+      model: "qwen3:8b",
+      sessions_read: 1,
+      report_blocks_generated: 1,
+      report_path: "/tmp/r.md",
+      success: true,
+      errors: [],
+    };
+    await appendRunLog(logPath, base);
+    await appendRunLog(logPath, { ...base, sessions_read: 2 });
+    const lines = readFileSync(logPath, "utf8").trim().split("\n");
+    expect(lines).toHaveLength(2);
+    expect(JSON.parse(lines[1]).sessions_read).toBe(2);
+    if (existsSync(logPath)) unlinkSync(logPath);
+  });
+});
+
+// ─── Unit 3 Tests ─────────────────────────────────────────────────────────────
+
+// ── Fixture helpers for main() integration tests ──────────────────────────────
+
+/** Create a file-based DB with valid schema + some sessions for main() tests. */
+function createFileDb(dbPath: string, sessions: Array<{ id: string; timeUpdated: number; text: string }>): void {
+  const db = new Database(dbPath);
+  db.exec(`
+    CREATE TABLE session (
+      id TEXT PRIMARY KEY,
+      project_id TEXT,
+      parent_id TEXT,
+      time_created INTEGER,
+      time_updated INTEGER
+    );
+    CREATE TABLE message (
+      id TEXT PRIMARY KEY,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+    CREATE TABLE part (
+      id TEXT PRIMARY KEY,
+      message_id TEXT,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+  `);
+  for (const s of sessions) {
+    db.run(
+      "INSERT INTO session (id, project_id, parent_id, time_created, time_updated) VALUES (?, NULL, NULL, ?, ?)",
+      [s.id, s.timeUpdated, s.timeUpdated]
+    );
+    const msgId = s.id + "-msg";
+    db.run("INSERT INTO message (id, session_id, time_created, data) VALUES (?, ?, ?, ?)", [
+      msgId, s.id, s.timeUpdated, JSON.stringify({ role: "user" }),
+    ]);
+    db.run("INSERT INTO part (id, message_id, session_id, time_created, data) VALUES (?, ?, ?, ?, ?)", [
+      s.id + "-part", msgId, s.id, s.timeUpdated, JSON.stringify({ type: "text", text: s.text }),
+    ]);
+  }
+  db.close();
+}
+
+/** Mock fetch for Ollama: health OK + chat response. */
+function mockOllamaOk(content = "## Insight\n\nSome durable insight."): typeof globalThis.fetch {
+  return async (url: string | URL | Request, _init?: RequestInit) => {
+    const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+    if (urlStr.includes("/api/tags")) {
+      return new Response(JSON.stringify({ models: [] }), { status: 200 });
+    }
+    if (urlStr.includes("/api/chat")) {
+      return new Response(JSON.stringify({ message: { content } }), { status: 200 });
+    }
+    throw new Error(`Unexpected URL: ${urlStr}`);
+  };
+}
+
+/** Mock fetch for Ollama: health fails. */
+function mockOllamaDown(): typeof globalThis.fetch {
+  return async () => {
+    throw new Error("ECONNREFUSED");
+  };
+}
+
+// ── parseArgs tests ───────────────────────────────────────────────────────────
+
+describe("parseArgs", () => {
+  test("happy path: --since=ISO + --out parses correctly", () => {
+    const args = parseArgs(["--since=2026-05-15", "--out=/tmp/r.md"]);
+    expect(args.out).toBe("/tmp/r.md");
+    expect(args.since).toBeDefined();
+    // 2026-05-15T00:00:00Z in epoch ms
+    expect(args.since).toBe(new Date("2026-05-15T00:00:00.000Z").getTime());
+    expect(args.extractOnly).toBe(false);
+    expect(args.help).toBe(false);
+    expect(args.unknownFlag).toBeUndefined();
+  });
+
+  test("--since formats: 7d, ISO date, epoch ms all parse", () => {
+    const before = Date.now();
+    const rel = parseArgs(["--since=7d"]);
+    const after = Date.now();
+    expect(rel.since).toBeGreaterThanOrEqual(before - 7 * 24 * 3600 * 1000 - 100);
+    expect(rel.since).toBeLessThanOrEqual(after - 7 * 24 * 3600 * 1000 + 100);
+
+    const iso = parseArgs(["--since=2026-05-15"]);
+    expect(iso.since).toBe(new Date("2026-05-15T00:00:00.000Z").getTime());
+
+    const epochMs = parseArgs(["--since=1747267200000"]);
+    expect(epochMs.since).toBe(1747267200000);
+  });
+
+  test("--help flag sets help: true", () => {
+    const args = parseArgs(["--help"]);
+    expect(args.help).toBe(true);
+  });
+
+  test("unknown flag captured in unknownFlag", () => {
+    const args = parseArgs(["--foo=bar"]);
+    expect(args.unknownFlag).toBe("--foo=bar");
+  });
+
+  test("--session and --extract-only parse correctly", () => {
+    const args = parseArgs(["--session=ses_abc123", "--extract-only"]);
+    expect(args.session).toBe("ses_abc123");
+    expect(args.extractOnly).toBe(true);
+  });
+
+  // Fix #6: invalid --since
+  test("Fix #6: --since=7days (invalid format) → flagError set", () => {
+    const args = parseArgs(["--since=7days"]);
+    expect(args.flagError).toBeDefined();
+    expect(args.flagError).toContain("Invalid --since value");
+    expect(args.since).toBeUndefined();
+  });
+
+  test("Fix #6: --since= (empty) → flagError set", () => {
+    const args = parseArgs(["--since="]);
+    expect(args.flagError).toBeDefined();
+    expect(args.flagError).toContain("Empty value");
+  });
+
+  test("Fix #6: --since=notadate → flagError set", () => {
+    const args = parseArgs(["--since=notadate"]);
+    expect(args.flagError).toBeDefined();
+    expect(args.flagError).toContain("Invalid --since value");
+  });
+
+  // Fix #7: positional arguments rejected
+  test("Fix #7: positional argument → flagError set", () => {
+    const args = parseArgs(["somevalue"]);
+    expect(args.flagError).toBeDefined();
+    expect(args.flagError).toContain("positional argument");
+  });
+
+  // Fix #7: empty values rejected
+  test("Fix #7: --session= (empty value) → flagError set", () => {
+    const args = parseArgs(["--session="]);
+    expect(args.flagError).toBeDefined();
+    expect(args.flagError).toContain("Empty value");
+  });
+
+  test("Fix #7: --out= (empty value) → flagError set", () => {
+    const args = parseArgs(["--out="]);
+    expect(args.flagError).toBeDefined();
+    expect(args.flagError).toContain("Empty value");
+  });
+
+  // Fix #7: duplicate flags rejected
+  test("Fix #7: duplicate --session flag → flagError set", () => {
+    const args = parseArgs(["--session=ses_a", "--session=ses_b"]);
+    expect(args.flagError).toBeDefined();
+    expect(args.flagError).toContain("Duplicate flag");
+  });
+
+  test("Fix #7: duplicate --since flag → flagError set", () => {
+    const args = parseArgs(["--since=7d", "--since=30d"]);
+    expect(args.flagError).toBeDefined();
+    expect(args.flagError).toContain("Duplicate flag");
+  });
+});
+
+// ── checkOllamaReachable tests ────────────────────────────────────────────────
+
+describe("checkOllamaReachable", () => {
+  test("returns ok: true when /api/tags responds 200", async () => {
+    globalThis.fetch = async () => new Response(JSON.stringify({ models: [] }), { status: 200 });
+    try {
+      const result = await checkOllamaReachable();
+      expect(result.ok).toBe(true);
+      expect(result.error).toBeUndefined();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("returns ok: false when fetch throws (connection refused)", async () => {
+    globalThis.fetch = async () => { throw new Error("ECONNREFUSED"); };
+    try {
+      const result = await checkOllamaReachable();
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("ECONNREFUSED");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
+// ── main() integration tests ──────────────────────────────────────────────────
+
+describe("main", () => {
+  test("--help: returns 0 and prints usage to stdout", async () => {
+    const written: string[] = [];
+    const code = await main(["bun", "script.ts", "--help"], (s) => written.push(s), () => {});
+    expect(code).toBe(0);
+    expect(written.join("")).toContain("ollama-distill");
+    expect(written.join("")).toContain("--since");
+  });
+
+  // Fix #11: --help output should contain -- separator in examples
+  test("Fix #11: --help output contains -- separator in examples", async () => {
+    const written: string[] = [];
+    await main(["bun", "script.ts", "--help"], (s) => written.push(s), () => {});
+    const output = written.join("");
+    expect(output).toContain("-- --since=");
+    expect(output).toContain("-- --session=");
+    expect(output).toContain("-- --extract-only");
+  });
+
+  test("unknown flag: returns 1 and prints usage to stderr", async () => {
+    const written: string[] = [];
+    const code = await main(["bun", "script.ts", "--unknown-flag=xyz"], () => {}, (s) => written.push(s));
+    expect(code).toBe(1);
+    expect(written.join("")).toContain("Unknown flag");
+  });
+
+  // Fix #6: invalid --since exits 1 with usage error
+  test("Fix #6: --since=7days → exit 1 with usage error", async () => {
+    const stderrLines: string[] = [];
+    const code = await main(["bun", "script.ts", "--since=7days"], () => {}, (s) => stderrLines.push(s));
+    expect(code).toBe(1);
+    expect(stderrLines.join("")).toContain("Invalid --since value");
+  });
+
+  test("no ollama: normal mode returns 1 with actionable stderr message", async () => {
+    const stateDir = join(tmpdir(), "distill-test-noollama-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-noollama-" + Math.random().toString(36).slice(2) + ".db");
+    createFileDb(dbPath, [{ id: "sess-1", timeUpdated: 1000, text: "hello" }]);
+
+    const stderrLines: string[] = [];
+    globalThis.fetch = mockOllamaDown();
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, (s) => stderrLines.push(s));
+      expect(code).toBe(1);
+      const stderr = stderrLines.join("");
+      expect(stderr).toContain("ollama serve");
+      expect(stderr).toContain("127.0.0.1:11434");
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("--session non-mutating: cursor file not created, output to stdout", async () => {
+    const stateDir = join(tmpdir(), "distill-test-session-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-session-" + Math.random().toString(36).slice(2) + ".db");
+    createFileDb(dbPath, [{ id: "ses_test123", timeUpdated: 2000, text: "session content here" }]);
+
+    const stdoutLines: string[] = [];
+    globalThis.fetch = mockOllamaOk();
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts", "--session=ses_test123"], (s) => stdoutLines.push(s), () => {});
+      expect(code).toBe(0);
+
+      // Cursor must NOT be created (non-mutating)
+      expect(existsSync(join(stateDir, "cursor.json"))).toBe(false);
+
+      // Output should contain the session block
+      const stdout = stdoutLines.join("");
+      expect(stdout).toContain("ses_test123");
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("--session + --out: writes to file, JSONL records mode: session", async () => {
+    const stateDir = join(tmpdir(), "distill-test-session-out-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-session-out-" + Math.random().toString(36).slice(2) + ".db");
+    const outPath = join(tmpdir(), "distill-session-out-" + Math.random().toString(36).slice(2) + ".md");
+    createFileDb(dbPath, [{ id: "ses_outtest", timeUpdated: 3000, text: "output test content" }]);
+
+    globalThis.fetch = mockOllamaOk("## Session Insight\n\nSpecific detail here.");
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(
+        ["bun", "script.ts", "--session=ses_outtest", `--out=${outPath}`],
+        () => {}, () => {}
+      );
+      expect(code).toBe(0);
+
+      // File written to --out path
+      expect(existsSync(outPath)).toBe(true);
+      const content = readFileSync(outPath, "utf8");
+      expect(content).toContain("ses_outtest");
+
+      // JSONL records mode: session
+      const logPath = join(stateDir, "runs.jsonl");
+      if (existsSync(logPath)) {
+        const line = readFileSync(logPath, "utf8").trim().split("\n").pop()!;
+        const record = JSON.parse(line);
+        expect(record.mode).toBe("session");
+      }
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+      if (existsSync(outPath)) unlinkSync(outPath);
+    }
+  });
+
+  test("bootstrap on first run: cursor file created after normal mode success", async () => {
+    const stateDir = join(tmpdir(), "distill-test-bootstrap-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-bootstrap-" + Math.random().toString(36).slice(2) + ".db");
+    // Sessions with time_updated far in the past so they're selected by the default 7d cursor
+    const now = Date.now();
+    createFileDb(dbPath, [
+      { id: "ses_boot1", timeUpdated: now - 3 * 24 * 3600 * 1000, text: "bootstrap session" },
+    ]);
+
+    globalThis.fetch = mockOllamaOk();
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(0);
+
+      // Cursor file must be created
+      const cursorPath = join(stateDir, "cursor.json");
+      expect(existsSync(cursorPath)).toBe(true);
+      const cursor = JSON.parse(readFileSync(cursorPath, "utf8"));
+      expect(typeof cursor.last_run_timestamp).toBe("number");
+      expect(cursor.last_run_timestamp).toBeGreaterThan(0);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("partial success: 2nd Ollama call fails → returns 1, JSONL errors has 1 entry", async () => {
+    const stateDir = join(tmpdir(), "distill-test-partial-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-partial-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+    createFileDb(dbPath, [
+      { id: "ses_p1", timeUpdated: now - 5 * 24 * 3600 * 1000, text: "session one" },
+      { id: "ses_p2", timeUpdated: now - 4 * 24 * 3600 * 1000, text: "session two" },
+      { id: "ses_p3", timeUpdated: now - 3 * 24 * 3600 * 1000, text: "session three" },
+    ]);
+
+    let chatCallCount = 0;
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) {
+        return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      }
+      if (urlStr.includes("/api/chat")) {
+        chatCallCount++;
+        if (chatCallCount === 2) {
+          // 2nd call fails
+          return new Response("Internal Server Error", { status: 500, statusText: "Internal Server Error" });
+        }
+        return new Response(JSON.stringify({ message: { content: "## Insight\n\nGood content." } }), { status: 200 });
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1); // any error → non-zero
+
+      // JSONL should record the error
+      const logPath = join(stateDir, "runs.jsonl");
+      expect(existsSync(logPath)).toBe(true);
+      const line = readFileSync(logPath, "utf8").trim().split("\n").pop()!;
+      const record = JSON.parse(line);
+      expect(record.success).toBe(false);
+      expect(record.errors.length).toBeGreaterThanOrEqual(1);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("schema error: DB missing column → main returns 1", async () => {
+    const stateDir = join(tmpdir(), "distill-test-schema-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-schema-" + Math.random().toString(36).slice(2) + ".db");
+
+    // Create DB missing session.parent_id
+    const db = new Database(dbPath);
+    db.exec(`
+      CREATE TABLE session (id TEXT PRIMARY KEY, project_id TEXT, time_created INTEGER, time_updated INTEGER);
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+    db.close();
+
+    globalThis.fetch = mockOllamaOk();
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  // Fix #1: Cursor advances only through contiguous successful prefix
+  test("Fix #1: middle session fails → cursor advances only to session-1's time_updated", async () => {
+    const stateDir = join(tmpdir(), "distill-test-cursor-fix1-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-cursor-fix1-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+    const s1Time = now - 5 * 24 * 3600 * 1000;
+    const s2Time = now - 4 * 24 * 3600 * 1000;
+    const s3Time = now - 3 * 24 * 3600 * 1000;
+
+    createFileDb(dbPath, [
+      { id: "ses_c1", timeUpdated: s1Time, text: "session one" },
+      { id: "ses_c2", timeUpdated: s2Time, text: "session two" },
+      { id: "ses_c3", timeUpdated: s3Time, text: "session three" },
+    ]);
+
+    let chatCallCount = 0;
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) {
+        return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      }
+      if (urlStr.includes("/api/chat")) {
+        chatCallCount++;
+        if (chatCallCount === 2) {
+          // Middle session (ses_c2) fails
+          return new Response("Internal Server Error", { status: 500, statusText: "Internal Server Error" });
+        }
+        return new Response(JSON.stringify({ message: { content: "## Insight\n\nGood content." } }), { status: 200 });
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1); // partial failure
+
+      // Cursor should be at ses_c1's time_updated, NOT ses_c3's
+      const cursorPath = join(stateDir, "cursor.json");
+      expect(existsSync(cursorPath)).toBe(true);
+      const cursor = JSON.parse(readFileSync(cursorPath, "utf8"));
+      // Should be at s1Time (first session succeeded, second failed → stop there)
+      expect(cursor.last_run_timestamp).toBe(s1Time);
+      // Must NOT be at s3Time
+      expect(cursor.last_run_timestamp).not.toBe(s3Time);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("Fix #1: first session fails → cursor does not advance at all", async () => {
+    const stateDir = join(tmpdir(), "distill-test-cursor-fix1b-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-cursor-fix1b-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+    const s1Time = now - 5 * 24 * 3600 * 1000;
+    const s2Time = now - 4 * 24 * 3600 * 1000;
+
+    createFileDb(dbPath, [
+      { id: "ses_f1", timeUpdated: s1Time, text: "session one" },
+      { id: "ses_f2", timeUpdated: s2Time, text: "session two" },
+    ]);
+
+    // Pre-write a cursor so we can verify it doesn't change
+    mkdirSync(stateDir, { recursive: true });
+    const initialCursorTs = s1Time - 1000;
+    writeFileSync(join(stateDir, "cursor.json"), JSON.stringify({ last_run_timestamp: initialCursorTs }));
+
+    let chatCallCount = 0;
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) {
+        return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      }
+      if (urlStr.includes("/api/chat")) {
+        chatCallCount++;
+        // ALL calls fail
+        return new Response("Internal Server Error", { status: 500, statusText: "Internal Server Error" });
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1);
+
+      // Cursor should NOT have advanced
+      const cursor = JSON.parse(readFileSync(join(stateDir, "cursor.json"), "utf8"));
+      expect(cursor.last_run_timestamp).toBe(initialCursorTs);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  // Fix #2: File lock prevents concurrent runs
+  test("Fix #2: lock file present → main exits 1 with 'another distill run' message", async () => {
+    const stateDir = join(tmpdir(), "distill-test-lock-" + Math.random().toString(36).slice(2));
+    mkdirSync(stateDir, { recursive: true });
+
+    // Write a sentinel lock file
+    const lockPath = join(stateDir, ".lock");
+    writeFileSync(lockPath, "99999\n2026-01-01T00:00:00.000Z\n");
+
+    const stderrLines: string[] = [];
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = "/nonexistent/path.db"; // won't be reached
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, (s) => stderrLines.push(s));
+      expect(code).toBe(1);
+      expect(stderrLines.join("")).toContain("another distill run");
+    } finally {
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(lockPath)) unlinkSync(lockPath);
+    }
+  });
+
+  // Fix #5: Early failures write JSONL record
+  test("Fix #5: DB-not-found → JSONL record written with phase: db-not-found", async () => {
+    const stateDir = join(tmpdir(), "distill-test-early-fail-" + Math.random().toString(36).slice(2));
+
+    globalThis.fetch = mockOllamaOk();
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = "/nonexistent/path/opencode.db";
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1);
+
+      const logPath = join(stateDir, "runs.jsonl");
+      expect(existsSync(logPath)).toBe(true);
+      const line = readFileSync(logPath, "utf8").trim();
+      const record = JSON.parse(line);
+      expect(record.success).toBe(false);
+      expect(record.errors.length).toBeGreaterThan(0);
+      // db-not-found when env var not set; db-open-failure when path set but invalid
+      expect(["db-not-found", "db-open-failure"]).toContain(record.errors[0].phase);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+    }
+  });
+
+  test("Fix #5: schema-invariant-violation → JSONL record written with phase: schema-invariant-violation", async () => {
+    const stateDir = join(tmpdir(), "distill-test-schema-fail-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-schema-fail-" + Math.random().toString(36).slice(2) + ".db");
+
+    // DB missing parent_id → schema error
+    const db = new Database(dbPath);
+    db.exec(`
+      CREATE TABLE session (id TEXT PRIMARY KEY, project_id TEXT, time_created INTEGER, time_updated INTEGER);
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+    db.close();
+
+    globalThis.fetch = mockOllamaOk();
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1);
+
+      const logPath = join(stateDir, "runs.jsonl");
+      expect(existsSync(logPath)).toBe(true);
+      const line = readFileSync(logPath, "utf8").trim();
+      const record = JSON.parse(line);
+      expect(record.success).toBe(false);
+      // Schema error is caught during openDatabase (db-open-failure) or selectSessions
+      expect(["db-open-failure", "schema-invariant-violation"]).toContain(record.errors[0].phase);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+});
+
+// ── acquireLock / releaseLock tests ───────────────────────────────────────────
+
+describe("acquireLock / releaseLock", () => {
+  test("Fix #2: acquireLock creates lock file with PID content", () => {
+    const stateDir = join(tmpdir(), "distill-lock-test-" + Math.random().toString(36).slice(2));
+    const lockPath = acquireLock(stateDir);
+    expect(existsSync(lockPath)).toBe(true);
+    releaseLock(lockPath);
+    expect(existsSync(lockPath)).toBe(false);
+  });
+
+  test("Fix #2: acquireLock throws when lock already held", () => {
+    const stateDir = join(tmpdir(), "distill-lock-test2-" + Math.random().toString(36).slice(2));
+    const lockPath = acquireLock(stateDir);
+    try {
+      expect(() => acquireLock(stateDir)).toThrow("another distill run");
+    } finally {
+      releaseLock(lockPath);
+    }
+  });
+});
