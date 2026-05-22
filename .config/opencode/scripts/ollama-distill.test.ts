@@ -2,14 +2,24 @@ import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { Database } from "bun:sqlite";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { unlinkSync, existsSync } from "node:fs";
+import { unlinkSync, existsSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import {
   openDatabase,
   extractTranscript,
   SchemaError,
   ReadOnlyVerificationError,
+  loadCursor,
+  saveCursor,
+  selectSessions,
+  callOllama,
+  writeReport,
+  appendRunLog,
   type ExtractStats,
+  type RunRecord,
 } from "./ollama-distill.ts";
+
+// Save original fetch so we can restore it after each Ollama test
+const originalFetch = globalThis.fetch;
 
 // ─── Fixture helpers ──────────────────────────────────────────────────────────
 
@@ -334,5 +344,321 @@ describe("openDatabase", () => {
       db.exec("INSERT INTO session (id) VALUES ('x')");
     }).toThrow();
     db.close();
+  });
+});
+
+// ─── Unit 2 Tests ─────────────────────────────────────────────────────────────
+
+// ── Fixture helpers for session selection ────────────────────────────────────
+
+function createSelectionDb(): Database {
+  const db = new Database(":memory:");
+  db.exec(`
+    CREATE TABLE session (
+      id TEXT PRIMARY KEY,
+      project_id TEXT,
+      parent_id TEXT,
+      time_created INTEGER,
+      time_updated INTEGER
+    );
+    CREATE TABLE message (
+      id TEXT PRIMARY KEY,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+    CREATE TABLE part (
+      id TEXT PRIMARY KEY,
+      message_id TEXT,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+  `);
+  return db;
+}
+
+function insertSession(db: Database, id: string, timeUpdated: number, parentId: string | null = null): void {
+  db.run(
+    "INSERT INTO session (id, project_id, parent_id, time_created, time_updated) VALUES (?, NULL, ?, ?, ?)",
+    [id, parentId, timeUpdated, timeUpdated]
+  );
+}
+
+function insertSessionWithText(db: Database, id: string, timeUpdated: number, text: string): void {
+  insertSession(db, id, timeUpdated);
+  const msgId = id + "-msg";
+  db.run("INSERT INTO message (id, session_id, time_created, data) VALUES (?, ?, ?, ?)", [
+    msgId, id, timeUpdated, JSON.stringify({ role: "user" }),
+  ]);
+  db.run("INSERT INTO part (id, message_id, session_id, time_created, data) VALUES (?, ?, ?, ?, ?)", [
+    id + "-part", msgId, id, timeUpdated, JSON.stringify({ type: "text", text }),
+  ]);
+}
+
+// ── Cursor tests ─────────────────────────────────────────────────────────────
+
+describe("loadCursor / saveCursor", () => {
+  test("bootstrap: missing cursor file returns ~7 days ago timestamp", async () => {
+    const stateDir = join(tmpdir(), "ollama-distill-cursor-test-" + Math.random().toString(36).slice(2));
+    const before = Date.now();
+    const cursor = await loadCursor(stateDir);
+    const after = Date.now();
+
+    expect(cursor.last_run_timestamp).not.toBeNull();
+    const ts = cursor.last_run_timestamp!;
+    const sevenDaysMs = 7 * 24 * 3600 * 1000;
+    // Should be approximately now - 7d (within 5s tolerance)
+    expect(ts).toBeGreaterThanOrEqual(before - sevenDaysMs - 5000);
+    expect(ts).toBeLessThanOrEqual(after - sevenDaysMs + 5000);
+  });
+
+  test("round-trip: saveCursor then loadCursor returns exact value", async () => {
+    const stateDir = join(tmpdir(), "ollama-distill-cursor-rt-" + Math.random().toString(36).slice(2));
+    const cursor = { last_run_timestamp: 1234567890123 };
+    await saveCursor(stateDir, cursor);
+    const loaded = await loadCursor(stateDir);
+    expect(loaded.last_run_timestamp).toBe(1234567890123);
+  });
+
+  test("atomic write: .tmp file without rename → next load returns old cursor", async () => {
+    const stateDir = join(tmpdir(), "ollama-distill-cursor-atomic-" + Math.random().toString(36).slice(2));
+    mkdirSync(stateDir, { recursive: true });
+
+    // Write a known cursor first
+    await saveCursor(stateDir, { last_run_timestamp: 9999 });
+
+    // Simulate interrupted write: write .tmp but don't rename
+    writeFileSync(join(stateDir, "cursor.json.tmp"), JSON.stringify({ last_run_timestamp: 42 }) + "\n");
+
+    // Load should return the old cursor (9999), not the .tmp value (42)
+    const loaded = await loadCursor(stateDir);
+    expect(loaded.last_run_timestamp).toBe(9999);
+  });
+});
+
+// ── Session selection tests ───────────────────────────────────────────────────
+
+describe("selectSessions", () => {
+  test("count cap: 75 sessions → selectSessions returns 50", async () => {
+    const db = createSelectionDb();
+    for (let i = 0; i < 75; i++) {
+      insertSessionWithText(db, `sess-${i}`, 1000 + i, "short text");
+    }
+    const result = await selectSessions(db, 0, 50);
+    expect(result.sessions.length).toBe(50);
+    expect(result.max_processed_time_updated).toBe(1049); // 50th session time_updated
+    db.close();
+  });
+
+  test("byte cap: stops before accumulating byte cap of transcript chars", async () => {
+    const db = createSelectionDb();
+    // Each session ~40KB of text (under 60K truncation limit)
+    // With a 100KB cap, should stop after ~2-3 sessions
+    const chunkText = "x".repeat(40_000);
+    for (let i = 0; i < 10; i++) {
+      insertSessionWithText(db, `sess-${i}`, 1000 + i, chunkText);
+    }
+    const result = await selectSessions(db, 0, 50, 100_000);
+    // Should stop well before 10 sessions (40K chars each, cap 100K → stops at 2-3)
+    expect(result.sessions.length).toBeLessThan(10);
+    expect(result.sessions.length).toBeGreaterThan(0);
+    db.close();
+  });
+
+  test("cursor advance: second call with advanced cursor selects remaining sessions", async () => {
+    const db = createSelectionDb();
+    for (let i = 0; i < 75; i++) {
+      insertSessionWithText(db, `sess-${i}`, 1000 + i, "short text");
+    }
+
+    // First call: selects 50
+    const first = await selectSessions(db, 0, 50);
+    expect(first.sessions.length).toBe(50);
+
+    // Second call with advanced cursor: selects remaining 25
+    const second = await selectSessions(db, first.max_processed_time_updated, 50);
+    expect(second.sessions.length).toBe(25);
+
+    // No overlap
+    const firstIds = new Set(first.sessions.map((s) => s.id));
+    for (const s of second.sessions) {
+      expect(firstIds.has(s.id)).toBe(false);
+    }
+    db.close();
+  });
+
+  test("zero sessions: max_processed_time_updated returns lastRunTimestamp unchanged", async () => {
+    const db = createSelectionDb();
+    const result = await selectSessions(db, 5000, 50);
+    expect(result.sessions.length).toBe(0);
+    expect(result.max_processed_time_updated).toBe(5000);
+    db.close();
+  });
+});
+
+// ── Ollama client tests ───────────────────────────────────────────────────────
+
+describe("callOllama", () => {
+  test("happy path: mocked fetch returns content → callOllama returns output + duration", async () => {
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ message: { content: "## Block\n\nSome insight." } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("## Block\n\nSome insight.");
+      expect(result.error).toBeUndefined();
+      expect(result.durationMs).toBeGreaterThanOrEqual(0);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("network error: mocked fetch throws → returns error string", async () => {
+    globalThis.fetch = async () => {
+      throw new Error("ECONNREFUSED");
+    };
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("");
+      expect(result.error).toContain("ECONNREFUSED");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("empty response: Ollama returns 200 with empty content → error: 'empty response'", async () => {
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ message: { content: "" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("");
+      expect(result.error).toBe("empty response");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("non-2xx response: returns HTTP error string", async () => {
+    globalThis.fetch = async () =>
+      new Response("Service Unavailable", { status: 503, statusText: "Service Unavailable" });
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("");
+      expect(result.error).toContain("503");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("timeout: AbortSignal.timeout fires → returns timeout error", async () => {
+    // We can't easily test the 300s timeout, but we can verify the error path
+    // by mocking fetch to throw a TimeoutError
+    globalThis.fetch = async () => {
+      const err = new Error("The operation was aborted due to timeout");
+      err.name = "TimeoutError";
+      throw err;
+    };
+
+    try {
+      const result = await callOllama("test transcript");
+      expect(result.output).toBe("");
+      expect(result.error).toContain("timeout");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
+// ── Report writer tests ───────────────────────────────────────────────────────
+
+describe("writeReport", () => {
+  test("new file: creates header + blocks", async () => {
+    const reportPath = join(tmpdir(), "ollama-distill-report-" + Math.random().toString(36).slice(2) + ".md");
+    await writeReport(reportPath, [
+      { sessionId: "sess-abc", title: "My Session", ollamaOutput: "## Insight\n\nSome text." },
+    ]);
+    const content = readFileSync(reportPath, "utf8");
+    expect(content).toContain("# Distillation Report");
+    expect(content).toContain("### My Session (sess-abc)");
+    expect(content).toContain("## Insight");
+    if (existsSync(reportPath)) unlinkSync(reportPath);
+  });
+
+  test("append: existing file gets separator + new blocks", async () => {
+    const reportPath = join(tmpdir(), "ollama-distill-report-append-" + Math.random().toString(36).slice(2) + ".md");
+    // First write
+    await writeReport(reportPath, [
+      { sessionId: "sess-1", title: "First", ollamaOutput: "## First insight." },
+    ]);
+    // Second write (append)
+    await writeReport(reportPath, [
+      { sessionId: "sess-2", title: "Second", ollamaOutput: "## Second insight." },
+    ]);
+    const content = readFileSync(reportPath, "utf8");
+    expect(content).toContain("---");
+    expect(content).toContain("## Run at");
+    expect(content).toContain("### First (sess-1)");
+    expect(content).toContain("### Second (sess-2)");
+    if (existsSync(reportPath)) unlinkSync(reportPath);
+  });
+});
+
+// ── JSONL run log tests ───────────────────────────────────────────────────────
+
+describe("appendRunLog", () => {
+  test("partial failure: RunRecord with errors[] writes valid JSON with success: false", async () => {
+    const logPath = join(tmpdir(), "ollama-distill-log-" + Math.random().toString(36).slice(2) + ".jsonl");
+    const record: RunRecord = {
+      ts: new Date().toISOString(),
+      ts_ms: Date.now(),
+      duration_ms: 1234,
+      mode: "normal",
+      model: "qwen3:8b",
+      sessions_read: 3,
+      report_blocks_generated: 2,
+      report_path: "/tmp/report.md",
+      success: false,
+      errors: [{ session_id: "sess-x", phase: "ollama", message: "ECONNREFUSED" }],
+    };
+    await appendRunLog(logPath, record);
+    const line = readFileSync(logPath, "utf8").trim();
+    const parsed = JSON.parse(line);
+    expect(parsed.success).toBe(false);
+    expect(parsed.errors).toHaveLength(1);
+    expect(parsed.errors[0].session_id).toBe("sess-x");
+    expect(parsed.model).toBe("qwen3:8b");
+    if (existsSync(logPath)) unlinkSync(logPath);
+  });
+
+  test("multiple appends: each call adds a new line", async () => {
+    const logPath = join(tmpdir(), "ollama-distill-log-multi-" + Math.random().toString(36).slice(2) + ".jsonl");
+    const base: RunRecord = {
+      ts: new Date().toISOString(),
+      ts_ms: Date.now(),
+      duration_ms: 100,
+      mode: "normal",
+      model: "qwen3:8b",
+      sessions_read: 1,
+      report_blocks_generated: 1,
+      report_path: "/tmp/r.md",
+      success: true,
+      errors: [],
+    };
+    await appendRunLog(logPath, base);
+    await appendRunLog(logPath, { ...base, sessions_read: 2 });
+    const lines = readFileSync(logPath, "utf8").trim().split("\n");
+    expect(lines).toHaveLength(2);
+    expect(JSON.parse(lines[1]).sessions_read).toBe(2);
+    if (existsSync(logPath)) unlinkSync(logPath);
   });
 });
