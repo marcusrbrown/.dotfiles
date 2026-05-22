@@ -123,6 +123,14 @@ export function openDatabase(dbPath: string): Database {
 
   // Read-only verification probe: CREATE TEMP TABLE must throw SQLITE_READONLY.
   // If it succeeds, the connection is not truly read-only — abort immediately.
+  //
+  // This probe is bun:sqlite-specific. Standard SQLite routes TEMP tables to a
+  // separate temp file that bypasses the main-db read-only enforcement, but
+  // bun:sqlite with `{ readonly: true }` + `mode=ro` rejects TEMP writes too
+  // (verified empirically). If a future Bun release changes that, the probe
+  // will silently stop rejecting and leave the connection unverified — re-test
+  // this after Bun upgrades and consider switching to a probe that writes to
+  // a main-db table (which always honors read-only).
   try {
     db.exec("CREATE TEMP TABLE _verify(x)");
     db.close();
