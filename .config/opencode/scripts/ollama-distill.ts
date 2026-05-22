@@ -639,7 +639,7 @@ const USAGE = `ollama-distill — Distill recent OpenCode sessions into a Markdo
 
 USAGE:
   ollama-distill [OPTIONS]
-  mise run distill [OPTIONS]
+  mise run distill -- [OPTIONS]                # note: -- separator forwards flags through mise
 
 OPTIONS:
   --since=<value>     Recency filter override. Accepts: '7d', '2026-05-15', or epoch ms.
