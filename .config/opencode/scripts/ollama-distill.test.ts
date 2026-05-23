@@ -2500,6 +2500,57 @@ describe("--max-sessions integration", () => {
       if (existsSync(dbPath)) unlinkSync(dbPath);
     }
   });
+
+  test("60 sessions in DB, --max-sessions=55 → 55 processed (cap honored above default 50)", async () => {
+    const stateDir = join(tmpdir(), "distill-maxsess55-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-maxsess55-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+
+    const db = new Database(dbPath);
+    db.exec(`
+      CREATE TABLE session (id TEXT PRIMARY KEY, project_id TEXT, parent_id TEXT, time_created INTEGER, time_updated INTEGER);
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+    for (let i = 1; i <= 60; i++) {
+      const sid = `ses_ms55_${String(i).padStart(3, "0")}`;
+      const mid = `msg_ms55_${String(i).padStart(3, "0")}`;
+      const pid = `part_ms55_${String(i).padStart(3, "0")}`;
+      db.run("INSERT INTO session VALUES (?, NULL, NULL, ?, ?)", [sid, now - (61 - i) * 1000, now - (61 - i) * 1000]);
+      db.run("INSERT INTO message VALUES (?, ?, ?, ?)", [mid, sid, now - (61 - i) * 1000, JSON.stringify({ role: "user" })]);
+      db.run("INSERT INTO part VALUES (?, ?, ?, ?, ?)", [pid, mid, sid, now - (61 - i) * 1000, JSON.stringify({ type: "text", text: `Content ${i}` })]);
+    }
+    db.close();
+
+    let ollamaCallCount = 0;
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      if (urlStr.includes("/api/chat")) {
+        ollamaCallCount++;
+        return new Response(JSON.stringify({ message: { content: `## Summary ${ollamaCallCount}\n\nDone.` } }), { status: 200 });
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts", "--max-sessions=55"], () => {}, () => {});
+      expect(code).toBe(0);
+
+      const logPath = join(stateDir, "runs.jsonl");
+      const record = JSON.parse(readFileSync(logPath, "utf8").trim());
+      expect(record.sessions_read).toBe(55);
+      expect(ollamaCallCount).toBe(55);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
 });
 
 // ─── v1.4 Item B: empty sessionResults writeReport guard ─────────────────────
@@ -2739,5 +2790,16 @@ describe("dedupeChunkBlocks", () => {
       "## abcdefghi\n\nContent B.",
     ]);
     expect(result).toHaveLength(1);
+  });
+
+  test("keeps all-numeric titles distinct (numbered-sequence exemption: stem '' shared, normalized differs)", () => {
+    const result = dedupeChunkBlocks([
+      "## 1\n\nFoo\n",
+      "## 2\n\nBar\n",
+    ]);
+    expect(result).toHaveLength(2);
+    const joined = result.join("");
+    expect(joined).toContain("Foo");
+    expect(joined).toContain("Bar");
   });
 });

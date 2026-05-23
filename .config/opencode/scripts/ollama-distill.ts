@@ -478,7 +478,9 @@ export function renderChunkTranscript(segments: MessageSegment[]): string {
 
 /**
  * Compute Levenshtein distance between two strings.
- * Bounded implementation — returns early once distance exceeds `maxDist`.
+ * Length-difference short-circuit: returns `maxDist + 1` immediately if
+ * `|a.length - b.length| > maxDist`. Inner DP loop is not bounded; runs in
+ * full O(n×m) for inputs that pass the length check.
  */
 function levenshtein(a: string, b: string, maxDist = 2): number {
   if (a === b) return 0;
@@ -1516,7 +1518,7 @@ export async function main(
 
       let selectionResult: SelectionResult;
       try {
-        selectionResult = await selectSessions(db, effectiveTimestamp);
+        selectionResult = await selectSessions(db, effectiveTimestamp, args.maxSessions);
       } catch (err) {
         db.close();
         const msg = err instanceof Error ? err.message : String(err);
@@ -1538,12 +1540,6 @@ export async function main(
       db.close();
 
       let { sessions } = selectionResult;
-
-      // Apply --max-sessions cap if provided
-      if (args.maxSessions !== undefined && sessions.length > args.maxSessions) {
-        stderr(`Capping run at ${args.maxSessions} of ${sessions.length} selected sessions (--max-sessions)\n`);
-        sessions = sessions.slice(0, args.maxSessions);
-      }
 
       // 0 sessions: no-op success
       if (sessions.length === 0) {
