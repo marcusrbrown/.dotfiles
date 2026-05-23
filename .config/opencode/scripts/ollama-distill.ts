@@ -1,16 +1,21 @@
 #!/usr/bin/env bun
 import { Database } from "bun:sqlite";
-import { mkdirSync, renameSync, existsSync, appendFileSync, openSync, closeSync, unlinkSync, writeFileSync } from "node:fs";
+import { mkdirSync, renameSync, existsSync, appendFileSync, openSync, closeSync, unlinkSync, writeFileSync, lstatSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type MessageSegment = {
-  role: "USER" | "ASSISTANT";  // matches the existing prefix format
-  text: string;                 // the body of this segment (no leading "USER:" line)
-  char_count: number;
-};
+/**
+ * A single message segment extracted from a session transcript.
+ *
+ * Discriminated on `kind`: "text" for normal message bodies, "reasoning" for
+ * model chain-of-thought blocks. The `kind` field drives the `[reasoning]`
+ * label in renderChunkTranscript — omitting it loses that signal.
+ */
+export type MessageSegment =
+  | { kind: "text"; role: "USER" | "ASSISTANT"; text: string; char_count: number; time_created: number; message_id: string }
+  | { kind: "reasoning"; role: "USER" | "ASSISTANT"; text: string; char_count: number; time_created: number; message_id: string };
 
 export type ExtractStats = {
   messages: number;
@@ -19,14 +24,14 @@ export type ExtractStats = {
   skipped_parts: number;
   skipped_types: string[];
   transcript_chars: number;
-  truncated: boolean;           // now means "a single message exceeded the hard cap and got truncated mid-message"
-  segments_total: number;       // NEW
-  segments_truncated: number;   // NEW — usually 0
+  truncated: boolean;           // true when a single message body exceeded the hard cap and got truncated mid-message
+  segments_total: number;
+  segments_truncated: number;   // usually 0; >0 means cursor will not advance past this session
 };
 
 export type ExtractResult = {
-  transcript: string;           // existing — concatenated USER:/ASSISTANT: lines, unchanged shape
-  segments: MessageSegment[];   // NEW — for the chunker
+  transcript: string;           // concatenated USER:/ASSISTANT: lines, unchanged shape
+  segments: MessageSegment[];   // for the chunker
   stats: ExtractStats;
 };
 
@@ -126,6 +131,9 @@ export async function withSqliteBusyRetry<T>(
  * - PRAGMA busy_timeout=5000
  * - Read-only verification probe (CREATE TEMP TABLE must throw)
  * - Schema invariant check (fail-closed on missing columns)
+ *
+ * Gotcha: the read-only probe is bun:sqlite-specific — see inline comment.
+ * // See: docs/solutions/2026-05-22-bun-sqlite-readonly-wal-pattern.md
  */
 export function openDatabase(dbPath: string): Database {
   const uri = "file:" + dbPath + "?mode=ro";
@@ -189,11 +197,10 @@ function checkSchema(db: Database): void {
  *
  * SQL groups message rows with their parts via LEFT JOIN. Parts are ordered
  * chronologically. Each text/reasoning part emits a labeled line; other types
- * are counted as skipped. Truncates at 60K chars (keeping prefix + marker).
- *
- * Retries on SQLITE_BUSY/SQLITE_LOCKED up to 3 times with 100ms backoff.
- */
-export async function extractTranscript(
+ * are counted as skipped. Truncates individual segments at SEGMENT_HARD_CAP
+ * (70K chars) — segments_truncated > 0 in stats means cursor will not advance
+ * past this session.
+ */export async function extractTranscript(
   db: Database,
   sessionId: string
 ): Promise<ExtractResult> {
@@ -217,7 +224,7 @@ export async function extractTranscript(
   return buildTranscript(rows);
 }
 
-// Fix #10: Type-narrowing parse helpers for stored JSON rows
+// Type-narrowing parse helpers for stored JSON rows
 
 /**
  * Parse a part.data JSON string with type narrowing.
@@ -277,7 +284,7 @@ function buildTranscript(rows: TranscriptRow[]): ExtractResult {
     if (!messageMap.has(row.message_id)) {
       messageOrder.push(row.message_id);
 
-      // Fix #10: Use type-narrowing parse helper; skip malformed rows with warning
+      // Use type-narrowing parse helper; skip malformed rows with warning
       const envelope = parseMessageEnvelope(row.message_data);
       if (envelope === null) {
         process.stderr.write(
@@ -306,7 +313,7 @@ function buildTranscript(rows: TranscriptRow[]): ExtractResult {
     stats.messages++;
 
     for (const row of partRows) {
-      // Fix #10: Use type-narrowing parse helper; skip malformed parts with warning
+      // Use type-narrowing parse helper; skip malformed parts with warning
       const partData = parsePartData(row.part_data!);
       if (partData === null) {
         process.stderr.write(
@@ -333,7 +340,7 @@ function buildTranscript(rows: TranscriptRow[]): ExtractResult {
         continue;
       }
 
-      // Fix #1: Per-segment hard cap — if a single message body exceeds SEGMENT_HARD_CAP,
+      // Per-segment hard cap — if a single message body exceeds SEGMENT_HARD_CAP,
       // prefix-truncate that ONE segment and flag it. Other segments stay intact.
       let finalSegText = segText;
       let segTruncated = false;
@@ -346,18 +353,17 @@ function buildTranscript(rows: TranscriptRow[]): ExtractResult {
       }
 
       segments.push({
+        kind: partData.type === "reasoning" ? "reasoning" : "text",
         role: segRole,
         text: finalSegText,
         char_count: finalSegText.length,
+        time_created: 0,  // not available from this query; set to 0
+        message_id: row.message_id,
       });
 
       // Build the concatenated transcript line (backward-compat)
       const line = linePrefix + finalSegText;
       lines.push(line);
-
-      if (segTruncated) {
-        // Don't break — other messages still get processed into segments
-      }
     }
   }
 
@@ -438,11 +444,14 @@ export function chunkSegments(
 
 /**
  * Reconstruct the USER: .../ASSISTANT: ... transcript string from a chunk's
- * segments. Matches the exact format extractTranscript produces.
+ * segments. Emits `[reasoning]` label for reasoning segments to preserve
+ * that signal for the model.
  */
 export function renderChunkTranscript(segments: MessageSegment[]): string {
   return segments
-    .map((seg) => `${seg.role}: ${seg.text}`)
+    .map((seg) => seg.kind === "reasoning"
+      ? `${seg.role} [reasoning]: ${seg.text}`
+      : `${seg.role}: ${seg.text}`)
     .join("\n");
 }
 
@@ -456,11 +465,31 @@ const CURSOR_FILENAME = "cursor.json";
 const CURSOR_TMP_FILENAME = "cursor.json.tmp";
 const SEVEN_DAYS_MS = 7 * 24 * 3600 * 1000;
 
+/**
+ * Type guard for Cursor. Validates shape and timestamp plausibility.
+ * Allows up to one day in the future to tolerate clock drift.
+ */
+function isCursor(x: unknown): x is Cursor {
+  if (typeof x !== "object" || x === null) return false;
+  if (!("last_run_timestamp" in x)) return false;
+  const ts = (x as { last_run_timestamp: unknown }).last_run_timestamp;
+  if (typeof ts !== "number") return false;
+  if (ts < 0) return false;
+  if (ts > Date.now() + 86_400_000) return false; // one day future tolerance
+  return true;
+}
+
+/**
+ * Load the cursor from disk. Falls back to a 7-day bootstrap window on
+ * missing file, JSON parse error, or shape mismatch.
+ */
 export async function loadCursor(stateDir: string): Promise<Cursor> {
   const cursorPath = stateDir + "/" + CURSOR_FILENAME;
   if (existsSync(cursorPath)) {
     try {
-      return await Bun.file(cursorPath).json() as Cursor;
+      const parsed: unknown = await Bun.file(cursorPath).json();
+      if (isCursor(parsed)) return parsed;
+      // Shape mismatch — fall through to bootstrap
     } catch {
       // Corrupted file — bootstrap
     }
@@ -468,6 +497,10 @@ export async function loadCursor(stateDir: string): Promise<Cursor> {
   return { last_run_timestamp: Date.now() - SEVEN_DAYS_MS };
 }
 
+/**
+ * Persist the cursor to disk using an atomic tmp-rename write.
+ * Creates the state directory if it doesn't exist.
+ */
 export async function saveCursor(stateDir: string, cursor: Cursor): Promise<void> {
   mkdirSync(stateDir, { recursive: true });
   const tmpPath = stateDir + "/" + CURSOR_TMP_FILENAME;
@@ -496,16 +529,23 @@ export type SelectionResult = {
   max_processed_time_updated: number;
 };
 
+/**
+ * Select sessions updated since `lastRunTimestamp`, extract their transcripts,
+ * and return them ordered by `time_updated` ASC.
+ *
+ * Caps at `maxSessions` (default 50). Fetches 1.5× that to allow for sessions
+ * that produce empty transcripts. Returns the `max_processed_time_updated` for
+ * cursor advancement.
+ */
 export async function selectSessions(
   db: Database,
   lastRunTimestamp: number | null,
-  maxSessions = 50,
-  maxBytes = Infinity  // deprecated: chunked inference makes per-session byte caps unnecessary; kept for API compat
+  maxSessions = 50
 ): Promise<SelectionResult> {
   const since = lastRunTimestamp ?? 0;
   const fetchCap = Math.ceil(maxSessions * 1.5);
 
-  // Fix #4: Wrap session-list SELECT with SQLITE_BUSY retry helper
+  // Wrap session-list SELECT with SQLITE_BUSY retry helper
   const rows = await withSqliteBusyRetry(() =>
     db
       .query<SessionRow, [number, number]>(
@@ -533,6 +573,20 @@ export async function selectSessions(
       : (lastRunTimestamp ?? 0);
 
   return { sessions, max_processed_time_updated };
+}
+
+/**
+ * Type guard for the Ollama /api/chat response shape.
+ * Expects { message: { content: string } }.
+ */
+function isOllamaChatResponse(x: unknown): x is { message: { content: string } } {
+  return (
+    typeof x === "object" && x !== null && "message" in x &&
+    typeof (x as { message: unknown }).message === "object" &&
+    (x as { message: unknown }).message !== null &&
+    "content" in (x as { message: object }).message &&
+    typeof (x as { message: { content: unknown } }).message.content === "string"
+  );
 }
 
 // ─── Ollama Client ────────────────────────────────────────────────────────────
@@ -583,6 +637,14 @@ export type OllamaResult = {
   error?: string;
 };
 
+/**
+ * Call the Ollama /api/chat endpoint with the system prompt + transcript.
+ * Returns { output, durationMs } on success, or { output: "", error } on failure.
+ *
+ * Gotcha: times out after 10 minutes (OLLAMA_TIMEOUT_MS). Chunks typically
+ * take ~1m50s; the 10x cap covers slow chunks without unbounded hang.
+ * No retry on HTTP errors — that's deferred to v1.4.
+ */
 export async function callOllama(
   transcript: string,
   model = "qwen3:8b"
@@ -629,7 +691,7 @@ export async function callOllama(
     };
   }
 
-  // Fix #9: Parse and narrow the Ollama response shape instead of asserting
+  // Parse and narrow the Ollama response shape
   let rawBody: unknown;
   try {
     rawBody = await response.json();
@@ -642,15 +704,7 @@ export async function callOllama(
   }
 
   // Narrow: expect { message: { content: string } }
-  if (
-    typeof rawBody !== "object" ||
-    rawBody === null ||
-    !("message" in rawBody) ||
-    typeof (rawBody as { message: unknown }).message !== "object" ||
-    (rawBody as { message: unknown }).message === null ||
-    !("content" in (rawBody as { message: object }).message) ||
-    typeof ((rawBody as { message: { content: unknown } }).message.content) !== "string"
-  ) {
+  if (!isOllamaChatResponse(rawBody)) {
     return {
       output: "",
       durationMs,
@@ -658,7 +712,7 @@ export async function callOllama(
     };
   }
 
-  const content = (rawBody as { message: { content: string } }).message.content;
+  const content = rawBody.message.content;
   if (!content) {
     return { output: "", durationMs, error: "empty response" };
   }
@@ -674,18 +728,37 @@ export type SessionResult = {
   ollamaOutput: string;
 };
 
-// Fix #8: Atomic write helper
-async function atomicWrite(path: string, content: string): Promise<void> {
-  const tmpPath = path + ".tmp";
-  await Bun.write(tmpPath, content);
-  renameSync(tmpPath, path);
-}
-
+/**
+ * Write session results to a Markdown report file.
+ *
+ * Appends to an existing file (with a timestamped separator) or creates a new
+ * one. Refuses to write if the target path is a symbolic link to prevent
+ * symlink-based path traversal attacks.
+ *
+ * Gotcha: only called in normal mode (the file lock serializes concurrent
+ * runs), so the append is safe without additional locking.
+ */
 export async function writeReport(
   reportPath: string,
   runs: SessionResult[]
 ): Promise<void> {
   mkdirSync(dirname(reportPath), { recursive: true });
+
+  // Symlink defense: refuse to write if the path is a symlink
+  try {
+    const stat = lstatSync(reportPath);
+    if (stat.isSymbolicLink()) {
+      throw new Error(`refusing to write report: ${reportPath} is a symbolic link`);
+    }
+  } catch (err) {
+    // lstatSync throws ENOENT if the file doesn't exist — that's fine, continue
+    if (err instanceof Error && !err.message.startsWith("refusing to write")) {
+      const isEnoent = (err as NodeJS.ErrnoException).code === "ENOENT";
+      if (!isEnoent) throw err;
+    } else if (err instanceof Error && err.message.startsWith("refusing to write")) {
+      throw err;
+    }
+  }
 
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
@@ -695,14 +768,12 @@ export async function writeReport(
     .map((r) => `### ${r.title} (${r.sessionId})\n\n${r.ollamaOutput}\n\n`)
     .join("");
 
-  // Fix #8: Use atomic write for report (read + concat + atomic write)
   if (existsSync(reportPath)) {
-    const existing = await Bun.file(reportPath).text();
     const separator = `\n\n---\n\n## Run at ${timeStr}\n\n`;
-    await atomicWrite(reportPath, existing + separator + blocks);
+    appendFileSync(reportPath, separator + blocks, "utf8");
   } else {
     const header = `# Distillation Report — ${dateStr}\n\n`;
-    await atomicWrite(reportPath, header + blocks);
+    appendFileSync(reportPath, header + blocks, "utf8");
   }
 }
 
@@ -727,6 +798,12 @@ export type RunRecord = {
   errors: RunError[];
 };
 
+/**
+ * Append a RunRecord as a JSONL line to the audit log.
+ * Creates the log directory if it doesn't exist.
+ * Gotcha: uses synchronous appendFileSync — safe because the file lock
+ * serializes normal-mode runs; session mode writes are inherently single-threaded.
+ */
 export async function appendRunLog(logPath: string, record: RunRecord): Promise<void> {
   mkdirSync(dirname(logPath), { recursive: true });
   const line = JSON.stringify(record) + "\n";
@@ -742,12 +819,16 @@ export type ParsedArgs = {
   extractOnly: boolean;
   help: boolean;
   unknownFlag?: string;
-  flagError?: string;   // Fix #6: validation error for invalid flag values
+  flagError?: string;   // validation error for invalid flag values
 };
 
 /**
  * Parse CLI argv (pass Bun.argv.slice(2) or the raw Bun.argv — we skip the
  * first two elements internally).
+ *
+ * Supports both `--flag=value` and `--flag value` (space-separated) forms for
+ * --session, --since, and --out. Errors clearly if the next arg is missing or
+ * starts with `--`.
  */
 export function parseArgs(argv: string[]): ParsedArgs {
   // Skip interpreter + script path if argv looks like Bun.argv (starts with bun path)
@@ -757,11 +838,13 @@ export function parseArgs(argv: string[]): ParsedArgs {
 
   const result: ParsedArgs = { extractOnly: false, help: false };
 
-  // Fix #7: Track seen flags to detect duplicates
+  // Track seen flags to detect duplicates
   const seenFlags = new Set<string>();
 
-  for (const arg of args) {
-    // Fix #7: Reject positional arguments (anything not starting with --)
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    // Reject positional arguments (anything not starting with --)
     if (!arg.startsWith("--") && arg !== "-h") {
       result.flagError = `Unexpected positional argument: '${arg}'. Use --flag=value syntax.`;
       return result;
@@ -780,19 +863,31 @@ export function parseArgs(argv: string[]): ParsedArgs {
       result.extractOnly = true;
       continue;
     }
-    if (arg.startsWith("--since=")) {
+
+    // Helper: consume next arg as value for space-separated form
+    function consumeNext(flagName: string): string | null {
+      const next = args[i + 1];
+      if (next === undefined || next.startsWith("--")) {
+        result.flagError = `Missing value for ${flagName}. Use ${flagName}=<value> or ${flagName} <value>.`;
+        return null;
+      }
+      i++;
+      return next;
+    }
+
+    if (arg.startsWith("--since=") || arg === "--since") {
       if (seenFlags.has("--since")) {
         result.flagError = `Duplicate flag: --since`;
         return result;
       }
       seenFlags.add("--since");
-      const value = arg.slice("--since=".length);
-      // Fix #7: Reject empty values
+      const value = arg === "--since" ? consumeNext("--since") : arg.slice("--since=".length);
+      if (value === null) return result;
       if (value === "") {
         result.flagError = `Empty value for --since. Use --since=<value>.`;
         return result;
       }
-      // Fix #6: parseSince returns null on unparseable input
+      // parseSince returns null on unparseable input
       const parsed = parseSince(value);
       if (parsed === null) {
         result.flagError = `Invalid --since value: '${value}'. Accepted formats: epoch ms (e.g. 1779438773648), ISO date (e.g. 2026-05-21), relative days (e.g. 7d).`;
@@ -801,14 +896,15 @@ export function parseArgs(argv: string[]): ParsedArgs {
       result.since = parsed;
       continue;
     }
-    if (arg.startsWith("--session=")) {
+    if (arg.startsWith("--session=") || arg === "--session") {
       if (seenFlags.has("--session")) {
         result.flagError = `Duplicate flag: --session`;
         return result;
       }
       seenFlags.add("--session");
-      const value = arg.slice("--session=".length);
-      // Fix #7: Reject empty values
+      const value = arg === "--session" ? consumeNext("--session") : arg.slice("--session=".length);
+      if (value === null) return result;
+      // Reject empty values
       if (value === "") {
         result.flagError = `Empty value for --session. Use --session=<id>.`;
         return result;
@@ -816,14 +912,15 @@ export function parseArgs(argv: string[]): ParsedArgs {
       result.session = value;
       continue;
     }
-    if (arg.startsWith("--out=")) {
+    if (arg.startsWith("--out=") || arg === "--out") {
       if (seenFlags.has("--out")) {
         result.flagError = `Duplicate flag: --out`;
         return result;
       }
       seenFlags.add("--out");
-      const value = arg.slice("--out=".length);
-      // Fix #7: Reject empty values
+      const value = arg === "--out" ? consumeNext("--out") : arg.slice("--out=".length);
+      if (value === null) return result;
+      // Reject empty values
       if (value === "") {
         result.flagError = `Empty value for --out. Use --out=<path>.`;
         return result;
@@ -846,7 +943,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
  * - "2026-05-15" → ISO date (start of day UTC)
  * - "1747267200000" → epoch ms (>1_000_000_000_000)
  *
- * Fix #6: Returns null on unparseable input (instead of 0).
+ * Returns null on unparseable input (caller emits error).
  */
 function parseSince(value: string): number | null {
   // Relative: Nd
@@ -872,7 +969,7 @@ function parseSince(value: string): number | null {
   const parsed = Date.parse(value);
   if (!isNaN(parsed) && value.includes("T")) return parsed;
 
-  // Fix #6: Can't parse — return null (caller will emit error)
+  // Can't parse — return null (caller will emit error)
   return null;
 }
 
@@ -885,14 +982,38 @@ USAGE:
   mise run distill -- [OPTIONS]                # note: -- separator forwards flags through mise
 
 OPTIONS:
+  -h, --help          Show this message.
   --since=<value>     Recency filter override. Accepts: '7d', '2026-05-15', or epoch ms.
                       Cursor still advances after success.
-  --session=<id>      Process exactly one session (non-mutating: skips cursor read/write,
-                      writes to stdout unless --out provided).
-  --out=<path>        Override report destination (or stdout target in --session mode).
+                      Example: --since=7d  (backfill last 7 days)
+                      Example: --since=2026-05-01  (from May 1st)
+  --session=<id>      Process exactly one session. Does not advance the cursor and does
+                      not acquire the run lock — safe to run alongside a normal batch.
+                      Writes to stdout unless --out is provided. JSONL is still written.
+                      Example: --session=ses_01jxyz...
+  --out=<path>        Override report destination (or output target in --session mode).
+                      Example: --out=/tmp/review.md
   --extract-only      Print extracted transcript(s) to stdout; skip Ollama call.
                       Useful for debugging the extractor.
-  --help              Show this message.
+                      Example: --extract-only --session=ses_01jxyz...
+
+ENVIRONMENT VARIABLES:
+  OLLAMA_DISTILL_STATE_DIR   Override state directory (default: ~/.local/state/ollama-distill)
+  OPENCODE_DB_PATH           Override OpenCode SQLite path (default: XDG_DATA_HOME/opencode/opencode.db)
+  OLLAMA_KEEP_ALIVE          Consumed by the Ollama server itself (not this script) to control
+                             model keep-alive duration. Set to "0" to unload after each call.
+
+OUTPUT FILES:
+  Report:  \$OLLAMA_DISTILL_STATE_DIR/reports/YYYY-MM-DD.md  (default; overridable with --out)
+  JSONL:   \$OLLAMA_DISTILL_STATE_DIR/runs.jsonl
+  Cursor:  \$OLLAMA_DISTILL_STATE_DIR/cursor.json
+
+EXIT CODES:
+  0   Success — report written, all sessions processed cleanly.
+  1   Failure or partial failure — some sessions failed, Ollama unreachable, schema error, etc.
+      JSONL log carries detailed cause.
+  130 Interrupted (SIGINT / Ctrl-C)
+  143 Terminated (SIGTERM)
 
 EXAMPLES:
   mise run distill                                          # normal run; reads cursor, writes today's report
@@ -910,6 +1031,11 @@ OLLAMA REQUIREMENTS:
 
 const OLLAMA_TAGS_URL = "http://127.0.0.1:11434/api/tags";
 
+/**
+ * Probe Ollama's /api/tags endpoint to verify it's reachable.
+ * Returns { ok: true } on success, { ok: false, error } on failure.
+ * Times out after 2 seconds.
+ */
 export async function checkOllamaReachable(): Promise<{ ok: boolean; error?: string }> {
   try {
     const response = await fetch(OLLAMA_TAGS_URL, {
@@ -931,28 +1057,86 @@ export async function checkOllamaReachable(): Promise<{ ok: boolean; error?: str
  * Acquire a file-based lock using O_EXCL semantics.
  * Returns the lock path on success, throws if already held.
  *
- * Fix #2: Prevents concurrent normal-mode runs.
+ * Stale-lock recovery: on EEXIST, reads the lockfile and probes the PID with
+ * kill(pid, 0). If the process is gone (ESRCH), unlinks the stale lock and
+ * retries once. Malformed lockfiles (empty, non-numeric PID) are treated as
+ * stale. If the retry also fails with EEXIST, the original "another distill
+ * run is in progress" error is thrown.
  */
 export function acquireLock(stateDir: string): string {
   const lockPath = join(stateDir, ".lock");
   mkdirSync(stateDir, { recursive: true });
-  try {
+
+  function tryAcquire(): string {
     const fd = openSync(lockPath, "wx");
     closeSync(fd);
-    // Write PID + timestamp as lock content
     writeFileSync(lockPath, `${process.pid}\n${new Date().toISOString()}\n`);
     return lockPath;
+  }
+
+  try {
+    return tryAcquire();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("EEXIST")) {
-      throw new Error(
-        `another distill run is in progress (lock at ${lockPath}); remove it manually if stale`
-      );
+    if (!msg.includes("EEXIST")) throw err;
+
+    // EEXIST: check if the lock is stale (dead PID or malformed content)
+    let isStale = false;
+    try {
+      const content = readFileSync(lockPath, "utf8") as string;
+      const firstLine = content.split("\n")[0]?.trim() ?? "";
+      const pid = parseInt(firstLine, 10);
+      if (!firstLine || isNaN(pid) || pid <= 0) {
+        // Malformed lockfile — treat as stale
+        isStale = true;
+      } else {
+        try {
+          process.kill(pid, 0);
+          // Process is alive — not stale
+        } catch (killErr) {
+          const killMsg = killErr instanceof Error ? killErr.message : String(killErr);
+          if (killMsg.includes("ESRCH")) {
+            // No such process — stale lock
+            isStale = true;
+          }
+          // EPERM means process exists but we can't signal it — not stale
+        }
+      }
+    } catch {
+      // Can't read lockfile — treat as stale
+      isStale = true;
     }
-    throw err;
+
+    if (isStale) {
+      try {
+        unlinkSync(lockPath);
+      } catch {
+        // Best-effort unlink
+      }
+      // Retry once after removing stale lock
+      try {
+        return tryAcquire();
+      } catch (retryErr) {
+        const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
+        if (retryMsg.includes("EEXIST")) {
+          throw new Error(
+            `another distill run is in progress (lock at ${lockPath}); remove it manually if stale`
+          );
+        }
+        throw retryErr;
+      }
+    }
+
+    throw new Error(
+      `another distill run is in progress (lock at ${lockPath}); remove it manually if stale`
+    );
   }
 }
 
+/**
+ * Release the file lock. Best-effort: swallows errors so it's safe to call
+ * from signal handlers and finally blocks.
+ */
 export function releaseLock(lockPath: string): void {
   try {
     if (existsSync(lockPath)) {
@@ -969,6 +1153,13 @@ const MODEL = "qwen3:8b";
 
 type WriteStream = (s: string) => void;
 
+/**
+ * CLI entry point. Parses argv, dispatches to --session or normal mode,
+ * and returns an exit code (0 = success, 1 = failure, 130/143 = signal).
+ *
+ * Gotcha: registers SIGINT/SIGTERM handlers for lock cleanup and removes them
+ * in a finally block — safe to call multiple times (e.g., in tests).
+ */
 export async function main(
   argv: string[] = Bun.argv,
   stdout: WriteStream = (s) => process.stdout.write(s),
@@ -985,7 +1176,7 @@ export async function main(
       return 0;
     }
 
-    // Fix #6/#7: Flag validation errors
+    // Flag validation errors
     if (args.flagError) {
       stderr(`Error: ${args.flagError}\n\n${USAGE}`);
       return 1;
@@ -1003,7 +1194,7 @@ export async function main(
 
     const logPath = join(stateDir, "runs.jsonl");
 
-    // Fix #5: finalize helper — writes JSONL record then returns exit code
+    // finalize helper — writes JSONL record then returns exit code
     async function finalize(record: RunRecord, exitCode: 0 | 1): Promise<number> {
       try {
         await appendRunLog(logPath, record);
@@ -1123,7 +1314,7 @@ export async function main(
 
     // ── Normal mode ──────────────────────────────────────────────────────────
 
-    // Fix #2: Acquire file lock for normal mode
+    // Acquire file lock for normal mode
     let lockPath: string | null = null;
     try {
       lockPath = acquireLock(stateDir);
@@ -1133,13 +1324,18 @@ export async function main(
       return 1;
     }
 
-    // Register cleanup handlers for lock release
+    // Register cleanup handlers for lock release.
+    // Store refs so we can remove them in the finally block — prevents handler
+    // accumulation when main() is called multiple times (e.g., in tests).
     const cleanupLock = () => {
       if (lockPath) releaseLock(lockPath);
     };
-    process.on("exit", cleanupLock);
-    process.on("SIGINT", () => { cleanupLock(); process.exit(130); });
-    process.on("SIGTERM", () => { cleanupLock(); process.exit(143); });
+    const onExit = () => cleanupLock();
+    const onSigint = () => { cleanupLock(); process.exit(130); };
+    const onSigterm = () => { cleanupLock(); process.exit(143); };
+    process.on("exit", onExit);
+    process.on("SIGINT", onSigint);
+    process.on("SIGTERM", onSigterm);
 
     try {
       // Health check (always in normal mode)
@@ -1160,7 +1356,6 @@ export async function main(
       const dbPath = findOpenCodeDb();
       if (!dbPath) {
         stderr("Could not locate OpenCode SQLite database.\n");
-        // Fix #5: Write JSONL record for early failures
         return await finalize({
           ts: new Date().toISOString(),
           ts_ms: Date.now(),
@@ -1181,7 +1376,6 @@ export async function main(
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         stderr(`Failed to open database: ${msg}\n`);
-        // Fix #5: Write JSONL record for DB open failure
         return await finalize({
           ts: new Date().toISOString(),
           ts_ms: Date.now(),
@@ -1203,7 +1397,6 @@ export async function main(
         db.close();
         const msg = err instanceof Error ? err.message : String(err);
         stderr(`Failed to select sessions: ${msg}\n`);
-        // Fix #5: Write JSONL record for session-select failure
         const phase = err instanceof SchemaError ? "schema-invariant-violation" : "session-select-failure";
         return await finalize({
           ts: new Date().toISOString(),
@@ -1224,7 +1417,9 @@ export async function main(
 
       // 0 sessions: no-op success
       if (sessions.length === 0) {
-        stderr("no new sessions to distill\n");
+        const cursorIso = new Date(effectiveTimestamp ?? 0).toISOString();
+        const windowEndIso = new Date().toISOString();
+        stderr(`no new sessions to distill (cursor at ${cursorIso}, window ends ${windowEndIso})\n`);
         const durationMs = Date.now() - startMs;
         const record: RunRecord = {
           ts: new Date().toISOString(),
@@ -1250,7 +1445,7 @@ export async function main(
         return 0;
       }
 
-      // Fix #4: Process sessions through Ollama with chunked inference.
+      // Process sessions through Ollama with chunked inference.
       // Per-chunk independence is intentional — see chunkSegments() comment block.
       const sessionResults: SessionResult[] = [];
       const errors: RunError[] = [];
@@ -1259,7 +1454,8 @@ export async function main(
       let reportBlocksGenerated = 0;
 
       for (const s of sessions) {
-        // Fix #3: Sessions with per-segment truncation are treated as failures for cursor purposes
+        // Sessions with per-segment truncation are treated as failures for cursor purposes:
+        // the model saw incomplete content, so we don't advance past this session.
         if (s.stats.segments_truncated > 0) {
           errors.push({
             session_id: s.id,
@@ -1308,10 +1504,9 @@ export async function main(
           title = `Session ${s.id}`;
         } else if (allChunksSucceeded) {
           title = `Session ${s.id} (${chunks.length} chunks)`;
-        } else if (chunkBlocks.length > 0) {
-          title = `Session ${s.id} (${chunkBlocks.length}/${chunks.length} chunks succeeded)`;
         } else {
-          title = `Session ${s.id} (failed)`;
+          // Partial failure: some chunks succeeded (chunkBlocks.length > 0 guaranteed by gate below)
+          title = `Session ${s.id} (${chunkBlocks.length}/${chunks.length} chunks succeeded)`;
         }
 
         if (chunkBlocks.length > 0) {
@@ -1333,8 +1528,8 @@ export async function main(
         }
       }
 
-      // Fix #1: Advance cursor only through the longest contiguous successful prefix
-      // Walk sessions in time order; stop at first failure
+      // Advance cursor only through the longest contiguous successful prefix.
+      // Walk sessions in time order; stop at first failure.
       let cursorAdvanceTo: number = cursor.last_run_timestamp ?? 0;
       for (let i = 0; i < sessions.length; i++) {
         if (sessionSucceeded[i]) {
@@ -1379,12 +1574,39 @@ export async function main(
 
       return success ? 0 : 1;
     } finally {
-      // Fix #2: Always release lock
+      // Always release lock and deregister handlers to prevent accumulation
+      // when main() is called multiple times (e.g., in tests).
       if (lockPath) releaseLock(lockPath);
+      process.off("exit", onExit);
+      process.off("SIGINT", onSigint);
+      process.off("SIGTERM", onSigterm);
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     stderr(`Fatal error: ${msg}\n`);
+    // Best-effort: append a fatal RunRecord to JSONL so all distillation activity is auditable.
+    // Don't let JSONL write failure mask the original error.
+    try {
+      const stateDir =
+        process.env.OLLAMA_DISTILL_STATE_DIR ??
+        join(homedir(), ".local/state/ollama-distill");
+      const logPath = join(stateDir, "runs.jsonl");
+      const fatalRecord: RunRecord = {
+        ts: new Date().toISOString(),
+        ts_ms: Date.now(),
+        duration_ms: Date.now() - startMs,
+        mode: "normal",
+        model: MODEL,
+        sessions_read: 0,
+        report_blocks_generated: 0,
+        report_path: "",
+        success: false,
+        errors: [{ session_id: "", phase: "fatal", message: msg }],
+      };
+      await appendRunLog(logPath, fatalRecord);
+    } catch {
+      // Ignore JSONL write failure in fatal path
+    }
     return 1;
   }
 }

@@ -108,6 +108,9 @@ The hardware constrains the cure: local LLMs cannot become another always-on sub
 
 - R16. No input collected by the pipeline is sent to any cloud service. All processing happens locally via Ollama.
 - R17. Pipeline never writes to `opencode.db`. SQLite connection is opened with `PRAGMA query_only=ON`; planning verifies the chosen runtime (Bun's `bun:sqlite` or Python `sqlite3`) enforces this at the connection layer and fails closed if the pragma can't be set.
+- R18. The pipeline acquires a file lock before processing to prevent concurrent batch runs from corrupting the cursor or report.
+- R19. The JSONL audit log records every distillation run (batch and session mode) so all activity is auditable from one place.
+- R20. `--session <id>` mode does not advance the cursor and does not acquire the run lock, so a single-session distillation is safe to run alongside a normal batch. It still writes to the JSONL audit log so all distillation activity is auditable from one place.
 
 ---
 

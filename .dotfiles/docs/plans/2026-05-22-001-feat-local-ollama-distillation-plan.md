@@ -78,7 +78,7 @@ Origin: `docs/brainstorms/2026-05-21-local-ollama-distillation-requirements.md`
 - **No Modelfile** (resolves OQ2). Ollama HTTP API options pass `think: false`, `temperature: 0.3`, `num_ctx: 32768`.
 - **No "also-ran" tail** (resolves OQ5). R5 quality-rules prompt eliminates padding.
 - **Simplified cursor (revision-1 finding F1):** `cursor.json` stores only `{ last_run_timestamp: number | null }`. No overflow tracking — the recency filter (`WHERE session.time_updated > <last_run_timestamp>`) naturally re-surfaces any sessions not processed in the previous run. R7's per-run cap (50/1.5MB) selects a subset of matching sessions ordered ASC by `time_updated`; on success, the cursor advances to the `time_updated` of the LAST processed session (NOT to `now()`), so unprocessed sessions remain visible to the next run. No state can be silently skipped.
-- **`--session=<id>` is non-mutating (revision-1 finding F3):** When `--session` is passed, the pipeline processes exactly that session and exits. Does NOT read cursor, does NOT update cursor, does NOT write to the default daily report file. Output goes to stdout by default; pass `--out=<path>` to redirect to a file. JSONL log records the run with a `mode: "session"` field so it's distinguishable from regular runs.
+- **`--session=<id>` does not advance cursor (R20):** When `--session` is passed, the pipeline processes exactly that session and exits. Does NOT read cursor, does NOT update cursor, does NOT acquire the run lock, and does NOT write to the default daily report file. Output goes to stdout by default; pass `--out=<path>` to redirect to a file. JSONL log records the run with a `mode: "session"` field so all distillation activity is auditable from one place.
 - **`--since=<value>` is a recency-filter override that does NOT mutate cursor:** Behaves the same as a regular run except `last_run_timestamp` is read from the flag rather than the cursor. Cursor still updates after success per the simplified-cursor rule. This is the correct behavior for one-off catch-ups (you may want to backfill the last 30 days without losing your normal-cadence cursor position). If a user wants to BOTH backfill AND reset the cursor, they delete `cursor.json` first.
 - **Schema-invariant check at startup (revision-1 finding F4):** Replaces the brittle hash check with explicit column-presence assertions. On open, query `PRAGMA table_info('session')`, `('message')`, `('part')` and verify expected columns exist (`session.id, project_id, parent_id, time_updated`; `message.id, session_id, time_created, data`; `part.id, message_id, message_id, time_created, data`). If ANY expected column is missing, **fail closed** with `SchemaError` and exit code 3. This is fail-closed (not warn-only) because the parser produces silent garbage on missing columns.
 - **Skip the `agent` part type** even though it carries text — structured subagent context, not user/assistant conversation text. Per brainstorm R6.
@@ -151,7 +151,7 @@ State directory created at runtime (untracked):
 │    ~/.local/state/ollama-distill/cursor.json                        │
 │       → { last_run_timestamp }                                      │
 │    --since overrides for the run (cursor still advances)            │
-│    --session bypasses cursor entirely (non-mutating)                │
+│    --session does not advance cursor (R20)                          │
 │    GET /api/tags → if fails, exit 1 with actionable error           │
 │                                                                     │
 │  Phase B: open SQLite (read-only, verified, schema-checked)         │
@@ -301,7 +301,7 @@ State directory created at runtime (untracked):
 - Simple positional + `--flag=value` parsing via `Bun.argv` (no full arg-parsing lib)
 - Flags:
   - `--since=<value>` — recency filter override; accepts ISO date, `Nd` relative, or epoch ms. Cursor still updates after success.
-  - `--session=<id>` — non-mutating: process exactly one session; does NOT read or write cursor; output to stdout unless `--out` provided; JSONL logged with `mode: "session"`.
+    - `--session=<id>` — does not advance cursor (R20): process exactly one session; does NOT read or write cursor; does NOT acquire run lock; output to stdout unless `--out` provided; JSONL logged with `mode: "session"`.
   - `--out=<path>` — override report destination (or output target in --session mode).
   - `--extract-only` — debug: print extracted transcript, skip Ollama. Does NOT update cursor.
   - `--help` — usage.
@@ -316,7 +316,7 @@ State directory created at runtime (untracked):
 **Test scenarios:**
 - **Flag parsing happy path:** `--since=2026-05-15 --out=/tmp/r.md` → `{ since: <ms>, out: "/tmp/r.md" }`
 - **`--since` formats accepted:** `7d`, `2026-05-15`, `1747267200000` all parse correctly
-- **`--session` non-mutating:** passing `--session=ses_xxx` runs against that one session, does NOT touch cursor.json, output goes to stdout when no --out
+- **`--session` does not advance cursor (R20):** passing `--session=ses_xxx` runs against that one session, does NOT touch cursor.json, does NOT acquire run lock; output goes to stdout when no --out
 - **`--session` + `--out`:** output redirected to specified file, JSONL records `mode: "session"`
 - **No ollama:** mock fetch on `/api/tags` returns ECONNREFUSED → exit 1 with actionable stderr message
 - **Schema error in extract:** mock extract throws SchemaError → exit 1 + JSONL records the error
