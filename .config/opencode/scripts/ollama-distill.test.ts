@@ -1098,7 +1098,7 @@ describe("main", () => {
     }
   });
 
-  test("--session non-mutating: cursor file not created, output to stdout", async () => {
+  test("--session does not advance cursor: cursor file not created, JSONL written, output to stdout", async () => {
     const stateDir = join(tmpdir(), "distill-test-session-" + Math.random().toString(36).slice(2));
     const dbPath = join(tmpdir(), "distill-test-session-" + Math.random().toString(36).slice(2) + ".db");
     createFileDb(dbPath, [{ id: "ses_test123", timeUpdated: 2000, text: "session content here" }]);
@@ -1112,12 +1112,23 @@ describe("main", () => {
       const code = await main(["bun", "script.ts", "--session=ses_test123"], (s) => stdoutLines.push(s), () => {});
       expect(code).toBe(0);
 
-      // Cursor must NOT be created (non-mutating)
+      // Cursor must NOT be created (does not advance cursor)
       expect(existsSync(join(stateDir, "cursor.json"))).toBe(false);
+
+      // JSONL IS written (all distillation activity is auditable)
+      const logPath = join(stateDir, "runs.jsonl");
+      expect(existsSync(logPath)).toBe(true);
+      const record = JSON.parse(readFileSync(logPath, "utf8").trim());
+      expect(record.mode).toBe("session");
 
       // Output should contain the session block
       const stdout = stdoutLines.join("");
       expect(stdout).toContain("ses_test123");
+
+      // Default report path (YYYY-MM-DD.md) must NOT be touched
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const defaultReport = join(stateDir, "reports", `${dateStr}.md`);
+      expect(existsSync(defaultReport)).toBe(false);
     } finally {
       globalThis.fetch = originalFetch;
       delete process.env.OLLAMA_DISTILL_STATE_DIR;
@@ -1433,13 +1444,13 @@ describe("main", () => {
   });
 
   // Fix #2: File lock prevents concurrent runs
-  test("Fix #2: lock file present → main exits 1 with 'another distill run' message", async () => {
+  test("Fix #2: lock file present with live PID → main exits 1 with 'another distill run' message", async () => {
     const stateDir = join(tmpdir(), "distill-test-lock-" + Math.random().toString(36).slice(2));
     mkdirSync(stateDir, { recursive: true });
 
-    // Write a sentinel lock file
+    // Write a lock file with the CURRENT process PID (live process — not stale)
     const lockPath = join(stateDir, ".lock");
-    writeFileSync(lockPath, "99999\n2026-01-01T00:00:00.000Z\n");
+    writeFileSync(lockPath, `${process.pid}\n2026-01-01T00:00:00.000Z\n`);
 
     const stderrLines: string[] = [];
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
@@ -1511,6 +1522,51 @@ describe("main", () => {
       expect(record.success).toBe(false);
       // Schema error is caught during openDatabase (db-open-failure) or selectSessions
       expect(["db-open-failure", "schema-invariant-violation"]).toContain(record.errors[0].phase);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  // FIX-T1: truncated segment → exit 1, phase:"truncation" in JSONL, cursor not advanced
+  test("truncated segment: exit 1, JSONL has phase:truncation, cursor not advanced past session", async () => {
+    const stateDir = join(tmpdir(), "distill-test-trunc-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-test-trunc-" + Math.random().toString(36).slice(2) + ".db");
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    // One root session with a part whose text exceeds SEGMENT_HARD_CAP (70K)
+    createFileDb(dbPath, [{
+      id: "ses_trunc1",
+      timeUpdated: now - 1000,
+      text: "x".repeat(80_000),
+    }]);
+
+    globalThis.fetch = mockOllamaOk("## Test Block\n\n**Category:** Test\n**Insight:** mocked\n");
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1);
+
+      // JSONL: errors array must contain a truncation entry for this session
+      const logPath = join(stateDir, "runs.jsonl");
+      expect(existsSync(logPath)).toBe(true);
+      const record = JSON.parse(readFileSync(logPath, "utf8").trim());
+      const truncErr = record.errors?.find(
+        (e: { phase: string; session_id: string }) => e.phase === "truncation" && e.session_id === "ses_trunc1"
+      );
+      expect(truncErr).toBeDefined();
+
+      // Cursor must NOT have advanced past the truncated session — stays at bootstrap floor
+      const cursorPath = join(stateDir, "cursor.json");
+      expect(existsSync(cursorPath)).toBe(true);
+      const cursor = JSON.parse(readFileSync(cursorPath, "utf8"));
+      expect(cursor.last_run_timestamp).toBeGreaterThan(now - SEVEN_DAYS_MS - 5000);
+      expect(cursor.last_run_timestamp).toBeLessThan(now - SEVEN_DAYS_MS + 5000);
     } finally {
       globalThis.fetch = originalFetch;
       delete process.env.OLLAMA_DISTILL_STATE_DIR;
@@ -2118,5 +2174,234 @@ describe("v1.2 smoke fixes", () => {
       delete process.env.OPENCODE_DB_PATH;
       if (existsSync(dbPath)) unlinkSync(dbPath);
     }
+  });
+});
+
+// ─── FIX-T2: Stale-lock recovery tests ────────────────────────────────────────
+
+describe("acquireLock stale-lock recovery", () => {
+  test("empty lockfile → treated as stale, lock acquired", () => {
+    const stateDir = join(tmpdir(), "distill-lock-empty-" + Math.random().toString(36).slice(2));
+    mkdirSync(stateDir, { recursive: true });
+    const lockPath = join(stateDir, ".lock");
+    writeFileSync(lockPath, ""); // empty — malformed
+
+    // Should not throw; stale lock is cleaned up and re-acquired
+    let acquiredPath: string | undefined;
+    expect(() => { acquiredPath = acquireLock(stateDir); }).not.toThrow();
+    expect(existsSync(lockPath)).toBe(true);
+    if (acquiredPath) releaseLock(acquiredPath);
+  });
+
+  test("lockfile with dead PID → treated as stale, lock acquired", () => {
+    const stateDir = join(tmpdir(), "distill-lock-dead-" + Math.random().toString(36).slice(2));
+    mkdirSync(stateDir, { recursive: true });
+    const lockPath = join(stateDir, ".lock");
+    // Use a very high PID that almost certainly doesn't exist
+    writeFileSync(lockPath, "9999999\n2026-01-01T00:00:00.000Z\n");
+
+    let acquiredPath: string | undefined;
+    expect(() => { acquiredPath = acquireLock(stateDir); }).not.toThrow();
+    expect(existsSync(lockPath)).toBe(true);
+    if (acquiredPath) releaseLock(acquiredPath);
+  });
+
+  test("lockfile with malformed content (non-numeric PID) → treated as stale, lock acquired", () => {
+    const stateDir = join(tmpdir(), "distill-lock-malformed-" + Math.random().toString(36).slice(2));
+    mkdirSync(stateDir, { recursive: true });
+    const lockPath = join(stateDir, ".lock");
+    writeFileSync(lockPath, "not-a-pid\n2026-01-01T00:00:00.000Z\n");
+
+    let acquiredPath: string | undefined;
+    expect(() => { acquiredPath = acquireLock(stateDir); }).not.toThrow();
+    expect(existsSync(lockPath)).toBe(true);
+    if (acquiredPath) releaseLock(acquiredPath);
+  });
+
+  test("lockfile with live PID → throws 'another distill run' error", () => {
+    const stateDir = join(tmpdir(), "distill-lock-live-" + Math.random().toString(36).slice(2));
+    mkdirSync(stateDir, { recursive: true });
+    const lockPath = join(stateDir, ".lock");
+    // Use current process PID — definitely alive
+    writeFileSync(lockPath, `${process.pid}\n2026-01-01T00:00:00.000Z\n`);
+
+    expect(() => acquireLock(stateDir)).toThrow(/another distill run/);
+    // Clean up manually since we didn't acquire
+    unlinkSync(lockPath);
+  });
+});
+
+// ─── FIX-T3: Process-listener stability ───────────────────────────────────────
+
+describe("main() process listener stability", () => {
+  test("calling main() 5 times does not accumulate SIGINT/SIGTERM/exit listeners", async () => {
+    const stateDir = join(tmpdir(), "distill-listener-" + Math.random().toString(36).slice(2));
+    mkdirSync(stateDir, { recursive: true });
+    const dbPath = join(tmpdir(), "distill-listener-" + Math.random().toString(36).slice(2) + ".db");
+
+    // Create a minimal DB so main() gets past DB open
+    const db = new Database(dbPath);
+    db.run(`CREATE TABLE IF NOT EXISTS session (id TEXT, "time_updated" INTEGER)`);
+    db.run(`CREATE TABLE IF NOT EXISTS message (id TEXT, session_id TEXT, data TEXT)`);
+    db.run(`CREATE TABLE IF NOT EXISTS message_part (id TEXT, message_id TEXT, data TEXT)`);
+    db.close();
+
+    globalThis.fetch = mockOllamaOk();
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    const before = {
+      sigint: process.listenerCount("SIGINT"),
+      sigterm: process.listenerCount("SIGTERM"),
+      exit: process.listenerCount("exit"),
+    };
+
+    try {
+      for (let i = 0; i < 5; i++) {
+        await main(["bun", "script.ts"], () => {}, () => {});
+      }
+
+      expect(process.listenerCount("SIGINT")).toBeLessThanOrEqual(before.sigint + 1);
+      expect(process.listenerCount("SIGTERM")).toBeLessThanOrEqual(before.sigterm + 1);
+      expect(process.listenerCount("exit")).toBeLessThanOrEqual(before.exit + 1);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+});
+
+// ─── FIX-T5: Malformed-200 Ollama response ────────────────────────────────────
+
+describe("callOllama malformed response handling", () => {
+  test("HTML 200 response → error contains 'malformed' or 'parse'", async () => {
+    globalThis.fetch = async () =>
+      new Response("<html>Bad Gateway</html>", { status: 200 });
+
+    try {
+      const result = await callOllama("http://127.0.0.1:11434", "sys", "transcript", "ses_x");
+      expect(result.output).toBe("");
+      expect(result.error).toBeDefined();
+      const errMsg = result.error!.toLowerCase();
+      expect(errMsg.match(/malformed|parse|json/)).toBeTruthy();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("valid JSON but wrong shape (missing message.content) → error", async () => {
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ response: "wrong shape" }), { status: 200 });
+
+    try {
+      const result = await callOllama("http://127.0.0.1:11434", "sys", "transcript", "ses_x");
+      expect(result.output).toBe("");
+      expect(result.error).toBeDefined();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
+// ─── FIX-T6: Cursor non-advancement assertion (strengthen) ────────────────────
+
+describe("cursor non-advancement on error", () => {
+  test("cursor stays near bootstrap value when all sessions fail", async () => {
+    const stateDir = join(tmpdir(), "distill-cursor-noadvance-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-cursor-noadvance-" + Math.random().toString(36).slice(2) + ".db");
+
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    // Session with timeUpdated in the last 7 days so it's in window
+    const db = new Database(dbPath);
+    db.run(`CREATE TABLE IF NOT EXISTS session (id TEXT, "time_updated" INTEGER)`);
+    db.run(`CREATE TABLE IF NOT EXISTS message (id TEXT, session_id TEXT, data TEXT)`);
+    db.run(`CREATE TABLE IF NOT EXISTS message_part (id TEXT, message_id TEXT, data TEXT)`);
+    db.run(`INSERT INTO session VALUES ('ses_fail1', ${now - 1000})`);
+    db.close();
+
+    globalThis.fetch = async () => new Response("Internal Server Error", { status: 500 });
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1);
+
+      // Cursor should NOT have been advanced — it stays at bootstrap
+      const cursorPath = join(stateDir, "cursor.json");
+      if (existsSync(cursorPath)) {
+        const cursor = JSON.parse(readFileSync(cursorPath, "utf8"));
+        // Bootstrap value is Date.now() - SEVEN_DAYS_MS at time of run
+        expect(cursor.last_run_timestamp).toBeGreaterThan(now - SEVEN_DAYS_MS - 5000);
+        expect(cursor.last_run_timestamp).toBeLessThan(now - SEVEN_DAYS_MS + 5000);
+      }
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+});
+
+// ─── FIX-T7: chunkSegments exact-boundary cases ───────────────────────────────
+
+describe("chunkSegments exact-boundary edge cases", () => {
+  // ROLE_PREFIX_OVERHEAD = 12 (see ollama-distill.ts)
+  const ROLE_PREFIX_OVERHEAD = 12;
+
+  function makeSegment(chars: number, role: "user" | "assistant" = "user"): MessageSegment {
+    return {
+      kind: "text",
+      role,
+      text: "x".repeat(chars),
+      char_count: chars,
+      time_created: Date.now(),
+      message_id: "msg_" + Math.random().toString(36).slice(2),
+    };
+  }
+
+  test("single segment whose size exactly equals targetChars fits in one chunk", () => {
+    const targetChars = 1000;
+    // segSize = char_count + ROLE_PREFIX_OVERHEAD; to get segSize === targetChars:
+    const charCount = targetChars - ROLE_PREFIX_OVERHEAD;
+    const seg = makeSegment(charCount);
+    const chunks = chunkSegments([seg], targetChars);
+    expect(chunks.length).toBe(1);
+    expect(chunks[0].length).toBe(1);
+  });
+
+  test("single segment one byte over targetChars still fits alone (oversized goes in own chunk)", () => {
+    const targetChars = 1000;
+    const charCount = targetChars - ROLE_PREFIX_OVERHEAD + 1; // segSize = targetChars + 1
+    const seg = makeSegment(charCount);
+    const chunks = chunkSegments([seg], targetChars);
+    // Single oversized segment always goes in its own chunk (extractTranscript already capped it)
+    expect(chunks.length).toBe(1);
+  });
+
+  test("two segments whose combined size exactly equals targetChars fit in one chunk", () => {
+    const targetChars = 1000;
+    // Each segment: charCount such that 2 * (charCount + ROLE_PREFIX_OVERHEAD) === targetChars
+    const charCount = Math.floor((targetChars - 2 * ROLE_PREFIX_OVERHEAD) / 2);
+    const segs = [makeSegment(charCount), makeSegment(charCount)];
+    // Combined segSize = 2 * (charCount + ROLE_PREFIX_OVERHEAD) <= targetChars
+    const chunks = chunkSegments(segs, targetChars);
+    expect(chunks.length).toBe(1);
+  });
+
+  test("second segment pushes combined size one byte over targetChars → splits into two chunks", () => {
+    const targetChars = 1000;
+    // First segment fills exactly half
+    const charCount = Math.floor((targetChars - 2 * ROLE_PREFIX_OVERHEAD) / 2);
+    const seg1 = makeSegment(charCount);
+    // Second segment is one byte larger, pushing total over targetChars
+    const seg2 = makeSegment(charCount + 1);
+    const chunks = chunkSegments([seg1, seg2], targetChars);
+    expect(chunks.length).toBe(2);
   });
 });
