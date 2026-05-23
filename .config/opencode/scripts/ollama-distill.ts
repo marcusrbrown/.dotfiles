@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { Database } from "bun:sqlite";
-import { mkdirSync, renameSync, existsSync, appendFileSync, openSync, closeSync, unlinkSync } from "node:fs";
+import { mkdirSync, renameSync, existsSync, appendFileSync, openSync, closeSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 
@@ -68,7 +68,6 @@ export class ReadOnlyVerificationError extends Error {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TRUNCATION_LIMIT = 120_000;
 const TRUNCATION_MARKER = "\n\n[... transcript truncated for context limit]";
 // Per-segment hard cap: if a single message body exceeds this, it gets prefix-truncated.
 // The chunker enforces 70K per CHUNK; segments are smaller than chunks.
@@ -377,26 +376,30 @@ function buildTranscript(rows: TranscriptRow[]): ExtractResult {
 // chunk N only pays off in chunk N+1 will produce a thinner second block.
 // 8B models hallucinate or lose coherence when given a "consolidate previous
 // summaries" pass, so this pipeline accepts the lossy boundary as a tradeoff
-// for predictable per-chunk quality. See PR #<TBD> for rationale.
+// for predictable per-chunk quality. See PR #1707 for rationale.
 
 /**
  * Split an ordered list of MessageSegments into chunks for independent
- * Ollama inference. Each chunk targets ~55K chars; hard cap is 70K.
+ * Ollama inference.
  *
- * Algorithm:
+ * Algorithm: greedy packing with a single size threshold.
  * 1. Start a new chunk: current = [], currentChars = 0.
  * 2. For each segment:
  *    a. Compute segment size: seg.char_count + ROLE_PREFIX_OVERHEAD.
- *    b. If current is empty: push segment, add size, continue.
- *    c. If currentChars + segSize > hardCapChars: finalize current, start new chunk with this segment.
- *    d. Else if currentChars + segSize > targetChars: finalize current WITHOUT this segment, push to new chunk.
- *    e. Else: append to current.
+ *    b. If current is empty: always push the segment (even if it alone exceeds
+ *       targetChars — extractTranscript already truncated it to SEGMENT_HARD_CAP).
+ *    c. If currentChars + segSize > targetChars: finalize current chunk, start
+ *       a new chunk with this segment.
+ *    d. Else: append to current.
  * 3. Finalize last chunk if non-empty.
+ *
+ * Default targetChars is 55K. Single segments larger than that go into their
+ * own chunk; extractTranscript pre-truncates each segment to SEGMENT_HARD_CAP
+ * (70K) so oversized lone segments are still bounded.
  */
 export function chunkSegments(
   segments: MessageSegment[],
-  targetChars = 55_000,
-  hardCapChars = 70_000
+  targetChars = 55_000
 ): MessageSegment[][] {
   const chunks: MessageSegment[][] = [];
   let current: MessageSegment[] = [];
@@ -406,20 +409,17 @@ export function chunkSegments(
     const segSize = seg.char_count + ROLE_PREFIX_OVERHEAD;
 
     if (current.length === 0) {
-      // Always push at least one segment per chunk (even if it exceeds hardCap —
-      // extractTranscript already truncated it to SEGMENT_HARD_CAP)
+      // Always push at least one segment per chunk — even if it alone exceeds
+      // targetChars. extractTranscript already truncated it to SEGMENT_HARD_CAP.
       current.push(seg);
       currentChars += segSize;
       continue;
     }
 
-    if (currentChars + segSize > hardCapChars) {
-      // Would overflow hard cap: finalize current chunk, start new one
-      chunks.push(current);
-      current = [seg];
-      currentChars = segSize;
-    } else if (currentChars + segSize > targetChars) {
-      // Would exceed target but fits under hard cap: finalize current WITHOUT this segment
+    if (currentChars + segSize > targetChars) {
+      // Would exceed target: finalize current chunk, start new one with this segment.
+      // Single segments larger than targetChars are already truncated by
+      // extractTranscript to SEGMENT_HARD_CAP, so they fit when alone in a fresh chunk.
       chunks.push(current);
       current = [seg];
       currentChars = segSize;
@@ -940,7 +940,7 @@ export function acquireLock(stateDir: string): string {
     const fd = openSync(lockPath, "wx");
     closeSync(fd);
     // Write PID + timestamp as lock content
-    Bun.write(lockPath, `${process.pid}\n${new Date().toISOString()}\n`);
+    writeFileSync(lockPath, `${process.pid}\n${new Date().toISOString()}\n`);
     return lockPath;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

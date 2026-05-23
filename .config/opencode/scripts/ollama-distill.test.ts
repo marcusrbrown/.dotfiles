@@ -162,11 +162,11 @@ describe("extractTranscript", () => {
 
   // ─── Test 3: Truncation ─────────────────────────────────────────────────────
 
-  test("truncation: content exceeding 120K chars is truncated with marker", async () => {
+  test("truncation: content exceeding SEGMENT_HARD_CAP (70K) is truncated with marker", async () => {
     const db = createFixtureDb();
     const sid = "sess-3";
 
-    // Create a message with text that exceeds 120K chars
+    // Create a message with text that exceeds SEGMENT_HARD_CAP (70K chars)
     const bigText = "x".repeat(121_000);
     const m1 = insertMessage(db, sid, "user", 1000, "msg-1");
     insertPart(db, m1, sid, "text", bigText, 1001, "p-1");
@@ -198,8 +198,8 @@ describe("extractTranscript", () => {
     // Should have substantial prefix content (not just the marker)
     const markerIdx = transcript.indexOf("[... transcript truncated for context limit]");
     expect(markerIdx).toBeGreaterThan(1000); // at least 1000 chars of original content
-    // Total length should be close to 120K (not 200K)
-    expect(transcript.length).toBeLessThanOrEqual(120_100); // 120K + marker length
+    // Total length should be close to SEGMENT_HARD_CAP (70K), not 200K
+    expect(transcript.length).toBeLessThanOrEqual(70_100); // SEGMENT_HARD_CAP + marker length
 
     db.close();
   });
