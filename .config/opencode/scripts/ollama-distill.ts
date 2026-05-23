@@ -89,6 +89,25 @@ const EXPECTED_COLUMNS: Record<string, string[]> = {
   part: ["id", "message_id", "session_id", "time_created", "data"],
 };
 
+// ─── Module-level lock cleanup handlers ──────────────────────────────────────
+// Registered once at module load to avoid MaxListenersExceededWarning when
+// main() is called multiple times (e.g., in tests). Each normal-mode run adds
+// its lockPath to this Set; the finally block removes it after explicit release.
+
+export const activeLockPaths = new Set<string>();
+
+process.on("exit", () => {
+  for (const p of activeLockPaths) releaseLock(p);
+});
+process.on("SIGINT", () => {
+  for (const p of activeLockPaths) releaseLock(p);
+  process.exit(130);
+});
+process.on("SIGTERM", () => {
+  for (const p of activeLockPaths) releaseLock(p);
+  process.exit(143);
+});
+
 // ─── SQLite Busy Retry Helper ─────────────────────────────────────────────────
 
 /**
@@ -455,6 +474,95 @@ export function renderChunkTranscript(segments: MessageSegment[]): string {
     .join("\n");
 }
 
+// ─── Cross-chunk dedup ────────────────────────────────────────────────────────
+
+/**
+ * Compute Levenshtein distance between two strings.
+ * Bounded implementation — returns early once distance exceeds `maxDist`.
+ */
+function levenshtein(a: string, b: string, maxDist = 2): number {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > maxDist) return maxDist + 1;
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  const curr = new Array<number>(b.length + 1);
+  for (let i = 1; i <= a.length; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      curr[j] = a[i - 1] === b[j - 1]
+        ? prev[j - 1]
+        : 1 + Math.min(prev[j - 1], prev[j], curr[j - 1]);
+    }
+    for (let j = 0; j <= b.length; j++) prev[j] = curr[j];
+  }
+  return prev[b.length];
+}
+
+/** Normalize a title for fuzzy comparison: lowercase, strip non-alphanumeric. */
+function normalizeTitle(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * Deduplicate near-duplicate `## <title>` sub-sections across chunk blocks.
+ *
+ * Each block is a multi-line Markdown string. Sub-sections are delimited by
+ * `## ` headers. For each sub-section, the normalized title is compared
+ * against all previously seen titles using two guards:
+ *
+ * 1. **Numbered-sequence exemption**: if two titles share the same stem but
+ *    differ only in a trailing digit suffix (e.g. `step1` vs `step2`), they
+ *    are always kept distinct — numbered sequences are never deduped.
+ *
+ * 2. **Length-proportional Levenshtein threshold**: short titles require a
+ *    near-exact match to be considered duplicates.
+ *    - normalized length < 5  → threshold 0 (exact match only)
+ *    - normalized length 5–9  → threshold 1
+ *    - normalized length ≥ 10 → threshold 2
+ *
+ * Empty blocks (after section removal) are filtered out.
+ */
+export function dedupeChunkBlocks(blocks: string[]): string[] {
+  const seenTitles = new Set<string>();
+
+  return blocks.map((block) => {
+    // Split block into sub-sections on ## headers (keep delimiter)
+    const sections = block.split(/(?=^## )/m);
+    const kept: string[] = [];
+
+    for (const section of sections) {
+      const headerMatch = /^## (.+)/m.exec(section);
+      if (!headerMatch) {
+        // No ## header — keep as-is (preamble text, etc.)
+        kept.push(section);
+        continue;
+      }
+      const normalized = normalizeTitle(headerMatch[1]);
+      // Strip trailing digits to detect numbered sequences (e.g. "step1", "step2")
+      const stem = normalized.replace(/\d+$/, "");
+
+      let isDup = false;
+      for (const seen of seenTitles) {
+        const seenStem = seen.replace(/\d+$/, "");
+        // Numbered-sequence exemption: same stem, different full string → keep distinct
+        if (stem === seenStem && normalized !== seen) continue;
+        // Length-proportional threshold: conservative for short titles
+        const minLen = Math.min(seen.length, normalized.length);
+        const threshold = Math.min(2, Math.floor(minLen / 5));
+        if (levenshtein(normalized, seen, threshold) <= threshold) {
+          isDup = true;
+          break;
+        }
+      }
+      if (!isDup) {
+        seenTitles.add(normalized);
+        kept.push(section);
+      }
+    }
+
+    return kept.join("");
+  }).filter((b) => b.trim() !== "");
+}
+
 // ─── Cursor ───────────────────────────────────────────────────────────────────
 
 export type Cursor = {
@@ -818,6 +926,7 @@ export type ParsedArgs = {
   out?: string;
   extractOnly: boolean;
   help: boolean;
+  maxSessions?: number; // cap on sessions processed in normal mode
   unknownFlag?: string;
   flagError?: string;   // validation error for invalid flag values
 };
@@ -928,6 +1037,26 @@ export function parseArgs(argv: string[]): ParsedArgs {
       result.out = value;
       continue;
     }
+    if (arg.startsWith("--max-sessions=") || arg === "--max-sessions") {
+      if (seenFlags.has("--max-sessions")) {
+        result.flagError = `Duplicate flag: --max-sessions`;
+        return result;
+      }
+      seenFlags.add("--max-sessions");
+      const value = arg === "--max-sessions" ? consumeNext("--max-sessions") : arg.slice("--max-sessions=".length);
+      if (value === null) return result;
+      if (value === "") {
+        result.flagError = `Empty value for --max-sessions. Use --max-sessions=<N>.`;
+        return result;
+      }
+      const n = Number(value);
+      if (!Number.isInteger(n) || n <= 0) {
+        result.flagError = `Invalid --max-sessions value: '${value}'. Must be a positive integer (e.g. --max-sessions=2).`;
+        return result;
+      }
+      result.maxSessions = n;
+      continue;
+    }
     if (arg.startsWith("--")) {
       result.unknownFlag = arg;
       break;
@@ -996,6 +1125,9 @@ OPTIONS:
   --extract-only      Print extracted transcript(s) to stdout; skip Ollama call.
                       Useful for debugging the extractor.
                       Example: --extract-only --session=ses_01jxyz...
+  --max-sessions=<N>  Cap the number of sessions processed in a normal-mode run.
+                      Default: unlimited. Useful to limit runtime on large backlogs.
+                      Example: --max-sessions=2
 
 ENVIRONMENT VARIABLES:
   OLLAMA_DISTILL_STATE_DIR   Override state directory (default: ~/.local/state/ollama-distill)
@@ -1324,18 +1456,10 @@ export async function main(
       return 1;
     }
 
-    // Register cleanup handlers for lock release.
-    // Store refs so we can remove them in the finally block — prevents handler
-    // accumulation when main() is called multiple times (e.g., in tests).
-    const cleanupLock = () => {
-      if (lockPath) releaseLock(lockPath);
-    };
-    const onExit = () => cleanupLock();
-    const onSigint = () => { cleanupLock(); process.exit(130); };
-    const onSigterm = () => { cleanupLock(); process.exit(143); };
-    process.on("exit", onExit);
-    process.on("SIGINT", onSigint);
-    process.on("SIGTERM", onSigterm);
+    // Register this lock path with the module-level cleanup Set.
+    // The module-level SIGINT/SIGTERM/exit handlers (registered once at module load)
+    // iterate activeLockPaths — no per-call handler registration needed.
+    activeLockPaths.add(lockPath);
 
     try {
       // Health check (always in normal mode)
@@ -1413,7 +1537,13 @@ export async function main(
       }
       db.close();
 
-      const { sessions } = selectionResult;
+      let { sessions } = selectionResult;
+
+      // Apply --max-sessions cap if provided
+      if (args.maxSessions !== undefined && sessions.length > args.maxSessions) {
+        stderr(`Capping run at ${args.maxSessions} of ${sessions.length} selected sessions (--max-sessions)\n`);
+        sessions = sessions.slice(0, args.maxSessions);
+      }
 
       // 0 sessions: no-op success
       if (sessions.length === 0) {
@@ -1514,7 +1644,7 @@ export async function main(
           sessionResults.push({
             sessionId: s.id,
             title,
-            ollamaOutput: chunkBlocks.join("\n\n"),
+            ollamaOutput: dedupeChunkBlocks(chunkBlocks).join("\n\n"),
           });
           reportBlocksGenerated += chunkBlocks.length;
         }
@@ -1540,11 +1670,14 @@ export async function main(
         }
       }
 
-      // Write report — always call when there's a resolved path; empty sessionResults = header-only file
+      // Write report — only when there are results to write; skip on zero results
+      // to avoid accumulating header-only files or trailing separators on all-failure days.
       const dateStr = new Date().toISOString().slice(0, 10);
       const reportPath = args.out ?? join(stateDir, "reports", `${dateStr}.md`);
 
-      await writeReport(reportPath, sessionResults);
+      if (sessionResults.length > 0) {
+        await writeReport(reportPath, sessionResults);
+      }
 
       const durationMs = Date.now() - startMs;
       const success = errors.length === 0;
@@ -1557,7 +1690,7 @@ export async function main(
         model: MODEL,
         sessions_read: sessions.length,
         report_blocks_generated: reportBlocksGenerated,
-        report_path: reportPath,
+        report_path: sessionResults.length > 0 ? reportPath : "",
         success,
         errors,
       };
@@ -1574,12 +1707,12 @@ export async function main(
 
       return success ? 0 : 1;
     } finally {
-      // Always release lock and deregister handlers to prevent accumulation
-      // when main() is called multiple times (e.g., in tests).
-      if (lockPath) releaseLock(lockPath);
-      process.off("exit", onExit);
-      process.off("SIGINT", onSigint);
-      process.off("SIGTERM", onSigterm);
+      // Explicitly release lock and remove from the module-level Set.
+      // The module-level signal handlers will no longer see this path.
+      if (lockPath) {
+        activeLockPaths.delete(lockPath);
+        releaseLock(lockPath);
+      }
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

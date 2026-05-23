@@ -22,6 +22,8 @@ import {
   releaseLock,
   chunkSegments,
   renderChunkTranscript,
+  dedupeChunkBlocks,
+  activeLockPaths,
   type ExtractStats,
   type RunRecord,
   type MessageSegment,
@@ -1806,7 +1808,7 @@ describe("v1.2 end-to-end chunked inference", () => {
       if (urlStr.includes("/api/chat")) {
         ollamaCallCount++;
         return new Response(
-          JSON.stringify({ message: { content: `## Chunk ${ollamaCallCount} Summary\n\nContent here.` } }),
+          JSON.stringify({ message: { content: `## Chunk ${ollamaCallCount === 1 ? "Alpha" : "Beta"} Summary\n\nContent here.` } }),
           { status: 200 }
         );
       }
@@ -1828,8 +1830,8 @@ describe("v1.2 end-to-end chunked inference", () => {
       expect(existsSync(reportPath)).toBe(true);
       const reportContent = readFileSync(reportPath, "utf8");
       expect(reportContent).toContain("(2 chunks)");
-      expect(reportContent).toContain("Chunk 1 Summary");
-      expect(reportContent).toContain("Chunk 2 Summary");
+      expect(reportContent).toContain("Chunk Alpha Summary");
+      expect(reportContent).toContain("Chunk Beta Summary");
 
       // Cursor should be advanced (session succeeded)
       const cursor = JSON.parse(readFileSync(join(stateDir, "cursor.json"), "utf8"));
@@ -2024,8 +2026,9 @@ describe("v1.2 smoke fixes", () => {
         if (ollamaCallCount >= 4) {
           return new Response("Internal Server Error", { status: 500 });
         }
+        const titles = ["Alpha", "Beta", "Gamma"];
         return new Response(
-          JSON.stringify({ message: { content: `## Block ${ollamaCallCount}\n\nContent.` } }),
+          JSON.stringify({ message: { content: `## ${titles[ollamaCallCount - 1]} Block\n\nContent.` } }),
           { status: 200 }
         );
       }
@@ -2043,9 +2046,9 @@ describe("v1.2 smoke fixes", () => {
       // Report should exist and contain the partial blocks
       expect(existsSync(reportPath)).toBe(true);
       const reportContent = readFileSync(reportPath, "utf8");
-      expect(reportContent).toContain("Block 1");
-      expect(reportContent).toContain("Block 2");
-      expect(reportContent).toContain("Block 3");
+      expect(reportContent).toContain("Alpha Block");
+      expect(reportContent).toContain("Beta Block");
+      expect(reportContent).toContain("Gamma Block");
       // Title should indicate partial success
       expect(reportContent).toContain("chunks succeeded");
 
@@ -2064,8 +2067,8 @@ describe("v1.2 smoke fixes", () => {
     }
   });
 
-  // Fix D: total-failure session — report_path is still resolved in JSONL
-  test("Fix D: total-failure (chunk 1 fails) → sessionResults empty, report_path still resolved in JSONL", async () => {
+  // Fix D: total-failure session — report_path is "" in JSONL (no file written, Item B behavior)
+  test("Fix D: total-failure (chunk 1 fails) → sessionResults empty, report_path is '' in JSONL", async () => {
     const stateDir = join(tmpdir(), "distill-total-fail-d-" + Math.random().toString(36).slice(2));
     const dbPath = join(tmpdir(), "distill-total-fail-d-" + Math.random().toString(36).slice(2) + ".db");
     const now = Date.now();
@@ -2093,12 +2096,13 @@ describe("v1.2 smoke fixes", () => {
       const code = await main(["bun", "script.ts", `--out=${reportPath}`], () => {}, () => {});
       expect(code).toBe(1);
 
-      // JSONL: report_path must be the resolved path, not ""
+      // JSONL: report_path is "" because no results were written (Item B behavior)
       const logPath = join(stateDir, "runs.jsonl");
       const record = JSON.parse(readFileSync(logPath, "utf8").trim());
       expect(record.success).toBe(false);
-      expect(record.report_path).toBe(reportPath);
-      expect(record.report_path).not.toBe("");
+      expect(record.report_path).toBe("");
+      // Report file should NOT exist (no results to write)
+      expect(existsSync(reportPath)).toBe(false);
     } finally {
       globalThis.fetch = originalFetch;
       delete process.env.OLLAMA_DISTILL_STATE_DIR;
@@ -2403,5 +2407,337 @@ describe("chunkSegments exact-boundary edge cases", () => {
     const seg2 = makeSegment(charCount + 1);
     const chunks = chunkSegments([seg1, seg2], targetChars);
     expect(chunks.length).toBe(2);
+  });
+});
+
+// ─── v1.4 Item A: --max-sessions flag ────────────────────────────────────────
+
+describe("parseArgs --max-sessions", () => {
+  test("--max-sessions=5 → maxSessions: 5", () => {
+    const result = parseArgs(["--max-sessions=5"]);
+    expect(result.flagError).toBeUndefined();
+    expect(result.maxSessions).toBe(5);
+  });
+
+  test("--max-sessions 5 (space form) → maxSessions: 5", () => {
+    const result = parseArgs(["--max-sessions", "5"]);
+    expect(result.flagError).toBeUndefined();
+    expect(result.maxSessions).toBe(5);
+  });
+
+  test("--max-sessions=0 → flagError", () => {
+    const result = parseArgs(["--max-sessions=0"]);
+    expect(result.flagError).toMatch(/Invalid --max-sessions/);
+  });
+
+  test("--max-sessions=-1 → flagError", () => {
+    const result = parseArgs(["--max-sessions=-1"]);
+    expect(result.flagError).toMatch(/Invalid --max-sessions/);
+  });
+
+  test("--max-sessions=abc → flagError", () => {
+    const result = parseArgs(["--max-sessions=abc"]);
+    expect(result.flagError).toMatch(/Invalid --max-sessions/);
+  });
+
+  test("--max-sessions=1.5 → flagError", () => {
+    const result = parseArgs(["--max-sessions=1.5"]);
+    expect(result.flagError).toMatch(/Invalid --max-sessions/);
+  });
+
+  test("duplicate --max-sessions=3 --max-sessions=5 → flagError", () => {
+    const result = parseArgs(["--max-sessions=3", "--max-sessions=5"]);
+    expect(result.flagError).toMatch(/Duplicate flag: --max-sessions/);
+  });
+});
+
+describe("--max-sessions integration", () => {
+  test("3 sessions in DB, --max-sessions=2 → only 2 processed, sessions_read=2 in JSONL", async () => {
+    const stateDir = join(tmpdir(), "distill-maxsess-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-maxsess-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+
+    // Create 3 sessions
+    const db = new Database(dbPath);
+    db.exec(`
+      CREATE TABLE session (id TEXT PRIMARY KEY, project_id TEXT, parent_id TEXT, time_created INTEGER, time_updated INTEGER);
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+    for (let i = 1; i <= 3; i++) {
+      db.run("INSERT INTO session VALUES (?, NULL, NULL, ?, ?)", [`ses_ms${i}`, now - (4 - i) * 1000, now - (4 - i) * 1000]);
+      db.run("INSERT INTO message VALUES (?, ?, ?, ?)", [`msg_ms${i}`, `ses_ms${i}`, now - (4 - i) * 1000, JSON.stringify({ role: "user" })]);
+      db.run("INSERT INTO part VALUES (?, ?, ?, ?, ?)", [`part_ms${i}`, `msg_ms${i}`, `ses_ms${i}`, now - (4 - i) * 1000, JSON.stringify({ type: "text", text: `Content ${i}` })]);
+    }
+    db.close();
+
+    let ollamaCallCount = 0;
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      if (urlStr.includes("/api/chat")) {
+        ollamaCallCount++;
+        return new Response(JSON.stringify({ message: { content: `## Summary ${ollamaCallCount}\n\nDone.` } }), { status: 200 });
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts", "--max-sessions=2"], () => {}, () => {});
+      expect(code).toBe(0);
+
+      const logPath = join(stateDir, "runs.jsonl");
+      const record = JSON.parse(readFileSync(logPath, "utf8").trim());
+      expect(record.sessions_read).toBe(2);
+      expect(ollamaCallCount).toBe(2);
+    } finally {
+      globalThis.fetch = (globalThis as { _originalFetch?: typeof fetch })._originalFetch ?? globalThis.fetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+});
+
+// ─── v1.4 Item B: empty sessionResults writeReport guard ─────────────────────
+
+describe("Item B: empty sessionResults guard", () => {
+  test("all sessions hit truncation → sessionResults empty → no report file written, report_path=''", async () => {
+    const stateDir = join(tmpdir(), "distill-itemb-trunc-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-itemb-trunc-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+
+    // Create a session with a segment that will be truncated (segments_truncated > 0)
+    // We simulate this by creating a DB with a very large part that exceeds SEGMENT_HARD_CAP
+    const db = new Database(dbPath);
+    db.exec(`
+      CREATE TABLE session (id TEXT PRIMARY KEY, project_id TEXT, parent_id TEXT, time_created INTEGER, time_updated INTEGER);
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+    db.run("INSERT INTO session VALUES (?, NULL, NULL, ?, ?)", ["ses_trunc", now - 1000, now - 1000]);
+    db.run("INSERT INTO message VALUES (?, ?, ?, ?)", ["msg_trunc", "ses_trunc", now - 1000, JSON.stringify({ role: "user" })]);
+    // 71K chars — exceeds SEGMENT_HARD_CAP (70K), triggers segments_truncated > 0
+    const bigText = "X".repeat(71_000);
+    db.run("INSERT INTO part VALUES (?, ?, ?, ?, ?)", ["part_trunc", "msg_trunc", "ses_trunc", now - 1000, JSON.stringify({ type: "text", text: bigText })]);
+    db.close();
+
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    const reportPath = join(stateDir, "trunc-report.md");
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts", `--out=${reportPath}`], () => {}, () => {});
+      expect(code).toBe(1); // truncation = failure
+
+      // Report file must NOT exist
+      expect(existsSync(reportPath)).toBe(false);
+
+      // JSONL: report_path must be ""
+      const logPath = join(stateDir, "runs.jsonl");
+      const record = JSON.parse(readFileSync(logPath, "utf8").trim());
+      expect(record.report_path).toBe("");
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+});
+
+// ─── v1.4 Item C: cleanup-handler refactor ───────────────────────────────────
+
+describe("Item C: module-level cleanup handler", () => {
+  test("process.listenerCount('exit') stays at 1 across multiple main() calls", async () => {
+    // The module-level handler is registered once; calling main() multiple times
+    // must not add more listeners.
+    const before = process.listenerCount("exit");
+
+    // We need a DB + state dir to get past the lock acquisition
+    const stateDir = join(tmpdir(), "distill-itemc-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-itemc-" + Math.random().toString(36).slice(2) + ".db");
+    const db = new Database(dbPath);
+    db.exec(`
+      CREATE TABLE session (id TEXT PRIMARY KEY, project_id TEXT, parent_id TEXT, time_created INTEGER, time_updated INTEGER);
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+    db.close();
+
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      // Call main() 3 times — each should complete without adding exit listeners
+      await main(["bun", "script.ts"], () => {}, () => {});
+      await main(["bun", "script.ts"], () => {}, () => {});
+      await main(["bun", "script.ts"], () => {}, () => {});
+
+      const after = process.listenerCount("exit");
+      // Should not have grown (module-level handler registered once)
+      expect(after).toBe(before);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("activeLockPaths is empty after normal-mode main() completes (lock released in finally)", async () => {
+    const stateDir = join(tmpdir(), "distill-itemc2-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-itemc2-" + Math.random().toString(36).slice(2) + ".db");
+    const db = new Database(dbPath);
+    db.exec(`
+      CREATE TABLE session (id TEXT PRIMARY KEY, project_id TEXT, parent_id TEXT, time_created INTEGER, time_updated INTEGER);
+      CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+      CREATE TABLE part (id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT);
+    `);
+    db.close();
+
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      await main(["bun", "script.ts"], () => {}, () => {});
+      // After completion, the lock path must have been removed from the Set
+      expect(activeLockPaths.size).toBe(0);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+});
+
+// ─── v1.4 Item D: dedupeChunkBlocks ──────────────────────────────────────────
+
+describe("dedupeChunkBlocks", () => {
+  test("empty input → empty output", () => {
+    expect(dedupeChunkBlocks([])).toEqual([]);
+  });
+
+  test("two identical ## Title sub-blocks → second dropped", () => {
+    const block1 = "## My Title\n\nSome content here.";
+    const block2 = "## My Title\n\nDuplicate content.";
+    const result = dedupeChunkBlocks([block1, block2]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toContain("My Title");
+  });
+
+  test("## Title A and ## Title A! (punctuation only diff) → second dropped (distance 0 after normalization)", () => {
+    const block1 = "## Title A\n\nContent.";
+    const block2 = "## Title A!\n\nOther content.";
+    const result = dedupeChunkBlocks([block1, block2]);
+    expect(result).toHaveLength(1);
+  });
+
+  test("## Title A and ## Tytle A (Levenshtein distance 2) → second dropped", () => {
+    const block1 = "## Title A\n\nContent.";
+    const block2 = "## Tytle A\n\nOther content.";
+    const result = dedupeChunkBlocks([block1, block2]);
+    expect(result).toHaveLength(1);
+  });
+
+  test("## Title A and ## Title BCDEF (Levenshtein distance > 2) → both kept", () => {
+    const block1 = "## Title A\n\nContent.";
+    const block2 = "## Title BCDEF\n\nOther content.";
+    const result = dedupeChunkBlocks([block1, block2]);
+    expect(result).toHaveLength(2);
+  });
+
+  test("block with multiple ## sub-sections, only middle one is a dup → middle dropped, others kept", () => {
+    const block1 = "## Alpha Section\n\nFirst content.\n\n## Refactoring Notes\n\nSecond content.";
+    // block2 has Refactoring Notes (dup) sandwiched between unique sections
+    const block2 = "## Deployment Steps\n\nThird.\n\n## Refactoring Notes\n\nDuplicate.\n\n## Performance Metrics\n\nFourth.";
+    const result = dedupeChunkBlocks([block1, block2]);
+    // block1 kept as-is; block2 has Refactoring Notes dropped but Deployment Steps and Performance Metrics kept
+    const joined = result.join("\n\n");
+    expect(joined).toContain("Alpha Section");
+    expect(joined).toContain("Refactoring Notes"); // from block1
+    expect(joined).toContain("Deployment Steps");
+    expect(joined).not.toContain("Duplicate."); // the dup Refactoring Notes content dropped
+    expect(joined).toContain("Performance Metrics");
+  });
+
+  // ─── v1.4 follow-up: length-proportional threshold + numbered-sequence exemption ───
+
+  test("numbered exemption: ## Step 1 and ## Step 2 → both KEPT", () => {
+    const result = dedupeChunkBlocks([
+      "## Step 1\n\nFirst step.",
+      "## Step 2\n\nSecond step.",
+    ]);
+    expect(result).toHaveLength(2);
+  });
+
+  test("numbered exemption: ## Decision 1 and ## Decision 2 → both KEPT", () => {
+    const result = dedupeChunkBlocks([
+      "## Decision 1\n\nFirst decision.",
+      "## Decision 2\n\nSecond decision.",
+    ]);
+    expect(result).toHaveLength(2);
+  });
+
+  test("threshold 0 (len < 5): ## ab and ## cd → both KEPT (distance 2 > 0)", () => {
+    const result = dedupeChunkBlocks([
+      "## ab\n\nContent A.",
+      "## cd\n\nContent B.",
+    ]);
+    expect(result).toHaveLength(2);
+  });
+
+  test("threshold 0 (len < 5): ## abc and ## abd → both KEPT (distance 1 > 0)", () => {
+    const result = dedupeChunkBlocks([
+      "## abc\n\nContent A.",
+      "## abd\n\nContent B.",
+    ]);
+    expect(result).toHaveLength(2);
+  });
+
+  test("threshold 1 (len 5-9): ## abcde and ## abcdf → second DEDUPED (distance 1 ≤ 1)", () => {
+    const result = dedupeChunkBlocks([
+      "## abcde\n\nContent A.",
+      "## abcdf\n\nContent B.",
+    ]);
+    expect(result).toHaveLength(1);
+  });
+
+  test("threshold 1 (len 9): ## abcdefghi and ## abcdefghj → second DEDUPED (distance 1 ≤ 1)", () => {
+    const result = dedupeChunkBlocks([
+      "## abcdefghi\n\nContent A.",
+      "## abcdefghj\n\nContent B.",
+    ]);
+    expect(result).toHaveLength(1);
+  });
+
+  test("threshold 2 (len ≥ 10): ## abcdefghij and ## abcdefghi → second DEDUPED (distance 1 ≤ 2)", () => {
+    const result = dedupeChunkBlocks([
+      "## abcdefghij\n\nContent A.",
+      "## abcdefghi\n\nContent B.",
+    ]);
+    expect(result).toHaveLength(1);
   });
 });
