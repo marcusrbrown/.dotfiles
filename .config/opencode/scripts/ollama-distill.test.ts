@@ -1602,7 +1602,7 @@ describe("acquireLock / releaseLock", () => {
 
 describe("chunkSegments", () => {
   function seg(role: "USER" | "ASSISTANT", chars: number): MessageSegment {
-    return { role, text: "x".repeat(chars), char_count: chars };
+    return { kind: "text", role, text: "x".repeat(chars), char_count: chars, time_created: 0, message_id: "msg_test" };
   }
 
   test("empty input returns empty array", () => {
@@ -1682,35 +1682,35 @@ describe("chunkSegments", () => {
 
 describe("renderChunkTranscript", () => {
   test("single USER segment renders correctly", () => {
-    const segments: MessageSegment[] = [{ role: "USER", text: "hello world", char_count: 11 }];
+    const segments: MessageSegment[] = [{ kind: "text", role: "USER", text: "hello world", char_count: 11, time_created: 0, message_id: "m1" }];
     expect(renderChunkTranscript(segments)).toBe("USER: hello world");
   });
 
   test("single ASSISTANT segment renders correctly", () => {
-    const segments: MessageSegment[] = [{ role: "ASSISTANT", text: "hi there", char_count: 8 }];
+    const segments: MessageSegment[] = [{ kind: "text", role: "ASSISTANT", text: "hi there", char_count: 8, time_created: 0, message_id: "m2" }];
     expect(renderChunkTranscript(segments)).toBe("ASSISTANT: hi there");
   });
 
   test("multi-segment renders with role prefixes and newlines", () => {
     const segments: MessageSegment[] = [
-      { role: "USER", text: "question", char_count: 8 },
-      { role: "ASSISTANT", text: "answer", char_count: 6 },
+      { kind: "text", role: "USER", text: "question", char_count: 8, time_created: 0, message_id: "m3" },
+      { kind: "text", role: "ASSISTANT", text: "answer", char_count: 6, time_created: 0, message_id: "m4" },
     ];
     expect(renderChunkTranscript(segments)).toBe("USER: question\nASSISTANT: answer");
   });
 
   test("USER+ASSISTANT alternation renders in order", () => {
     const segments: MessageSegment[] = [
-      { role: "USER", text: "a", char_count: 1 },
-      { role: "ASSISTANT", text: "b", char_count: 1 },
-      { role: "USER", text: "c", char_count: 1 },
+      { kind: "text", role: "USER", text: "a", char_count: 1, time_created: 0, message_id: "m5" },
+      { kind: "text", role: "ASSISTANT", text: "b", char_count: 1, time_created: 0, message_id: "m6" },
+      { kind: "text", role: "USER", text: "c", char_count: 1, time_created: 0, message_id: "m7" },
     ];
     expect(renderChunkTranscript(segments)).toBe("USER: a\nASSISTANT: b\nUSER: c");
   });
 
   test("ASSISTANT-only segment renders correctly", () => {
     const segments: MessageSegment[] = [
-      { role: "ASSISTANT", text: "standalone", char_count: 10 },
+      { kind: "text", role: "ASSISTANT", text: "standalone", char_count: 10, time_created: 0, message_id: "m8" },
     ];
     expect(renderChunkTranscript(segments)).toBe("ASSISTANT: standalone");
   });
@@ -2281,7 +2281,7 @@ describe("callOllama malformed response handling", () => {
       new Response("<html>Bad Gateway</html>", { status: 200 });
 
     try {
-      const result = await callOllama("http://127.0.0.1:11434", "sys", "transcript", "ses_x");
+      const result = await callOllama("test transcript");
       expect(result.output).toBe("");
       expect(result.error).toBeDefined();
       const errMsg = result.error!.toLowerCase();
@@ -2296,7 +2296,7 @@ describe("callOllama malformed response handling", () => {
       new Response(JSON.stringify({ response: "wrong shape" }), { status: 200 });
 
     try {
-      const result = await callOllama("http://127.0.0.1:11434", "sys", "transcript", "ses_x");
+      const result = await callOllama("test transcript");
       expect(result.output).toBe("");
       expect(result.error).toBeDefined();
     } finally {
@@ -2354,7 +2354,7 @@ describe("chunkSegments exact-boundary edge cases", () => {
   // ROLE_PREFIX_OVERHEAD = 12 (see ollama-distill.ts)
   const ROLE_PREFIX_OVERHEAD = 12;
 
-  function makeSegment(chars: number, role: "user" | "assistant" = "user"): MessageSegment {
+  function makeSegment(chars: number, role: "USER" | "ASSISTANT" = "USER"): MessageSegment {
     return {
       kind: "text",
       role,

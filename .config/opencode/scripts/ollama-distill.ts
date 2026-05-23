@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { Database } from "bun:sqlite";
-import { mkdirSync, renameSync, existsSync, appendFileSync, openSync, closeSync, unlinkSync, writeFileSync, lstatSync } from "node:fs";
+import { mkdirSync, renameSync, existsSync, appendFileSync, openSync, closeSync, unlinkSync, writeFileSync, lstatSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 
@@ -1083,7 +1083,7 @@ export function acquireLock(stateDir: string): string {
     // EEXIST: check if the lock is stale (dead PID or malformed content)
     let isStale = false;
     try {
-      const content = require("node:fs").readFileSync(lockPath, "utf8") as string;
+      const content = readFileSync(lockPath, "utf8") as string;
       const firstLine = content.split("\n")[0]?.trim() ?? "";
       const pid = parseInt(firstLine, 10);
       if (!firstLine || isNaN(pid) || pid <= 0) {
