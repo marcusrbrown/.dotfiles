@@ -28,7 +28,8 @@
       "enabled": true,
       "token_budget": 20000,
       "min_reads": 4
-    }
+    },
+    "inject_docs": true
   },
   "sidekick": {
     "disabled": true
