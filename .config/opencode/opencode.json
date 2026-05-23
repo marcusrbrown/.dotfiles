@@ -6,7 +6,7 @@
     "@cortexkit/opencode-magic-context@0.21.8",
     "@cortexkit/aft-opencode@0.29.1",
     "opencode-copilot-delegate@0.12.0",
-    "@fro.bot/systematic@2.21.0"
+    "@fro.bot/systematic@2.22.0"
   ],
   "provider": {
     "openai": {
