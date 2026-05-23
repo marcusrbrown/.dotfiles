@@ -20,8 +20,11 @@ import {
   withSqliteBusyRetry,
   acquireLock,
   releaseLock,
+  chunkSegments,
+  renderChunkTranscript,
   type ExtractStats,
   type RunRecord,
+  type MessageSegment,
 } from "./ollama-distill.ts";
 
 // Save original fetch so we can restore it after each Ollama test
@@ -543,18 +546,14 @@ describe("selectSessions", () => {
     db.close();
   });
 
-  test("byte cap: stops before accumulating byte cap of transcript chars", async () => {
+  test("maxSessions cap: 5 sessions in DB + maxSessions=3 returns exactly 3", async () => {
     const db = createSelectionDb();
-    // Each session ~40KB of text (under 60K truncation limit)
-    // With a 100KB cap, should stop after ~2-3 sessions
-    const chunkText = "x".repeat(40_000);
-    for (let i = 0; i < 10; i++) {
+    const chunkText = "x".repeat(200_000); // 200K chars each — would have blown old 1.5MB cap
+    for (let i = 0; i < 5; i++) {
       insertSessionWithText(db, `sess-${i}`, 1000 + i, chunkText);
     }
-    const result = await selectSessions(db, 0, 50, 100_000);
-    // Should stop well before 10 sessions (40K chars each, cap 100K → stops at 2-3)
-    expect(result.sessions.length).toBeLessThan(10);
-    expect(result.sessions.length).toBeGreaterThan(0);
+    const result = await selectSessions(db, 0, 3);
+    expect(result.sessions.length).toBe(3);
     db.close();
   });
 
@@ -695,7 +694,7 @@ describe("callOllama", () => {
   });
 
   test("timeout: AbortSignal.timeout fires → returns timeout error", async () => {
-    // We can't easily test the 300s timeout, but we can verify the error path
+    // We can't easily test the 600s timeout, but we can verify the error path
     // by mocking fetch to throw a TimeoutError
     globalThis.fetch = async () => {
       const err = new Error("The operation was aborted due to timeout");
@@ -707,6 +706,7 @@ describe("callOllama", () => {
       const result = await callOllama("test transcript");
       expect(result.output).toBe("");
       expect(result.error).toContain("timeout");
+      expect(result.error).toContain("600s");
     } finally {
       globalThis.fetch = originalFetch;
     }
@@ -1538,6 +1538,585 @@ describe("acquireLock / releaseLock", () => {
       expect(() => acquireLock(stateDir)).toThrow("another distill run");
     } finally {
       releaseLock(lockPath);
+    }
+  });
+});
+
+// ─── v1.2: chunkSegments tests ────────────────────────────────────────────────
+
+describe("chunkSegments", () => {
+  function seg(role: "USER" | "ASSISTANT", chars: number): MessageSegment {
+    return { role, text: "x".repeat(chars), char_count: chars };
+  }
+
+  test("empty input returns empty array", () => {
+    expect(chunkSegments([])).toEqual([]);
+  });
+
+  test("single small segment returns one chunk", () => {
+    const segments = [seg("USER", 100)];
+    const chunks = chunkSegments(segments);
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]).toHaveLength(1);
+  });
+
+  test("exactly-target-sized segment returns one chunk", () => {
+    // 55000 chars + 12 overhead = 55012, which is > target (55000), but since
+    // current is empty we always push the first segment regardless
+    const segments = [seg("USER", 55_000)];
+    const chunks = chunkSegments(segments);
+    expect(chunks).toHaveLength(1);
+  });
+
+  test("multiple small segments that fit in one chunk", () => {
+    // 3 segments of 10K each = 30K + overhead, well under 55K target
+    const segments = [seg("USER", 10_000), seg("ASSISTANT", 10_000), seg("USER", 10_000)];
+    const chunks = chunkSegments(segments);
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]).toHaveLength(3);
+  });
+
+  test("segments spanning two chunks when target exceeded", () => {
+    // 3 segments of 30K each: first two would be 60K+overhead > 55K target
+    // so: chunk1=[seg0, seg1 won't fit at target], chunk2=[seg1, seg2 won't fit], chunk3=[seg2]
+    // Actually: seg0 (30K+12=30012) fits in chunk1. seg1 (30012) would make 60024 > 55000 target
+    // → finalize chunk1=[seg0], start chunk2 with seg1. seg2 (30012) would make 60024 > 55000
+    // → finalize chunk2=[seg1], start chunk3 with seg2.
+    const segments = [seg("USER", 30_000), seg("ASSISTANT", 30_000), seg("USER", 30_000)];
+    const chunks = chunkSegments(segments);
+    expect(chunks).toHaveLength(3);
+    expect(chunks[0]).toHaveLength(1);
+    expect(chunks[1]).toHaveLength(1);
+    expect(chunks[2]).toHaveLength(1);
+  });
+
+  test("segments that pack perfectly under target stay in one chunk", () => {
+    // Two segments of 20K each: 20012 + 20012 = 40024 < 55000 target → one chunk
+    const segments = [seg("USER", 20_000), seg("ASSISTANT", 20_000)];
+    const chunks = chunkSegments(segments);
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]).toHaveLength(2);
+  });
+
+  test("segment exceeding hard cap forces its own chunk", () => {
+    // A pre-truncated segment at exactly SEGMENT_HARD_CAP (70K) chars
+    // It's the first segment so it always goes into its own chunk
+    const bigSeg = seg("USER", 70_000);
+    const smallSeg = seg("ASSISTANT", 100);
+    const chunks = chunkSegments([bigSeg, smallSeg]);
+    // bigSeg alone: 70000+12=70012 > hardCap(70000) but it's first so it goes in chunk1
+    // smallSeg: currentChars=70012, adding 112 > hardCap → finalize chunk1, start chunk2
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0][0]).toBe(bigSeg);
+    expect(chunks[1][0]).toBe(smallSeg);
+  });
+
+  test("exceeds hard cap forces split mid-sequence", () => {
+    // seg0=40K, seg1=35K: 40012+35012=75024 > hardCap(70000) → split
+    const s0 = seg("USER", 40_000);
+    const s1 = seg("ASSISTANT", 35_000);
+    const chunks = chunkSegments([s0, s1]);
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0]).toContain(s0);
+    expect(chunks[1]).toContain(s1);
+  });
+});
+
+// ─── v1.2: renderChunkTranscript tests ───────────────────────────────────────
+
+describe("renderChunkTranscript", () => {
+  test("single USER segment renders correctly", () => {
+    const segments: MessageSegment[] = [{ role: "USER", text: "hello world", char_count: 11 }];
+    expect(renderChunkTranscript(segments)).toBe("USER: hello world");
+  });
+
+  test("single ASSISTANT segment renders correctly", () => {
+    const segments: MessageSegment[] = [{ role: "ASSISTANT", text: "hi there", char_count: 8 }];
+    expect(renderChunkTranscript(segments)).toBe("ASSISTANT: hi there");
+  });
+
+  test("multi-segment renders with role prefixes and newlines", () => {
+    const segments: MessageSegment[] = [
+      { role: "USER", text: "question", char_count: 8 },
+      { role: "ASSISTANT", text: "answer", char_count: 6 },
+    ];
+    expect(renderChunkTranscript(segments)).toBe("USER: question\nASSISTANT: answer");
+  });
+
+  test("USER+ASSISTANT alternation renders in order", () => {
+    const segments: MessageSegment[] = [
+      { role: "USER", text: "a", char_count: 1 },
+      { role: "ASSISTANT", text: "b", char_count: 1 },
+      { role: "USER", text: "c", char_count: 1 },
+    ];
+    expect(renderChunkTranscript(segments)).toBe("USER: a\nASSISTANT: b\nUSER: c");
+  });
+
+  test("ASSISTANT-only segment renders correctly", () => {
+    const segments: MessageSegment[] = [
+      { role: "ASSISTANT", text: "standalone", char_count: 10 },
+    ];
+    expect(renderChunkTranscript(segments)).toBe("ASSISTANT: standalone");
+  });
+
+  test("empty segments returns empty string", () => {
+    expect(renderChunkTranscript([])).toBe("");
+  });
+});
+
+// ─── v1.2: end-to-end chunked inference tests ────────────────────────────────
+
+// Helper: create a DB with sessions where each session has a long transcript
+function createChunkedDb(
+  dbPath: string,
+  sessions: Array<{ id: string; timeUpdated: number; messages: Array<{ role: string; text: string }> }>
+) {
+  const db = new Database(dbPath);
+  db.exec(`
+    CREATE TABLE session (
+      id TEXT PRIMARY KEY,
+      project_id TEXT,
+      parent_id TEXT,
+      time_created INTEGER,
+      time_updated INTEGER
+    );
+    CREATE TABLE message (
+      id TEXT PRIMARY KEY,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+    CREATE TABLE part (
+      id TEXT PRIMARY KEY,
+      message_id TEXT,
+      session_id TEXT,
+      time_created INTEGER,
+      data TEXT
+    );
+  `);
+
+  for (const session of sessions) {
+    db.run(
+      "INSERT INTO session (id, project_id, parent_id, time_created, time_updated) VALUES (?, NULL, NULL, ?, ?)",
+      [session.id, session.timeUpdated - 1000, session.timeUpdated]
+    );
+
+    for (let i = 0; i < session.messages.length; i++) {
+      const msg = session.messages[i];
+      const msgId = `${session.id}-msg-${i}`;
+      db.run(
+        "INSERT INTO message (id, session_id, time_created, data) VALUES (?, ?, ?, ?)",
+        [msgId, session.id, session.timeUpdated - 1000 + i, JSON.stringify({ role: msg.role })]
+      );
+      const partId = `${session.id}-part-${i}`;
+      db.run(
+        "INSERT INTO part (id, message_id, session_id, time_created, data) VALUES (?, ?, ?, ?, ?)",
+        [partId, msgId, session.id, session.timeUpdated - 1000 + i, JSON.stringify({ type: "text", text: msg.text })]
+      );
+    }
+  }
+
+  db.close();
+}
+
+describe("v1.2 end-to-end chunked inference", () => {
+  test("session with 3 segments totaling ~100K chars produces 2 chunks, both succeed, report has (2 chunks) suffix", async () => {
+    const stateDir = join(tmpdir(), "distill-e2e-chunked-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-e2e-chunked-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+
+    // 3 messages of ~20K chars each = ~60K total → should produce 2 chunks
+    // chunk1: msg0+msg1 = 40K+overhead < 55K target; msg2 would push to 60K > 55K → split
+    // chunk2: msg2 alone
+    const text20K = "A".repeat(20_000);
+    createChunkedDb(dbPath, [
+      {
+        id: "ses_chunked1",
+        timeUpdated: now - 1000,
+        messages: [
+          { role: "user", text: text20K },
+          { role: "assistant", text: text20K },
+          { role: "user", text: text20K },
+        ],
+      },
+    ]);
+
+    let ollamaCallCount = 0;
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) {
+        return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      }
+      if (urlStr.includes("/api/chat")) {
+        ollamaCallCount++;
+        return new Response(
+          JSON.stringify({ message: { content: `## Chunk ${ollamaCallCount} Summary\n\nContent here.` } }),
+          { status: 200 }
+        );
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    const reportPath = join(stateDir, "test-report.md");
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts", `--out=${reportPath}`], () => {}, () => {});
+      expect(code).toBe(0);
+
+      // Should have called Ollama twice (2 chunks)
+      expect(ollamaCallCount).toBe(2);
+
+      // Report should exist and contain "(2 chunks)" in the session header
+      expect(existsSync(reportPath)).toBe(true);
+      const reportContent = readFileSync(reportPath, "utf8");
+      expect(reportContent).toContain("(2 chunks)");
+      expect(reportContent).toContain("Chunk 1 Summary");
+      expect(reportContent).toContain("Chunk 2 Summary");
+
+      // Cursor should be advanced (session succeeded)
+      const cursor = JSON.parse(readFileSync(join(stateDir, "cursor.json"), "utf8"));
+      expect(cursor.last_run_timestamp).toBe(now - 1000);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("2 chunks, second chunk fails Ollama → session marked FAILED, error has chunk index", async () => {
+    const stateDir = join(tmpdir(), "distill-e2e-chunk-fail-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-e2e-chunk-fail-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+
+    const text34K = "B".repeat(34_000);
+    createChunkedDb(dbPath, [
+      {
+        id: "ses_failchunk",
+        timeUpdated: now - 1000,
+        messages: [
+          { role: "user", text: text34K },
+          { role: "assistant", text: text34K },
+          { role: "user", text: text34K },
+        ],
+      },
+    ]);
+
+    let ollamaCallCount = 0;
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) {
+        return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      }
+      if (urlStr.includes("/api/chat")) {
+        ollamaCallCount++;
+        if (ollamaCallCount === 2) {
+          // Second chunk fails
+          return new Response("Internal Server Error", { status: 500, statusText: "Internal Server Error" });
+        }
+        return new Response(
+          JSON.stringify({ message: { content: "## Summary\n\nContent." } }),
+          { status: 200 }
+        );
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts"], () => {}, () => {});
+      expect(code).toBe(1); // failure
+
+      // Cursor should NOT be advanced (session failed)
+      const cursorPath = join(stateDir, "cursor.json");
+      expect(existsSync(cursorPath)).toBe(true);
+      const cursor = JSON.parse(readFileSync(cursorPath, "utf8"));
+      // Cursor stays at window floor, not at session's time_updated
+      expect(cursor.last_run_timestamp).not.toBe(now - 1000);
+
+      // JSONL log should have error with chunk index in message
+      const logPath = join(stateDir, "runs.jsonl");
+      expect(existsSync(logPath)).toBe(true);
+      const record = JSON.parse(readFileSync(logPath, "utf8").trim());
+      expect(record.success).toBe(false);
+      expect(record.errors.length).toBeGreaterThan(0);
+      expect(record.errors[0].phase).toBe("ollama");
+      expect(record.errors[0].message).toContain("chunk 2/");
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  test("regression: small single-chunk session produces header WITHOUT (N chunks) suffix", async () => {
+    const stateDir = join(tmpdir(), "distill-e2e-single-chunk-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-e2e-single-chunk-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+
+    // Small transcript — fits in one chunk
+    createChunkedDb(dbPath, [
+      {
+        id: "ses_small",
+        timeUpdated: now - 1000,
+        messages: [
+          { role: "user", text: "Hello, what is 2+2?" },
+          { role: "assistant", text: "It is 4." },
+        ],
+      },
+    ]);
+
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) {
+        return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      }
+      if (urlStr.includes("/api/chat")) {
+        return new Response(
+          JSON.stringify({ message: { content: "## Summary\n\nSimple session." } }),
+          { status: 200 }
+        );
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    const reportPath = join(stateDir, "test-report.md");
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts", `--out=${reportPath}`], () => {}, () => {});
+      expect(code).toBe(0);
+
+      const reportContent = readFileSync(reportPath, "utf8");
+      // Should NOT contain "(N chunks)" suffix for single-chunk sessions
+      expect(reportContent).not.toContain("chunks)");
+      // Should contain the session header without chunk count
+      expect(reportContent).toContain("ses_small");
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+});
+
+// ─── v1.2 smoke-fix tests (Fix A/B/C/D) ──────────────────────────────────────
+
+describe("v1.2 smoke fixes", () => {
+  // Fix A: timeout string uses 600s
+  test("Fix A: timeout error string contains '600s'", async () => {
+    globalThis.fetch = async () => {
+      const err = new Error("The operation was aborted due to timeout");
+      err.name = "TimeoutError";
+      throw err;
+    };
+    try {
+      const result = await callOllama("test");
+      expect(result.error).toContain("600s");
+      expect(result.error).not.toContain("300s");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  // Fix B: selectSessions no longer caps by bytes — large sessions all selected
+  test("Fix B: 10 sessions × 200K chars each all selected when maxSessions=10", async () => {
+    const db = createSelectionDb();
+    const bigText = "x".repeat(200_000);
+    for (let i = 0; i < 10; i++) {
+      insertSessionWithText(db, `big-sess-${i}`, 2000 + i, bigText);
+    }
+    const result = await selectSessions(db, 0, 10);
+    expect(result.sessions.length).toBe(10);
+    db.close();
+  });
+
+  // Fix C: partial-success session writes blocks to report
+  test("Fix C: partial-success (3/5 chunks) writes 3 blocks, title contains '3/5 chunks succeeded', sessionSucceeded=false", async () => {
+    const stateDir = join(tmpdir(), "distill-partial-c-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-partial-c-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+
+    // Create a session with a large transcript that will produce 5+ chunks
+    // Each segment ~35K chars → 3 segments per chunk at 55K target → need ~15 segments for 5 chunks
+    // Simpler: mock callOllama at the fetch level — succeed on calls 1-3, fail on call 4
+    const text35K = "C".repeat(35_000);
+    const messages: Array<{ role: string; text: string }> = [];
+    for (let i = 0; i < 15; i++) {
+      messages.push({ role: i % 2 === 0 ? "user" : "assistant", text: text35K });
+    }
+
+    createChunkedDb(dbPath, [
+      { id: "ses_partial_c", timeUpdated: now - 1000, messages },
+    ]);
+
+    let ollamaCallCount = 0;
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) {
+        return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      }
+      if (urlStr.includes("/api/chat")) {
+        ollamaCallCount++;
+        if (ollamaCallCount >= 4) {
+          return new Response("Internal Server Error", { status: 500 });
+        }
+        return new Response(
+          JSON.stringify({ message: { content: `## Block ${ollamaCallCount}\n\nContent.` } }),
+          { status: 200 }
+        );
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    const reportPath = join(stateDir, "partial-report.md");
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts", `--out=${reportPath}`], () => {}, () => {});
+      expect(code).toBe(1); // partial failure → non-zero
+
+      // Report should exist and contain the partial blocks
+      expect(existsSync(reportPath)).toBe(true);
+      const reportContent = readFileSync(reportPath, "utf8");
+      expect(reportContent).toContain("Block 1");
+      expect(reportContent).toContain("Block 2");
+      expect(reportContent).toContain("Block 3");
+      // Title should indicate partial success
+      expect(reportContent).toContain("chunks succeeded");
+
+      // JSONL: success=false, errors has chunk failure, report_path is resolved
+      const logPath = join(stateDir, "runs.jsonl");
+      const record = JSON.parse(readFileSync(logPath, "utf8").trim());
+      expect(record.success).toBe(false);
+      expect(record.errors.length).toBeGreaterThan(0);
+      expect(record.errors[0].message).toContain("chunk 4/");
+      expect(record.report_path).toBe(reportPath);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  // Fix D: total-failure session — report_path is still resolved in JSONL
+  test("Fix D: total-failure (chunk 1 fails) → sessionResults empty, report_path still resolved in JSONL", async () => {
+    const stateDir = join(tmpdir(), "distill-total-fail-d-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-total-fail-d-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+
+    createFileDb(dbPath, [
+      { id: "ses_total_fail", timeUpdated: now - 1000, text: "some content" },
+    ]);
+
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) {
+        return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      }
+      if (urlStr.includes("/api/chat")) {
+        return new Response("Internal Server Error", { status: 500 });
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    const reportPath = join(stateDir, "fail-report.md");
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts", `--out=${reportPath}`], () => {}, () => {});
+      expect(code).toBe(1);
+
+      // JSONL: report_path must be the resolved path, not ""
+      const logPath = join(stateDir, "runs.jsonl");
+      const record = JSON.parse(readFileSync(logPath, "utf8").trim());
+      expect(record.success).toBe(false);
+      expect(record.report_path).toBe(reportPath);
+      expect(record.report_path).not.toBe("");
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
+    }
+  });
+
+  // Fix C+D: multi-session with partial failure — report contains both sessions' content
+  test("Fix C+D: session1 partial (3 chunks succeed) + session2 full success (1 chunk) → report has both, report_blocks_generated=4", async () => {
+    const stateDir = join(tmpdir(), "distill-multi-partial-" + Math.random().toString(36).slice(2));
+    const dbPath = join(tmpdir(), "distill-multi-partial-" + Math.random().toString(36).slice(2) + ".db");
+    const now = Date.now();
+
+    // Session 1: large enough to produce 4+ chunks; fail on chunk 4
+    const text35K = "D".repeat(35_000);
+    const messages1: Array<{ role: string; text: string }> = [];
+    for (let i = 0; i < 15; i++) {
+      messages1.push({ role: i % 2 === 0 ? "user" : "assistant", text: text35K });
+    }
+
+    // Session 2: small, 1 chunk
+    createChunkedDb(dbPath, [
+      { id: "ses_mp1", timeUpdated: now - 2000, messages: messages1 },
+      { id: "ses_mp2", timeUpdated: now - 1000, messages: [{ role: "user", text: "short" }] },
+    ]);
+
+    let ollamaCallCount = 0;
+    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
+      if (urlStr.includes("/api/tags")) {
+        return new Response(JSON.stringify({ models: [] }), { status: 200 });
+      }
+      if (urlStr.includes("/api/chat")) {
+        ollamaCallCount++;
+        // Calls 1-3: session 1 chunks 1-3 succeed; call 4: session 1 chunk 4 fails
+        // Call 5: session 2 chunk 1 succeeds
+        if (ollamaCallCount === 4) {
+          return new Response("Internal Server Error", { status: 500 });
+        }
+        return new Response(
+          JSON.stringify({ message: { content: `## Block ${ollamaCallCount}\n\nContent.` } }),
+          { status: 200 }
+        );
+      }
+      throw new Error(`Unexpected URL: ${urlStr}`);
+    };
+
+    const reportPath = join(stateDir, "multi-report.md");
+    process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
+    process.env.OPENCODE_DB_PATH = dbPath;
+
+    try {
+      const code = await main(["bun", "script.ts", `--out=${reportPath}`], () => {}, () => {});
+      expect(code).toBe(1); // partial failure
+
+      // Report should contain both sessions' content
+      expect(existsSync(reportPath)).toBe(true);
+      const reportContent = readFileSync(reportPath, "utf8");
+      expect(reportContent).toContain("ses_mp1");
+      expect(reportContent).toContain("ses_mp2");
+      expect(reportContent).toContain("Block 1");
+      expect(reportContent).toContain("Block 5"); // session 2's block
+
+      // JSONL: report_blocks_generated = 3 (partial) + 1 (full) = 4
+      const logPath = join(stateDir, "runs.jsonl");
+      const record = JSON.parse(readFileSync(logPath, "utf8").trim());
+      expect(record.report_blocks_generated).toBe(4);
+      expect(record.report_path).toBe(reportPath);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.OLLAMA_DISTILL_STATE_DIR;
+      delete process.env.OPENCODE_DB_PATH;
+      if (existsSync(dbPath)) unlinkSync(dbPath);
     }
   });
 });
