@@ -1,12 +1,12 @@
 # DOTFILES KNOWLEDGE BASE
 
-**Generated:** 2026-04-20
-**Commit:** 90742fb
+**Generated:** 2026-05-23
+**Commit:** ed15ddc
 **Branch:** main
 
 ## OVERVIEW
 
-Bare git dotfiles repo. `GIT_DIR=~/.dotfiles`, `GIT_WORK_TREE=~/`. 162 tracked files spanning shell init, dev tooling, AI agent configs, devcontainer setup, and CI. Sync across machines via allowlist `.gitignore`.
+Bare git dotfiles repo. `GIT_DIR=~/.dotfiles`, `GIT_WORK_TREE=~/`. 195 tracked files spanning shell init, dev tooling, AI agent configs, devcontainer setup, CI, and project documentation (plans, brainstorms, solutions, runbooks). Sync across machines via allowlist `.gitignore`.
 
 ## GIT OPERATIONS
 
@@ -50,7 +50,8 @@ git status  # now works on dotfiles
 │   └── skills/          # Loadable by Claude Code, OpenCode, etc.
 ├── .claude/             # Claude Code: agents/, rules/, commands/, settings.json
 ├── .devcontainer/       # Devcontainer + custom features (dotfiles-dev, mise, sheldon, keychain)
-├── .dotfiles/           # Bare repo metadata (.gitignore allowlist, .gitconfig, docs/)
+├── .dotfiles/           # Bare repo metadata (.gitignore allowlist, .gitconfig)
+│   └── docs/            # Project docs: brainstorms/, plans/, runbooks/, solutions/
 ├── .github/             # CI workflows + settings.yml (branch protection)
 ├── .ssh/                # SSH config only (no credentials)
 ├── .vim/, .vimrc        # vim config
@@ -72,6 +73,8 @@ git status  # now works on dotfiles
 | Git settings | `.config/git/config` | GPG signing on, rebase defaults, autoStash |
 | Mise tool versions | `.config/mise/config.toml` | Node, Python, Rust, etc. — `nvm` is disabled |
 | Mise tasks | `.config/mise/tasks/` | File-based shebang scripts; subdirs map to `:` (e.g. `mise/tools/install` -> `mise:tools:install`); auto-discovered, no `task_config.includes` needed |
+| Project docs | `.dotfiles/docs/` | `brainstorms/` (requirements), `plans/` (implementation plans), `runbooks/` (operational procedures), `solutions/` (compound knowledge captures) |
+| OpenCode scripts | `.config/opencode/scripts/` | Bun + TypeScript utilities. `opencode-doctor.ts` (config diagnostic), `ollama-distill.ts` (local session distillation pipeline) |
 | Brewfile | `Brewfile` | macOS apps + casks + mas + 140+ vscode extensions |
 | Claude Code agents/rules | `.claude/agents/`, `.claude/rules/` | Custom agent + rule definitions |
 | OpenCode config | `.config/opencode/` | Has own AGENTS.md (collaboration system prompt) |
@@ -195,6 +198,12 @@ mise run install
 mise run opencode:doctor                      # Full diagnostic
 mise run opencode:doctor -- --only health     # Specific section
 mise run opencode:doctor -- --json            # Scriptable output
+
+# Distill recent OpenCode sessions into a Markdown report (runs locally via Ollama)
+mise run distill                              # Process sessions since last cursor
+mise run distill -- --since=7d                # Override window
+mise run distill -- --session=ses_<id>        # Single session, no cursor mutation
+mise run distill -- --help                    # Full flag reference (env, exit codes, output paths)
 
 # Dotfiles git operations (use the alias)
 .dotfiles git status
