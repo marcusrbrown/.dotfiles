@@ -1,10 +1,16 @@
 #!/usr/bin/env bun
 import { Database } from "bun:sqlite";
-import { mkdirSync, renameSync, existsSync, appendFileSync, openSync, closeSync, unlinkSync } from "node:fs";
+import { mkdirSync, renameSync, existsSync, appendFileSync, openSync, closeSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export type MessageSegment = {
+  role: "USER" | "ASSISTANT";  // matches the existing prefix format
+  text: string;                 // the body of this segment (no leading "USER:" line)
+  char_count: number;
+};
 
 export type ExtractStats = {
   messages: number;
@@ -13,11 +19,14 @@ export type ExtractStats = {
   skipped_parts: number;
   skipped_types: string[];
   transcript_chars: number;
-  truncated: boolean;
+  truncated: boolean;           // now means "a single message exceeded the hard cap and got truncated mid-message"
+  segments_total: number;       // NEW
+  segments_truncated: number;   // NEW — usually 0
 };
 
 export type ExtractResult = {
-  transcript: string;
+  transcript: string;           // existing — concatenated USER:/ASSISTANT: lines, unchanged shape
+  segments: MessageSegment[];   // NEW — for the chunker
   stats: ExtractStats;
 };
 
@@ -59,8 +68,12 @@ export class ReadOnlyVerificationError extends Error {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TRUNCATION_LIMIT = 120_000;
 const TRUNCATION_MARKER = "\n\n[... transcript truncated for context limit]";
+// Per-segment hard cap: if a single message body exceeds this, it gets prefix-truncated.
+// The chunker enforces 70K per CHUNK; segments are smaller than chunks.
+const SEGMENT_HARD_CAP = 70_000;
+// Overhead per segment when reconstructing transcript (role prefix + newline)
+const ROLE_PREFIX_OVERHEAD = 12; // "ASSISTANT: \n" is 12 chars; "USER: \n" is 7; use 12 as safe upper bound
 const BUSY_RETRY_ATTEMPTS = 3;
 const BUSY_RETRY_DELAY_MS = 100;
 
@@ -252,6 +265,8 @@ function buildTranscript(rows: TranscriptRow[]): ExtractResult {
     skipped_types: [],
     transcript_chars: 0,
     truncated: false,
+    segments_total: 0,
+    segments_truncated: 0,
   };
 
   // Group rows by message_id preserving insertion order
@@ -280,13 +295,14 @@ function buildTranscript(rows: TranscriptRow[]): ExtractResult {
   }
 
   const skippedTypesSet = new Set<string>();
+  const segments: MessageSegment[] = [];
   const lines: string[] = [];
-  let totalChars = 0;
-  let truncated = false;
 
   for (const msgId of messageOrder) {
     const { envelope, partRows } = messageMap.get(msgId)!;
-    const role = String(envelope.role ?? "unknown").toUpperCase();
+    const rawRole = String(envelope.role ?? "unknown").toUpperCase();
+    // Normalize role to USER or ASSISTANT for segments; fall back to USER for unknown
+    const segRole: "USER" | "ASSISTANT" = rawRole === "ASSISTANT" ? "ASSISTANT" : "USER";
     stats.messages++;
 
     for (const row of partRows) {
@@ -301,12 +317,15 @@ function buildTranscript(rows: TranscriptRow[]): ExtractResult {
         continue;
       }
 
-      let line: string;
+      let segText: string;
+      let linePrefix: string;
       if (partData.type === "text") {
-        line = `${role}: ${(partData as { type: "text"; text: string }).text}`;
+        segText = (partData as { type: "text"; text: string }).text;
+        linePrefix = `${rawRole}: `;
         stats.text_parts++;
       } else if (partData.type === "reasoning") {
-        line = `${role} [reasoning]: ${(partData as { type: "reasoning"; text: string }).text}`;
+        segText = (partData as { type: "reasoning"; text: string }).text;
+        linePrefix = `${rawRole} [reasoning]: `;
         stats.reasoning_parts++;
       } else {
         stats.skipped_parts++;
@@ -314,38 +333,117 @@ function buildTranscript(rows: TranscriptRow[]): ExtractResult {
         continue;
       }
 
-      // Fix #3: Keep prefix up to (CAP - markerLength) chars, then append marker
-      const lineWithNewline = lines.length === 0 ? line : "\n" + line;
-      const newTotal = totalChars + lineWithNewline.length;
-
-      if (newTotal > TRUNCATION_LIMIT) {
-        truncated = true;
-        // Keep as much of the current line as fits before the marker
-        const available = TRUNCATION_LIMIT - totalChars - (lines.length === 0 ? 0 : 1); // account for "\n"
-        if (available > 0) {
-          const prefix = lines.length === 0 ? line.slice(0, available) : line.slice(0, available);
-          lines.push(prefix);
-        }
-        break;
+      // Fix #1: Per-segment hard cap — if a single message body exceeds SEGMENT_HARD_CAP,
+      // prefix-truncate that ONE segment and flag it. Other segments stay intact.
+      let finalSegText = segText;
+      let segTruncated = false;
+      if (segText.length > SEGMENT_HARD_CAP) {
+        const available = SEGMENT_HARD_CAP - TRUNCATION_MARKER.length;
+        finalSegText = segText.slice(0, available) + TRUNCATION_MARKER;
+        segTruncated = true;
+        stats.segments_truncated++;
+        stats.truncated = true;
       }
 
+      segments.push({
+        role: segRole,
+        text: finalSegText,
+        char_count: finalSegText.length,
+      });
+
+      // Build the concatenated transcript line (backward-compat)
+      const line = linePrefix + finalSegText;
       lines.push(line);
-      totalChars = newTotal;
+
+      if (segTruncated) {
+        // Don't break — other messages still get processed into segments
+      }
     }
-
-    if (truncated) break;
   }
 
-  let transcript = lines.join("\n");
-  if (truncated) {
-    transcript += TRUNCATION_MARKER;
-  }
+  const transcript = lines.join("\n");
 
   stats.skipped_types = Array.from(skippedTypesSet);
+  stats.segments_total = segments.length;
   stats.transcript_chars = transcript.length;
-  stats.truncated = truncated;
 
-  return { transcript, stats };
+  return { transcript, segments, stats };
+}
+
+// ─── Chunker ──────────────────────────────────────────────────────────────────
+
+// Per-chunk independence is intentional. Sessions where context built up in
+// chunk N only pays off in chunk N+1 will produce a thinner second block.
+// 8B models hallucinate or lose coherence when given a "consolidate previous
+// summaries" pass, so this pipeline accepts the lossy boundary as a tradeoff
+// for predictable per-chunk quality. See PR #1707 for rationale.
+
+/**
+ * Split an ordered list of MessageSegments into chunks for independent
+ * Ollama inference.
+ *
+ * Algorithm: greedy packing with a single size threshold.
+ * 1. Start a new chunk: current = [], currentChars = 0.
+ * 2. For each segment:
+ *    a. Compute segment size: seg.char_count + ROLE_PREFIX_OVERHEAD.
+ *    b. If current is empty: always push the segment (even if it alone exceeds
+ *       targetChars — extractTranscript already truncated it to SEGMENT_HARD_CAP).
+ *    c. If currentChars + segSize > targetChars: finalize current chunk, start
+ *       a new chunk with this segment.
+ *    d. Else: append to current.
+ * 3. Finalize last chunk if non-empty.
+ *
+ * Default targetChars is 55K. Single segments larger than that go into their
+ * own chunk; extractTranscript pre-truncates each segment to SEGMENT_HARD_CAP
+ * (70K) so oversized lone segments are still bounded.
+ */
+export function chunkSegments(
+  segments: MessageSegment[],
+  targetChars = 55_000
+): MessageSegment[][] {
+  const chunks: MessageSegment[][] = [];
+  let current: MessageSegment[] = [];
+  let currentChars = 0;
+
+  for (const seg of segments) {
+    const segSize = seg.char_count + ROLE_PREFIX_OVERHEAD;
+
+    if (current.length === 0) {
+      // Always push at least one segment per chunk — even if it alone exceeds
+      // targetChars. extractTranscript already truncated it to SEGMENT_HARD_CAP.
+      current.push(seg);
+      currentChars += segSize;
+      continue;
+    }
+
+    if (currentChars + segSize > targetChars) {
+      // Would exceed target: finalize current chunk, start new one with this segment.
+      // Single segments larger than targetChars are already truncated by
+      // extractTranscript to SEGMENT_HARD_CAP, so they fit when alone in a fresh chunk.
+      chunks.push(current);
+      current = [seg];
+      currentChars = segSize;
+    } else {
+      current.push(seg);
+      currentChars += segSize;
+    }
+  }
+
+  if (current.length > 0) {
+    chunks.push(current);
+  }
+
+  return chunks;
+}
+
+/**
+ * Reconstruct the USER: .../ASSISTANT: ... transcript string from a chunk's
+ * segments. Matches the exact format extractTranscript produces.
+ */
+export function renderChunkTranscript(segments: MessageSegment[]): string {
+  return segments
+    .map((seg) => `${seg.role}: ${seg.text}`)
+    .join("\n");
 }
 
 // ─── Cursor ───────────────────────────────────────────────────────────────────
@@ -389,6 +487,7 @@ export type SelectedSession = {
   id: string;
   time_updated: number;
   transcript: string;
+  segments: MessageSegment[];
   stats: ExtractStats;
 };
 
@@ -401,7 +500,7 @@ export async function selectSessions(
   db: Database,
   lastRunTimestamp: number | null,
   maxSessions = 50,
-  maxBytes = 1.5 * 1024 * 1024
+  maxBytes = Infinity  // deprecated: chunked inference makes per-session byte caps unnecessary; kept for API compat
 ): Promise<SelectionResult> {
   const since = lastRunTimestamp ?? 0;
   const fetchCap = Math.ceil(maxSessions * 1.5);
@@ -419,20 +518,13 @@ export async function selectSessions(
   );
 
   const sessions: SelectedSession[] = [];
-  let cumulativeBytes = 0;
 
   for (const row of rows) {
     if (sessions.length >= maxSessions) break;
 
-    const { transcript, stats } = await extractTranscript(db, row.id);
-    const byteCount = stats.transcript_chars;
+    const { transcript, segments, stats } = await extractTranscript(db, row.id);
 
-    if (cumulativeBytes + byteCount > maxBytes && sessions.length > 0) break;
-
-    sessions.push({ id: row.id, time_updated: row.time_updated, transcript, stats });
-    cumulativeBytes += byteCount;
-
-    if (cumulativeBytes >= maxBytes) break;
+    sessions.push({ id: row.id, time_updated: row.time_updated, transcript, segments, stats });
   }
 
   const max_processed_time_updated =
@@ -483,7 +575,7 @@ export const USER_TEMPLATE = `<transcript>
 Extract up to 5 report blocks from the transcript above. Start your response with "## ".`;
 
 const OLLAMA_URL = "http://127.0.0.1:11434/api/chat";
-const OLLAMA_TIMEOUT_MS = 300_000;
+const OLLAMA_TIMEOUT_MS = 600_000;  // 10 min — empirically chunks take ~1m50s; 10x cap covers slow chunks without unbounded hang
 
 export type OllamaResult = {
   output: string;
@@ -523,7 +615,7 @@ export async function callOllama(
     return {
       output: "",
       durationMs,
-      error: isTimeout ? "timeout: Ollama did not respond within 300s" : `network error: ${msg}`,
+      error: isTimeout ? "timeout: Ollama did not respond within 600s" : `network error: ${msg}`,
     };
   }
 
@@ -848,7 +940,7 @@ export function acquireLock(stateDir: string): string {
     const fd = openSync(lockPath, "wx");
     closeSync(fd);
     // Write PID + timestamp as lock content
-    Bun.write(lockPath, `${process.pid}\n${new Date().toISOString()}\n`);
+    writeFileSync(lockPath, `${process.pid}\n${new Date().toISOString()}\n`);
     return lockPath;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -941,7 +1033,7 @@ export async function main(
         return 1;
       }
 
-      let extractResult: { transcript: string; stats: ExtractStats };
+      let extractResult: { transcript: string; segments: MessageSegment[]; stats: ExtractStats };
       try {
         extractResult = await extractTranscript(db, sessionId);
       } catch (err) {
@@ -952,7 +1044,7 @@ export async function main(
       }
       db.close();
 
-      const { transcript } = extractResult;
+      const { transcript, segments: sessionSegments } = extractResult;
 
       // --extract-only: skip Ollama
       if (args.extractOnly) {
@@ -973,7 +1065,25 @@ export async function main(
         return 1;
       }
 
-      const ollamaResult = await callOllama(transcript, MODEL);
+      const sessionChunks = chunkSegments(sessionSegments);
+      const sessionChunkBlocks: string[] = [];
+      let sessionChunkError: string | undefined;
+
+      for (let c = 0; c < sessionChunks.length; c++) {
+        const chunkTranscript = renderChunkTranscript(sessionChunks[c]);
+        const ollamaResult = await callOllama(chunkTranscript, MODEL);
+        if (ollamaResult.error) {
+          sessionChunkError = `chunk ${c + 1}/${sessionChunks.length}: ${ollamaResult.error}`;
+          break;
+        }
+        sessionChunkBlocks.push(ollamaResult.output);
+      }
+
+      // If no chunks (empty transcript), treat as success with empty output
+      if (sessionChunks.length === 0) {
+        sessionChunkBlocks.push("");
+      }
+
       const durationMs = Date.now() - startMs;
 
       const record: RunRecord = {
@@ -983,22 +1093,25 @@ export async function main(
         mode: "session",
         model: MODEL,
         sessions_read: 1,
-        report_blocks_generated: ollamaResult.error ? 0 : 1,
+        report_blocks_generated: sessionChunkError ? 0 : sessionChunkBlocks.length,
         report_path: args.out ?? "stdout",
-        success: !ollamaResult.error,
-        errors: ollamaResult.error
-          ? [{ session_id: sessionId, phase: "ollama", message: ollamaResult.error }]
+        success: !sessionChunkError,
+        errors: sessionChunkError
+          ? [{ session_id: sessionId, phase: "ollama", message: sessionChunkError }]
           : [],
       };
 
       await appendRunLog(logPath, record);
 
-      if (ollamaResult.error) {
-        stderr(`Ollama error for ${sessionId}: ${ollamaResult.error}\n`);
+      if (sessionChunkError) {
+        stderr(`Ollama error for ${sessionId}: ${sessionChunkError}\n`);
         return 1;
       }
 
-      const output = `### Session ${sessionId}\n\n${ollamaResult.output}\n`;
+      const sessionHeader = sessionChunks.length > 1
+        ? `### Session ${sessionId} (${sessionChunks.length} chunks)\n\n`
+        : `### Session ${sessionId}\n\n`;
+      const output = sessionHeader + sessionChunkBlocks.join("\n\n") + "\n";
       if (args.out) {
         await Bun.write(args.out, output);
       } else {
@@ -1137,39 +1250,87 @@ export async function main(
         return 0;
       }
 
-      // Fix #1: Process sessions through Ollama, tracking per-session success
-      // for cursor advancement (only advance through contiguous successful prefix)
+      // Fix #4: Process sessions through Ollama with chunked inference.
+      // Per-chunk independence is intentional — see chunkSegments() comment block.
       const sessionResults: SessionResult[] = [];
       const errors: RunError[] = [];
       // Track which sessions succeeded (by index, in time order)
       const sessionSucceeded: boolean[] = [];
+      let reportBlocksGenerated = 0;
 
       for (const s of sessions) {
-        // Fix #3: Truncated sessions are treated as failures for cursor purposes
-        if (s.stats.truncated) {
+        // Fix #3: Sessions with per-segment truncation are treated as failures for cursor purposes
+        if (s.stats.segments_truncated > 0) {
           errors.push({
             session_id: s.id,
             phase: "truncation",
-            message: `Transcript truncated at ${TRUNCATION_LIMIT} chars; session excluded from cursor advance`,
+            message: `${s.stats.segments_truncated} segment(s) truncated at ${SEGMENT_HARD_CAP} chars; session excluded from cursor advance`,
           });
-          stderr(`Warning: transcript truncated for ${s.id}; treating as failure for cursor\n`);
+          stderr(`Warning: segment(s) truncated for ${s.id}; treating as failure for cursor\n`);
           sessionSucceeded.push(false);
           continue;
         }
 
-        const ollamaResult = await callOllama(s.transcript, MODEL);
-        if (ollamaResult.error) {
-          errors.push({ session_id: s.id, phase: "ollama", message: ollamaResult.error });
-          stderr(`Warning: Ollama error for ${s.id}: ${ollamaResult.error}\n`);
-          sessionSucceeded.push(false);
+        const chunks = chunkSegments(s.segments);
+
+        if (chunks.length === 0) {
+          // No content — mark succeeded trivially (consistent with empty-transcript handling)
+          sessionSucceeded.push(true);
           continue;
         }
-        sessionResults.push({
-          sessionId: s.id,
-          title: `Session ${s.id.slice(0, 20)}`,
-          ollamaOutput: ollamaResult.output,
-        });
-        sessionSucceeded.push(true);
+
+        let allChunksSucceeded = true;
+        const chunkBlocks: string[] = [];
+        const chunkErrors: RunError[] = [];
+
+        for (let c = 0; c < chunks.length; c++) {
+          const chunkTranscript = renderChunkTranscript(chunks[c]);
+          const ollamaResult = await callOllama(chunkTranscript, MODEL);
+          if (ollamaResult.error) {
+            chunkErrors.push({
+              session_id: s.id,
+              phase: "ollama",
+              message: `chunk ${c + 1}/${chunks.length}: ${ollamaResult.error}`,
+            });
+            allChunksSucceeded = false;
+            break;  // stop processing remaining chunks on first failure
+          }
+          chunkBlocks.push(ollamaResult.output);
+        }
+
+        // Header convention:
+        // - 1 chunk total, success: title = "Session <id>"
+        // - N chunks, all succeeded: title = "Session <id> (N chunks)"
+        // - M of N chunks succeeded (partial): title = "Session <id> (M/N chunks succeeded)"
+        // writeReport wraps title as: ### <title> (<sessionId>)
+        let title: string;
+        if (chunks.length === 1 && allChunksSucceeded) {
+          title = `Session ${s.id}`;
+        } else if (allChunksSucceeded) {
+          title = `Session ${s.id} (${chunks.length} chunks)`;
+        } else if (chunkBlocks.length > 0) {
+          title = `Session ${s.id} (${chunkBlocks.length}/${chunks.length} chunks succeeded)`;
+        } else {
+          title = `Session ${s.id} (failed)`;
+        }
+
+        if (chunkBlocks.length > 0) {
+          // Write whatever we got, even on partial failure
+          sessionResults.push({
+            sessionId: s.id,
+            title,
+            ollamaOutput: chunkBlocks.join("\n\n"),
+          });
+          reportBlocksGenerated += chunkBlocks.length;
+        }
+
+        if (allChunksSucceeded) {
+          sessionSucceeded.push(true);
+        } else {
+          errors.push(...chunkErrors);
+          stderr(`Warning: Ollama error for ${s.id}: ${chunkErrors[0]?.message}\n`);
+          sessionSucceeded.push(false);
+        }
       }
 
       // Fix #1: Advance cursor only through the longest contiguous successful prefix
@@ -1184,13 +1345,11 @@ export async function main(
         }
       }
 
-      // Write report
+      // Write report — always call when there's a resolved path; empty sessionResults = header-only file
       const dateStr = new Date().toISOString().slice(0, 10);
       const reportPath = args.out ?? join(stateDir, "reports", `${dateStr}.md`);
 
-      if (sessionResults.length > 0) {
-        await writeReport(reportPath, sessionResults);
-      }
+      await writeReport(reportPath, sessionResults);
 
       const durationMs = Date.now() - startMs;
       const success = errors.length === 0;
@@ -1202,8 +1361,8 @@ export async function main(
         mode: "normal",
         model: MODEL,
         sessions_read: sessions.length,
-        report_blocks_generated: sessionResults.length,
-        report_path: sessionResults.length > 0 ? reportPath : "",
+        report_blocks_generated: reportBlocksGenerated,
+        report_path: reportPath,
         success,
         errors,
       };
