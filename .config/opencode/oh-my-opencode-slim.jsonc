@@ -4,14 +4,14 @@
   "presets": {
     "openai": {
       "orchestrator": {
-        "model": "openai/gpt-5.5",
+        "model": "openai/gpt-5.5-fast",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-5.5",
+        "model": "openai/gpt-5.5-fast",
         "variant": "high",
-        "skills": ["simplify"],
+        "skills": [],
         "mcps": []
       },
       "council": {
@@ -50,7 +50,7 @@
       "oracle": {
         "model": "opencode-go/deepseek-v4-pro",
         "variant": "max",
-        "skills": ["simplify"],
+        "skills": [],
         "mcps": []
       },
       "council": {
@@ -82,14 +82,14 @@
     },
     "copilot": {
       "orchestrator": {
-        "model": "openai/gpt-5.5",
+        "model": "openai/gpt-5.5-fast",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-5.5",
+        "model": "openai/gpt-5.5-fast",
         "variant": "high",
-        "skills": ["simplify"],
+        "skills": [],
         "mcps": []
       },
       "council": {
@@ -125,9 +125,9 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-5.5",
+        "model": "openai/gpt-5.5-fast",
         "variant": "high",
-        "skills": ["simplify"],
+        "skills": [],
         "mcps": []
       },
       "council": {
