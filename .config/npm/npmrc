@@ -6,3 +6,4 @@ init-author-url=https://marcusrbrown.com/
 init-license=MIT
 init-version=0.1.0
 //registry.npmjs.org/:_authToken=${NPM_TOKEN}
+@marcusrbrown:registry=https://registry.npmjs.org/
