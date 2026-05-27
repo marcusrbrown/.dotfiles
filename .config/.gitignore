@@ -1,3 +1,4 @@
+/agent-browser-states/
 /aws/
 /brew-keeper/*
 !/brew-keeper/packages.txt
