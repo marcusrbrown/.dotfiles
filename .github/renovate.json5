@@ -59,6 +59,11 @@
       enabled: false
     },
     {
+      description: 'Follow the latest dist-tag to detect cross-series prerelease upgrades.',
+      matchPackageNames: ['@marcusrbrown/opencode-anthropic-auth'],
+      followTag: 'latest'
+    },
+    {
       description: ['Automerge unstable minor updates of some packages.'],
       matchCurrentVersion: '/^v?0/',
       matchPackageNames: [
