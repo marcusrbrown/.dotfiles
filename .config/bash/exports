@@ -364,6 +364,7 @@ export OMO_DISABLE_POSTHOG=1
 # OpenCode
 
 export OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true
+export OPENCODE_EXPERIMENTAL_WEBSOCKETS=true
 
 # Ollama — short keep-alive so models unload after each on-demand run
 # (Default is 5m; on 16GB this holds a ~5GB model resident long after use.)
