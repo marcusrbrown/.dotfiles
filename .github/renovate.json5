@@ -79,6 +79,11 @@
       extends: ['github>bfra-me/renovate-config:automerge.json5#5.2.1'],
       groupName: null,
       dependencyDashboardApproval: false
+    },
+    {
+      description: 'Hold @cortexkit/aft-opencode at 0.32.0; v0.33.0 has regressions.',
+      matchPackageNames: ['@cortexkit/aft-opencode'],
+      allowedVersions: '0.32.0'
     }
   ],
   prCreation: 'immediate',
