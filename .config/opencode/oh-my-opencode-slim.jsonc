@@ -113,7 +113,7 @@
     },
     "mixed": {
       "orchestrator": {
-        "model": "anthropic/claude-opus-4-7",
+        "model": "anthropic/claude-opus-4-8",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
@@ -152,7 +152,7 @@
     "presets": {
       "default": {
         "alpha": {
-          "model": "anthropic/claude-opus-4-6"
+          "model": "anthropic/claude-sonnet-4-6"
         },
         "beta": {
           "model": "github-copilot/gemini-3.1-pro-preview"
