@@ -11,7 +11,7 @@
       "oracle": {
         "model": "openai/gpt-5.5-fast",
         "variant": "high",
-        "skills": ["ce:*", "systematic:*"],
+        "skills": ["systematic:*"],
         "mcps": []
       },
       "council": {
@@ -47,7 +47,7 @@
       "oracle": {
         "model": "opencode-go/deepseek-v4-pro",
         "variant": "max",
-        "skills": ["ce:*", "systematic:*"],
+        "skills": ["systematic:*"],
         "mcps": []
       },
       "council": {
@@ -84,7 +84,7 @@
       "oracle": {
         "model": "openai/gpt-5.5-fast",
         "variant": "high",
-        "skills": ["ce:*", "systematic:*"],
+        "skills": ["systematic:*"],
         "mcps": []
       },
       "council": {
@@ -120,7 +120,7 @@
       "oracle": {
         "model": "openai/gpt-5.5-fast",
         "variant": "high",
-        "skills": ["ce:*", "systematic:*"],
+        "skills": ["systematic:*"],
         "mcps": []
       },
       "council": {
