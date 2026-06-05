@@ -52,7 +52,15 @@
     "github-copilot/claude-opus-4.7": 80000,
     "github-copilot/claude-sonnet-4.6": 95000
   },
-  "experimental": {
+  "temporal_awareness": true,
+  "caveman_text_compression": {
+    "enabled": false
+  },
+
+  "history_budget_percentage": 0.15,
+  "historian_timeout_ms": 420000,
+  "memory": {
+    "injection_budget_tokens": 6000,
     "auto_search": {
       "enabled": true,
       "min_prompt_chars": 20,
@@ -62,16 +70,7 @@
       "enabled": true,
       "since_days": 365,
       "max_commits": 2000
-    },
-    "temporal_awareness": true,
-    "caveman_text_compression": {
-      "enabled": false
     }
-  },
-  "history_budget_percentage": 0.15,
-  "historian_timeout_ms": 420000,
-  "memory": {
-    "injection_budget_tokens": 6000
   },
   "auto_drop_tool_age": 30,
   "system_prompt_injection": {
