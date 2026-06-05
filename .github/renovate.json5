@@ -76,7 +76,7 @@
         'opencode-copilot-delegate'
       ],
       matchUpdateTypes: ['minor', 'patch'],
-      extends: ['github>bfra-me/renovate-config:automerge.json5#5.2.1'],
+      extends: ['github>bfra-me/renovate-config:automerge.json5#5.2.2'],
       groupName: null,
       dependencyDashboardApproval: false
     },
