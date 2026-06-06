@@ -4,7 +4,7 @@
   "presets": {
     "openai": {
       "orchestrator": {
-        "model": "openai/gpt-5.5-fast",
+        "model": "openai/gpt-5.5",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
@@ -79,7 +79,7 @@
     },
     "copilot": {
       "orchestrator": {
-        "model": "openai/gpt-5.5-fast",
+        "model": "openai/gpt-5.5",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },

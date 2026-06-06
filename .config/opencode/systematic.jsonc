@@ -20,6 +20,9 @@
     }
   },
   "agents": {
+    "spec-flow-analyzer": {
+      "model": "anthropic/claude-sonnet-4-6"
+    },
     "systematic-implementer": {
       "model": "anthropic/claude-sonnet-4-6"
     }
