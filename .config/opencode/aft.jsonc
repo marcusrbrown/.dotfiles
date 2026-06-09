@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/cortexkit/aft/master/assets/aft.schema.json",
   "restrict_to_project_root": false,
   "search_index": true,
   "semantic_search": true,

@@ -8,15 +8,16 @@
       "model": "github-copilot/gemini-3.1-pro-preview"
     },
     "document-review": {
-      "model": "openai/gpt-5.4-mini",
+      "model": "github-copilot/gpt-5.4-mini",
       "variant": "low"
     },
     "research": {
-      "model": "openai/gpt-5.4-mini",
+      "model": "opencode-go/minimax-m2.7",
       "variant": "low"
     },
     "review": {
-      "model": "openai/gpt-5.5-fast"
+      "model": "opencode-go/deepseek-v4-flash",
+      "variant": "high"
     }
   },
   "agents": {
