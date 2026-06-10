@@ -40,7 +40,8 @@
     "anthropic/claude-sonnet-4-6": "59m",
     "anthropic/claude-opus-4-6": "59m",
     "anthropic/claude-opus-4-7": "59m",
-    "anthropic/claude-opus-4-8": "59m"
+    "anthropic/claude-opus-4-8": "59m",
+    "anthropic/claude-fable-5": "59m"
   },
   "execute_threshold_percentage": {
     "default": 65,
