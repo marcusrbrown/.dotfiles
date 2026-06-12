@@ -44,7 +44,16 @@ bindkey '^[[3;5~' kill-word
 # [Shift-Tab] - Move to the previous completion
 zmodload zsh/complist
 bindkey '^[[Z'    reverse-menu-complete
-bindkey -M menuselect '^[[Z' reverse-menu-complete
+# The `menuselect` keymap is created by compinit, which runs after this plugin is
+# sourced (the completion plugin loads later). Defer the menuselect binding to the
+# first precmd so the keymap exists by the time we bind it.
+_keybindings_bind_menuselect() {
+  bindkey -M menuselect '^[[Z' reverse-menu-complete
+  add-zsh-hook -d precmd _keybindings_bind_menuselect
+  unfunction _keybindings_bind_menuselect
+}
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _keybindings_bind_menuselect
 
 # Edit the command line in $EDITOR
 autoload -U edit-command-line
