@@ -73,7 +73,6 @@
       "max_commits": 2000
     }
   },
-  "auto_drop_tool_age": 30,
   "system_prompt_injection": {
     "enabled": true,
     "skip_signatures": ["You are the Council agent — a multi-LLM"]
