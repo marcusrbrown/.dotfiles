@@ -64,6 +64,11 @@
       followTag: 'latest'
     },
     {
+      description: 'Ungroup non-major updates so single-package PRs get accurate titles instead of the inherited group:allNonMajor name.',
+      matchUpdateTypes: ['minor', 'patch'],
+      groupName: null
+    },
+    {
       description: ['Automerge unstable minor updates of some packages.'],
       matchCurrentVersion: '/^v?0/',
       matchPackageNames: [
