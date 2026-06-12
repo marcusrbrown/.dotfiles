@@ -44,7 +44,23 @@ bindkey '^[[3;5~' kill-word
 # [Shift-Tab] - Move to the previous completion
 zmodload zsh/complist
 bindkey '^[[Z'    reverse-menu-complete
-bindkey -M menuselect '^[[Z' reverse-menu-complete
+# zsh-utils/editor runs `bindkey -d` at source time, which destroys the
+# `menuselect` keymap (created by zsh/complist) and wipes the main-keymap bind
+# below. A plain `zmodload zsh/complist` is a no-op once the module is loaded, so
+# it cannot recreate the keymap. Repair at the first precmd: reload complist to
+# recreate `menuselect`, then re-apply both binds.
+_keybindings_bind_menuselect() {
+  if ! bindkey -l menuselect >/dev/null 2>&1; then
+    zmodload -u zsh/complist 2>/dev/null && zmodload zsh/complist 2>/dev/null
+    bindkey -l menuselect >/dev/null 2>&1 || bindkey -N menuselect
+  fi
+  bindkey '^[[Z' reverse-menu-complete
+  bindkey -M menuselect '^[[Z' reverse-menu-complete
+  add-zsh-hook -d precmd _keybindings_bind_menuselect
+  unfunction _keybindings_bind_menuselect
+}
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _keybindings_bind_menuselect
 
 # Edit the command line in $EDITOR
 autoload -U edit-command-line
