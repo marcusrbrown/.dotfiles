@@ -37,26 +37,6 @@
         "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
       }
     },
-    "discord": {
-      "type": "local",
-      "command": [
-        "docker",
-        "run",
-        "--rm",
-        "-i",
-        "-e",
-        "DISCORD_TOKEN",
-        "-e",
-        "DISCORD_GUILD_ID",
-        "saseq/discord-mcp:1.0.0"
-      ],
-      "environment": {
-        "DISCORD_TOKEN": "{env:DISCORD_TOKEN}",
-        "DISCORD_GUILD_ID": "{env:DISCORD_GUILD_ID}"
-      },
-      "enabled": false,
-      "timeout": 30000
-    },
     "grep_app": {
       "type": "remote",
       "url": "https://mcp.grep.app",
