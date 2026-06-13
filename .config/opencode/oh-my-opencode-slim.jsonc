@@ -56,12 +56,12 @@
         "variant": "high"
       },
       "librarian": {
-        "model": "opencode-go/minimax-m2.7",
+        "model": "opencode-go/minimax-m3",
         "skills": [],
         "mcps": ["websearch", "context7", "grep_app", "tavily"]
       },
       "explorer": {
-        "model": "opencode-go/minimax-m2.7",
+        "model": "opencode-go/minimax-m3",
         "skills": [],
         "mcps": []
       },

@@ -12,7 +12,7 @@
       "variant": "low"
     },
     "research": {
-      "model": "opencode-go/minimax-m2.7",
+      "model": "opencode-go/minimax-m3",
       "variant": "low"
     },
     "review": {
