@@ -21,11 +21,15 @@
     }
   },
   "agents": {
+    "repo-research-analyst": {
+      "model": "opencode-go/minimax-m3"
+    },
     "spec-flow-analyzer": {
-      "model": "anthropic/claude-sonnet-4-6"
+      "model": "github-copilot/gemini-3.5-flash"
     },
     "systematic-implementer": {
-      "model": "anthropic/claude-sonnet-4-6"
+      "model": "anthropic/claude-sonnet-4-6",
+      "temperature": 0.1
     }
   }
 }
