@@ -8,26 +8,6 @@
     "opencode-copilot-delegate@0.12.0",
     "@fro.bot/systematic@2.32.0"
   ],
-  "provider": {
-    "openai": {
-      "models": {
-        "gpt-5.5": {
-          "limit": {
-            "context": 272000,
-            "input": 272000,
-            "output": 32000
-          }
-        },
-        "gpt-5.5-fast": {
-          "limit": {
-            "context": 272000,
-            "input": 272000,
-            "output": 32000
-          }
-        }
-      }
-    }
-  },
   "mcp": {
     "context7": {
       "type": "remote",
