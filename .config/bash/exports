@@ -88,7 +88,16 @@ if [[ "$HOST_OS" == "darwin" ]]; then
     PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
     [ ! -x "$PREFIX/bin/brew" ] && PREFIX="/usr/local"
     if [ -x "$PREFIX/bin/brew" ]; then
-        eval "$("$PREFIX"/bin/brew shellenv)"
+        prepend_to_path "$PREFIX/bin"
+        prepend_to_path "$PREFIX/sbin"
+
+        # Homebrew may emit no shellenv output in already-initialized shells.
+        # Keep PATH deterministic above, then apply shellenv if it returns exports.
+        BREW_SHELLENV_OUTPUT=$("$PREFIX"/bin/brew shellenv 2>/dev/null)
+        if [ -n "$BREW_SHELLENV_OUTPUT" ]; then
+            eval "$BREW_SHELLENV_OUTPUT"
+        fi
+        unset BREW_SHELLENV_OUTPUT
         # mise captures the pre-activation PATH into an exported __MISE_ORIG_PATH once,
         # then reuses it as the base on every shell (it survives exec/subshells). A shell
         # that froze a Homebrew-less base makes every later shell rebuild PATH from it and
