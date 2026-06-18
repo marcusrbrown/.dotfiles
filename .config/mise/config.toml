@@ -19,7 +19,7 @@ ast-grep = "0.43.0"
 
 "npm:typescript" = "6.0.3"
 "npm:vibe-tools" = "0.63.3"
-"npm:playwright" = "1.60.0"
+"npm:playwright" = "1.61.0"
 "npm:puppeteer" = "25.1.0"
 "npm:prettier" = "3.8.4"
 "npm:@bfra.me/prettier-config" = "0.16.9"
