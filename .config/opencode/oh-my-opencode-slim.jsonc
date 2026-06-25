@@ -31,12 +31,12 @@
       },
       "designer": {
         "model": "github-copilot/gemini-3.1-pro-preview",
-        "skills": ["agent-browser", "systematic:*"],
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fixer": {
         "model": "anthropic/claude-sonnet-4-6",
-        "skills": ["systematic:*"]
+        "skills": ["agent-browser", "impeccable", "systematic:*"]
       }
     },
     "opencode-go": {
@@ -68,13 +68,13 @@
       "designer": {
         "model": "opencode-go/kimi-k2.6",
         "variant": "medium",
-        "skills": ["agent-browser", "systematic:*"],
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fixer": {
         "model": "opencode-go/deepseek-v4-flash",
         "variant": "high",
-        "skills": ["systematic:*"]
+        "skills": ["agent-browser", "impeccable", "systematic:*"]
       }
     },
     "copilot": {
@@ -106,12 +106,12 @@
       },
       "designer": {
         "model": "github-copilot/gemini-3.1-pro-preview",
-        "skills": ["agent-browser", "systematic:*"],
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fixer": {
         "model": "github-copilot/claude-sonnet-4.6",
-        "skills": ["systematic:*"]
+        "skills": ["agent-browser", "impeccable", "systematic:*"]
       }
     },
     "mixed": {
@@ -143,12 +143,12 @@
       },
       "designer": {
         "model": "github-copilot/gemini-3.1-pro-preview",
-        "skills": ["agent-browser", "systematic:*"],
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fixer": {
         "model": "anthropic/claude-sonnet-4-6",
-        "skills": ["systematic:*"]
+        "skills": ["agent-browser", "impeccable", "systematic:*"]
       }
     }
   },
