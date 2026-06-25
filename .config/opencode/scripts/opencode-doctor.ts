@@ -932,19 +932,24 @@ async function runDbPruneExecute(options: CliOptions): Promise<SectionResult> {
   const dbSize = safeStatSize(options.dbPath);
   if (dbSize > 0) {
     try {
-      const dfResult = Bun.spawnSync(["df", "-k", dirname(options.dbPath)]);
+      // -P forces POSIX output: one data line per filesystem, never wrapped
+      // (plain `df -k` can split a long device name across two lines).
+      const dfResult = Bun.spawnSync(["df", "-kP", dirname(options.dbPath)]);
       if (dfResult.exitCode === 0) {
         const dfOut = dfResult.stdout instanceof Buffer
           ? dfResult.stdout.toString("utf8")
           : String(dfResult.stdout ?? "");
-        // df -k output: header line then data line; Available is column 4 (0-indexed 3)
+        // POSIX `df -kP` data line, both macOS and Linux:
+        //   Filesystem  1024-blocks  Used  Available  Capacity  Mounted-on
+        // Columns are fixed: Available is index 3, Mounted-on is the last field.
         const lines = dfOut.trim().split("\n");
         const dataLine = lines[lines.length - 1];
         const cols = dataLine.trim().split(/\s+/);
-        // macOS df: Filesystem 512-blocks Used Available Capacity iused ifree %iused Mounted
-        // Linux df -k: Filesystem 1K-blocks Used Available Use% Mounted
-        // Available is always the 4th column (index 3)
-        const availableKb = parseInt(cols[3] ?? "0", 10);
+        // Anchor from the end (Mounted-on is last) so a space in the mount path
+        // can't shift the Available column: Available is 4th from the path,
+        // i.e. cols[length-3] in POSIX layout. Fall back to index 3.
+        const availableRaw = cols.length >= 6 ? cols[cols.length - 3] : cols[3];
+        const availableKb = parseInt(availableRaw ?? "", 10);
         if (!isNaN(availableKb)) {
           const availableBytes = availableKb * 1024;
           const requiredBytes = dbSize * 1.1;
