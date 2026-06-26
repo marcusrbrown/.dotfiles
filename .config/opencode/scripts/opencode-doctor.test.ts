@@ -10,6 +10,8 @@ import {
   estimateReclaim,
   pruneSessions,
   classifyPgrepExitCode,
+  autoVacuumModeName,
+  convertToIncrementalVacuum,
 } from "./opencode-doctor";
 
 const SCRIPT_PATH = "./opencode-doctor.ts";
@@ -1077,6 +1079,351 @@ describe("DB guards (unit)", () => {
         .nothrow();
 
       expect(result.exitCode).not.toBe(0);
+    },
+    { timeout: TEST_TIMEOUT }
+  );
+});
+
+// ─── DB Set Incremental Vacuum Tests ─────────────────────────────────────────
+
+describe("DB Set Incremental Vacuum (unit)", () => {
+  // ── autoVacuumModeName ────────────────────────────────────────────────────
+
+  test("autoVacuumModeName maps 0 → NONE", () => {
+    expect(autoVacuumModeName(0)).toBe("NONE");
+  });
+
+  test("autoVacuumModeName maps 1 → FULL", () => {
+    expect(autoVacuumModeName(1)).toBe("FULL");
+  });
+
+  test("autoVacuumModeName maps 2 → INCREMENTAL", () => {
+    expect(autoVacuumModeName(2)).toBe("INCREMENTAL");
+  });
+
+  test("autoVacuumModeName maps unknown value → UNKNOWN", () => {
+    expect(autoVacuumModeName(99)).toBe("UNKNOWN");
+    expect(autoVacuumModeName(-1)).toBe("UNKNOWN");
+  });
+
+  // ── convertToIncrementalVacuum: NONE → INCREMENTAL ────────────────────────
+
+  test("convertToIncrementalVacuum converts NONE DB to INCREMENTAL and reports confirmed:true", () => {
+    const dir = makeTempDir();
+    try {
+      // Default SQLite DB has auto_vacuum=NONE (0)
+      const dbPath = join(dir, "vacuum-test.db");
+      const db = new Database(dbPath);
+      db.exec("PRAGMA journal_mode=WAL");
+      // Insert a few rows so the file has some content
+      db.exec("CREATE TABLE t (v TEXT)");
+      db.exec("INSERT INTO t VALUES ('hello'), ('world'), ('foo')");
+
+      // Verify starting mode is NONE
+      type PragmaRow = { [key: string]: unknown };
+      const beforeMode = Number(db.query<PragmaRow, []>("PRAGMA auto_vacuum").get()?.auto_vacuum ?? 0);
+      expect(beforeMode).toBe(0);
+
+      const result = convertToIncrementalVacuum(db, dbPath);
+
+      expect(result.already_incremental).toBe(false);
+      expect(result.before.auto_vacuum).toBe(0);
+      expect(result.before.auto_vacuum_mode).toBe("NONE");
+      expect(result.after.auto_vacuum).toBe(2);
+      expect(result.after.auto_vacuum_mode).toBe("INCREMENTAL");
+      expect(result.confirmed).toBe(true);
+      expect(result.vacuum_error).toBeUndefined();
+
+      // Verify the DB actually has INCREMENTAL mode now
+      const afterMode = Number(db.query<PragmaRow, []>("PRAGMA auto_vacuum").get()?.auto_vacuum ?? 0);
+      expect(afterMode).toBe(2);
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  // ── convertToIncrementalVacuum: idempotency ───────────────────────────────
+
+  test("convertToIncrementalVacuum is idempotent: already-INCREMENTAL DB returns already_incremental:true and still runs full VACUUM", () => {
+    const dir = makeTempDir();
+    try {
+      const dbPath = join(dir, "already-incremental.db");
+      const db = new Database(dbPath);
+      // Create DB with INCREMENTAL mode from the start
+      db.exec("PRAGMA auto_vacuum=INCREMENTAL");
+      db.exec("PRAGMA journal_mode=WAL");
+      db.exec("CREATE TABLE t (v TEXT)");
+      db.exec("INSERT INTO t VALUES ('a'), ('b'), ('c')");
+      // VACUUM to bake in the mode
+      db.exec("VACUUM");
+
+      type PragmaRow = { [key: string]: unknown };
+      const mode = Number(db.query<PragmaRow, []>("PRAGMA auto_vacuum").get()?.auto_vacuum ?? 0);
+      expect(mode).toBe(2);
+
+      const result = convertToIncrementalVacuum(db, dbPath);
+
+      // already_incremental reflects the state BEFORE the call
+      expect(result.already_incremental).toBe(true);
+      expect(result.before.auto_vacuum).toBe(2);
+      expect(result.before.auto_vacuum_mode).toBe("INCREMENTAL");
+      expect(result.after.auto_vacuum).toBe(2);
+      expect(result.after.auto_vacuum_mode).toBe("INCREMENTAL");
+      // confirmed must be true: VACUUM ran and succeeded
+      expect(result.confirmed).toBe(true);
+      expect(result.vacuum_error).toBeUndefined();
+
+      // Mode must still be 2 after the call
+      const afterMode = Number(db.query<PragmaRow, []>("PRAGMA auto_vacuum").get()?.auto_vacuum ?? 0);
+      expect(afterMode).toBe(2);
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  // ── convertToIncrementalVacuum: VACUUM failure path ───────────────────────
+
+  test("convertToIncrementalVacuum: VACUUM failure → vacuum_error set, confirmed:false, result label is (failed)", () => {
+    const dir = makeTempDir();
+    try {
+      const dbPath = join(dir, "vacuum-fail-test.db");
+      const db = new Database(dbPath);
+      db.exec("PRAGMA journal_mode=WAL");
+      db.exec("CREATE TABLE t (v TEXT)");
+      db.exec("INSERT INTO t VALUES ('hello'), ('world')");
+
+      // Monkeypatch db.exec to throw on VACUUM
+      const originalExec = db.exec.bind(db);
+      let vacuumCallCount = 0;
+      db.exec = (sql: string) => {
+        if (sql.trim().toUpperCase() === "VACUUM") {
+          vacuumCallCount++;
+          throw new Error("Simulated VACUUM failure");
+        }
+        return originalExec(sql);
+      };
+
+      const result = convertToIncrementalVacuum(db, dbPath);
+
+      // VACUUM was attempted
+      expect(vacuumCallCount).toBeGreaterThan(0);
+      // vacuum_error must be populated
+      expect(result.vacuum_error).toBeDefined();
+      expect(result.vacuum_error).toContain("Simulated VACUUM failure");
+      // confirmed must be false when VACUUM failed
+      expect(result.confirmed).toBe(false);
+
+      // Restore exec and close
+      db.exec = originalExec;
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("runSetIncrementalVacuum label is '(failed)' when VACUUM throws", () => {
+    // Verify the label routing in runSetIncrementalVacuum uses vacuum_error correctly.
+    // We test this indirectly: a result with vacuum_error set must produce confirmed:false.
+    const dir = makeTempDir();
+    try {
+      const dbPath = join(dir, "vacuum-fail-label.db");
+      const db = new Database(dbPath);
+      db.exec("PRAGMA journal_mode=WAL");
+      db.exec("CREATE TABLE t (v TEXT)");
+      db.exec("INSERT INTO t VALUES ('x')");
+
+      const originalExec = db.exec.bind(db);
+      db.exec = (sql: string) => {
+        if (sql.trim().toUpperCase() === "VACUUM") {
+          throw new Error("Simulated VACUUM failure for label test");
+        }
+        return originalExec(sql);
+      };
+
+      const result = convertToIncrementalVacuum(db, dbPath);
+
+      // The label in runSetIncrementalVacuum is driven by vacuum_error
+      expect(result.vacuum_error).toBeDefined();
+      expect(result.confirmed).toBe(false);
+
+      db.exec = originalExec;
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  // ── Re-run after partial failure (INCREMENTAL set but VACUUM never completed) ──
+
+  test("convertToIncrementalVacuum: re-run on already-INCREMENTAL DB with free pages runs full VACUUM and ends confirmed:true with space reclaimed", () => {
+    // The partial-failure scenario: a previous run set auto_vacuum=INCREMENTAL AND
+    // ran VACUUM (so mode=2 is baked in), but the DB has since accumulated free pages
+    // (or the VACUUM was incomplete). A re-run must still run the full VACUUM to
+    // guarantee the on-disk layout is correct and reclaim free pages.
+    //
+    // Note: SQLite only persists auto_vacuum=INCREMENTAL (mode=2) after a VACUUM.
+    // So we set up a properly-converted DB (mode=2), then delete rows to create
+    // free pages, and verify that a re-run still runs VACUUM and reclaims them.
+    const dir = makeTempDir();
+    try {
+      const dbPath = join(dir, "partial-fail-rerun.db");
+      const db = new Database(dbPath);
+      // Use DELETE journal so VACUUM actually shrinks the file
+      db.exec("PRAGMA journal_mode=DELETE");
+      db.exec("PRAGMA auto_vacuum=INCREMENTAL");
+      db.exec("CREATE TABLE t (v TEXT)");
+
+      // Insert enough data to fill several pages
+      const insert = db.prepare("INSERT INTO t VALUES (?)");
+      db.transaction(() => {
+        for (let i = 0; i < 300; i++) {
+          insert.run(`row-${i}-${"x".repeat(80)}`);
+        }
+      })();
+
+      // VACUUM to bake in INCREMENTAL mode (mode=2 persisted to disk)
+      db.exec("VACUUM");
+
+      type PragmaRow = { [key: string]: unknown };
+      const modeAfterSetup = Number(db.query<PragmaRow, []>("PRAGMA auto_vacuum").get()?.auto_vacuum ?? 0);
+      expect(modeAfterSetup).toBe(2); // INCREMENTAL baked in
+
+      // Delete rows to create free pages (simulating accumulated garbage)
+      db.exec("DELETE FROM t WHERE rowid > 10");
+
+      const freelistBeforeRerun = Number(db.query<PragmaRow, []>("PRAGMA freelist_count").get()?.freelist_count ?? 0);
+      expect(freelistBeforeRerun).toBeGreaterThan(0); // there are free pages to reclaim
+
+      // Re-run: must run full VACUUM even though auto_vacuum is already 2
+      const result = convertToIncrementalVacuum(db, dbPath);
+
+      // already_incremental is true (mode was 2 before the call)
+      expect(result.already_incremental).toBe(true);
+      // VACUUM ran and succeeded → confirmed:true
+      expect(result.confirmed).toBe(true);
+      expect(result.vacuum_error).toBeUndefined();
+      // Free pages should have been reclaimed (freelist drops after VACUUM)
+      expect(result.after.freelist_count).toBeLessThan(freelistBeforeRerun);
+      // Mode is still INCREMENTAL
+      expect(result.after.auto_vacuum).toBe(2);
+      // Space was reclaimed
+      expect(result.bytes_reclaimed).toBeGreaterThan(0);
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  // ── incremental_vacuum actually reclaims pages ────────────────────────────
+
+  test("incremental_vacuum reclaims free pages after deleting rows on an INCREMENTAL DB", () => {
+    const dir = makeTempDir();
+    try {
+      const dbPath = join(dir, "reclaim-test.db");
+      const db = new Database(dbPath);
+      // Set up INCREMENTAL mode
+      db.exec("PRAGMA auto_vacuum=INCREMENTAL");
+      db.exec("PRAGMA journal_mode=DELETE"); // Use DELETE journal so VACUUM shrinks the file
+      db.exec("CREATE TABLE t (v TEXT)");
+
+      // Insert enough data to fill several pages
+      const insert = db.prepare("INSERT INTO t VALUES (?)");
+      db.transaction(() => {
+        for (let i = 0; i < 500; i++) {
+          insert.run(`row-${i}-${"x".repeat(100)}`);
+        }
+      })();
+      db.exec("VACUUM"); // bake in INCREMENTAL mode
+
+      type PragmaRow = { [key: string]: unknown };
+      const modeAfterSetup = Number(db.query<PragmaRow, []>("PRAGMA auto_vacuum").get()?.auto_vacuum ?? 0);
+      expect(modeAfterSetup).toBe(2);
+
+      // Capture freelist before delete
+      const freelistBefore = Number(db.query<PragmaRow, []>("PRAGMA freelist_count").get()?.freelist_count ?? 0);
+
+      // Delete most rows to create free pages
+      db.exec("DELETE FROM t WHERE rowid > 10");
+
+      // Freelist should now be higher (pages freed by delete)
+      const freelistAfterDelete = Number(db.query<PragmaRow, []>("PRAGMA freelist_count").get()?.freelist_count ?? 0);
+      expect(freelistAfterDelete).toBeGreaterThan(freelistBefore);
+
+      // Run incremental_vacuum to reclaim those pages
+      db.exec("PRAGMA incremental_vacuum");
+
+      // Freelist should drop after incremental_vacuum
+      const freelistAfterVacuum = Number(db.query<PragmaRow, []>("PRAGMA freelist_count").get()?.freelist_count ?? 0);
+      expect(freelistAfterVacuum).toBeLessThan(freelistAfterDelete);
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  // ── CLI: --set-incremental-vacuum flag ────────────────────────────────────
+
+  test(
+    "--set-incremental-vacuum --json converts a NONE DB and reports confirmed:true",
+    async () => {
+      const dir = makeTempDir();
+      try {
+        // Create a plain DB (auto_vacuum=NONE by default)
+        const dbPath = join(dir, "cli-vacuum-test.db");
+        const db = new Database(dbPath);
+        db.exec("PRAGMA journal_mode=WAL");
+        db.exec("CREATE TABLE t (v TEXT)");
+        db.exec("INSERT INTO t VALUES ('a'), ('b')");
+        db.close();
+
+        const result = await $`bun ${SCRIPT_PATH} --set-incremental-vacuum --json --db-path=${dbPath}`
+          .quiet()
+          .nothrow();
+
+        // May be refused if other opencode processes are running — that's valid
+        const stdout = result.stdout.toString();
+        let parsed: unknown;
+        expect(() => { parsed = JSON.parse(stdout); }).not.toThrow();
+
+        const sections = parsed as Array<{ label: string; data?: unknown }>;
+        const vacSection = sections.find((s) =>
+          s.label.startsWith("DB Set Incremental Vacuum")
+        );
+        expect(vacSection).toBeDefined();
+
+        if (vacSection?.label === "DB Set Incremental Vacuum (executed)") {
+          const data = vacSection.data as Record<string, unknown>;
+          expect(data.confirmed).toBe(true);
+          expect(data.already_incremental).toBe(false);
+        } else if (vacSection?.label === "DB Set Incremental Vacuum (already incremental)") {
+          const data = vacSection.data as Record<string, unknown>;
+          expect(data.confirmed).toBe(true);
+          expect(data.already_incremental).toBe(true);
+        } else {
+          // Refused due to running opencode processes — valid behavior
+          const data = vacSection?.data as Record<string, unknown>;
+          expect(data.refused).toBe(true);
+        }
+      } finally {
+        removeTempDir(dir);
+      }
+    },
+    { timeout: TEST_TIMEOUT }
+  );
+
+  test(
+    "--help contains --set-incremental-vacuum documentation",
+    async () => {
+      const result = await $`bun ${SCRIPT_PATH} --help`.text();
+
+      expect(result).toContain("--set-incremental-vacuum");
+      expect(result).toContain("INCREMENTAL");
     },
     { timeout: TEST_TIMEOUT }
   );

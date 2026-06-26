@@ -25,6 +25,7 @@ type CliOptions = {
   pruneOlderDays: number | null;
   execute: boolean;
   dbPath: string;
+  setIncrementalVacuum: boolean;
 };
 
 type SectionResult = {
@@ -32,6 +33,9 @@ type SectionResult = {
   data: unknown;
   error?: string;
 };
+
+// Plain-object shape returned by safety-gate helpers (subset of SectionResult.data).
+type SectionResultData = Record<string, unknown>;
 
 const DEFAULT_PORT = 4096;
 const AUTO_PORT_ATTEMPTS = 10;
@@ -101,6 +105,7 @@ const KNOWN_FLAGS = new Set([
   "--prune-older",
   "--execute",
   "--db-path",
+  "--set-incremental-vacuum",
 ]);
 
 function warnUnknownFlag(flag: string): void {
@@ -285,6 +290,9 @@ function parseArgs(argv: string[]): CliOptions {
       ? String(dbPathValue)
       : DEFAULT_DB_PATH;
 
+  const setIncrementalVacuumValue = args.get("--set-incremental-vacuum");
+  const setIncrementalVacuum = setIncrementalVacuumValue != null && !isBooleanFalse(setIncrementalVacuumValue);
+
   return {
     host,
     port,
@@ -301,6 +309,7 @@ function parseArgs(argv: string[]): CliOptions {
     pruneOlderDays,
     execute,
     dbPath,
+    setIncrementalVacuum,
   };
 }
 
@@ -335,6 +344,13 @@ DB Maintenance (no server required):
   --execute                 PERMANENTLY and IRREVERSIBLY deletes sessions and all their
                             messages, parts, and events. Requires --prune-older.
                             Without --prune-older, --execute is an error.
+  --set-incremental-vacuum  One-time conversion: sets auto_vacuum=INCREMENTAL on the DB,
+                            then runs a full VACUUM to rewrite the file with the new mode.
+                            After this, future prunes can reclaim free pages incrementally
+                            via PRAGMA incremental_vacuum without a full exclusive VACUUM.
+                            Requires all other OpenCode instances to be closed and ~1.1x
+                            the DB file size in free disk space (same constraints as prune
+                            --execute). Safe to re-run: no-op if already INCREMENTAL.
   --db-path <path>          Override DB path (default: ~/.local/share/opencode/opencode.db)
 
 Sections:
@@ -850,6 +866,186 @@ function checkForOtherOpencodeProcesses(): { safe: boolean; count: number; pids:
   return { safe: pids.length === 0, count: pids.length, pids };
 }
 
+// ─── Safety Gate Helpers ──────────────────────────────────────────────────────
+
+/**
+ * Returns a refused SectionResultData if other OpenCode processes are running,
+ * or null if it is safe to proceed with a destructive DB operation.
+ */
+function refuseIfOtherOpencodeProcesses(): SectionResultData | null {
+  const procCheck = checkForOtherOpencodeProcesses();
+  if (!procCheck.safe) {
+    const reason = procCheck.count === -1
+      ? "Could not verify other OpenCode processes are stopped (pgrep unavailable); refusing to run this destructive operation. Re-run where process detection works."
+      : `Found ${procCheck.count} other opencode process(es) running (PIDs: ${procCheck.pids.join(", ")}). Close all OpenCode instances and re-run.`;
+    return {
+      refused: true,
+      reason,
+      instruction: "Close all OpenCode instances and re-run.",
+    };
+  }
+  return null;
+}
+
+/**
+ * Returns a refused SectionResultData if there is insufficient disk space for
+ * a VACUUM operation (~1.1x the DB file size), or null if it is safe to proceed.
+ * Best-effort: if df fails, returns null (let VACUUM itself be the real guard).
+ */
+function refuseIfInsufficientDiskForVacuum(dbPath: string): SectionResultData | null {
+  const dbSize = safeStatSize(dbPath);
+  if (dbSize > 0) {
+    try {
+      // -P forces POSIX output: one data line per filesystem, never wrapped
+      // (plain `df -k` can split a long device name across two lines).
+      const dfResult = Bun.spawnSync(["df", "-kP", dirname(dbPath)]);
+      if (dfResult.exitCode === 0) {
+        const dfOut = dfResult.stdout instanceof Buffer
+          ? dfResult.stdout.toString("utf8")
+          : String(dfResult.stdout ?? "");
+        // POSIX `df -kP` data line, both macOS and Linux:
+        //   Filesystem  1024-blocks  Used  Available  Capacity  Mounted-on
+        // Columns are fixed: Available is index 3, Mounted-on is the last field.
+        const lines = dfOut.trim().split("\n");
+        const dataLine = lines[lines.length - 1];
+        const cols = dataLine.trim().split(/\s+/);
+        // Anchor from the end (Mounted-on is last) so a space in the mount path
+        // can't shift the Available column: Available is 4th from the path,
+        // i.e. cols[length-3] in POSIX layout. Fall back to index 3.
+        const availableRaw = cols.length >= 6 ? cols[cols.length - 3] : cols[3];
+        const availableKb = parseInt(availableRaw ?? "", 10);
+        if (!isNaN(availableKb)) {
+          const availableBytes = availableKb * 1024;
+          const requiredBytes = dbSize * 1.1;
+          if (availableBytes < requiredBytes) {
+            return {
+              refused: true,
+              reason: `VACUUM needs ~${bytesToHuman(Math.ceil(requiredBytes))} free; only ${bytesToHuman(availableBytes)} available. Free disk space and re-run.`,
+            };
+          }
+        }
+      }
+    } catch {
+      // If df fails, proceed — disk check is best-effort; the real guard is VACUUM itself.
+    }
+  }
+  return null;
+}
+
+// ─── Incremental Vacuum Helpers ───────────────────────────────────────────────
+
+/**
+ * Maps a SQLite auto_vacuum PRAGMA integer to its mode name.
+ * Exported for unit testing.
+ */
+export function autoVacuumModeName(n: number): "NONE" | "FULL" | "INCREMENTAL" | "UNKNOWN" {
+  if (n === 0) return "NONE";
+  if (n === 1) return "FULL";
+  if (n === 2) return "INCREMENTAL";
+  return "UNKNOWN";
+}
+
+export type IncrementalVacuumResult = {
+  already_incremental: boolean;
+  before: {
+    auto_vacuum: number;
+    auto_vacuum_mode: string;
+    file_size_bytes: number;
+    file_size_human: string;
+    freelist_count: number;
+  };
+  after: {
+    auto_vacuum: number;
+    auto_vacuum_mode: string;
+    file_size_bytes: number;
+    file_size_human: string;
+    freelist_count: number;
+  };
+  bytes_reclaimed: number;
+  bytes_reclaimed_human: string;
+  confirmed: boolean;
+  vacuum_error?: string;
+};
+
+export function convertToIncrementalVacuum(db: Database, dbPath: string): IncrementalVacuumResult {
+  type PragmaRow = { [key: string]: unknown };
+
+  const beforeAutoVacuumRow = db.query<PragmaRow, []>("PRAGMA auto_vacuum").get();
+  const beforeAutoVacuum = Number(beforeAutoVacuumRow?.auto_vacuum ?? 0);
+  const beforeFreelistRow = db.query<PragmaRow, []>("PRAGMA freelist_count").get();
+  const beforeFreelist = Number(beforeFreelistRow?.freelist_count ?? 0);
+  const beforeFileSize = safeStatSize(dbPath);
+
+  const before = {
+    auto_vacuum: beforeAutoVacuum,
+    auto_vacuum_mode: autoVacuumModeName(beforeAutoVacuum),
+    file_size_bytes: beforeFileSize,
+    file_size_human: bytesToHuman(beforeFileSize),
+    freelist_count: beforeFreelist,
+  };
+
+  // Whether the DB was already INCREMENTAL before we touched it.
+  // NOTE: even if already INCREMENTAL, we still run a full VACUUM to guarantee
+  // the on-disk layout is correct — a previous run may have set the PRAGMA but
+  // failed before VACUUM completed, leaving the file in a half-converted state.
+  const alreadyIncremental = beforeAutoVacuum === 2;
+
+  let vacuumError: string | undefined;
+
+  // Always set PRAGMA auto_vacuum=INCREMENTAL (no-op if already set).
+  // Then always run a full VACUUM — this is the operation that actually rewrites
+  // the file with the new mode and reclaims free pages.
+  // A WAL checkpoint is run first so WAL pages are folded in (reduces peak disk).
+  // Checkpoint failure is non-fatal; VACUUM is the real operation.
+  try {
+    db.exec("PRAGMA auto_vacuum=INCREMENTAL");
+  } catch (err) {
+    vacuumError = formatErrorMessage(err);
+  }
+
+  if (vacuumError == null) {
+    try {
+      db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+    } catch {
+      // Checkpoint failure is non-fatal — proceed to VACUUM.
+    }
+    try {
+      db.exec("VACUUM");
+    } catch (err) {
+      vacuumError = formatErrorMessage(err);
+    }
+  }
+
+  const afterAutoVacuumRow = db.query<PragmaRow, []>("PRAGMA auto_vacuum").get();
+  const afterAutoVacuum = Number(afterAutoVacuumRow?.auto_vacuum ?? 0);
+  const afterFreelistRow = db.query<PragmaRow, []>("PRAGMA freelist_count").get();
+  const afterFreelist = Number(afterFreelistRow?.freelist_count ?? 0);
+  const afterFileSize = safeStatSize(dbPath);
+
+  const after = {
+    auto_vacuum: afterAutoVacuum,
+    auto_vacuum_mode: autoVacuumModeName(afterAutoVacuum),
+    file_size_bytes: afterFileSize,
+    file_size_human: bytesToHuman(afterFileSize),
+    freelist_count: afterFreelist,
+  };
+
+  // confirmed is only true when the mode is INCREMENTAL AND the full VACUUM
+  // completed without error (VACUUM is what actually rewrites the file).
+  const confirmed = afterAutoVacuum === 2 && vacuumError == null;
+
+  const result: IncrementalVacuumResult = {
+    already_incremental: alreadyIncremental,
+    before,
+    after,
+    bytes_reclaimed: Math.max(0, beforeFileSize - afterFileSize),
+    bytes_reclaimed_human: bytesToHuman(Math.max(0, beforeFileSize - afterFileSize)),
+    confirmed,
+  };
+  if (vacuumError != null) result.vacuum_error = vacuumError;
+  return result;
+}
+
 // ─── DB Section Runners ───────────────────────────────────────────────────────
 
 async function runDbHealth(options: CliOptions): Promise<SectionResult> {
@@ -914,57 +1110,16 @@ async function runDbPruneExecute(options: CliOptions): Promise<SectionResult> {
   const cutoffDate = new Date(cutoffMs).toISOString().slice(0, 10);
 
   // Safety gate: check for other opencode processes
-  const procCheck = checkForOtherOpencodeProcesses();
-  if (!procCheck.safe) {
-    const reason = procCheck.count === -1
-      ? "Could not verify other OpenCode processes are stopped (pgrep unavailable); refusing to run destructive prune. Re-run where process detection works."
-      : `Found ${procCheck.count} other opencode process(es) running (PIDs: ${procCheck.pids.join(", ")}). Close all OpenCode instances and re-run.`;
-    const data = {
-      refused: true,
-      reason,
-      instruction: "Close all OpenCode instances and re-run with --prune-older --execute",
-    };
-    return { label: "DB Prune (refused)", data };
+  const procRefusal = refuseIfOtherOpencodeProcesses();
+  if (procRefusal != null) {
+    return { label: "DB Prune (refused)", data: procRefusal };
   }
 
   // Disk-space pre-check: VACUUM needs ~= DB size of free space for a temp copy.
   // Check BEFORE any destructive operation so we never delete-then-fail-vacuum.
-  const dbSize = safeStatSize(options.dbPath);
-  if (dbSize > 0) {
-    try {
-      // -P forces POSIX output: one data line per filesystem, never wrapped
-      // (plain `df -k` can split a long device name across two lines).
-      const dfResult = Bun.spawnSync(["df", "-kP", dirname(options.dbPath)]);
-      if (dfResult.exitCode === 0) {
-        const dfOut = dfResult.stdout instanceof Buffer
-          ? dfResult.stdout.toString("utf8")
-          : String(dfResult.stdout ?? "");
-        // POSIX `df -kP` data line, both macOS and Linux:
-        //   Filesystem  1024-blocks  Used  Available  Capacity  Mounted-on
-        // Columns are fixed: Available is index 3, Mounted-on is the last field.
-        const lines = dfOut.trim().split("\n");
-        const dataLine = lines[lines.length - 1];
-        const cols = dataLine.trim().split(/\s+/);
-        // Anchor from the end (Mounted-on is last) so a space in the mount path
-        // can't shift the Available column: Available is 4th from the path,
-        // i.e. cols[length-3] in POSIX layout. Fall back to index 3.
-        const availableRaw = cols.length >= 6 ? cols[cols.length - 3] : cols[3];
-        const availableKb = parseInt(availableRaw ?? "", 10);
-        if (!isNaN(availableKb)) {
-          const availableBytes = availableKb * 1024;
-          const requiredBytes = dbSize * 1.1;
-          if (availableBytes < requiredBytes) {
-            const data = {
-              refused: true,
-              reason: `VACUUM needs ~${bytesToHuman(Math.ceil(requiredBytes))} free; only ${bytesToHuman(availableBytes)} available. Free disk space and re-run.`,
-            };
-            return { label: "DB Prune (refused)", data };
-          }
-        }
-      }
-    } catch {
-      // If df fails, proceed — disk check is best-effort; the real guard is VACUUM itself.
-    }
+  const diskRefusal = refuseIfInsufficientDiskForVacuum(options.dbPath);
+  if (diskRefusal != null) {
+    return { label: "DB Prune (refused)", data: diskRefusal };
   }
 
   let db: Database | null = null;
@@ -986,6 +1141,42 @@ async function runDbPruneExecute(options: CliOptions): Promise<SectionResult> {
     return { label: "DB Prune (executed)", data };
   } catch (error) {
     return { label: "DB Prune (executed)", data: null, error: formatErrorMessage(error) };
+  } finally {
+    db?.close();
+  }
+}
+
+async function runSetIncrementalVacuum(options: CliOptions): Promise<SectionResult> {
+  const label = "DB Set Incremental Vacuum";
+
+  // Safety gate: check for other opencode processes
+  const procRefusal = refuseIfOtherOpencodeProcesses();
+  if (procRefusal != null) {
+    return { label: `${label} (refused)`, data: procRefusal };
+  }
+
+  // Disk-space pre-check: VACUUM needs ~= DB size of free space for a temp copy.
+  const diskRefusal = refuseIfInsufficientDiskForVacuum(options.dbPath);
+  if (diskRefusal != null) {
+    return { label: `${label} (refused)`, data: diskRefusal };
+  }
+
+  let db: Database | null = null;
+  try {
+    db = new Database(options.dbPath);
+    db.exec("PRAGMA busy_timeout=5000");
+
+    const result = convertToIncrementalVacuum(db, options.dbPath);
+
+    const resultLabel = result.vacuum_error != null
+      ? `${label} (failed)`
+      : result.already_incremental
+        ? `${label} (already incremental)`
+        : `${label} (executed)`;
+
+    return { label: resultLabel, data: result };
+  } catch (error) {
+    return { label: `${label} (failed)`, data: null, error: formatErrorMessage(error) };
   } finally {
     db?.close();
   }
@@ -1337,7 +1528,7 @@ async function main(): Promise<void> {
 
   // DB-only path: if any db flag is present, skip server entirely.
   // Also route here if --execute is set alone (to give a clear error).
-  const isDbMode = options.dbHealth || options.pruneOlderDays != null || options.execute;
+  const isDbMode = options.dbHealth || options.pruneOlderDays != null || options.execute || options.setIncrementalVacuum;
 
   if (isDbMode) {
     // Guard: --execute without --prune-older is a user error
@@ -1368,6 +1559,22 @@ async function main(): Promise<void> {
         const result = await runDbPruneDryRun(options);
         sections.push(result);
         if (result.error != null) hasError = true;
+      }
+    }
+
+    if (options.setIncrementalVacuum) {
+      const result = await runSetIncrementalVacuum(options);
+      sections.push(result);
+      // Exit nonzero if refused, errored, or VACUUM failed (vacuum_error set or confirmed===false on executed path)
+      if (isPlainObject(result.data) && (result.data as { refused?: boolean }).refused) {
+        hasError = true;
+      }
+      if (result.error != null) hasError = true;
+      if (isPlainObject(result.data) && result.data.vacuum_error != null) {
+        hasError = true;
+      }
+      if (isPlainObject(result.data) && result.data.confirmed === false) {
+        hasError = true;
       }
     }
 

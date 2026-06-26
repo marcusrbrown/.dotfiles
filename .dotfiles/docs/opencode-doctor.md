@@ -128,6 +128,14 @@ mise run opencode:doctor -- --prune-older=30 --execute
 
 Pruning events is only safe for local-first usage — `event` rows back OpenCode's sync / cross-device replay / history features. See `docs/solutions/2026-06-25-opencode-sqlite-db-bloat-prune-vacuum.md` for the full safety contract.
 
+### One-time: switch to incremental auto-vacuum
+
+```bash
+mise run opencode:doctor -- --set-incremental-vacuum
+```
+
+Converts the DB from `auto_vacuum=NONE` to `INCREMENTAL` (sets the pragma, then runs a full `VACUUM` to rewrite the file). After this, future prunes free pages that can be reclaimed incrementally without a full exclusive VACUUM each time. Same constraints as `--execute` (close other OpenCode instances; needs ~1.1× DB size free disk). Safe to re-run — it re-attempts the full VACUUM until the conversion is confirmed.
+
 ---
 
 ## SDK Workaround Note
