@@ -1,5 +1,9 @@
 #!/usr/bin/env bun
 import { spawn, type ChildProcess } from "node:child_process";
+import { statSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname } from "node:path";
+import { Database } from "bun:sqlite";
 import { createOpencodeClient } from "@opencode-ai/sdk";
 
 type OutputFormat = "text" | "json";
@@ -16,6 +20,11 @@ type CliOptions = {
   limit: number;
   toolsProvider?: string;
   toolsModel?: string;
+  // DB flags
+  dbHealth: boolean;
+  pruneOlderDays: number | null;
+  execute: boolean;
+  dbPath: string;
 };
 
 type SectionResult = {
@@ -27,6 +36,10 @@ type SectionResult = {
 const DEFAULT_PORT = 4096;
 const AUTO_PORT_ATTEMPTS = 10;
 const DEFAULT_LIMIT = 10;
+const DEFAULT_DB_PATH = `${homedir()}/.local/share/opencode/opencode.db`;
+const DEFAULT_PRUNE_DAYS = 30;
+const BUSY_RETRY_ATTEMPTS = 3;
+const BUSY_RETRY_DELAY_MS = 100;
 
 const SECTION_KEYS = [
   "server",
@@ -46,6 +59,7 @@ const SECTION_KEYS = [
   "formatter",
   "sessions",
   "session-status",
+  "db-health",
 ] as const;
 
 const SENSITIVE_KEYS = [
@@ -82,6 +96,11 @@ const KNOWN_FLAGS = new Set([
   "--tools-model",
   "--help",
   "-h",
+  // DB flags
+  "--db-health",
+  "--prune-older",
+  "--execute",
+  "--db-path",
 ]);
 
 function warnUnknownFlag(flag: string): void {
@@ -236,6 +255,36 @@ function parseArgs(argv: string[]): CliOptions {
     }
   }
 
+  // DB flags
+  const dbHealthValue = args.get("--db-health");
+  const dbHealth = dbHealthValue != null && !isBooleanFalse(dbHealthValue);
+
+  const pruneOlderValue = args.get("--prune-older");
+  let pruneOlderDays: number | null = null;
+  if (pruneOlderValue != null) {
+    if (pruneOlderValue === true) {
+      // Flag present without value — use default
+      pruneOlderDays = DEFAULT_PRUNE_DAYS;
+    } else {
+      const parsed = Number(pruneOlderValue);
+      if (!Number.isFinite(parsed) || parsed < 1) {
+        warnInvalidValue("--prune-older", String(pruneOlderValue), "positive integer >= 1 (days)");
+        pruneOlderDays = DEFAULT_PRUNE_DAYS;
+      } else {
+        pruneOlderDays = parsed;
+      }
+    }
+  }
+
+  const executeValue = args.get("--execute");
+  const execute = executeValue != null && !isBooleanFalse(executeValue);
+
+  const dbPathValue = args.get("--db-path");
+  const dbPath =
+    dbPathValue != null && dbPathValue !== true
+      ? String(dbPathValue)
+      : DEFAULT_DB_PATH;
+
   return {
     host,
     port,
@@ -248,6 +297,10 @@ function parseArgs(argv: string[]): CliOptions {
     limit,
     toolsProvider: toolsProviderValue != null && toolsProviderValue !== true ? String(toolsProviderValue) : undefined,
     toolsModel: toolsModelValue != null && toolsModelValue !== true ? String(toolsModelValue) : undefined,
+    dbHealth,
+    pruneOlderDays,
+    execute,
+    dbPath,
   };
 }
 
@@ -274,6 +327,15 @@ Options:
   --tools-provider <string> Provider ID for tool schemas
   --tools-model <string>    Model ID for tool schemas
   --help                    Show this help
+
+DB Maintenance (no server required):
+  --db-health               Read-only DB metrics (size, pragmas, row counts, age histogram)
+  --prune-older[=<days>]    Select sessions older than N days (default: 30, minimum: 1).
+                            Dry-run unless --execute. Deletion is IRREVERSIBLE.
+  --execute                 PERMANENTLY and IRREVERSIBLY deletes sessions and all their
+                            messages, parts, and events. Requires --prune-older.
+                            Without --prune-older, --execute is an error.
+  --db-path <path>          Override DB path (default: ~/.local/share/opencode/opencode.db)
 
 Sections:
   ${SECTION_KEYS.join(", ")}
@@ -403,6 +465,533 @@ function formatErrorMessage(error: unknown): string {
   }
   return String(error);
 }
+
+// ─── DB Helpers ───────────────────────────────────────────────────────────────
+
+function bytesToHuman(bytes: number): string {
+  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(2)} GB`;
+  if (bytes >= 1e6) return `${(bytes / 1e6).toFixed(2)} MB`;
+  if (bytes >= 1e3) return `${(bytes / 1e3).toFixed(2)} KB`;
+  return `${bytes} B`;
+}
+
+function safeStatSize(path: string): number {
+  try {
+    return statSync(path).size;
+  } catch {
+    return 0;
+  }
+}
+
+async function withSqliteBusyRetry<T>(
+  fn: () => T,
+  attempts = BUSY_RETRY_ATTEMPTS,
+  backoffMs = BUSY_RETRY_DELAY_MS
+): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      return fn();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("SQLITE_BUSY") || msg.includes("SQLITE_LOCKED")) {
+        lastError = err;
+        if (attempt < attempts - 1) {
+          await new Promise((r) => setTimeout(r, backoffMs));
+        }
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError;
+}
+
+export type DbHealthData = {
+  db_path: string;
+  file_size_bytes: number;
+  file_size_human: string;
+  wal_size_bytes: number;
+  wal_size_human: string;
+  shm_size_bytes: number;
+  shm_size_human: string;
+  page_count: number;
+  page_size: number;
+  freelist_count: number;
+  free_bytes: number;
+  free_pct: string;
+  journal_mode: string;
+  auto_vacuum: number;
+  row_counts: {
+    session: number;
+    message: number;
+    part: number;
+    event: number;
+    event_sequence: number;
+  };
+  session_age_histogram: {
+    last7d: number;
+    days7to30: number;
+    days30to90: number;
+    older90d: number;
+  };
+};
+
+export function computeDbHealth(db: Database, dbPath: string): DbHealthData {
+  type PragmaRow = { [key: string]: unknown };
+
+  const pageCountRow = db.query<PragmaRow, []>("PRAGMA page_count").get();
+  const pageSizeRow = db.query<PragmaRow, []>("PRAGMA page_size").get();
+  const freelistRow = db.query<PragmaRow, []>("PRAGMA freelist_count").get();
+  const journalRow = db.query<PragmaRow, []>("PRAGMA journal_mode").get();
+  const autoVacuumRow = db.query<PragmaRow, []>("PRAGMA auto_vacuum").get();
+
+  const pageCount = Number(pageCountRow?.page_count ?? 0);
+  const pageSize = Number(pageSizeRow?.page_size ?? 0);
+  const freelistCount = Number(freelistRow?.freelist_count ?? 0);
+  const journalMode = String(journalRow?.journal_mode ?? "unknown");
+  const autoVacuum = Number(autoVacuumRow?.auto_vacuum ?? 0);
+
+  const freeBytes = freelistCount * pageSize;
+  const totalBytes = pageCount * pageSize;
+  const freePct = totalBytes > 0 ? ((freeBytes / totalBytes) * 100).toFixed(2) + "%" : "0.00%";
+
+  type CountRow = { cnt: number };
+  const sessionCount = db.query<CountRow, []>("SELECT COUNT(*) AS cnt FROM session").get()?.cnt ?? 0;
+  const messageCount = db.query<CountRow, []>("SELECT COUNT(*) AS cnt FROM message").get()?.cnt ?? 0;
+  const partCount = db.query<CountRow, []>("SELECT COUNT(*) AS cnt FROM part").get()?.cnt ?? 0;
+  const eventCount = db.query<CountRow, []>("SELECT COUNT(*) AS cnt FROM event").get()?.cnt ?? 0;
+  const eventSeqCount = db.query<CountRow, []>("SELECT COUNT(*) AS cnt FROM event_sequence").get()?.cnt ?? 0;
+
+  // Age histogram — CAST to INTEGER to avoid numeric-vs-text comparison bug
+  const now7d = Math.floor(Date.now() / 1000) - 7 * 86400;
+  const now30d = Math.floor(Date.now() / 1000) - 30 * 86400;
+  const now90d = Math.floor(Date.now() / 1000) - 90 * 86400;
+
+  type HistRow = { cnt: number };
+  const last7d = db.query<HistRow, [number]>(
+    "SELECT COUNT(*) AS cnt FROM session WHERE CAST(time_created / 1000 AS INTEGER) >= ?"
+  ).get(now7d)?.cnt ?? 0;
+
+  const days7to30 = db.query<HistRow, [number, number]>(
+    "SELECT COUNT(*) AS cnt FROM session WHERE CAST(time_created / 1000 AS INTEGER) >= ? AND CAST(time_created / 1000 AS INTEGER) < ?"
+  ).get(now30d, now7d)?.cnt ?? 0;
+
+  const days30to90 = db.query<HistRow, [number, number]>(
+    "SELECT COUNT(*) AS cnt FROM session WHERE CAST(time_created / 1000 AS INTEGER) >= ? AND CAST(time_created / 1000 AS INTEGER) < ?"
+  ).get(now90d, now30d)?.cnt ?? 0;
+
+  const older90d = db.query<HistRow, [number]>(
+    "SELECT COUNT(*) AS cnt FROM session WHERE CAST(time_created / 1000 AS INTEGER) < ?"
+  ).get(now90d)?.cnt ?? 0;
+
+  const fileSizeBytes = safeStatSize(dbPath);
+  const walSizeBytes = safeStatSize(dbPath + "-wal");
+  const shmSizeBytes = safeStatSize(dbPath + "-shm");
+
+  return {
+    db_path: dbPath,
+    file_size_bytes: fileSizeBytes,
+    file_size_human: bytesToHuman(fileSizeBytes),
+    wal_size_bytes: walSizeBytes,
+    wal_size_human: bytesToHuman(walSizeBytes),
+    shm_size_bytes: shmSizeBytes,
+    shm_size_human: bytesToHuman(shmSizeBytes),
+    page_count: pageCount,
+    page_size: pageSize,
+    freelist_count: freelistCount,
+    free_bytes: freeBytes,
+    free_pct: freePct,
+    journal_mode: journalMode,
+    auto_vacuum: autoVacuum,
+    row_counts: {
+      session: sessionCount,
+      message: messageCount,
+      part: partCount,
+      event: eventCount,
+      event_sequence: eventSeqCount,
+    },
+    session_age_histogram: {
+      last7d,
+      days7to30,
+      days30to90,
+      older90d,
+    },
+  };
+}
+
+export function selectOldSessionIds(db: Database, cutoffMs: number): string[] {
+  type IdRow = { id: string };
+  const cutoffSec = Math.floor(cutoffMs / 1000);
+  const rows = db.query<IdRow, [number]>(
+    "SELECT id FROM session WHERE CAST(time_created / 1000 AS INTEGER) < ?"
+  ).all(cutoffSec);
+  return rows.map((r) => r.id);
+}
+
+export type ReclaimEstimate = {
+  part_bytes: number;
+  message_bytes: number;
+  event_bytes: number;
+  total_bytes: number;
+  part_human: string;
+  message_human: string;
+  event_human: string;
+  total_human: string;
+};
+
+export function estimateReclaim(db: Database, sessionIds: string[]): ReclaimEstimate {
+  if (sessionIds.length === 0) {
+    return {
+      part_bytes: 0, message_bytes: 0, event_bytes: 0, total_bytes: 0,
+      part_human: "0 B", message_human: "0 B", event_human: "0 B", total_human: "0 B",
+    };
+  }
+
+  // Use a temp table to avoid SQLite's bound-variable limit (SQLITE_MAX_VARIABLE_NUMBER).
+  // A giant IN (?,?,…) clause with thousands of ids will throw "too many SQL variables".
+  db.exec("CREATE TEMP TABLE IF NOT EXISTS _prune_ids (id TEXT PRIMARY KEY)");
+  db.exec("DELETE FROM _prune_ids");
+
+  const insertId = db.prepare("INSERT OR IGNORE INTO _prune_ids (id) VALUES (?)");
+  db.transaction(() => {
+    for (const id of sessionIds) insertId.run(id);
+  })();
+
+  type SumRow = { total: number | null };
+
+  // Use CAST(data AS BLOB) so length() returns byte count, not character count.
+  // SQLite's length() on TEXT counts Unicode code points; BLOB length is always bytes.
+  const partBytes = db.query<SumRow, []>(
+    "SELECT SUM(length(CAST(data AS BLOB))) AS total FROM part WHERE session_id IN (SELECT id FROM _prune_ids)"
+  ).get()?.total ?? 0;
+
+  const messageBytes = db.query<SumRow, []>(
+    "SELECT SUM(length(CAST(data AS BLOB))) AS total FROM message WHERE session_id IN (SELECT id FROM _prune_ids)"
+  ).get()?.total ?? 0;
+
+  const eventBytes = db.query<SumRow, []>(
+    "SELECT SUM(length(CAST(data AS BLOB))) AS total FROM event WHERE aggregate_id IN (SELECT id FROM _prune_ids)"
+  ).get()?.total ?? 0;
+
+  db.exec("DROP TABLE IF EXISTS _prune_ids");
+
+  const totalBytes = (partBytes ?? 0) + (messageBytes ?? 0) + (eventBytes ?? 0);
+
+  return {
+    part_bytes: partBytes ?? 0,
+    message_bytes: messageBytes ?? 0,
+    event_bytes: eventBytes ?? 0,
+    total_bytes: totalBytes,
+    part_human: bytesToHuman(partBytes ?? 0),
+    message_human: bytesToHuman(messageBytes ?? 0),
+    event_human: bytesToHuman(eventBytes ?? 0),
+    total_human: bytesToHuman(totalBytes),
+  };
+}
+
+export type PruneResult = {
+  sessions_deleted: number;
+  before: {
+    file_size_bytes: number;
+    file_size_human: string;
+    freelist_count: number;
+    row_counts: { session: number; message: number; part: number; event: number; event_sequence: number };
+  };
+  after: {
+    file_size_bytes: number;
+    file_size_human: string;
+    freelist_count: number;
+    row_counts: { session: number; message: number; part: number; event: number; event_sequence: number };
+  };
+  bytes_reclaimed: number;
+  bytes_reclaimed_human: string;
+  vacuum_error?: string;
+};
+
+function captureDbSnapshot(db: Database, dbPath: string): PruneResult["before"] {
+  type PragmaRow = { [key: string]: unknown };
+  type CountRow = { cnt: number };
+
+  const freelistCount = Number(db.query<PragmaRow, []>("PRAGMA freelist_count").get()?.freelist_count ?? 0);
+  const sessionCount = db.query<CountRow, []>("SELECT COUNT(*) AS cnt FROM session").get()?.cnt ?? 0;
+  const messageCount = db.query<CountRow, []>("SELECT COUNT(*) AS cnt FROM message").get()?.cnt ?? 0;
+  const partCount = db.query<CountRow, []>("SELECT COUNT(*) AS cnt FROM part").get()?.cnt ?? 0;
+  const eventCount = db.query<CountRow, []>("SELECT COUNT(*) AS cnt FROM event").get()?.cnt ?? 0;
+  const eventSeqCount = db.query<CountRow, []>("SELECT COUNT(*) AS cnt FROM event_sequence").get()?.cnt ?? 0;
+  const fileSizeBytes = safeStatSize(dbPath);
+
+  return {
+    file_size_bytes: fileSizeBytes,
+    file_size_human: bytesToHuman(fileSizeBytes),
+    freelist_count: freelistCount,
+    row_counts: {
+      session: sessionCount,
+      message: messageCount,
+      part: partCount,
+      event: eventCount,
+      event_sequence: eventSeqCount,
+    },
+  };
+}
+
+export function pruneSessions(db: Database, sessionIds: string[], dbPath: string): PruneResult {
+  const before = captureDbSnapshot(db, dbPath);
+
+  let sessionsDeleted = 0;
+
+  if (sessionIds.length > 0) {
+    // Populate a temp table to avoid SQLite's bound-variable limit.
+    // IN (?,?,…) with thousands of ids throws "too many SQL variables".
+    db.exec("CREATE TEMP TABLE IF NOT EXISTS _prune_ids (id TEXT PRIMARY KEY)");
+    db.exec("DELETE FROM _prune_ids");
+
+    const insertId = db.prepare("INSERT OR IGNORE INTO _prune_ids (id) VALUES (?)");
+
+    db.transaction(() => {
+      // Bulk-load ids — one bind per statement, no variable-count limit.
+      for (const id of sessionIds) insertId.run(id);
+
+      // Count sessions that actually exist in the DB (not just input list length).
+      type CountRow = { cnt: number };
+      const existingCount = db.query<CountRow, []>(
+        "SELECT COUNT(*) AS cnt FROM session WHERE id IN (SELECT id FROM _prune_ids)"
+      ).get()?.cnt ?? 0;
+      sessionsDeleted = existingCount;
+
+      // Delete event_sequence (cascades to event) for these session ids.
+      db.exec("DELETE FROM event_sequence WHERE aggregate_id IN (SELECT id FROM _prune_ids)");
+      // Delete sessions (cascades to message, part via FK).
+      db.exec("DELETE FROM session WHERE id IN (SELECT id FROM _prune_ids)");
+    })();
+
+    db.exec("DROP TABLE IF EXISTS _prune_ids");
+  }
+
+  // Checkpoint WAL then VACUUM to reclaim space (VACUUM must run outside a transaction).
+  // Wrap in its own try/catch: if VACUUM fails, we still report what was deleted.
+  let vacuumError: string | undefined;
+  try {
+    db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+    db.exec("VACUUM");
+  } catch (err) {
+    vacuumError = formatErrorMessage(err);
+  }
+
+  const after = captureDbSnapshot(db, dbPath);
+
+  const bytesReclaimed = Math.max(0, before.file_size_bytes - after.file_size_bytes);
+
+  const result: PruneResult = {
+    sessions_deleted: sessionsDeleted,
+    before,
+    after,
+    bytes_reclaimed: bytesReclaimed,
+    bytes_reclaimed_human: bytesToHuman(bytesReclaimed),
+  };
+
+  if (vacuumError != null) {
+    result.vacuum_error = `Rows deleted but space reclamation failed: ${vacuumError}`;
+  }
+
+  return result;
+}
+
+/**
+ * Classify a pgrep exit code into a process-check result.
+ * Exported for unit testing.
+ *   0  → pgrep found matches (processes exist)
+ *   1  → pgrep found no matches (safe)
+ *   other → pgrep itself failed / unavailable (treat as UNSAFE)
+ */
+export function classifyPgrepExitCode(exitCode: number | null): "has_procs" | "no_procs" | "error" {
+  if (exitCode === 0) return "has_procs";
+  if (exitCode === 1) return "no_procs";
+  return "error";
+}
+
+function checkForOtherOpencodeProcesses(): { safe: boolean; count: number; pids: number[] } {
+  const result = Bun.spawnSync(["pgrep", "-f", "opencode"]);
+  const classification = classifyPgrepExitCode(result.exitCode);
+
+  if (classification === "error") {
+    // pgrep unavailable or crashed — cannot verify safety, refuse to proceed
+    return { safe: false, count: -1, pids: [] };
+  }
+
+  if (classification === "no_procs") {
+    return { safe: true, count: 0, pids: [] };
+  }
+
+  const output = result.stdout instanceof Buffer
+    ? result.stdout.toString("utf8")
+    : String(result.stdout ?? "");
+
+  const ownPid = process.pid;
+  // Get parent PID via /proc or ps
+  let parentPid: number | null = null;
+  try {
+    const ppidResult = Bun.spawnSync(["ps", "-o", "ppid=", "-p", String(ownPid)]);
+    if (ppidResult.exitCode === 0) {
+      const ppidOut = ppidResult.stdout instanceof Buffer
+        ? ppidResult.stdout.toString("utf8")
+        : String(ppidResult.stdout ?? "");
+      parentPid = parseInt(ppidOut.trim(), 10) || null;
+    }
+  } catch {
+    // ignore
+  }
+
+  const pids = output
+    .split("\n")
+    .map((line) => parseInt(line.trim(), 10))
+    .filter((pid) => !isNaN(pid) && pid !== ownPid && pid !== parentPid);
+
+  return { safe: pids.length === 0, count: pids.length, pids };
+}
+
+// ─── DB Section Runners ───────────────────────────────────────────────────────
+
+async function runDbHealth(options: CliOptions): Promise<SectionResult> {
+  let db: Database | null = null;
+  try {
+    const uri = "file:" + options.dbPath + "?mode=ro";
+    db = new Database(uri, { readonly: true });
+    db.exec("PRAGMA busy_timeout=5000");
+
+    const data = await withSqliteBusyRetry(() => computeDbHealth(db!, options.dbPath));
+    return { label: "DB Health", data };
+  } catch (error) {
+    return { label: "DB Health", data: null, error: formatErrorMessage(error) };
+  } finally {
+    db?.close();
+  }
+}
+
+async function runDbPruneDryRun(options: CliOptions): Promise<SectionResult> {
+  const days = options.pruneOlderDays ?? DEFAULT_PRUNE_DAYS;
+  const cutoffMs = Date.now() - days * 24 * 3600 * 1000;
+  const cutoffDate = new Date(cutoffMs).toISOString().slice(0, 10);
+
+  let db: Database | null = null;
+  try {
+    const uri = "file:" + options.dbPath + "?mode=ro";
+    db = new Database(uri, { readonly: true });
+    db.exec("PRAGMA busy_timeout=5000");
+
+    const sessionIds = await withSqliteBusyRetry(() => selectOldSessionIds(db!, cutoffMs));
+    const reclaim = await withSqliteBusyRetry(() => estimateReclaim(db!, sessionIds));
+
+    const data = {
+      cutoff_date: cutoffDate,
+      prune_older_than_days: days,
+      sessions_to_delete: sessionIds.length,
+      reclaimable_estimate: reclaim,
+      notice: "DRY RUN — no changes. Re-run with --execute to delete.",
+    };
+
+    return { label: "DB Prune (dry-run)", data };
+  } catch (error) {
+    return { label: "DB Prune (dry-run)", data: null, error: formatErrorMessage(error) };
+  } finally {
+    db?.close();
+  }
+}
+
+async function runDbPruneExecute(options: CliOptions): Promise<SectionResult> {
+  const days = options.pruneOlderDays ?? DEFAULT_PRUNE_DAYS;
+
+  // Defense-in-depth: hard-refuse if pruneOlderDays < 1 even if parseArgs let it through.
+  if (days < 1) {
+    const data = {
+      refused: true,
+      reason: `--prune-older must be >= 1 day (got ${days}). Refusing to prevent mass deletion.`,
+    };
+    return { label: "DB Prune (refused)", data };
+  }
+
+  const cutoffMs = Date.now() - days * 24 * 3600 * 1000;
+  const cutoffDate = new Date(cutoffMs).toISOString().slice(0, 10);
+
+  // Safety gate: check for other opencode processes
+  const procCheck = checkForOtherOpencodeProcesses();
+  if (!procCheck.safe) {
+    const reason = procCheck.count === -1
+      ? "Could not verify other OpenCode processes are stopped (pgrep unavailable); refusing to run destructive prune. Re-run where process detection works."
+      : `Found ${procCheck.count} other opencode process(es) running (PIDs: ${procCheck.pids.join(", ")}). Close all OpenCode instances and re-run.`;
+    const data = {
+      refused: true,
+      reason,
+      instruction: "Close all OpenCode instances and re-run with --prune-older --execute",
+    };
+    return { label: "DB Prune (refused)", data };
+  }
+
+  // Disk-space pre-check: VACUUM needs ~= DB size of free space for a temp copy.
+  // Check BEFORE any destructive operation so we never delete-then-fail-vacuum.
+  const dbSize = safeStatSize(options.dbPath);
+  if (dbSize > 0) {
+    try {
+      // -P forces POSIX output: one data line per filesystem, never wrapped
+      // (plain `df -k` can split a long device name across two lines).
+      const dfResult = Bun.spawnSync(["df", "-kP", dirname(options.dbPath)]);
+      if (dfResult.exitCode === 0) {
+        const dfOut = dfResult.stdout instanceof Buffer
+          ? dfResult.stdout.toString("utf8")
+          : String(dfResult.stdout ?? "");
+        // POSIX `df -kP` data line, both macOS and Linux:
+        //   Filesystem  1024-blocks  Used  Available  Capacity  Mounted-on
+        // Columns are fixed: Available is index 3, Mounted-on is the last field.
+        const lines = dfOut.trim().split("\n");
+        const dataLine = lines[lines.length - 1];
+        const cols = dataLine.trim().split(/\s+/);
+        // Anchor from the end (Mounted-on is last) so a space in the mount path
+        // can't shift the Available column: Available is 4th from the path,
+        // i.e. cols[length-3] in POSIX layout. Fall back to index 3.
+        const availableRaw = cols.length >= 6 ? cols[cols.length - 3] : cols[3];
+        const availableKb = parseInt(availableRaw ?? "", 10);
+        if (!isNaN(availableKb)) {
+          const availableBytes = availableKb * 1024;
+          const requiredBytes = dbSize * 1.1;
+          if (availableBytes < requiredBytes) {
+            const data = {
+              refused: true,
+              reason: `VACUUM needs ~${bytesToHuman(Math.ceil(requiredBytes))} free; only ${bytesToHuman(availableBytes)} available. Free disk space and re-run.`,
+            };
+            return { label: "DB Prune (refused)", data };
+          }
+        }
+      }
+    } catch {
+      // If df fails, proceed — disk check is best-effort; the real guard is VACUUM itself.
+    }
+  }
+
+  let db: Database | null = null;
+  try {
+    db = new Database(options.dbPath);
+    db.exec("PRAGMA busy_timeout=5000");
+    db.exec("PRAGMA foreign_keys=ON");
+
+    const sessionIds = selectOldSessionIds(db, cutoffMs);
+
+    const result = pruneSessions(db, sessionIds, options.dbPath);
+
+    const data = {
+      cutoff_date: cutoffDate,
+      prune_older_than_days: days,
+      ...result,
+    };
+
+    return { label: "DB Prune (executed)", data };
+  } catch (error) {
+    return { label: "DB Prune (executed)", data: null, error: formatErrorMessage(error) };
+  } finally {
+    db?.close();
+  }
+}
+
+// ─── Server / Section Collection ─────────────────────────────────────────────
 
 async function spawnOpencodeServer(
   hostname: string,
@@ -745,6 +1334,53 @@ function summarize(value: unknown, limit: number): unknown {
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
+
+  // DB-only path: if any db flag is present, skip server entirely.
+  // Also route here if --execute is set alone (to give a clear error).
+  const isDbMode = options.dbHealth || options.pruneOlderDays != null || options.execute;
+
+  if (isDbMode) {
+    // Guard: --execute without --prune-older is a user error
+    if (options.execute && options.pruneOlderDays == null) {
+      console.error("Error: --execute requires --prune-older=<days>. Example: --prune-older=30 --execute");
+      process.exit(1);
+    }
+
+    const sections: SectionResult[] = [];
+    let hasError = false;
+
+    if (options.dbHealth) {
+      const result = await runDbHealth(options);
+      sections.push(result);
+      if (result.error != null) hasError = true;
+    }
+
+    if (options.pruneOlderDays != null) {
+      if (options.execute) {
+        const result = await runDbPruneExecute(options);
+        sections.push(result);
+        // Exit nonzero if refused or errored
+        if (isPlainObject(result.data) && (result.data as { refused?: boolean }).refused) {
+          hasError = true;
+        }
+        if (result.error != null) hasError = true;
+      } else {
+        const result = await runDbPruneDryRun(options);
+        sections.push(result);
+        if (result.error != null) hasError = true;
+      }
+    }
+
+    const output = options.format === "json"
+      ? JSON.stringify(redactSecrets(sections.map((section) => ({
+          label: section.label,
+          ...extractData(section.data),
+        }))), null, 2)
+      : sections.map((section) => renderSection(section, options)).join("\n");
+
+    console.log(output);
+    process.exit(hasError ? 1 : 0);
+  }
 
   const sections = await collectSections(options);
   const output = options.format === "json"
