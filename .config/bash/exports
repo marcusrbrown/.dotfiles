@@ -382,7 +382,9 @@ export OMO_DISABLE_POSTHOG=1
 
 # OpenCode
 
+export OPENCODE_DISABLE_FFF=1
 export OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true
+export OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER=true
 export OPENCODE_EXPERIMENTAL_WEBSOCKETS=true
 
 # Ollama — short keep-alive so models unload after each on-demand run
