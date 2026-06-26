@@ -111,6 +111,17 @@ v1.17.11 source): session display reads `message` + `part`, not `event`
 Deleting events breaks those features for pruned sessions — fine if you never use
 sync/share/replay.
 
+## Reducing future full VACUUMs
+
+`opencode-doctor --set-incremental-vacuum` converts the DB from
+`auto_vacuum=NONE` to `INCREMENTAL` (one-time: `PRAGMA auto_vacuum=INCREMENTAL`
+then a full `VACUUM` to rewrite the file). After conversion, future deletes free
+pages that `PRAGMA incremental_vacuum` can reclaim without a full exclusive
+VACUUM. Same safety gates as prune (other-process check, free disk ≥ DB×1.1).
+Note: converting an existing DB still needs one full VACUUM, and `confirmed` is
+only true when that VACUUM completes — a failed conversion leaves the mode flag
+set but the file un-rewritten, so re-running always re-attempts the full VACUUM.
+
 ## Prevention
 
 - Default to dry-run; require explicit `--execute` for deletion.
