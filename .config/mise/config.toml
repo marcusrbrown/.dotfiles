@@ -36,7 +36,7 @@ ast-grep = "0.43.0"
 "npm:@marcusrbrown/infra" = "latest"
 
 # Language Servers
-"npm:pyright" = "1.1.410"
+"npm:pyright" = "1.1.411"
 "npm:typescript-language-server" = "5.3.0"
 
 [env]
