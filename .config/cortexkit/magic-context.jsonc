@@ -19,17 +19,37 @@
   "dreamer": {
     "model": "anthropic/claude-sonnet-4-6",
     "fallback_models": ["openai/gpt-5.4-mini", "github-copilot/claude-sonnet-4.6"],
-    "schedule": "00:00-08:00",
-    "user_memories": {
-      "enabled": true,
-      "promotion_threshold": 3
-    },
-    "pin_key_files": {
-      "enabled": true,
-      "token_budget": 20000,
-      "min_reads": 4
-    },
-    "inject_docs": true
+    "inject_docs": true,
+    "tasks": {
+      "verify": {
+        "schedule": "0 0 * * *"
+      },
+      "verify-broad": {
+        "schedule": "0 4 * * 0"
+      },
+      "curate": {
+        "schedule": "0 0 * * *"
+      },
+      "classify-memories": {
+        "schedule": "0 6 * * *"
+      },
+      "retrospective": {
+        "schedule": "0 5 * * *"
+      },
+      "maintain-docs": {
+        "schedule": ""
+      },
+      "map-memories": {
+        "schedule": "0 0 * * *"
+      },
+      "evaluate-smart-notes": {
+        "schedule": "0 0 * * *"
+      },
+      "review-user-memories": {
+        "schedule": "0 0 * * *",
+        "promotion_threshold": 3
+      }
+    }
   },
   "sidekick": {
     "disabled": true,
@@ -80,8 +100,5 @@
     "enabled": true,
     "skip_signatures": ["You are the Council agent — a multi-LLM"]
   },
-  "auto_update": false,
-  "embedding": {
-    "provider": "off"
-  }
+  "auto_update": false
 }
