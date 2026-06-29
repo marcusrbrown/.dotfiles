@@ -25,7 +25,7 @@
         "mcps": ["websearch", "context7", "grep_app", "tavily"]
       },
       "explorer": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "github-copilot/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": []
@@ -119,6 +119,7 @@
     "mixed": {
       "orchestrator": {
         "model": "anthropic/claude-opus-4-8",
+        "variant": "xhigh",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
@@ -138,7 +139,7 @@
         "mcps": ["websearch", "context7", "grep_app", "tavily"]
       },
       "explorer": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "github-copilot/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": []
