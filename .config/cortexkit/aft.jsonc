@@ -10,5 +10,6 @@
   },
   "bridge": {
     "hang_threshold": 5
-  }
+  },
+  "auto_update": false
 }
