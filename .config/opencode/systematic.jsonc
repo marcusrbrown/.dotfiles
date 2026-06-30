@@ -28,7 +28,7 @@
       "model": "github-copilot/gemini-3.5-flash"
     },
     "systematic-implementer": {
-      "model": "anthropic/claude-sonnet-4-6",
+      "model": "anthropic/claude-sonnet-5",
       "temperature": 0.1
     }
   }
