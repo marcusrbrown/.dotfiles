@@ -196,7 +196,7 @@ State directory created at runtime (untracked):
 
 ## Implementation Units
 
-- [ ] **Unit 1: SQLite reader + transcript extraction**
+- [x] **Unit 1: SQLite reader + transcript extraction**
 
 **Goal:** Implement read-only SQLite connection with R17 hardening (URI mode + PRAGMA + temp-table probe), schema-invariant check (fail-closed on missing columns), and the role-labeled transcript-extraction function.
 
@@ -240,7 +240,7 @@ State directory created at runtime (untracked):
 
 ---
 
-- [ ] **Unit 2: Cursor + session selection + Ollama client + report writer**
+- [x] **Unit 2: Cursor + session selection + Ollama client + report writer**
 
 **Goal:** Implement the simplified cursor (last_run_timestamp only), session selection with R7 cap, Ollama HTTP client with validated R5 strategy, and the Markdown report writer + JSONL run log.
 
@@ -285,7 +285,7 @@ State directory created at runtime (untracked):
 
 ---
 
-- [ ] **Unit 3: CLI entry + flag parsing + Ollama health check**
+- [x] **Unit 3: CLI entry + flag parsing + Ollama health check**
 
 **Goal:** Wire all modules into a CLI with `--since`, `--session`, `--out`, `--extract-only`, `--help`. Implement Ollama health check + non-mutating `--session` semantics + fail-closed exit codes.
 
@@ -330,7 +330,7 @@ State directory created at runtime (untracked):
 
 ---
 
-- [ ] **Unit 4: Mise task wrapper + allowlist + compound doc**
+- [x] **Unit 4: Mise task wrapper + allowlist + compound doc**
 
 **Goal:** Expose pipeline as `mise run distill`; ensure all new files tracked; add the thin post-implementation compound doc capturing only what's net-new from implementation (the Bun/TS WAL-mode SQLite pattern).
 
