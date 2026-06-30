@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/cortexkit/magic-context/master/assets/magic-context.schema.json",
   "historian": {
     "model": "opencode-go/deepseek-v4-flash",
-    "fallback_models": ["openai/gpt-5.5", "anthropic/claude-sonnet-4-6", "github-copilot/claude-sonnet-4.6"],
+    "fallback_models": ["openai/gpt-5.5", "anthropic/claude-sonnet-5", "github-copilot/claude-sonnet-4.6"],
     "temperature": 0.1,
     "variant": "medium",
     "tools": {
@@ -17,7 +17,7 @@
     }
   },
   "dreamer": {
-    "model": "anthropic/claude-sonnet-4-6",
+    "model": "anthropic/claude-sonnet-5",
     "fallback_models": ["openai/gpt-5.4-mini", "github-copilot/claude-sonnet-4.6"],
     "inject_docs": true,
     "tasks": {
@@ -58,6 +58,7 @@
   "cache_ttl": {
     "default": "5m",
     "anthropic/claude-sonnet-4-6": "59m",
+    "anthropic/claude-sonnet-5": "59m",
     "anthropic/claude-opus-4-6": "59m",
     "anthropic/claude-opus-4-7": "59m",
     "anthropic/claude-opus-4-8": "59m",
@@ -68,6 +69,7 @@
   "execute_threshold_percentage": {
     "default": 65,
     "anthropic/claude-sonnet-4-6": 55,
+    "anthropic/claude-sonnet-5": 55,
     "anthropic/claude-opus-4-6": 55,
     "anthropic/claude-opus-4-7": 55,
     "openai/gpt-5.5": 80,
