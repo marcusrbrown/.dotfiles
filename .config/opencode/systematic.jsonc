@@ -29,6 +29,7 @@
     },
     "systematic-implementer": {
       "model": "anthropic/claude-sonnet-5",
+      "variant": "low",
       "temperature": 0.1
     }
   }

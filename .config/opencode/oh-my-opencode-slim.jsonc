@@ -37,6 +37,7 @@
       },
       "fixer": {
         "model": "anthropic/claude-sonnet-5",
+        "variant": "low",
         "skills": ["agent-browser", "impeccable", "systematic:*"]
       }
     },
@@ -151,6 +152,7 @@
       },
       "fixer": {
         "model": "anthropic/claude-sonnet-5",
+        "variant": "low",
         "skills": ["agent-browser", "impeccable", "systematic:*"]
       }
     }
