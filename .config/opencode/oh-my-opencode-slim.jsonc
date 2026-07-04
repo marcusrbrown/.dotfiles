@@ -43,7 +43,7 @@
     },
     "opencode-go": {
       "orchestrator": {
-        "model": "opencode-go/kimi-k2.6",
+        "model": "opencode-go/kimi-k2.7",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
@@ -68,7 +68,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "opencode-go/kimi-k2.6",
+        "model": "opencode-go/kimi-k2.7",
         "variant": "medium",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
@@ -146,7 +146,8 @@
         "mcps": []
       },
       "designer": {
-        "model": "github-copilot/gemini-3.1-pro-preview",
+        "model": "opencode-go/kimi-k2.7",
+        "variant": "medium",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       },
