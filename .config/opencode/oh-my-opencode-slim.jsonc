@@ -43,7 +43,7 @@
     },
     "opencode-go": {
       "orchestrator": {
-        "model": "opencode-go/kimi-k2.7",
+        "model": "opencode-go/kimi-k2.6",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
@@ -68,7 +68,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "opencode-go/kimi-k2.7",
+        "model": "opencode-go/kimi-k2.6",
         "variant": "medium",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
@@ -146,8 +146,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "opencode-go/kimi-k2.7",
-        "variant": "medium",
+        "model": "github-copilot/gemini-3.5-flash",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       },
