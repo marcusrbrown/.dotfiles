@@ -2,10 +2,10 @@
   "$schema": "https://fro.bot/systematic/schemas/v2/systematic-config.schema.json",
   "categories": {
     "design": {
-      "model": "github-copilot/gemini-3.1-pro-preview"
+      "model": "github-copilot/gemini-3.5-flash"
     },
     "docs": {
-      "model": "github-copilot/gemini-3.1-pro-preview"
+      "model": "opencode-go/kimi-k2.7-code"
     },
     "document-review": {
       "model": "github-copilot/gpt-5.4-mini",

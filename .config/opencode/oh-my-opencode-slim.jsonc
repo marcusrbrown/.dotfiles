@@ -25,13 +25,13 @@
         "mcps": ["websearch", "context7", "grep_app", "tavily"]
       },
       "explorer": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "openai/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": []
       },
       "designer": {
-        "model": "github-copilot/gemini-3.1-pro-preview",
+        "model": "github-copilot/gemini-3.5-flash",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       },
@@ -108,7 +108,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "github-copilot/gemini-3.1-pro-preview",
+        "model": "github-copilot/gemini-3.5-flash",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       },
@@ -140,7 +140,7 @@
         "mcps": ["websearch", "context7", "grep_app", "tavily"]
       },
       "explorer": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "openai/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": []
