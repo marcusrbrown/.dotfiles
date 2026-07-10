@@ -4,19 +4,19 @@
   "presets": {
     "openai": {
       "orchestrator": {
-        "model": "openai/gpt-5.5",
+        "model": "openai/gpt-5.6-sol-fast",
         "variant": "high",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-5.5-fast",
+        "model": "openai/gpt-5.6-sol-fast",
         "variant": "high",
         "skills": ["systematic:*"],
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-5.5-fast"
+        "model": "openai/gpt-5.6-terra-fast"
       },
       "librarian": {
         "model": "github-copilot/gpt-5.4-mini",
@@ -81,19 +81,19 @@
     },
     "copilot": {
       "orchestrator": {
-        "model": "openai/gpt-5.5",
+        "model": "openai/gpt-5.6-sol-fast",
         "variant": "high",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-5.5-fast",
+        "model": "openai/gpt-5.6-sol-fast",
         "variant": "high",
         "skills": ["systematic:*"],
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-5.5-fast"
+        "model": "openai/gpt-5.6-terra-fast"
       },
       "librarian": {
         "model": "github-copilot/gpt-5.4-mini",
@@ -125,13 +125,13 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-5.5-fast",
+        "model": "openai/gpt-5.6-sol-fast",
         "variant": "high",
         "skills": ["systematic:*"],
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-5.5-fast"
+        "model": "openai/gpt-5.6-terra-fast"
       },
       "librarian": {
         "model": "github-copilot/gpt-5.4-mini",
@@ -168,7 +168,7 @@
           "model": "github-copilot/gemini-3.1-pro-preview"
         },
         "gamma": {
-          "model": "openai/gpt-5.4-mini"
+          "model": "openai/gpt-5.5-fast"
         }
       }
     }
