@@ -11,7 +11,7 @@ cargo-binstall = "1.20.1"
 zig = "0.15.2"
 zls = "0.16.0"
 go = "1.26.5"
-ast-grep = "0.43.0"
+ast-grep = "0.44.1"
 
  # shfmt
 "aqua:mvdan/sh" = "3.13.1"
