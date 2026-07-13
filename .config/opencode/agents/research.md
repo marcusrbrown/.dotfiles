@@ -1,7 +1,7 @@
 ---
 description: External research via web search, library documentation, and code examples using Context7, Grep.app, and Exa
 mode: subagent
-model: openai/gpt-5.5-fast
+model: openai/gpt-5.6-luna-fast
 temperature: 0.1
 permission:
   edit: deny
