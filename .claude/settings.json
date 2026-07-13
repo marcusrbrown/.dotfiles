@@ -206,9 +206,11 @@
       "Write(/var/**)"
     ]
   },
+  "model": "sonnet",
   "statusLine": {
     "type": "command",
     "command": "bun x ccusage@latest statusline"
   },
-  "model": "sonnet"
+  "enabledPlugins": {},
+  "extraKnownMarketplaces": {}
 }
