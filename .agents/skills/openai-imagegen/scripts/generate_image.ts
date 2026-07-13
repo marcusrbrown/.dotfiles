@@ -7,11 +7,32 @@
  *     [--quality low|medium|high|auto] [--background transparent|opaque|auto]
  *     [--output out.png] [--format png|jpeg|webp]
  *
- * Auth/endpoint:
- *   OPENAI_API_KEY   — required (for OpenAI-compatible proxies, the proxy's key)
- *   OPENAI_BASE_URL  — optional, defaults to https://api.openai.com/v1
- *                      (set to your proxy's /v1 base to route through it)
+ * Auth/endpoint (first match wins):
+ *   OPENAI_API_KEY + OPENAI_BASE_URL (optional, default https://api.openai.com/v1)
+ *   CLIPROXY_API_KEY + CLIPROXY_URL or CLIPROXY_DOMAIN — CLIProxyAPI; /v1 appended if missing
  */
+
+function resolveAuth(): {apiKey: string; baseUrl: string} {
+  const trimBase = (u: string) => u.replace(/\/$/, '')
+  if (process.env.OPENAI_API_KEY) {
+    return {
+      apiKey: process.env.OPENAI_API_KEY,
+      baseUrl: trimBase(process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1'),
+    }
+  }
+  if (process.env.CLIPROXY_API_KEY) {
+    const domain = process.env.CLIPROXY_DOMAIN
+    const raw = process.env.CLIPROXY_URL ?? (domain ? (domain.includes('://') ? domain : `https://${domain}`) : process.env.OPENAI_BASE_URL)
+    if (!raw) {
+      console.error('CLIPROXY_API_KEY is set but no endpoint — set CLIPROXY_URL or CLIPROXY_DOMAIN (e.g. your-cliproxy-host.example).')
+      process.exit(1)
+    }
+    const base = trimBase(raw)
+    return {apiKey: process.env.CLIPROXY_API_KEY, baseUrl: base.endsWith('/v1') ? base : `${base}/v1`}
+  }
+  console.error('No credentials. Set OPENAI_API_KEY (+ optional OPENAI_BASE_URL), or CLIPROXY_API_KEY + CLIPROXY_URL for CLIProxyAPI. Project .env files work if your runner loads them (e.g. Bun auto-loads ./.env).')
+  process.exit(1)
+}
 
 function arg(name: string, fallback?: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`)
@@ -24,11 +45,7 @@ if (!prompt) {
   process.exit(1)
 }
 
-const apiKey = process.env.OPENAI_API_KEY
-if (!apiKey) {
-  console.error('OPENAI_API_KEY is not set. Use your OpenAI key, or your OpenAI-compatible proxy key with OPENAI_BASE_URL pointed at the proxy.')
-  process.exit(1)
-}
+const {apiKey, baseUrl} = resolveAuth()
 
 const model = arg('model', 'gpt-image-2')!
 const background = arg('background', 'auto')!
@@ -39,8 +56,6 @@ if (model === 'gpt-image-2' && background === 'transparent') {
 
 const format = arg('format', 'png')!
 const output = arg('output', `image-${Date.now()}.${format}`)!
-const baseUrl = (process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1').replace(/\/$/, '')
-
 const body: Record<string, unknown> = {
   model,
   prompt,

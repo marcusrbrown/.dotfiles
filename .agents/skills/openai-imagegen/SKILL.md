@@ -9,12 +9,14 @@ Generate and edit images with `gpt-image-2` and `gpt-image-1.5` via the OpenAI I
 
 ## Credentials & Endpoint
 
-| Env var | Meaning |
-|---------|---------|
-| `OPENAI_API_KEY` | Required. Your OpenAI key — or, when using a proxy, the proxy's API key. |
-| `OPENAI_BASE_URL` | Optional. Defaults to `https://api.openai.com/v1`. Set to your proxy's `/v1` base to route through it. |
+The scripts resolve auth in this order (first match wins):
 
-Before hunting for credentials, check whether the environment already provides an OpenAI-compatible proxy (a configured `OPENAI_BASE_URL`, or a local proxy config) — proxies often serve gpt-image models from an OAuth-backed upstream with no per-request OpenAI billing.
+| Priority | Env vars | Meaning |
+|----------|----------|---------|
+| 1 | `OPENAI_API_KEY` (+ optional `OPENAI_BASE_URL`) | Direct OpenAI, or any OpenAI-compatible proxy. Base defaults to `https://api.openai.com/v1`. |
+| 2 | `CLIPROXY_API_KEY` + `CLIPROXY_URL` or `CLIPROXY_DOMAIN` | CLIProxyAPI convention. Bare domains get `https://`; `/v1` is appended if missing. |
+
+Before hunting for credentials, check what the environment already provides: a project `.env` often carries `CLIPROXY_API_KEY`/`CLIPROXY_URL` (Bun auto-loads `./.env` from the CWD, so running the scripts from that project authenticates with zero setup) — proxies serve gpt-image models from an OAuth-backed upstream with no per-request OpenAI billing.
 
 Check which image models are actually served: `GET {base}/models` (through a proxy the list may differ from OpenAI's).
 
@@ -55,7 +57,7 @@ bun ~/.agents/skills/openai-imagegen/scripts/edit_image.ts \
   --prompt "add a sunset sky" --image scene.png --output sunset.png
 ```
 
-Run either script with no args for full usage. Both fail with a clear message if `OPENAI_API_KEY` is missing.
+Run either script with no args for full usage. Both fail with a clear message listing the accepted env vars when no credentials resolve.
 
 ## Raw API Pattern
 
