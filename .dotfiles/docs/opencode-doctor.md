@@ -112,7 +112,7 @@ bun ~/.config/opencode/scripts/opencode-doctor.ts --port 5000
 OpenCode never prunes its SQLite session DB (`~/.local/share/opencode/opencode.db`), so it grows unbounded. These flags operate directly on the SQLite file and do **not** spawn the OpenCode server.
 
 - `--db-health` — read-only metrics: file/WAL/shm sizes, page and freelist counts, free %, journal mode, `auto_vacuum`, per-table row counts, and a session age histogram. Safe to run anytime.
-- `--prune-older=<days>` — **dry-run by default**: reports how many sessions are older than `<days>` and the reclaimable bytes per table. Deletes nothing without `--execute`.
+- `--prune-older=<days>` — **dry-run by default**: reports how many sessions have not been used in `<days>` and the reclaimable bytes per table. Deletes nothing without `--execute`. Selection is based on last-use (`time_updated`), not creation time, and is tree-aware: a session tree (root + all descendants via `parent_id`) is only selected if *no* session in the tree was touched within the window — one active leaf keeps the whole tree.
 - `--prune-older=<days> --execute` — **IRREVERSIBLE.** Deletes old sessions and their messages, parts, and events, then runs `VACUUM` to reclaim space. Refuses to run if other OpenCode processes are active (a full VACUUM needs exclusive access), if free disk is below ~1.1× the DB size, or if `<days>` is less than 1.
 
 ```bash

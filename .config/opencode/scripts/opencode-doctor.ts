@@ -339,7 +339,9 @@ Options:
 
 DB Maintenance (no server required):
   --db-health               Read-only DB metrics (size, pragmas, row counts, age histogram)
-  --prune-older[=<days>]    Select sessions older than N days (default: 30, minimum: 1).
+  --prune-older[=<days>]    Select sessions not used in the last N days (default: 30, minimum: 1).
+                            Tree-aware: a session tree (root + descendants via parent_id) is
+                            only selected if no session in it was updated within the window.
                             Dry-run unless --execute. Deletion is IRREVERSIBLE.
   --execute                 PERMANENTLY and IRREVERSIBLY deletes sessions and all their
                             messages, parts, and events. Requires --prune-older.
@@ -636,12 +638,38 @@ export function computeDbHealth(db: Database, dbPath: string): DbHealthData {
   };
 }
 
+/**
+ * Select ids of all sessions belonging to "prunable" trees.
+ *
+ * A session tree (root + all descendants via parent_id) is prunable iff the
+ * MAX(time_updated) across every session in the tree is older than cutoffMs —
+ * i.e. no session in the tree has been used since the cutoff. If any member
+ * was touched within the window, the entire tree is kept, including that
+ * member's own stale siblings/ancestors/descendants.
+ *
+ * A session whose parent_id points at a nonexistent session (dangling
+ * reference, e.g. after a prior partial prune) is treated as its own tree
+ * root rather than causing an error or being silently dropped.
+ */
 export function selectOldSessionIds(db: Database, cutoffMs: number): string[] {
   type IdRow = { id: string };
   const cutoffSec = Math.floor(cutoffMs / 1000);
-  const rows = db.query<IdRow, [number]>(
-    "SELECT id FROM session WHERE CAST(time_created / 1000 AS INTEGER) < ?"
-  ).all(cutoffSec);
+  const rows = db.query<IdRow, [number]>(`
+    WITH RECURSIVE tree(id, root_id) AS (
+      SELECT id, id FROM session
+      WHERE parent_id IS NULL OR parent_id NOT IN (SELECT id FROM session)
+      UNION ALL
+      SELECT s.id, t.root_id FROM session s JOIN tree t ON s.parent_id = t.id
+    ),
+    root_activity AS (
+      SELECT t.root_id, MAX(s.time_updated) AS last_used
+      FROM tree t JOIN session s ON s.id = t.id
+      GROUP BY t.root_id
+    )
+    SELECT t.id FROM tree t
+    JOIN root_activity ra ON ra.root_id = t.root_id
+    WHERE CAST(ra.last_used / 1000 AS INTEGER) < ?
+  `).all(cutoffSec);
   return rows.map((r) => r.id);
 }
 

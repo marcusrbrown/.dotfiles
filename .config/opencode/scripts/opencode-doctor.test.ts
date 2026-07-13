@@ -111,15 +111,23 @@ function insertSession(
   db: Database,
   id: string,
   timeCreatedMs: number,
-  opts: { messages?: number; partsPerMessage?: number; events?: number } = {}
+  opts: {
+    messages?: number;
+    partsPerMessage?: number;
+    events?: number;
+    timeUpdatedMs?: number;
+    parentId?: string | null;
+  } = {}
 ): void {
   const messages = opts.messages ?? 2;
   const partsPerMessage = opts.partsPerMessage ?? 2;
   const events = opts.events ?? 3;
+  const timeUpdatedMs = opts.timeUpdatedMs ?? timeCreatedMs;
+  const parentId = opts.parentId ?? null;
 
-  db.query("INSERT INTO session (id, time_created, time_updated) VALUES (?, ?, ?)").run(
-    id, timeCreatedMs, timeCreatedMs
-  );
+  db.query(
+    "INSERT INTO session (id, parent_id, time_created, time_updated) VALUES (?, ?, ?, ?)"
+  ).run(id, parentId, timeCreatedMs, timeUpdatedMs);
 
   for (let m = 0; m < messages; m++) {
     const msgId = `${id}-msg-${m}`;
@@ -182,7 +190,7 @@ describe("DB helpers (unit)", () => {
     }
   });
 
-  test("selectOldSessionIds returns only sessions older than cutoff", () => {
+  test("selectOldSessionIds returns only sessions not used since cutoff", () => {
     const dir = makeTempDir();
     try {
       const { db } = createTestDb(dir);
@@ -202,6 +210,129 @@ describe("DB helpers (unit)", () => {
       expect(ids).toContain("sess-old2");
       expect(ids).not.toContain("sess-recent");
       expect(ids).not.toContain("sess-border");
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("selectOldSessionIds keeps a root created long ago but updated recently (regression: last-use, not creation)", () => {
+    const dir = makeTempDir();
+    try {
+      const { db } = createTestDb(dir);
+
+      const now = Date.now();
+      const cutoffMs = now - 30 * 24 * 3600 * 1000;
+
+      insertSession(db, "sess-still-active", now - 60 * 24 * 3600 * 1000, {
+        timeUpdatedMs: now - 5 * 24 * 3600 * 1000,
+      });
+
+      const ids = selectOldSessionIds(db, cutoffMs);
+
+      expect(ids).not.toContain("sess-still-active");
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("selectOldSessionIds prunes an entire tree when every member is stale", () => {
+    const dir = makeTempDir();
+    try {
+      const { db } = createTestDb(dir);
+
+      const now = Date.now();
+      const cutoffMs = now - 30 * 24 * 3600 * 1000;
+      const staleTs = now - 60 * 24 * 3600 * 1000;
+
+      insertSession(db, "root", staleTs, { timeUpdatedMs: staleTs });
+      insertSession(db, "child", staleTs, { timeUpdatedMs: staleTs, parentId: "root" });
+      insertSession(db, "grandchild", staleTs, { timeUpdatedMs: staleTs, parentId: "child" });
+
+      const ids = selectOldSessionIds(db, cutoffMs);
+
+      expect(ids).toContain("root");
+      expect(ids).toContain("child");
+      expect(ids).toContain("grandchild");
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("selectOldSessionIds keeps the whole tree when a grandchild was updated recently", () => {
+    const dir = makeTempDir();
+    try {
+      const { db } = createTestDb(dir);
+
+      const now = Date.now();
+      const cutoffMs = now - 30 * 24 * 3600 * 1000;
+      const staleTs = now - 60 * 24 * 3600 * 1000;
+      const recentTs = now - 5 * 24 * 3600 * 1000;
+
+      insertSession(db, "root", staleTs, { timeUpdatedMs: staleTs });
+      insertSession(db, "child", staleTs, { timeUpdatedMs: staleTs, parentId: "root" });
+      insertSession(db, "grandchild", staleTs, { timeUpdatedMs: recentTs, parentId: "child" });
+
+      const ids = selectOldSessionIds(db, cutoffMs);
+
+      expect(ids).not.toContain("root");
+      expect(ids).not.toContain("child");
+      expect(ids).not.toContain("grandchild");
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("selectOldSessionIds keeps a stale child when the root is active (tree kept whole)", () => {
+    const dir = makeTempDir();
+    try {
+      const { db } = createTestDb(dir);
+
+      const now = Date.now();
+      const cutoffMs = now - 30 * 24 * 3600 * 1000;
+      const staleTs = now - 60 * 24 * 3600 * 1000;
+      const recentTs = now - 5 * 24 * 3600 * 1000;
+
+      insertSession(db, "root", staleTs, { timeUpdatedMs: recentTs });
+      insertSession(db, "child", staleTs, { timeUpdatedMs: staleTs, parentId: "root" });
+
+      const ids = selectOldSessionIds(db, cutoffMs);
+
+      expect(ids).not.toContain("root");
+      expect(ids).not.toContain("child");
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("selectOldSessionIds treats an orphan (dangling parent_id) as its own tree root", () => {
+    const dir = makeTempDir();
+    try {
+      const { db } = createTestDb(dir);
+
+      const now = Date.now();
+      const cutoffMs = now - 30 * 24 * 3600 * 1000;
+      const staleTs = now - 60 * 24 * 3600 * 1000;
+      const recentTs = now - 5 * 24 * 3600 * 1000;
+
+      // orphan-stale references a parent that doesn't exist and is itself stale — prune
+      insertSession(db, "orphan-stale", staleTs, { timeUpdatedMs: staleTs, parentId: "deleted-parent" });
+      // orphan-active references a parent that doesn't exist but was updated recently — keep
+      insertSession(db, "orphan-active", staleTs, { timeUpdatedMs: recentTs, parentId: "deleted-parent-2" });
+
+      const ids = selectOldSessionIds(db, cutoffMs);
+
+      expect(ids).toContain("orphan-stale");
+      expect(ids).not.toContain("orphan-active");
 
       db.close();
     } finally {
