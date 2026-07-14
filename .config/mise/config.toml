@@ -31,7 +31,7 @@ ast-grep = "0.44.1"
 "npm:@fro.bot/harness" = "1.17.18-harness.4ec05a47"
 "npm:@github/copilot" = "1.0.70"
 "npm:agent-browser" = "0.31.1"
-"npm:skills" = "1.5.15"
+"npm:skills" = "1.5.16"
 "npm:ocx" = "2.0.11"
 "npm:@marcusrbrown/infra" = "latest"
 
