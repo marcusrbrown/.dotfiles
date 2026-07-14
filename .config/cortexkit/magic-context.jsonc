@@ -2,7 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/cortexkit/magic-context/master/assets/magic-context.schema.json",
   "historian": {
     "model": "opencode-go/deepseek-v4-flash",
-    "fallback_models": ["openai/gpt-5.5", "anthropic/claude-sonnet-5", "github-copilot/claude-sonnet-4.6"],
     "temperature": 0.1,
     "variant": "medium",
     "tools": {
@@ -18,7 +17,6 @@
   },
   "dreamer": {
     "model": "anthropic/claude-sonnet-5",
-    "fallback_models": ["openai/gpt-5.4-mini", "github-copilot/claude-sonnet-4.6"],
     "inject_docs": true,
     "tasks": {
       "verify": {
@@ -64,7 +62,13 @@
     "anthropic/claude-opus-4-8": "59m",
     "anthropic/claude-fable-5": "59m",
     "openai/gpt-5.5": "10m",
-    "openai/gpt-5.5-fast": "10m"
+    "openai/gpt-5.5-fast": "10m",
+    "openai/gpt-5.6-sol": "10m",
+    "openai/gpt-5.6-sol-fast": "10m",
+    "openai/gpt-5.6-terra": "10m",
+    "openai/gpt-5.6-terra-fast": "10m",
+    "openai/gpt-5.6-luna": "10m",
+    "openai/gpt-5.6-luna-fast": "10m"
   },
   "execute_threshold_percentage": {
     "default": 65,
@@ -73,7 +77,13 @@
     "anthropic/claude-opus-4-6": 55,
     "anthropic/claude-opus-4-7": 55,
     "openai/gpt-5.5": 80,
-    "openai/gpt-5.5-fast": 80
+    "openai/gpt-5.5-fast": 80,
+    "openai/gpt-5.6-sol": 80,
+    "openai/gpt-5.6-sol-fast": 80,
+    "openai/gpt-5.6-terra": 80,
+    "openai/gpt-5.6-terra-fast": 80,
+    "openai/gpt-5.6-luna": 80,
+    "openai/gpt-5.6-luna-fast": 80
   },
   "execute_threshold_tokens": {
     "github-copilot/claude-opus-4.7": 80000,

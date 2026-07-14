@@ -26,6 +26,7 @@
 /mcp/**/memory.json
 /mise/.env.local
 /NuGet/
+/opencode/.oh-my-opencode-slim
 /opencode/plugins/superpowers.js
 /opencode/profiles/*
 !/opencode/profiles/default/
@@ -42,6 +43,7 @@
 /robomongo/
 /sanity/
 /sops/age/keys.txt
+/space-bus/rosters.json
 /stetic/
 /syke/daemon.log
 /truffle/
