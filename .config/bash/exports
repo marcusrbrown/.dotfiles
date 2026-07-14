@@ -192,35 +192,30 @@ fi
 
 # pnpm
 
-if command_exists pnpm; then
-    configure_pnpm_dirs() {
-        ensure_dir "$XDG_CACHE_HOME"/pnpm
-        ensure_dir "$XDG_DATA_HOME"/pnpm
-        ensure_dir "$XDG_DATA_HOME"/pnpm/global
-        ensure_dir "$XDG_STATE_HOME"/pnpm
-
-        if [ -z "$PNPM_HOME" ]; then
-            PNPM_HOME="$XDG_DATA_HOME"/pnpm
-        fi
-
-        prepend_to_path "$PNPM_HOME"/bin
-
-        # See https://pnpm.io/npmrc
-        pnpm config set --global cache-dir "$XDG_CACHE_HOME/pnpm"
-        pnpm config set --global global-dir "$XDG_DATA_HOME/pnpm/global"
-        pnpm config set --global state-dir "$XDG_STATE_HOME/pnpm"
-        pnpm config set --global store-dir "$XDG_DATA_HOME/pnpm/store"
-    }
-
-    # If the PNPM_HOME variable is empty or the directory doesn't exist, set global config to use XDG directories
-    if [ -z "$PNPM_HOME" ] || [ ! -d "$PNPM_HOME" ]; then
-        configure_pnpm_dirs
-    fi
-
-    export PNPM_HOME
-
-    unset -f configure_pnpm_dirs
+if [ -z "$PNPM_HOME" ]; then
+    PNPM_HOME="$XDG_DATA_HOME"/pnpm
 fi
+export PNPM_HOME
+
+ensure_dir "$PNPM_HOME"
+prepend_to_path "$PNPM_HOME"
+
+# Marker records a fully successful config-set run; retry on partial failure.
+pnpm_config_marker="$XDG_STATE_HOME/pnpm/configured"
+if command_exists pnpm && [ ! -f "$pnpm_config_marker" ]; then
+    ensure_dir "$XDG_CACHE_HOME"/pnpm
+    ensure_dir "$XDG_DATA_HOME"/pnpm/global
+    ensure_dir "$XDG_STATE_HOME"/pnpm
+
+    # See https://pnpm.io/npmrc
+    if pnpm config set --global cache-dir "$XDG_CACHE_HOME/pnpm" \
+        && pnpm config set --global global-dir "$XDG_DATA_HOME/pnpm/global" \
+        && pnpm config set --global state-dir "$XDG_STATE_HOME/pnpm" \
+        && pnpm config set --global store-dir "$XDG_DATA_HOME/pnpm/store"; then
+        touch "$pnpm_config_marker"
+    fi
+fi
+unset pnpm_config_marker
 
 # Python
 
