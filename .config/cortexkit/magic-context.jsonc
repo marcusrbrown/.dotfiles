@@ -63,12 +63,12 @@
     "anthropic/claude-fable-5": "59m",
     "openai/gpt-5.5": "10m",
     "openai/gpt-5.5-fast": "10m",
-    "openai/gpt-5.6-sol": "10m",
-    "openai/gpt-5.6-sol-fast": "10m",
-    "openai/gpt-5.6-terra": "10m",
-    "openai/gpt-5.6-terra-fast": "10m",
-    "openai/gpt-5.6-luna": "10m",
-    "openai/gpt-5.6-luna-fast": "10m"
+    "openai/gpt-5.6-sol": "30m",
+    "openai/gpt-5.6-sol-fast": "30m",
+    "openai/gpt-5.6-terra": "30m",
+    "openai/gpt-5.6-terra-fast": "30m",
+    "openai/gpt-5.6-luna": "30m",
+    "openai/gpt-5.6-luna-fast": "30m"
   },
   "execute_threshold_percentage": {
     "default": 65,

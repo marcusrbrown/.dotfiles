@@ -1,13 +1,18 @@
 ---
 name: deepwork
-description: Orchestrator-only workflow for heavy coding sessions, multi-phase implementation, and risky refactors. Use for complex work that needs planning, review gates, and persistent progress tracking.
+description: High-cost orchestrator workflow for large, high-risk, multi-phase coding efforts with meaningful dependencies and review gates. Do not activate for routine multi-file changes.
 ---
 
 # Deepwork
 
-Deepwork is an orchestrator workflow for heavy coding sessions. Use it when the
-work is broad, risky, multi-file, or likely to span several implementation
-phases. Do not use it for trivial edits, quick docs changes, or simple bug fixes.
+Deepwork is an orchestrator workflow for heavy coding sessions. Use it only
+when the work is clearly large or high-risk: multiple dependent phases,
+cross-cutting architectural change, unsafe-to-partially-ship migration, or
+sustained coordination across several specialist lanes.
+
+Do not infer Deepwork merely because a task touches multiple files. Do not use
+it for trivial edits, quick docs changes, simple bug fixes, or routine bounded
+features.
 
 ## Core Contract
 
@@ -16,6 +21,10 @@ not as the default implementation worker.
 
 Required behavior:
 
+- before planning, delegation, or creating a deepwork state file, inspect the
+  existing `.gitignore` and `.ignore`; add only missing entries, without
+  duplicates, so `.gitignore` contains `.slim/deepwork/` and `.ignore` contains
+  `!.slim/deepwork/` and `!.slim/deepwork/**`;
 - keep OpenCode todos aligned with the active deepwork phase;
 - create and maintain a local markdown progress file under `.slim/deepwork/`;
 - write valuable research findings into that file as confirmed research context
@@ -65,8 +74,8 @@ Create a task-specific file such as:
 .slim/deepwork/<short-task-slug>.md
 ```
 
-Keep `.slim/deepwork/` out of git, but make it readable to OpenCode. Ensure the
-project ignore files include:
+Before creating this file—and before planning or delegation—inspect the existing
+`.gitignore` and `.ignore`. Add only missing entries and do not add duplicates:
 
 ```gitignore
 # .gitignore
@@ -78,6 +87,8 @@ project ignore files include:
 !.slim/deepwork/
 !.slim/deepwork/**
 ```
+
+These rules keep deepwork state git-local while allowing OpenCode to read it.
 
 Do not follow a rigid template. Choose whatever markdown structure best fits the
 work. The file only needs to remain useful as persistent session state and should
