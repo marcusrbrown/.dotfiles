@@ -1,6 +1,6 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
-  extends: ['github>marcusrbrown/renovate-config#5.2.6', 'github>sanity-io/renovate-config:semantic-commit-type'],
+  extends: ['github>marcusrbrown/renovate-config#5.2.7', 'github>sanity-io/renovate-config:semantic-commit-type'],
   customManagers: [
     {
       customType: 'regex',
@@ -81,7 +81,7 @@
         'opencode-copilot-delegate'
       ],
       matchUpdateTypes: ['minor', 'patch'],
-      extends: ['github>bfra-me/renovate-config:automerge.json5#5.2.4'],
+      extends: ['github>bfra-me/renovate-config:automerge.json5#5.2.5'],
       groupName: null,
       dependencyDashboardApproval: false
     },
