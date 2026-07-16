@@ -1,3 +1,2 @@
-visual-studio-code
 arc
 claude
