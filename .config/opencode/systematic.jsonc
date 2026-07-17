@@ -4,9 +4,6 @@
     "design": {
       "model": "github-copilot/gemini-3.1-pro-preview"
     },
-    "docs": {
-      "model": "opencode-go/kimi-k2.7-code"
-    },
     "document-review": {
       "model": "github-copilot/gpt-5.4-mini",
       "variant": "low"
