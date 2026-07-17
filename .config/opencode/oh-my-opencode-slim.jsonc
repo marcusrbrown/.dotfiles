@@ -19,7 +19,7 @@
         "model": "openai/gpt-5.6-terra"
       },
       "librarian": {
-        "model": "openai/gpt-5.3-codex-spark",
+        "model": "openai/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": ["websearch", "context7", "grep_app"]
@@ -137,7 +137,7 @@
         "model": "openai/gpt-5.6-terra"
       },
       "librarian": {
-        "model": "openai/gpt-5.3-codex-spark",
+        "model": "openai/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": ["websearch", "context7", "grep_app"]
