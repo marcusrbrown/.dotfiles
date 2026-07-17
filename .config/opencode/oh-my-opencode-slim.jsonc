@@ -7,22 +7,22 @@
         "model": "openai/gpt-5.6-sol",
         "variant": "high",
         "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "mcps": ["*", "!context7", "!grep_app", "!websearch"]
       },
       "oracle": {
         "model": "anthropic/claude-sonnet-5",
         "variant": "high",
-        "skills": ["systematic:*"],
+        "skills": ["ce:brainstorm", "systematic:*"],
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-5.6-terra-fast"
+        "model": "openai/gpt-5.6-terra"
       },
       "librarian": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "openai/gpt-5.3-codex-spark",
         "variant": "low",
         "skills": [],
-        "mcps": ["websearch", "context7", "grep_app", "tavily"]
+        "mcps": ["websearch", "context7", "grep_app"]
       },
       "explorer": {
         "model": "openai/gpt-5.4-mini",
@@ -31,26 +31,27 @@
         "mcps": []
       },
       "designer": {
-        "model": "github-copilot/gemini-3.1-pro-preview",
+        "model": "github-copilot/gemini-3.5-flash",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fixer": {
         "model": "anthropic/claude-sonnet-5",
         "variant": "low",
-        "skills": ["agent-browser", "impeccable", "systematic:*"]
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "mcps": []
       }
     },
     "opencode-go": {
       "orchestrator": {
         "model": "opencode-go/kimi-k2.6",
         "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "mcps": ["*", "!context7", "!grep_app", "!websearch"]
       },
       "oracle": {
         "model": "opencode-go/deepseek-v4-pro",
         "variant": "max",
-        "skills": ["systematic:*"],
+        "skills": ["ce:brainstorm", "systematic:*"],
         "mcps": []
       },
       "council": {
@@ -60,7 +61,7 @@
       "librarian": {
         "model": "opencode-go/minimax-m3",
         "skills": [],
-        "mcps": ["websearch", "context7", "grep_app", "tavily"]
+        "mcps": ["websearch", "context7", "grep_app"]
       },
       "explorer": {
         "model": "opencode-go/minimax-m3",
@@ -76,7 +77,8 @@
       "fixer": {
         "model": "opencode-go/deepseek-v4-flash",
         "variant": "high",
-        "skills": ["agent-browser", "impeccable", "systematic:*"]
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "mcps": []
       }
     },
     "copilot": {
@@ -84,22 +86,22 @@
         "model": "openai/gpt-5.6-sol",
         "variant": "high",
         "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "mcps": ["*", "!context7", "!grep_app", "!websearch"]
       },
       "oracle": {
-        "model": "openai/gpt-5.6-sol-fast",
+        "model": "openai/gpt-5.6-sol",
         "variant": "high",
-        "skills": ["systematic:*"],
+        "skills": ["ce:brainstorm", "systematic:*"],
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-5.6-terra-fast"
+        "model": "openai/gpt-5.6-terra"
       },
       "librarian": {
         "model": "github-copilot/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
-        "mcps": ["websearch", "context7", "grep_app", "tavily"]
+        "mcps": ["websearch", "context7", "grep_app"]
       },
       "explorer": {
         "model": "github-copilot/gpt-5.4-mini",
@@ -108,13 +110,14 @@
         "mcps": []
       },
       "designer": {
-        "model": "github-copilot/gemini-3.1-pro-preview",
+        "model": "github-copilot/gemini-3.5-flash",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fixer": {
         "model": "github-copilot/claude-sonnet-4.6",
-        "skills": ["agent-browser", "impeccable", "systematic:*"]
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "mcps": []
       }
     },
     "mixed": {
@@ -122,22 +125,22 @@
         "model": "anthropic/claude-fable-5",
         "variant": "high",
         "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "mcps": ["*", "!context7", "!grep_app", "!websearch"]
       },
       "oracle": {
-        "model": "openai/gpt-5.6-sol-fast",
+        "model": "openai/gpt-5.6-sol",
         "variant": "high",
-        "skills": ["systematic:*"],
+        "skills": ["ce:brainstorm", "systematic:*"],
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-5.6-terra-fast"
+        "model": "openai/gpt-5.6-terra"
       },
       "librarian": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "openai/gpt-5.3-codex-spark",
         "variant": "low",
         "skills": [],
-        "mcps": ["websearch", "context7", "grep_app", "tavily"]
+        "mcps": ["websearch", "context7", "grep_app"]
       },
       "explorer": {
         "model": "openai/gpt-5.4-mini",
@@ -146,14 +149,15 @@
         "mcps": []
       },
       "designer": {
-        "model": "github-copilot/gemini-3.1-pro-preview",
+        "model": "github-copilot/gemini-3.5-flash",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fixer": {
-        "model": "anthropic/claude-sonnet-5",
-        "variant": "low",
-        "skills": ["agent-browser", "impeccable", "systematic:*"]
+        "model": "openai/gpt-5.6-luna",
+        "variant": "medium",
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "mcps": []
       }
     }
   },
@@ -162,15 +166,28 @@
     "presets": {
       "default": {
         "alpha": {
-          "model": "anthropic/claude-sonnet-5"
+          "model": "anthropic/claude-sonnet-5",
+          "variant": "high"
         },
         "beta": {
-          "model": "github-copilot/gemini-3.1-pro-preview"
+          "model": "github-copilot/gemini-3.5-flash",
+          "variant": "high"
         },
         "gamma": {
-          "model": "openai/gpt-5.5-fast"
+          "model": "openai/gpt-5.6-luna",
+          "variant": "high"
         }
       }
+    }
+  },
+  "agents": {
+    "fast-generic": {
+      "model": "openai/gpt-5.3-codex-spark",
+      "variant": "low",
+      "prompt": "You are a fast generic execution agent for routine mechanical command work. Run requested shell commands, inspect results, and report concise outcomes. For git commits or pushes, inspect git status, git diff, and recent log first; stage only intended files; avoid secrets; preserve repository commit-message style; never amend, rebase, reset --hard, clean, force-push, delete branches, or perform destructive history operations unless the user explicitly requested that exact operation. Do not edit code or make architecture/design decisions.",
+      "orchestratorPrompt": "Delegate to @fast-generic for routine mechanical command work: git status/diff/log reconnaissance, normal commit preparation, creating commits, pushing commits, and no-edit command validation such as lint, typecheck, static verification, tests, builds, or package-manager equivalents. Ask it to inspect diffs before committing, stage only intended files, avoid secrets, preserve repository commit-message style, and report final commit hashes or push results. Do not use it for code edits, design work, architecture, debugging strategy, docs research, or destructive git history operations such as amend, rebase, reset --hard, clean, force-push, or deleting branches unless the user explicitly requested that exact operation.",
+      "skills": [],
+      "mcps": []
     }
   }
 }

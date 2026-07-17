@@ -27,6 +27,8 @@ Required behavior:
   `!.slim/deepwork/` and `!.slim/deepwork/**`;
 - keep OpenCode todos aligned with the active deepwork phase;
 - create and maintain a local markdown progress file under `.slim/deepwork/`;
+- save code/doc deliverables to project paths (e.g. `src/`, `docs/`); reserve
+  `.slim/deepwork/` strictly for progress files;
 - write valuable research findings into that file as confirmed research context
   when they are received and reconciled;
 - draft a plan before implementation;
