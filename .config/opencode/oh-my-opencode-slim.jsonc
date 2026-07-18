@@ -122,8 +122,8 @@
     },
     "mixed": {
       "orchestrator": {
-        "model": "anthropic/claude-fable-5",
-        "variant": "high",
+        "model": "anthropic/claude-opus-4-8",
+        "variant": "xhigh",
         "skills": ["*"],
         "mcps": ["*", "!context7", "!grep_app", "!websearch"]
       },
