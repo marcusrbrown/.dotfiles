@@ -159,6 +159,46 @@
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       }
+    },
+    "mixed-fable": {
+      "orchestrator": {
+        "model": "anthropic/claude-fable-5",
+        "variant": "high",
+        "skills": ["*"],
+        "mcps": ["*", "!context7", "!grep_app", "!websearch"]
+      },
+      "oracle": {
+        "model": "openai/gpt-5.6-sol",
+        "variant": "high",
+        "skills": ["ce:brainstorm", "systematic:*"],
+        "mcps": []
+      },
+      "council": {
+        "model": "openai/gpt-5.6-terra"
+      },
+      "librarian": {
+        "model": "openai/gpt-5.4-mini",
+        "variant": "low",
+        "skills": [],
+        "mcps": ["websearch", "context7", "grep_app"]
+      },
+      "explorer": {
+        "model": "openai/gpt-5.4-mini",
+        "variant": "low",
+        "skills": [],
+        "mcps": []
+      },
+      "designer": {
+        "model": "github-copilot/gemini-3.5-flash",
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "mcps": []
+      },
+      "fixer": {
+        "model": "openai/gpt-5.6-luna",
+        "variant": "medium",
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "mcps": []
+      }
     }
   },
   "autoUpdate": false,
