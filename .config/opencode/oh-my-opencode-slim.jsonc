@@ -123,7 +123,7 @@
     "mixed": {
       "orchestrator": {
         "model": "anthropic/claude-opus-4-8",
-        "variant": "xhigh",
+        "variant": "high",
         "skills": ["*"],
         "mcps": ["*", "!context7", "!grep_app", "!websearch"]
       },
