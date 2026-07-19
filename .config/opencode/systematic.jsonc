@@ -9,7 +9,7 @@
       "variant": "low"
     },
     "research": {
-      "model": "opencode-go/minimax-m3",
+      "model": "github-copilot/gpt-5.4-mini",
       "variant": "low"
     },
     "review": {
@@ -19,7 +19,7 @@
   },
   "agents": {
     "repo-research-analyst": {
-      "model": "opencode-go/minimax-m3"
+      "model": "github-copilot/gpt-5.4-mini"
     },
     "spec-flow-analyzer": {
       "model": "github-copilot/gemini-3.5-flash"
