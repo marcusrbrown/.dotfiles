@@ -3,7 +3,7 @@
   "plugin": [
     "@cortexkit/opencode-anthropic-auth@1.15.1",
     "oh-my-opencode-slim@2.2.4",
-    "@cortexkit/opencode-magic-context@0.32.2",
+    "@cortexkit/opencode-magic-context@0.32.3",
     "@cortexkit/aft-opencode@0.47.2",
     "@fro.bot/systematic@3.2.0"
   ],
