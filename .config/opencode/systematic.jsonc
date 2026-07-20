@@ -1,5 +1,5 @@
 {
-  "$schema": "https://fro.bot/systematic/schemas/v2/systematic-config.schema.json",
+  "$schema": "https://fro.bot/systematic/schemas/v3/systematic-config.schema.json",
   "categories": {
     "design": {
       "model": "github-copilot/gemini-3.1-pro-preview"
@@ -25,8 +25,8 @@
       "model": "github-copilot/gemini-3.5-flash"
     },
     "systematic-implementer": {
-      "model": "anthropic/claude-sonnet-5",
-      "variant": "low",
+      "model": "openai/gpt-5.6-luna",
+      "variant": "medium",
       "temperature": 0.1
     }
   }
