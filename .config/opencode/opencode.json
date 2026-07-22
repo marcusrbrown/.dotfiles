@@ -5,7 +5,7 @@
     "oh-my-opencode-slim@2.2.5",
     "@cortexkit/opencode-magic-context@0.32.4",
     "@cortexkit/aft-opencode@0.47.3",
-    "@fro.bot/systematic@3.2.4"
+    "@fro.bot/systematic@3.2.5"
   ],
   "mcp": {
     "context7": {
