@@ -35,6 +35,7 @@
 /opencode/antigravity-accounts.json
 /opencode/package-lock.json
 /opencode/oh-my-openagent.json.*
+/opencode/openai-auth*.json
 /opencode/tui-preferences.jsonc
 /pipedream/
 /pnpm/config.yaml
