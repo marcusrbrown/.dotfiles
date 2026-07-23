@@ -43,5 +43,6 @@
   "experimental": {
     "openTelemetry": false
   },
-  "lsp": true
+  "lsp": true,
+  "snapshot": false
 }
