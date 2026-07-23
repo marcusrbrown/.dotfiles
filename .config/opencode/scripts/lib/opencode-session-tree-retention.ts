@@ -1,6 +1,11 @@
 import type { Database } from "bun:sqlite";
 
-const SESSION_ID_CANDIDATE_TABLE = "_prune_ids";
+let sessionIdCandidateTableSequence = 0;
+
+function nextSessionIdCandidateTableName(): string {
+  sessionIdCandidateTableSequence += 1;
+  return `_prune_ids_${sessionIdCandidateTableSequence.toString(36)}`;
+}
 
 export function bytesToHuman(bytes: number): string {
   if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(2)} GB`;
@@ -18,19 +23,18 @@ export function withSessionIdCandidateTable<T>(
   sessionIds: readonly string[],
   operation: (tableName: string) => T,
 ): T {
-  db.exec(`CREATE TEMP TABLE IF NOT EXISTS ${SESSION_ID_CANDIDATE_TABLE} (id TEXT PRIMARY KEY)`);
+  const tableName = nextSessionIdCandidateTableName();
+  db.exec(`CREATE TEMP TABLE ${tableName} (id TEXT PRIMARY KEY)`);
 
   try {
-    db.exec(`DELETE FROM ${SESSION_ID_CANDIDATE_TABLE}`);
-
-    const insertId = db.prepare(`INSERT OR IGNORE INTO ${SESSION_ID_CANDIDATE_TABLE} (id) VALUES (?)`);
+    const insertId = db.prepare(`INSERT OR IGNORE INTO ${tableName} (id) VALUES (?)`);
     db.transaction(() => {
       for (const id of sessionIds) insertId.run(id);
     })();
 
-    return operation(SESSION_ID_CANDIDATE_TABLE);
+    return operation(tableName);
   } finally {
-    db.exec(`DROP TABLE IF EXISTS ${SESSION_ID_CANDIDATE_TABLE}`);
+    db.exec(`DROP TABLE ${tableName}`);
   }
 }
 

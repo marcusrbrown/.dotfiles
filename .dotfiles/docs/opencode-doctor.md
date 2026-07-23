@@ -47,8 +47,9 @@ bun ~/.config/opencode/scripts/opencode-doctor.ts [options]
 | `--tools-model`    | `<string>`     | Model ID for tool schemas               | -           |
 | `--db-health`      | -              | Read-only DB maintenance metrics        | -           |
 | `--prune-older`    | `<days>`       | Prune sessions older than N days (dry-run unless `--execute`) | `30` |
-| `--prune-events-older` | `<days>`   | Prune event streams for old session trees (dry-run unless `--execute`) | - |
+| `--prune-events-older` | `<days>`   | Event-only prune; preserves sessions/messages/parts, uses incremental vacuum, and reports an 8 GiB operational headroom floor | - |
 | `--execute`        | -              | Required to perform the requested prune; session pruning runs full `VACUUM` | -   |
+| `--set-incremental-vacuum` | -        | One-time conversion to `auto_vacuum=INCREMENTAL`; runs a full `VACUUM` | - |
 | `--db-path`        | `<path>`       | Override DB path                        | `~/.local/share/opencode/opencode.db` |
 | `--help`, `-h`     | -              | Show help message                       | -           |
 
@@ -115,7 +116,7 @@ OpenCode never prunes its SQLite session DB (`~/.local/share/opencode/opencode.d
 - `--db-health` — read-only metrics: file/WAL/shm sizes, page and freelist counts, free %, journal mode, `auto_vacuum`, per-table row counts, and a session age histogram. Safe to run anytime.
 - `--prune-older=<days>` — **dry-run by default**: reports how many sessions have not been used in `<days>` and the reclaimable bytes per table. Deletes nothing without `--execute`. Selection is based on last-use (`time_updated`), not creation time, and is tree-aware: a session tree (root + all descendants via `parent_id`) is only selected if *no* session in the tree was touched within the window — one active leaf keeps the whole tree.
 - `--prune-older=<days> --execute` — **IRREVERSIBLE.** Deletes old sessions and their messages, parts, and events, then runs `VACUUM` to reclaim space. Refuses to run if other OpenCode processes are active (a full VACUUM needs exclusive access), if the current free-space check cannot satisfy the calculated working-space budget, or if `<days>` is less than 1.
-- `--prune-events-older=<days>` — **dry-run by default**: reports event streams selected from session trees not used in `<days>`, while preserving sessions, messages, and parts. `--execute` requires no active OpenCode process and `auto_vacuum=INCREMENTAL`; it deletes only the selected event streams, runs checkpointing plus `PRAGMA incremental_vacuum`, and never runs a full `VACUUM`. The event-only and whole-session prune modes are mutually exclusive.
+- `--prune-events-older=<days>` — **dry-run by default**: reports event streams selected from session trees not used in `<days>`, while preserving sessions, messages, and parts. `--execute` requires no active OpenCode process, preservation indexes, `auto_vacuum=INCREMENTAL`, and a fixed 8 GiB operational headroom floor; it deletes only selected event streams, checkpoints, runs `PRAGMA incremental_vacuum`, and never runs a full `VACUUM`. The event-only and whole-session prune modes are mutually exclusive.
 
 ```bash
 # Inspect DB health

@@ -1,7 +1,7 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { $ } from "bun";
 import { Database } from "bun:sqlite";
-import { mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -60,7 +60,7 @@ function removeTempDir(dir: string): void {
  */
 function createTestDb(
   dir: string,
-  options: { autoVacuum?: number; eventCascade?: boolean } = {},
+  options: { autoVacuum?: number; eventCascade?: boolean; preservationIndexes?: boolean } = {},
 ): { db: Database; dbPath: string } {
   const dbPath = join(dir, "test.db");
   const db = new Database(dbPath);
@@ -114,6 +114,13 @@ function createTestDb(
       data TEXT NOT NULL DEFAULT '{}'
     );
   `);
+
+  if (options.preservationIndexes !== false) {
+    db.exec(`
+      CREATE INDEX message_session_id_idx ON message(session_id);
+      CREATE INDEX part_session_id_idx ON part(session_id);
+    `);
+  }
 
   return { db, dbPath };
 }
@@ -456,7 +463,7 @@ describe("DB helpers (unit)", () => {
 
       type TempTableRow = { name: string };
       const tempTable = db.query<TempTableRow, []>(
-        "SELECT name FROM sqlite_temp_master WHERE type = 'table' AND name = '_prune_ids'"
+        "SELECT name FROM sqlite_temp_master WHERE type = 'table' AND name LIKE '_prune_ids_%'"
       ).get();
       expect(tempTable).toBeNull();
 
@@ -484,9 +491,41 @@ describe("DB helpers (unit)", () => {
 
       type TempTableRow = { name: string };
       const tempTable = db.query<TempTableRow, []>(
-        "SELECT name FROM sqlite_temp_master WHERE type = 'table' AND name = '_prune_ids'"
+        "SELECT name FROM sqlite_temp_master WHERE type = 'table' AND name LIKE '_prune_ids_%'"
       ).get();
       expect(tempTable).toBeNull();
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("withSessionIdCandidateTable uses distinct temp tables for nested invocations on one connection", () => {
+    const dir = makeTempDir();
+    try {
+      const { db } = createTestDb(dir);
+      let outerTable = "";
+      let innerTable = "";
+
+      const result = withSessionIdCandidateTable(db, ["outer"], (outerName) => {
+        outerTable = outerName;
+        const before = db.query<{ cnt: number }, []>(`SELECT COUNT(*) AS cnt FROM ${outerName}`).get()?.cnt;
+        const inner = withSessionIdCandidateTable(db, ["inner-a", "inner-b"], (innerName) => {
+          innerTable = innerName;
+          return db.query<{ cnt: number }, []>(`SELECT COUNT(*) AS cnt FROM ${innerName}`).get()?.cnt ?? 0;
+        });
+        const after = db.query<{ cnt: number }, []>(`SELECT COUNT(*) AS cnt FROM ${outerName}`).get()?.cnt;
+        return { before, inner, after };
+      });
+
+      expect(result).toEqual({ before: 1, inner: 2, after: 1 });
+      expect(outerTable).toMatch(/^_prune_ids_/);
+      expect(innerTable).toMatch(/^_prune_ids_/);
+      expect(innerTable).not.toBe(outerTable);
+      expect(db.query<{ cnt: number }, []>(
+        "SELECT COUNT(*) AS cnt FROM sqlite_temp_master WHERE type = 'table' AND name LIKE '_prune_ids_%'"
+      ).get()?.cnt).toBe(0);
 
       db.close();
     } finally {
@@ -697,6 +736,29 @@ describe("DB helpers (unit)", () => {
 });
 
 describe("event-only retention (unit)", () => {
+  test("uses a fixed operational headroom floor independent of estimated event payload bytes", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2 });
+      const now = Date.now();
+      insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000, { events: 3 });
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+      const headroom = 8 * 1024 ** 3;
+
+      const result = pruneEvents(db, sessionIds, dbPath, {
+        availableBytes: () => headroom + 1,
+      });
+
+      expect(result.operational_headroom_floor_bytes).toBe(headroom);
+      expect(result.operational_headroom_floor_human).toContain("GB");
+      expect(result.estimated_reclaim.event_bytes).toBeGreaterThan(1);
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
   test("refuses an active OpenCode parent instead of excluding the parent PID", () => {
     const result = checkForOtherOpencodeProcesses({
       ownPid: 100,
@@ -773,6 +835,25 @@ describe("event-only retention (unit)", () => {
       expect(() => pruneEvents(db, sessionIds, dbPath, { availableBytes: () => 20 * 1024 ** 3 }))
         .toThrow(/CASCADE|foreign key/i);
       expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event_sequence").get()?.cnt).toBe(1);
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("refuses and rolls back event deletion when preservation predicate indexes are missing", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2, preservationIndexes: false });
+      const now = Date.now();
+      insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000);
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+
+      expect(() => pruneEvents(db, sessionIds, dbPath, { availableBytes: () => 20 * 1024 ** 3 }))
+        .toThrow(/index.*message|message.*index/i);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event_sequence").get()?.cnt).toBe(1);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event").get()?.cnt).toBe(3);
+
       db.close();
     } finally {
       removeTempDir(dir);
@@ -1178,6 +1259,27 @@ describe("DB CLI integration", () => {
 
 describe("event-only retention CLI", () => {
   test(
+    "bare --prune-events-older refuses with an explicit missing-value state, never NaN",
+    async () => {
+      const dir = makeTempDir();
+      try {
+        const { db, dbPath } = createTestDb(dir);
+        db.close();
+
+        const result = await $`bun ${SCRIPT_PATH} --prune-events-older --json --db-path=${dbPath}`.quiet().nothrow();
+        expect(result.exitCode).toBe(1);
+        const sections = JSON.parse(result.stdout.toString()) as Array<{ data?: Record<string, unknown> }>;
+        expect(sections[0]?.data?.refused).toBe(true);
+        expect(String(sections[0]?.data?.reason)).toMatch(/requires.*value|missing.*value|explicit/i);
+        expect(result.stdout.toString()).not.toContain("NaN");
+      } finally {
+        removeTempDir(dir);
+      }
+    },
+    { timeout: TEST_TIMEOUT },
+  );
+
+  test(
     "dry run reports event-only selection without deleting rows",
     async () => {
       const dir = makeTempDir();
@@ -1296,6 +1398,9 @@ describe("opencode-doctor CLI", () => {
       expect(result).toContain("--prune-older");
       expect(result).toContain("--execute");
       expect(result).toContain("--db-path");
+      expect(result).toContain("--prune-events-older");
+      expect(result).toContain("--set-incremental-vacuum");
+      expect(result).toMatch(/8\s*GiB|operational headroom/i);
     },
     { timeout: TEST_TIMEOUT }
   );
@@ -1381,6 +1486,18 @@ describe("opencode-doctor CLI", () => {
       expect(output).toContain("OpenCode doctor");
     },
     { timeout: TEST_TIMEOUT }
+  );
+
+  test(
+    "documentation table covers incremental vacuum and final event-prune semantics",
+    () => {
+      const docs = readFileSync(join(import.meta.dir, "../../../.dotfiles/docs/opencode-doctor.md"), "utf8");
+
+      expect(docs).toContain("| `--set-incremental-vacuum` |");
+      expect(docs).toMatch(/--prune-events-older[\s\S]*auto_vacuum=INCREMENTAL/);
+      expect(docs).toMatch(/8\s*GiB|operational headroom/i);
+      expect(docs).toMatch(/never runs a full `VACUUM`/i);
+    },
   );
 });
 

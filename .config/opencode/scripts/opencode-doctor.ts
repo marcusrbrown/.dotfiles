@@ -34,6 +34,7 @@ type CliOptions = {
   dbHealth: boolean;
   pruneOlderDays: number | null;
   pruneEventsOlderDays: number | null;
+  pruneEventsOlderRefusal: string | null;
   execute: boolean;
   dbPath: string;
   setIncrementalVacuum: boolean;
@@ -126,6 +127,10 @@ function warnUnknownFlag(flag: string): void {
 
 function warnInvalidValue(flag: string, value: string, expected: string): void {
   console.warn(`Warning: Invalid value "${value}" for ${flag}, expected ${expected}. Using default.`);
+}
+
+function warnRefusedValue(flag: string, value: string, expected: string): void {
+  console.warn(`Warning: Invalid value "${value}" for ${flag}, expected ${expected}. Refusing.`);
 }
 
 function isBooleanTrue(value: string | boolean): boolean {
@@ -295,15 +300,16 @@ function parseArgs(argv: string[]): CliOptions {
 
   const pruneEventsValue = args.get("--prune-events-older");
   let pruneEventsOlderDays: number | null = null;
+  let pruneEventsOlderRefusal: string | null = null;
   if (pruneEventsValue != null) {
     if (pruneEventsValue === true) {
-      warnInvalidValue("--prune-events-older", "(missing)", "integer >= 1 (days)");
-      pruneEventsOlderDays = Number.NaN;
+      warnRefusedValue("--prune-events-older", "(missing)", "integer >= 1 (days)");
+      pruneEventsOlderRefusal = "--prune-events-older requires an explicit value in days.";
     } else {
       const parsed = Number(pruneEventsValue);
       if (!Number.isFinite(parsed) || parsed < 1) {
-        warnInvalidValue("--prune-events-older", String(pruneEventsValue), "integer >= 1 (days)");
-        pruneEventsOlderDays = parsed;
+        warnRefusedValue("--prune-events-older", String(pruneEventsValue), "integer >= 1 (days)");
+        pruneEventsOlderRefusal = `--prune-events-older must be >= 1 day (got ${String(pruneEventsValue)}).`;
       } else {
         pruneEventsOlderDays = parsed;
       }
@@ -337,6 +343,7 @@ function parseArgs(argv: string[]): CliOptions {
     dbHealth,
     pruneOlderDays,
     pruneEventsOlderDays,
+    pruneEventsOlderRefusal,
     execute,
     dbPath,
     setIncrementalVacuum,
@@ -374,10 +381,12 @@ DB Maintenance (no server required):
                             only selected if no session in it was updated within the window.
                             Dry-run unless --execute. Deletion is IRREVERSIBLE.
   --prune-events-older <days>
-                            Event-only retention: delete selected event streams while preserving
-                            sessions, messages, and parts. Tree-aware and dry-run by default.
-                            Requires auto_vacuum=INCREMENTAL for --execute; never runs full VACUUM.
-                            Mutually exclusive with --prune-older.
+                             Event-only retention: delete selected event streams while preserving
+                             sessions, messages, and parts. Tree-aware and dry-run by default.
+                             --execute requires no active OpenCode process, indexed preservation
+                             predicates, auto_vacuum=INCREMENTAL, and 8 GiB operational headroom;
+                             it uses incremental vacuum and never runs full VACUUM.
+                             Mutually exclusive with --prune-older.
   --execute                 PERMANENTLY and IRREVERSIBLY deletes sessions and all their
                             messages, parts, and events for --prune-older, or only events for
                             --prune-events-older. Without either prune flag, --execute is an error.
@@ -763,7 +772,7 @@ export function pruneSessions(db: Database, sessionIds: string[], dbPath: string
   return result;
 }
 
-const EVENT_RETENTION_DISK_RESERVE_BYTES = 8 * 1024 ** 3;
+const EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES = 8 * 1024 ** 3;
 
 export type EventPruneDependencies = {
   availableBytes?: (path: string) => number;
@@ -777,6 +786,8 @@ export type EventPruneResult = {
   event_sequence_rows_deleted: number;
   event_rows_deleted: number;
   estimated_reclaim: ReclaimEstimate;
+  operational_headroom_floor_bytes: number;
+  operational_headroom_floor_human: string;
   before: PruneResult["before"];
   after: PruneResult["after"];
   file_size_delta_bytes: number;
@@ -909,6 +920,39 @@ function sqlIdentifier(identifier: string): string {
   return `"${identifier.replaceAll('"', '""')}"`;
 }
 
+function hasIndexColumnPrefix(db: Database, table: PreservationTable, columns: readonly string[]): boolean {
+  type IndexListRow = { name?: unknown };
+  type IndexInfoRow = { seqno?: unknown; name?: unknown };
+
+  const indexes = db.query<IndexListRow, []>(`PRAGMA index_list(${sqlIdentifier(table)})`).all();
+  return indexes.some((index) => {
+    if (typeof index.name !== "string") return false;
+    const indexColumns = db
+      .query<IndexInfoRow, []>(`PRAGMA index_info(${sqlIdentifier(index.name)})`)
+      .all()
+      .sort((left, right) => Number(left.seqno ?? 0) - Number(right.seqno ?? 0))
+      .map((column) => column.name);
+
+    return columns.every((column, position) => indexColumns[position] === column);
+  });
+}
+
+function assertPreservationIndexes(db: Database): void {
+  const requirements: Array<{ table: PreservationTable; columns: readonly string[] }> = [
+    { table: "session", columns: ["id"] },
+    { table: "message", columns: ["session_id"] },
+    { table: "part", columns: ["session_id"] },
+  ];
+
+  for (const requirement of requirements) {
+    if (!hasIndexColumnPrefix(db, requirement.table, requirement.columns)) {
+      throw new Error(
+        `event-only preservation requires an index with column prefix (${requirement.columns.join(", ")}) on ${requirement.table}`,
+      );
+    }
+  }
+}
+
 function streamSelectedTableProof(
   db: Database,
   table: PreservationTable,
@@ -1039,11 +1083,14 @@ export function pruneEvents(
   const selectedTreeCount = countSessionTrees(db, sessionIds);
   const estimatedReclaim = estimateReclaim(db, sessionIds);
   const availableBytes = (dependencies.availableBytes ?? availableBytesForPath)(dirname(dbPath));
-  const requiredBytes = estimatedReclaim.event_bytes + EVENT_RETENTION_DISK_RESERVE_BYTES;
-  if (availableBytes < requiredBytes) {
+  if (availableBytes < EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES) {
     throw new Error(
-      `event-only retention requires ${bytesToHuman(requiredBytes)} usable disk space; only ${bytesToHuman(availableBytes)} available`,
+      `event-only retention requires ${bytesToHuman(EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES)} operational headroom; only ${bytesToHuman(availableBytes)} available`,
     );
+  }
+
+  if (sessionIds.length > 0) {
+    assertPreservationIndexes(db);
   }
 
   const before = captureDbSnapshot(db, dbPath);
@@ -1097,6 +1144,8 @@ export function pruneEvents(
     event_sequence_rows_deleted: eventSequenceRowsDeleted,
     event_rows_deleted: eventRowsDeleted,
     estimated_reclaim: estimatedReclaim,
+    operational_headroom_floor_bytes: EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES,
+    operational_headroom_floor_human: bytesToHuman(EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES),
     before,
     after,
     file_size_delta_bytes: fileSizeDelta,
@@ -1433,7 +1482,20 @@ async function runDbPruneExecute(options: CliOptions): Promise<SectionResult> {
   }
 }
 
-function eventRetentionDaysOrRefusal(days: number | null): SectionResult | null {
+function eventRetentionDaysOrRefusal(
+  days: number | null,
+  refusal: string | null,
+): SectionResult | null {
+  if (refusal != null) {
+    return {
+      label: "DB Event Prune (refused)",
+      data: {
+        mode: "event-only",
+        refused: true,
+        reason: refusal,
+      },
+    };
+  }
   if (days == null || Number.isFinite(days) && days >= 1) return null;
   return {
     label: "DB Event Prune (refused)",
@@ -1446,7 +1508,7 @@ function eventRetentionDaysOrRefusal(days: number | null): SectionResult | null 
 }
 
 async function runDbEventPruneDryRun(options: CliOptions): Promise<SectionResult> {
-  const invalid = eventRetentionDaysOrRefusal(options.pruneEventsOlderDays);
+  const invalid = eventRetentionDaysOrRefusal(options.pruneEventsOlderDays, options.pruneEventsOlderRefusal);
   if (invalid != null) return invalid;
 
   const days = options.pruneEventsOlderDays as number;
@@ -1476,6 +1538,8 @@ async function runDbEventPruneDryRun(options: CliOptions): Promise<SectionResult
         estimated_event_bytes: reclaim.event_bytes,
         estimated_file_size_delta_bytes: reclaim.event_bytes,
         reclaimed_file_size_delta_bytes: 0,
+        operational_headroom_floor_bytes: EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES,
+        operational_headroom_floor_human: bytesToHuman(EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES),
         reclaimable_estimate: reclaim,
         auto_vacuum: autoVacuum,
         notice: "DRY RUN — no changes. Re-run with --execute to delete event rows only.",
@@ -1489,7 +1553,7 @@ async function runDbEventPruneDryRun(options: CliOptions): Promise<SectionResult
 }
 
 async function runDbEventPruneExecute(options: CliOptions): Promise<SectionResult> {
-  const invalid = eventRetentionDaysOrRefusal(options.pruneEventsOlderDays);
+  const invalid = eventRetentionDaysOrRefusal(options.pruneEventsOlderDays, options.pruneEventsOlderRefusal);
   if (invalid != null) return invalid;
 
   const days = options.pruneEventsOlderDays as number;
@@ -1915,19 +1979,20 @@ function summarize(value: unknown, limit: number): unknown {
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
+  const eventPruneRequested = options.pruneEventsOlderDays != null || options.pruneEventsOlderRefusal != null;
 
   // DB-only path: if any db flag is present, skip server entirely.
   // Also route here if --execute is set alone (to give a clear error).
   const isDbMode =
     options.dbHealth ||
     options.pruneOlderDays != null ||
-    options.pruneEventsOlderDays != null ||
+    eventPruneRequested ||
     options.execute ||
     options.setIncrementalVacuum;
 
   if (isDbMode) {
     // Guard: --execute without either prune mode is a user error.
-    if (options.execute && options.pruneOlderDays == null && options.pruneEventsOlderDays == null) {
+    if (options.execute && options.pruneOlderDays == null && !eventPruneRequested) {
       console.error("Error: --execute requires --prune-older=<days> or --prune-events-older=<days>");
       process.exit(1);
     }
@@ -1941,7 +2006,7 @@ async function main(): Promise<void> {
       if (result.error != null) hasError = true;
     }
 
-    if (options.pruneOlderDays != null && options.pruneEventsOlderDays != null) {
+    if (options.pruneOlderDays != null && eventPruneRequested) {
       sections.push({
         label: "DB Event Prune (refused)",
         data: {
@@ -1967,7 +2032,7 @@ async function main(): Promise<void> {
       }
     }
 
-    if (options.pruneEventsOlderDays != null && options.pruneOlderDays == null) {
+    if (eventPruneRequested && options.pruneOlderDays == null) {
       const result = options.execute
         ? await runDbEventPruneExecute(options)
         : await runDbEventPruneDryRun(options);
