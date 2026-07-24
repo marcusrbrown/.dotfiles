@@ -1,7 +1,7 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { $ } from "bun";
 import { Database } from "bun:sqlite";
-import { mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -9,15 +9,22 @@ import {
   selectOldSessionIds,
   estimateReclaim,
   pruneSessions,
+  pruneEvents,
   classifyPgrepExitCode,
   autoVacuumModeName,
   convertToIncrementalVacuum,
+  checkForOtherOpencodeProcesses,
 } from "./opencode-doctor";
+import {
+  selectOldSessionIds as selectOldSessionIdsFromRetention,
+  estimateReclaim as estimateReclaimFromRetention,
+  withSessionIdCandidateTable,
+} from "./lib/opencode-session-tree-retention";
 
 const SCRIPT_PATH = "./opencode-doctor.ts";
 const TEST_TIMEOUT = 90000;
 
-let spawnedProcs: Array<{ kill: (signal?: string) => void; exited: Promise<number> }> = [];
+let spawnedProcs: Array<Pick<ReturnType<typeof Bun.spawn>, "kill" | "exited">> = [];
 
 afterEach(async () => {
   for (const proc of spawnedProcs) {
@@ -51,11 +58,19 @@ function removeTempDir(dir: string): void {
  * Create a minimal OpenCode-schema SQLite DB for testing.
  * Returns the db instance and its file path.
  */
-function createTestDb(dir: string): { db: Database; dbPath: string } {
+function createTestDb(
+  dir: string,
+  options: { autoVacuum?: number; eventCascade?: boolean; preservationIndexes?: boolean } = {},
+): { db: Database; dbPath: string } {
   const dbPath = join(dir, "test.db");
   const db = new Database(dbPath);
+  const eventReference = options.eventCascade === false
+    ? "REFERENCES event_sequence(aggregate_id)"
+    : "REFERENCES event_sequence(aggregate_id) ON DELETE CASCADE";
+  const autoVacuum = options.autoVacuum === 2 ? "PRAGMA auto_vacuum=INCREMENTAL;" : "";
 
   db.exec(`
+    ${autoVacuum}
     PRAGMA journal_mode=WAL;
     PRAGMA foreign_keys=ON;
 
@@ -93,12 +108,19 @@ function createTestDb(dir: string): { db: Database; dbPath: string } {
 
     CREATE TABLE IF NOT EXISTS event (
       id TEXT PRIMARY KEY,
-      aggregate_id TEXT NOT NULL REFERENCES event_sequence(aggregate_id) ON DELETE CASCADE,
+      aggregate_id TEXT NOT NULL ${eventReference},
       seq INTEGER NOT NULL,
       type TEXT NOT NULL DEFAULT '',
       data TEXT NOT NULL DEFAULT '{}'
     );
   `);
+
+  if (options.preservationIndexes !== false) {
+    db.exec(`
+      CREATE INDEX message_session_id_idx ON message(session_id);
+      CREATE INDEX part_session_id_idx ON part(session_id);
+    `);
+  }
 
   return { db, dbPath };
 }
@@ -381,6 +403,136 @@ describe("DB helpers (unit)", () => {
     }
   });
 
+  test("extracted retention primitives preserve tree selection, event estimates, and large candidate sets", () => {
+    const dir = makeTempDir();
+    try {
+      const { db } = createTestDb(dir);
+
+      const now = Date.now();
+      const cutoffMs = now - 30 * 24 * 3600 * 1000;
+      const staleTs = now - 60 * 24 * 3600 * 1000;
+      const recentTs = now - 5 * 24 * 3600 * 1000;
+
+      insertSession(db, "stale-root", staleTs, { timeUpdatedMs: staleTs, events: 2 });
+      insertSession(db, "stale-child", staleTs, { timeUpdatedMs: staleTs, parentId: "stale-root", events: 3 });
+      insertSession(db, "protected-descendant", staleTs, {
+        timeUpdatedMs: recentTs,
+        parentId: "stale-child",
+        events: 4,
+      });
+      insertSession(db, "dangling-stale", staleTs, {
+        timeUpdatedMs: staleTs,
+        parentId: "deleted-parent",
+        events: 5,
+      });
+
+      const doctorIds = selectOldSessionIds(db, cutoffMs);
+      const extractedIds = selectOldSessionIdsFromRetention(db, cutoffMs);
+      expect(extractedIds).toEqual(doctorIds);
+      expect(extractedIds).toEqual(["dangling-stale"]);
+
+      const doctorEstimate = estimateReclaim(db, extractedIds);
+      const extractedEstimate = estimateReclaimFromRetention(db, extractedIds);
+      expect(extractedEstimate).toEqual(doctorEstimate);
+
+      const candidateIds = Array.from({ length: 1501 }, (_, index) => `candidate-${index}`);
+      const candidateCount = withSessionIdCandidateTable(db, candidateIds, (tableName) => {
+        type CountRow = { cnt: number };
+        return db.query<CountRow, []>(`SELECT COUNT(*) AS cnt FROM ${tableName}`).get()?.cnt ?? 0;
+      });
+      expect(candidateCount).toBe(candidateIds.length);
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("withSessionIdCandidateTable drops the temp table when population throws", () => {
+    const dir = makeTempDir();
+    try {
+      const { db } = createTestDb(dir);
+      const candidateIds = {
+        *[Symbol.iterator](): Generator<string> {
+          yield "candidate-before-failure";
+          throw new Error("candidate population failed");
+        },
+      } as unknown as readonly string[];
+
+      expect(() => withSessionIdCandidateTable(db, candidateIds, () => undefined)).toThrow(
+        "candidate population failed"
+      );
+
+      type TempTableRow = { name: string };
+      const tempTable = db.query<TempTableRow, []>(
+        "SELECT name FROM sqlite_temp_master WHERE type = 'table' AND name LIKE '_prune_ids_%'"
+      ).get();
+      expect(tempTable).toBeNull();
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("withSessionIdCandidateTable drops the temp table when the operation throws", () => {
+    const dir = makeTempDir();
+    try {
+      const { db } = createTestDb(dir);
+      let populatedRows = 0;
+
+      expect(() => withSessionIdCandidateTable(db, ["candidate"], (tableName) => {
+        type CountRow = { cnt: number };
+        populatedRows = db.query<CountRow, []>(
+          `SELECT COUNT(*) AS cnt FROM ${tableName}`
+        ).get()?.cnt ?? 0;
+        throw new Error("candidate operation failed");
+      })).toThrow("candidate operation failed");
+
+      expect(populatedRows).toBe(1);
+
+      type TempTableRow = { name: string };
+      const tempTable = db.query<TempTableRow, []>(
+        "SELECT name FROM sqlite_temp_master WHERE type = 'table' AND name LIKE '_prune_ids_%'"
+      ).get();
+      expect(tempTable).toBeNull();
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("withSessionIdCandidateTable uses distinct temp tables for nested invocations on one connection", () => {
+    const dir = makeTempDir();
+    try {
+      const { db } = createTestDb(dir);
+      let outerTable = "";
+      let innerTable = "";
+
+      const result = withSessionIdCandidateTable(db, ["outer"], (outerName) => {
+        outerTable = outerName;
+        const before = db.query<{ cnt: number }, []>(`SELECT COUNT(*) AS cnt FROM ${outerName}`).get()?.cnt;
+        const inner = withSessionIdCandidateTable(db, ["inner-a", "inner-b"], (innerName) => {
+          innerTable = innerName;
+          return db.query<{ cnt: number }, []>(`SELECT COUNT(*) AS cnt FROM ${innerName}`).get()?.cnt ?? 0;
+        });
+        const after = db.query<{ cnt: number }, []>(`SELECT COUNT(*) AS cnt FROM ${outerName}`).get()?.cnt;
+        return { before, inner, after };
+      });
+
+      expect(result).toEqual({ before: 1, inner: 2, after: 1 });
+      expect(outerTable).toMatch(/^_prune_ids_/);
+      expect(innerTable).toMatch(/^_prune_ids_/);
+      expect(innerTable).not.toBe(outerTable);
+      expect(db.query<{ cnt: number }, []>(
+        "SELECT COUNT(*) AS cnt FROM sqlite_temp_master WHERE type = 'table' AND name LIKE '_prune_ids_%'"
+      ).get()?.cnt).toBe(0);
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
   test("pruneSessions deletes old sessions and cascades to message/part/event", () => {
     const dir = makeTempDir();
     try {
@@ -583,6 +735,335 @@ describe("DB helpers (unit)", () => {
   });
 });
 
+describe("event-only retention (unit)", () => {
+  test("uses a fixed operational headroom floor independent of estimated event payload bytes", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2 });
+      const now = Date.now();
+      insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000, { events: 3 });
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+      const headroom = 8 * 1024 ** 3;
+
+      const result = pruneEvents(db, sessionIds, dbPath, {
+        availableBytes: () => headroom + 1,
+      });
+
+      expect(result.operational_headroom_floor_bytes).toBe(headroom);
+      expect(result.operational_headroom_floor_human).toContain("GB");
+      expect(result.estimated_reclaim.event_bytes).toBeGreaterThan(1);
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("refuses an active OpenCode parent instead of excluding the parent PID", () => {
+    const result = checkForOtherOpencodeProcesses({
+      ownPid: 100,
+      spawnSync: (args: string[]) => args[0] === "pgrep"
+        ? { exitCode: 0, stdout: "100\n200\n" }
+        : { exitCode: 0, stdout: "200\n" },
+    });
+
+    expect(result.safe).toBe(false);
+    expect(result.pids).toEqual([200]);
+  });
+
+  test("deletes selected event streams while preserving sessions, messages, and parts", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2 });
+      const now = Date.now();
+      insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000, { events: 3 });
+      insertSession(db, "sess-recent", now - 5 * 24 * 3600 * 1000, { events: 4 });
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+      const statements: string[] = [];
+      const originalExec = db.exec.bind(db);
+      (db as unknown as { exec: (sql: string) => void }).exec = (sql: string) => {
+        statements.push(sql);
+        originalExec(sql);
+      };
+
+      const result = pruneEvents(db, sessionIds, dbPath, {
+        availableBytes: () => 20 * 1024 ** 3,
+      });
+
+      expect(result.event_sequence_rows_deleted).toBe(1);
+      expect(result.event_rows_deleted).toBe(3);
+      expect(result.before.row_counts.session).toBe(result.after.row_counts.session);
+      expect(result.before.row_counts.message).toBe(result.after.row_counts.message);
+      expect(result.before.row_counts.part).toBe(result.after.row_counts.part);
+      expect(result.after.row_counts.event_sequence).toBe(1);
+      expect(result.after.row_counts.event).toBe(4);
+      expect(result.estimated_reclaim.event_bytes).toBeGreaterThan(0);
+      expect(result.file_size_delta_bytes).toBeGreaterThanOrEqual(0);
+      expect(statements.some((sql) => /\bVACUUM\b/i.test(sql))).toBe(false);
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("refuses event deletion unless auto_vacuum is incremental", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir);
+      const now = Date.now();
+      insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000);
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+
+      expect(() => pruneEvents(db, sessionIds, dbPath, { availableBytes: () => 20 * 1024 ** 3 }))
+        .toThrow(/auto_vacuum.*INCREMENTAL/i);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event").get()?.cnt).toBe(3);
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("refuses event deletion when the event foreign key is not cascading", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2, eventCascade: false });
+      const now = Date.now();
+      insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000);
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+
+      expect(() => pruneEvents(db, sessionIds, dbPath, { availableBytes: () => 20 * 1024 ** 3 }))
+        .toThrow(/CASCADE|foreign key/i);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event_sequence").get()?.cnt).toBe(1);
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("refuses and rolls back event deletion when preservation predicate indexes are missing", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2, preservationIndexes: false });
+      const now = Date.now();
+      insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000);
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+
+      expect(() => pruneEvents(db, sessionIds, dbPath, { availableBytes: () => 20 * 1024 ** 3 }))
+        .toThrow(/index.*message|message.*index/i);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event_sequence").get()?.cnt).toBe(1);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event").get()?.cnt).toBe(3);
+
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("preserves a recent descendant tree", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2 });
+      const now = Date.now();
+      insertSession(db, "old-root", now - 60 * 24 * 3600 * 1000, { events: 2 });
+      insertSession(db, "recent-child", now - 60 * 24 * 3600 * 1000, {
+        parentId: "old-root",
+        timeUpdatedMs: now - 5 * 24 * 3600 * 1000,
+        events: 2,
+      });
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+
+      const result = pruneEvents(db, sessionIds, dbPath, {
+        availableBytes: () => 20 * 1024 ** 3,
+      });
+
+      expect(sessionIds).toEqual([]);
+      expect(result.event_rows_deleted).toBe(0);
+      expect(result.event_sequence_rows_deleted).toBe(0);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event").get()?.cnt).toBe(4);
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("surfaces post-delete incremental vacuum errors without hiding deleted counts", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2 });
+      const now = Date.now();
+      insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000);
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+      const originalExec = db.exec.bind(db);
+      (db as unknown as { exec: (sql: string) => void }).exec = (sql: string) => {
+        if (sql.trim().toUpperCase() === "PRAGMA INCREMENTAL_VACUUM") {
+          throw new Error("simulated incremental vacuum failure");
+        }
+        originalExec(sql);
+      };
+
+      const result = pruneEvents(db, sessionIds, dbPath, {
+        availableBytes: () => 20 * 1024 ** 3,
+      });
+
+      expect(result.event_rows_deleted).toBe(3);
+      expect(result.vacuum_error).toContain("simulated incremental vacuum failure");
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("rolls back event deletion when a preservation trigger changes message rows", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2 });
+      const now = Date.now();
+      insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000);
+      insertSession(db, "sess-recent", now - 5 * 24 * 3600 * 1000);
+      db.exec(`
+        CREATE TRIGGER mutate_message_after_event_delete
+        AFTER DELETE ON event_sequence
+        BEGIN
+          DELETE FROM message WHERE id = (
+            SELECT id FROM message WHERE session_id = 'sess-recent' LIMIT 1
+          );
+        END;
+      `);
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+
+      expect(() => pruneEvents(db, sessionIds, dbPath, { availableBytes: () => 20 * 1024 ** 3 }))
+        .toThrow(/preservation|session, message, or part/i);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event_sequence").get()?.cnt).toBe(2);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event").get()?.cnt).toBe(6);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM message").get()?.cnt).toBe(4);
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("rolls back event deletion when selected message and part content changes without count drift", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2 });
+      const now = Date.now();
+      insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000);
+      db.exec(`
+        CREATE TRIGGER mutate_selected_content_after_event_delete
+        AFTER DELETE ON event_sequence
+        BEGIN
+          UPDATE message SET data = '{"role":"tampered"}' WHERE id = 'sess-old-msg-0';
+          UPDATE part SET data = '{"type":"text","text":"tampered"}' WHERE id = 'sess-old-part-0-0';
+        END;
+      `);
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+
+      expect(() => pruneEvents(db, sessionIds, dbPath, { availableBytes: () => 20 * 1024 ** 3 }))
+        .toThrow(/preservation|content|integrity/i);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event_sequence").get()?.cnt).toBe(1);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event").get()?.cnt).toBe(3);
+      expect(db.query<{ data: string }, []>("SELECT data FROM message WHERE id = 'sess-old-msg-0'").get()?.data)
+        .toContain('"role":"user"');
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("streams large selected payloads while rolling back count-preserving content mutation", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2 });
+      const now = Date.now();
+      const sessionId = "sess-large-preservation";
+      insertSession(db, sessionId, now - 60 * 24 * 3600 * 1000, {
+        messages: 8,
+        partsPerMessage: 4,
+        events: 3,
+      });
+
+      const largeText = "large-payload-" + "x".repeat(512 * 1024);
+      const updateMessage = db.prepare("UPDATE message SET data = ? WHERE id = ?");
+      const updatePart = db.prepare("UPDATE part SET data = ? WHERE id = ?");
+      db.transaction(() => {
+        for (let messageIndex = 0; messageIndex < 8; messageIndex += 1) {
+          updateMessage.run(largeText, `${sessionId}-msg-${messageIndex}`);
+          for (let partIndex = 0; partIndex < 4; partIndex += 1) {
+            updatePart.run(
+              partIndex === 0 && messageIndex === 0
+                ? new Uint8Array([0, 255, 1, 254, 2])
+                : largeText,
+              `${sessionId}-part-${messageIndex}-${partIndex}`,
+            );
+          }
+        }
+      })();
+
+      db.exec(`
+        CREATE TRIGGER mutate_large_selected_content_after_event_delete
+        AFTER DELETE ON event_sequence
+        BEGIN
+          UPDATE message SET data = 'tampered-message' WHERE id = '${sessionId}-msg-3';
+          UPDATE part SET data = 'tampered-part' WHERE id = '${sessionId}-part-5-2';
+        END;
+      `);
+
+      const observedQueries: string[] = [];
+      const originalQuery = db.query.bind(db);
+      (db as unknown as { query: (sql: string) => unknown }).query = (sql: string) => {
+        observedQueries.push(sql);
+        return originalQuery(sql);
+      };
+
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+
+      expect(() => pruneEvents(db, sessionIds, dbPath, { availableBytes: () => 20 * 1024 ** 3 }))
+        .toThrow(/preservation|content|integrity/i);
+      expect(observedQueries.some((sql) => /SELECT\s+\*\s+FROM\s+(session|message|part)/i.test(sql))).toBe(false);
+
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event_sequence").get()?.cnt).toBe(1);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event").get()?.cnt).toBe(3);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM message").get()?.cnt).toBe(8);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM part").get()?.cnt).toBe(32);
+      expect(db.query<{ data: string }, []>(`SELECT data FROM message WHERE id = '${sessionId}-msg-3'`).get()?.data)
+        .toBe(largeText);
+      expect(db.query<{ data: Uint8Array }, []>(`SELECT data FROM part WHERE id = '${sessionId}-part-0-0'`).get()?.data)
+        .toEqual(new Uint8Array([0, 255, 1, 254, 2]));
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("reports a busy post-delete checkpoint as an executed failure", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createTestDb(dir, { autoVacuum: 2 });
+      const now = Date.now();
+      insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000);
+      const sessionIds = selectOldSessionIds(db, now - 30 * 24 * 3600 * 1000);
+      let checkpointCalls = 0;
+
+      const result = pruneEvents(db, sessionIds, dbPath, {
+        availableBytes: () => 20 * 1024 ** 3,
+        walCheckpoint: () => {
+          checkpointCalls += 1;
+          return { busy: 1 };
+        },
+      });
+
+      expect(checkpointCalls).toBe(2);
+      expect(result.event_rows_deleted).toBe(3);
+      expect(result.vacuum_error).toMatch(/busy/i);
+      expect(db.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event").get()?.cnt).toBe(0);
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+});
+
 // ─── CLI Integration Tests (DB flags) ────────────────────────────────────────
 
 describe("DB CLI integration", () => {
@@ -776,6 +1257,127 @@ describe("DB CLI integration", () => {
   );
 });
 
+describe("event-only retention CLI", () => {
+  test(
+    "bare --prune-events-older refuses with an explicit missing-value state, never NaN",
+    async () => {
+      const dir = makeTempDir();
+      try {
+        const { db, dbPath } = createTestDb(dir);
+        db.close();
+
+        const result = await $`bun ${SCRIPT_PATH} --prune-events-older --json --db-path=${dbPath}`.quiet().nothrow();
+        expect(result.exitCode).toBe(1);
+        const sections = JSON.parse(result.stdout.toString()) as Array<{ data?: Record<string, unknown> }>;
+        expect(sections[0]?.data?.refused).toBe(true);
+        expect(String(sections[0]?.data?.reason)).toMatch(/requires.*value|missing.*value|explicit/i);
+        expect(result.stdout.toString()).not.toContain("NaN");
+      } finally {
+        removeTempDir(dir);
+      }
+    },
+    { timeout: TEST_TIMEOUT },
+  );
+
+  test(
+    "dry run reports event-only selection without deleting rows",
+    async () => {
+      const dir = makeTempDir();
+      try {
+        const { db, dbPath } = createTestDb(dir);
+        const now = Date.now();
+        insertSession(db, "sess-old", now - 60 * 24 * 3600 * 1000, { events: 3 });
+        insertSession(db, "sess-recent", now - 5 * 24 * 3600 * 1000, { events: 4 });
+        db.close();
+
+        const result = await $`bun ${SCRIPT_PATH} --db-health --prune-events-older=30 --json --db-path=${dbPath}`.text();
+        const sections = JSON.parse(result) as Array<{ label: string; data?: Record<string, unknown> }>;
+        const eventSection = sections.find((section) => section.label === "DB Event Prune (dry-run)");
+
+        expect(eventSection).toBeDefined();
+        expect(eventSection?.data?.mode).toBe("event-only");
+        expect(eventSection?.data?.selected_session_count).toBe(1);
+        expect(eventSection?.data?.deleted_event_rows).toBe(0);
+        expect(eventSection?.data?.deleted_event_sequence_rows).toBe(0);
+
+        const db2 = new Database(dbPath, { readonly: true });
+        expect(db2.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM session").get()?.cnt).toBe(2);
+        expect(db2.query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM event").get()?.cnt).toBe(7);
+        db2.close();
+      } finally {
+        removeTempDir(dir);
+      }
+    },
+    { timeout: TEST_TIMEOUT },
+  );
+
+  test(
+    "rejects event-only and whole-tree prune flags together",
+    async () => {
+      const dir = makeTempDir();
+      try {
+        const { db, dbPath } = createTestDb(dir);
+        db.close();
+
+        const result = await $`bun ${SCRIPT_PATH} --prune-events-older=30 --prune-older=30 --json --db-path=${dbPath}`.quiet().nothrow();
+        expect(result.exitCode).toBe(1);
+        const sections = JSON.parse(result.stdout.toString()) as Array<{ data?: Record<string, unknown> }>;
+        expect(sections[0]?.data?.refused).toBe(true);
+        expect(String(sections[0]?.data?.reason)).toMatch(/mutually exclusive/i);
+      } finally {
+        removeTempDir(dir);
+      }
+    },
+    { timeout: TEST_TIMEOUT },
+  );
+
+  test(
+    "rejects event-only retention days below one",
+    async () => {
+      const dir = makeTempDir();
+      try {
+        const { db, dbPath } = createTestDb(dir);
+        db.close();
+
+        const result = await $`bun ${SCRIPT_PATH} --prune-events-older=0 --json --db-path=${dbPath}`.quiet().nothrow();
+        expect(result.exitCode).toBe(1);
+        const sections = JSON.parse(result.stdout.toString()) as Array<{ data?: Record<string, unknown> }>;
+        expect(sections[0]?.data?.refused).toBe(true);
+        expect(String(sections[0]?.data?.reason)).toMatch(/>= 1|at least 1|positive/i);
+      } finally {
+        removeTempDir(dir);
+      }
+    },
+    { timeout: TEST_TIMEOUT },
+  );
+
+  test(
+    "refuses event-only execute while another OpenCode process is active",
+    async () => {
+      const dir = makeTempDir();
+      const active = Bun.spawn(["bash", "-c", "exec -a opencode-active-retention-test sleep 30"], {
+        stdout: "ignore",
+        stderr: "ignore",
+      });
+      try {
+        const { db, dbPath } = createTestDb(dir, { autoVacuum: 2 });
+        db.close();
+
+        const result = await $`bun ${SCRIPT_PATH} --prune-events-older=30 --execute --json --db-path=${dbPath}`.quiet().nothrow();
+        expect(result.exitCode).toBe(1);
+        const sections = JSON.parse(result.stdout.toString()) as Array<{ data?: Record<string, unknown> }>;
+        expect(sections[0]?.data?.refused).toBe(true);
+        expect(String(sections[0]?.data?.reason)).toMatch(/opencode|process|close/i);
+      } finally {
+        active.kill();
+        await active.exited;
+        removeTempDir(dir);
+      }
+    },
+    { timeout: TEST_TIMEOUT },
+  );
+});
+
 // ─── Existing CLI Tests ───────────────────────────────────────────────────────
 
 describe("opencode-doctor CLI", () => {
@@ -796,6 +1398,9 @@ describe("opencode-doctor CLI", () => {
       expect(result).toContain("--prune-older");
       expect(result).toContain("--execute");
       expect(result).toContain("--db-path");
+      expect(result).toContain("--prune-events-older");
+      expect(result).toContain("--set-incremental-vacuum");
+      expect(result).toMatch(/8\s*GiB|operational headroom/i);
     },
     { timeout: TEST_TIMEOUT }
   );
@@ -881,6 +1486,18 @@ describe("opencode-doctor CLI", () => {
       expect(output).toContain("OpenCode doctor");
     },
     { timeout: TEST_TIMEOUT }
+  );
+
+  test(
+    "documentation table covers incremental vacuum and final event-prune semantics",
+    () => {
+      const docs = readFileSync(join(import.meta.dir, "../../../.dotfiles/docs/opencode-doctor.md"), "utf8");
+
+      expect(docs).toContain("| `--set-incremental-vacuum` |");
+      expect(docs).toMatch(/--prune-events-older[\s\S]*auto_vacuum=INCREMENTAL/);
+      expect(docs).toMatch(/8\s*GiB|operational headroom/i);
+      expect(docs).toMatch(/never runs a full `VACUUM`/i);
+    },
   );
 });
 

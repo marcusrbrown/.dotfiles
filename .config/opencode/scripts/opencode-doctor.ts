@@ -1,10 +1,20 @@
 #!/usr/bin/env bun
 import { spawn, type ChildProcess } from "node:child_process";
-import { statSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { statfsSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname } from "node:path";
 import { Database } from "bun:sqlite";
 import { createOpencodeClient } from "@opencode-ai/sdk";
+import {
+  bytesToHuman,
+  estimateReclaim,
+  selectOldSessionIds,
+  withSessionIdCandidateTable,
+  type ReclaimEstimate,
+} from "./lib/opencode-session-tree-retention";
+
+export { estimateReclaim, selectOldSessionIds, type ReclaimEstimate };
 
 type OutputFormat = "text" | "json";
 
@@ -23,6 +33,8 @@ type CliOptions = {
   // DB flags
   dbHealth: boolean;
   pruneOlderDays: number | null;
+  pruneEventsOlderDays: number | null;
+  pruneEventsOlderRefusal: string | null;
   execute: boolean;
   dbPath: string;
   setIncrementalVacuum: boolean;
@@ -103,6 +115,7 @@ const KNOWN_FLAGS = new Set([
   // DB flags
   "--db-health",
   "--prune-older",
+  "--prune-events-older",
   "--execute",
   "--db-path",
   "--set-incremental-vacuum",
@@ -114,6 +127,10 @@ function warnUnknownFlag(flag: string): void {
 
 function warnInvalidValue(flag: string, value: string, expected: string): void {
   console.warn(`Warning: Invalid value "${value}" for ${flag}, expected ${expected}. Using default.`);
+}
+
+function warnRefusedValue(flag: string, value: string, expected: string): void {
+  console.warn(`Warning: Invalid value "${value}" for ${flag}, expected ${expected}. Refusing.`);
 }
 
 function isBooleanTrue(value: string | boolean): boolean {
@@ -281,6 +298,24 @@ function parseArgs(argv: string[]): CliOptions {
     }
   }
 
+  const pruneEventsValue = args.get("--prune-events-older");
+  let pruneEventsOlderDays: number | null = null;
+  let pruneEventsOlderRefusal: string | null = null;
+  if (pruneEventsValue != null) {
+    if (pruneEventsValue === true) {
+      warnRefusedValue("--prune-events-older", "(missing)", "integer >= 1 (days)");
+      pruneEventsOlderRefusal = "--prune-events-older requires an explicit value in days.";
+    } else {
+      const parsed = Number(pruneEventsValue);
+      if (!Number.isFinite(parsed) || parsed < 1) {
+        warnRefusedValue("--prune-events-older", String(pruneEventsValue), "integer >= 1 (days)");
+        pruneEventsOlderRefusal = `--prune-events-older must be >= 1 day (got ${String(pruneEventsValue)}).`;
+      } else {
+        pruneEventsOlderDays = parsed;
+      }
+    }
+  }
+
   const executeValue = args.get("--execute");
   const execute = executeValue != null && !isBooleanFalse(executeValue);
 
@@ -307,6 +342,8 @@ function parseArgs(argv: string[]): CliOptions {
     toolsModel: toolsModelValue != null && toolsModelValue !== true ? String(toolsModelValue) : undefined,
     dbHealth,
     pruneOlderDays,
+    pruneEventsOlderDays,
+    pruneEventsOlderRefusal,
     execute,
     dbPath,
     setIncrementalVacuum,
@@ -343,9 +380,16 @@ DB Maintenance (no server required):
                             Tree-aware: a session tree (root + descendants via parent_id) is
                             only selected if no session in it was updated within the window.
                             Dry-run unless --execute. Deletion is IRREVERSIBLE.
+  --prune-events-older <days>
+                             Event-only retention: delete selected event streams while preserving
+                             sessions, messages, and parts. Tree-aware and dry-run by default.
+                             --execute requires no active OpenCode process, indexed preservation
+                             predicates, auto_vacuum=INCREMENTAL, and 8 GiB operational headroom;
+                             it uses incremental vacuum and never runs full VACUUM.
+                             Mutually exclusive with --prune-older.
   --execute                 PERMANENTLY and IRREVERSIBLY deletes sessions and all their
-                            messages, parts, and events. Requires --prune-older.
-                            Without --prune-older, --execute is an error.
+                            messages, parts, and events for --prune-older, or only events for
+                            --prune-events-older. Without either prune flag, --execute is an error.
   --set-incremental-vacuum  One-time conversion: sets auto_vacuum=INCREMENTAL on the DB,
                             then runs a full VACUUM to rewrite the file with the new mode.
                             After this, future prunes can reclaim free pages incrementally
@@ -485,13 +529,6 @@ function formatErrorMessage(error: unknown): string {
 }
 
 // ─── DB Helpers ───────────────────────────────────────────────────────────────
-
-function bytesToHuman(bytes: number): string {
-  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(2)} GB`;
-  if (bytes >= 1e6) return `${(bytes / 1e6).toFixed(2)} MB`;
-  if (bytes >= 1e3) return `${(bytes / 1e3).toFixed(2)} KB`;
-  return `${bytes} B`;
-}
 
 function safeStatSize(path: string): number {
   try {
@@ -638,102 +675,6 @@ export function computeDbHealth(db: Database, dbPath: string): DbHealthData {
   };
 }
 
-/**
- * Select ids of all sessions belonging to "prunable" trees.
- *
- * A session tree (root + all descendants via parent_id) is prunable iff the
- * MAX(time_updated) across every session in the tree is older than cutoffMs —
- * i.e. no session in the tree has been used since the cutoff. If any member
- * was touched within the window, the entire tree is kept, including that
- * member's own stale siblings/ancestors/descendants.
- *
- * A session whose parent_id points at a nonexistent session (dangling
- * reference, e.g. after a prior partial prune) is treated as its own tree
- * root rather than causing an error or being silently dropped.
- */
-export function selectOldSessionIds(db: Database, cutoffMs: number): string[] {
-  type IdRow = { id: string };
-  const cutoffSec = Math.floor(cutoffMs / 1000);
-  const rows = db.query<IdRow, [number]>(`
-    WITH RECURSIVE tree(id, root_id) AS (
-      SELECT id, id FROM session
-      WHERE parent_id IS NULL OR parent_id NOT IN (SELECT id FROM session)
-      UNION ALL
-      SELECT s.id, t.root_id FROM session s JOIN tree t ON s.parent_id = t.id
-    ),
-    root_activity AS (
-      SELECT t.root_id, MAX(s.time_updated) AS last_used
-      FROM tree t JOIN session s ON s.id = t.id
-      GROUP BY t.root_id
-    )
-    SELECT t.id FROM tree t
-    JOIN root_activity ra ON ra.root_id = t.root_id
-    WHERE CAST(ra.last_used / 1000 AS INTEGER) < ?
-  `).all(cutoffSec);
-  return rows.map((r) => r.id);
-}
-
-export type ReclaimEstimate = {
-  part_bytes: number;
-  message_bytes: number;
-  event_bytes: number;
-  total_bytes: number;
-  part_human: string;
-  message_human: string;
-  event_human: string;
-  total_human: string;
-};
-
-export function estimateReclaim(db: Database, sessionIds: string[]): ReclaimEstimate {
-  if (sessionIds.length === 0) {
-    return {
-      part_bytes: 0, message_bytes: 0, event_bytes: 0, total_bytes: 0,
-      part_human: "0 B", message_human: "0 B", event_human: "0 B", total_human: "0 B",
-    };
-  }
-
-  // Use a temp table to avoid SQLite's bound-variable limit (SQLITE_MAX_VARIABLE_NUMBER).
-  // A giant IN (?,?,…) clause with thousands of ids will throw "too many SQL variables".
-  db.exec("CREATE TEMP TABLE IF NOT EXISTS _prune_ids (id TEXT PRIMARY KEY)");
-  db.exec("DELETE FROM _prune_ids");
-
-  const insertId = db.prepare("INSERT OR IGNORE INTO _prune_ids (id) VALUES (?)");
-  db.transaction(() => {
-    for (const id of sessionIds) insertId.run(id);
-  })();
-
-  type SumRow = { total: number | null };
-
-  // Use CAST(data AS BLOB) so length() returns byte count, not character count.
-  // SQLite's length() on TEXT counts Unicode code points; BLOB length is always bytes.
-  const partBytes = db.query<SumRow, []>(
-    "SELECT SUM(length(CAST(data AS BLOB))) AS total FROM part WHERE session_id IN (SELECT id FROM _prune_ids)"
-  ).get()?.total ?? 0;
-
-  const messageBytes = db.query<SumRow, []>(
-    "SELECT SUM(length(CAST(data AS BLOB))) AS total FROM message WHERE session_id IN (SELECT id FROM _prune_ids)"
-  ).get()?.total ?? 0;
-
-  const eventBytes = db.query<SumRow, []>(
-    "SELECT SUM(length(CAST(data AS BLOB))) AS total FROM event WHERE aggregate_id IN (SELECT id FROM _prune_ids)"
-  ).get()?.total ?? 0;
-
-  db.exec("DROP TABLE IF EXISTS _prune_ids");
-
-  const totalBytes = (partBytes ?? 0) + (messageBytes ?? 0) + (eventBytes ?? 0);
-
-  return {
-    part_bytes: partBytes ?? 0,
-    message_bytes: messageBytes ?? 0,
-    event_bytes: eventBytes ?? 0,
-    total_bytes: totalBytes,
-    part_human: bytesToHuman(partBytes ?? 0),
-    message_human: bytesToHuman(messageBytes ?? 0),
-    event_human: bytesToHuman(eventBytes ?? 0),
-    total_human: bytesToHuman(totalBytes),
-  };
-}
-
 export type PruneResult = {
   sessions_deleted: number;
   before: {
@@ -785,31 +726,21 @@ export function pruneSessions(db: Database, sessionIds: string[], dbPath: string
   let sessionsDeleted = 0;
 
   if (sessionIds.length > 0) {
-    // Populate a temp table to avoid SQLite's bound-variable limit.
-    // IN (?,?,…) with thousands of ids throws "too many SQL variables".
-    db.exec("CREATE TEMP TABLE IF NOT EXISTS _prune_ids (id TEXT PRIMARY KEY)");
-    db.exec("DELETE FROM _prune_ids");
+    withSessionIdCandidateTable(db, sessionIds, (tableName) => {
+      db.transaction(() => {
+        // Count sessions that actually exist in the DB (not just input list length).
+        type CountRow = { cnt: number };
+        const existingCount = db.query<CountRow, []>(
+          `SELECT COUNT(*) AS cnt FROM session WHERE id IN (SELECT id FROM ${tableName})`
+        ).get()?.cnt ?? 0;
+        sessionsDeleted = existingCount;
 
-    const insertId = db.prepare("INSERT OR IGNORE INTO _prune_ids (id) VALUES (?)");
-
-    db.transaction(() => {
-      // Bulk-load ids — one bind per statement, no variable-count limit.
-      for (const id of sessionIds) insertId.run(id);
-
-      // Count sessions that actually exist in the DB (not just input list length).
-      type CountRow = { cnt: number };
-      const existingCount = db.query<CountRow, []>(
-        "SELECT COUNT(*) AS cnt FROM session WHERE id IN (SELECT id FROM _prune_ids)"
-      ).get()?.cnt ?? 0;
-      sessionsDeleted = existingCount;
-
-      // Delete event_sequence (cascades to event) for these session ids.
-      db.exec("DELETE FROM event_sequence WHERE aggregate_id IN (SELECT id FROM _prune_ids)");
-      // Delete sessions (cascades to message, part via FK).
-      db.exec("DELETE FROM session WHERE id IN (SELECT id FROM _prune_ids)");
-    })();
-
-    db.exec("DROP TABLE IF EXISTS _prune_ids");
+        // Delete event_sequence (cascades to event) for these session ids.
+        db.exec(`DELETE FROM event_sequence WHERE aggregate_id IN (SELECT id FROM ${tableName})`);
+        // Delete sessions (cascades to message, part via FK).
+        db.exec(`DELETE FROM session WHERE id IN (SELECT id FROM ${tableName})`);
+      })();
+    });
   }
 
   // Checkpoint WAL then VACUUM to reclaim space (VACUUM must run outside a transaction).
@@ -841,6 +772,389 @@ export function pruneSessions(db: Database, sessionIds: string[], dbPath: string
   return result;
 }
 
+const EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES = 8 * 1024 ** 3;
+
+export type EventPruneDependencies = {
+  availableBytes?: (path: string) => number;
+  walCheckpoint?: (db: Database) => { busy: number };
+};
+
+export type EventPruneResult = {
+  mode: "event-only";
+  selected_tree_count: number;
+  selected_session_count: number;
+  event_sequence_rows_deleted: number;
+  event_rows_deleted: number;
+  estimated_reclaim: ReclaimEstimate;
+  operational_headroom_floor_bytes: number;
+  operational_headroom_floor_human: string;
+  before: PruneResult["before"];
+  after: PruneResult["after"];
+  file_size_delta_bytes: number;
+  file_size_delta_human: string;
+  vacuum_error?: string;
+};
+
+function availableBytesForPath(path: string): number {
+  const stats = statfsSync(path, { bigint: true });
+  return Number(stats.bsize * stats.bavail);
+}
+
+function countSessionTrees(db: Database, sessionIds: string[]): number {
+  if (sessionIds.length === 0) return 0;
+
+  return withSessionIdCandidateTable(db, sessionIds, (tableName) => {
+    type CountRow = { cnt: number };
+    return db.query<CountRow, []>(`
+      WITH RECURSIVE tree(id, root_id) AS (
+        SELECT s.id, s.id
+        FROM session AS s
+        WHERE s.parent_id IS NULL OR s.parent_id NOT IN (SELECT id FROM session)
+        UNION ALL
+        SELECT child.id, tree.root_id
+        FROM session AS child
+        JOIN tree ON child.parent_id = tree.id
+      )
+      SELECT COUNT(DISTINCT tree.root_id) AS cnt
+      FROM tree
+      JOIN ${tableName} AS candidate ON candidate.id = tree.id
+    `).get()?.cnt ?? 0;
+  });
+}
+
+function assertEventCascadeSchema(db: Database): void {
+  type ForeignKeyRow = {
+    table?: unknown;
+    from?: unknown;
+    to?: unknown;
+    on_delete?: unknown;
+  };
+  const foreignKeys = db.query<ForeignKeyRow, []>("PRAGMA foreign_key_list(event)").all();
+  const valid = foreignKeys.some((foreignKey) =>
+    foreignKey.table === "event_sequence" &&
+    foreignKey.from === "aggregate_id" &&
+    foreignKey.to === "aggregate_id" &&
+    String(foreignKey.on_delete).toUpperCase() === "CASCADE"
+  );
+  if (!valid) {
+    throw new Error("event schema must expose event.aggregate_id -> event_sequence.aggregate_id ON DELETE CASCADE");
+  }
+}
+
+function countSelectedEventRows(db: Database, tableName: string): { event: number; event_sequence: number } {
+  type CountRow = { cnt: number };
+  const eventSequence = db.query<CountRow, []>(
+    `SELECT COUNT(*) AS cnt FROM event_sequence WHERE aggregate_id IN (SELECT id FROM ${tableName})`,
+  ).get()?.cnt ?? 0;
+  const event = db.query<CountRow, []>(
+    `SELECT COUNT(*) AS cnt FROM event WHERE aggregate_id IN (SELECT id FROM ${tableName})`,
+  ).get()?.cnt ?? 0;
+  return { event, event_sequence: eventSequence };
+}
+
+type PreservationCounts = { session: number; message: number; part: number };
+type PreservationHashes = {
+  session: { identity: string; content: string };
+  message: { identity: string; content: string };
+  part: { identity: string; content: string };
+};
+
+type PreservationEvidence = {
+  global: PreservationCounts;
+  selected: PreservationCounts;
+  selected_hashes: PreservationHashes;
+};
+
+type PreservationTable = "session" | "message" | "part";
+type PreservationTableProof = {
+  count: number;
+  identity: string;
+  content: string;
+};
+
+function appendLengthPrefixedBytes(digest: ReturnType<typeof createHash>, bytes: Uint8Array): void {
+  const length = Buffer.allocUnsafe(8);
+  length.writeBigUInt64BE(BigInt(bytes.byteLength));
+  digest.update(length);
+  digest.update(bytes);
+}
+
+function appendFramedText(digest: ReturnType<typeof createHash>, value: string): void {
+  appendLengthPrefixedBytes(digest, Buffer.from(value, "utf8"));
+}
+
+function appendFramedValue(digest: ReturnType<typeof createHash>, value: unknown): void {
+  if (value == null) {
+    digest.update(Uint8Array.of(0));
+    return;
+  }
+
+  if (typeof value === "string") {
+    digest.update(Uint8Array.of(1));
+    appendLengthPrefixedBytes(digest, Buffer.from(value, "utf8"));
+    return;
+  }
+
+  if (value instanceof Uint8Array) {
+    digest.update(Uint8Array.of(2));
+    appendLengthPrefixedBytes(digest, value);
+    return;
+  }
+
+  if (typeof value === "bigint") {
+    digest.update(Uint8Array.of(3));
+    appendFramedText(digest, value.toString(10));
+    return;
+  }
+
+  if (typeof value === "number") {
+    digest.update(Uint8Array.of(4));
+    appendFramedText(digest, String(value));
+    return;
+  }
+
+  throw new Error(`unsupported SQLite value type in preservation proof: ${typeof value}`);
+}
+
+function sqlIdentifier(identifier: string): string {
+  return `"${identifier.replaceAll('"', '""')}"`;
+}
+
+function hasIndexColumnPrefix(db: Database, table: PreservationTable, columns: readonly string[]): boolean {
+  type IndexListRow = { name?: unknown };
+  type IndexInfoRow = { seqno?: unknown; name?: unknown };
+
+  const indexes = db.query<IndexListRow, []>(`PRAGMA index_list(${sqlIdentifier(table)})`).all();
+  return indexes.some((index) => {
+    if (typeof index.name !== "string") return false;
+    const indexColumns = db
+      .query<IndexInfoRow, []>(`PRAGMA index_info(${sqlIdentifier(index.name)})`)
+      .all()
+      .sort((left, right) => Number(left.seqno ?? 0) - Number(right.seqno ?? 0))
+      .map((column) => column.name);
+
+    return columns.every((column, position) => indexColumns[position] === column);
+  });
+}
+
+function assertPreservationIndexes(db: Database): void {
+  const requirements: Array<{ table: PreservationTable; columns: readonly string[] }> = [
+    { table: "session", columns: ["id"] },
+    { table: "message", columns: ["session_id"] },
+    { table: "part", columns: ["session_id"] },
+  ];
+
+  for (const requirement of requirements) {
+    if (!hasIndexColumnPrefix(db, requirement.table, requirement.columns)) {
+      throw new Error(
+        `event-only preservation requires an index with column prefix (${requirement.columns.join(", ")}) on ${requirement.table}`,
+      );
+    }
+  }
+}
+
+function streamSelectedTableProof(
+  db: Database,
+  table: PreservationTable,
+  tableName: string,
+): PreservationTableProof {
+  type ColumnRow = { cid: number; name: string };
+  const columns: string[] = [];
+  for (const row of db.query<ColumnRow, []>(`PRAGMA table_info(${sqlIdentifier(table)})`).iterate()) {
+    columns.push(row.name);
+  }
+  if (columns.length === 0) {
+    throw new Error(`event-only preservation invariant failed: ${table} table has no columns`);
+  }
+
+  const identityDigest = createHash("sha256");
+  const contentDigest = createHash("sha256");
+  appendFramedText(identityDigest, "opencode-doctor-preservation-v1");
+  appendFramedText(identityDigest, table);
+  appendFramedText(identityDigest, "identity");
+  appendFramedText(contentDigest, "opencode-doctor-preservation-v1");
+  appendFramedText(contentDigest, table);
+  appendFramedText(contentDigest, "content");
+
+  const sessionColumn = table === "session" ? "id" : "session_id";
+  const columnList = columns.map(sqlIdentifier).join(", ");
+  const query = db.query<Record<string, unknown>, []>(`
+    SELECT ${columnList}
+    FROM ${sqlIdentifier(table)}
+    WHERE ${sqlIdentifier(sessionColumn)} IN (SELECT id FROM ${sqlIdentifier(tableName)})
+    ORDER BY ${sqlIdentifier("id")} COLLATE BINARY
+  `);
+
+  let count = 0;
+  for (const row of query.iterate()) {
+    count += 1;
+    appendFramedText(identityDigest, "row");
+    appendFramedText(contentDigest, "row");
+
+    for (const column of columns) {
+      const value = row[column];
+      if (column === "id") {
+        appendFramedText(identityDigest, column);
+        appendFramedValue(identityDigest, value);
+      }
+      appendFramedText(contentDigest, column);
+      appendFramedValue(contentDigest, value);
+    }
+  }
+
+  appendFramedText(identityDigest, "row-count");
+  appendFramedValue(identityDigest, count);
+  appendFramedText(contentDigest, "row-count");
+  appendFramedValue(contentDigest, count);
+
+  return {
+    count,
+    identity: identityDigest.digest("hex"),
+    content: contentDigest.digest("hex"),
+  };
+}
+
+function capturePreservationEvidence(db: Database, tableName: string): PreservationEvidence {
+  type CountRow = { cnt: number };
+  const count = (sql: string): number => db.query<CountRow, []>(sql).get()?.cnt ?? 0;
+  const selected = { session: 0, message: 0, part: 0 };
+  const selectedHashes = {
+    session: { identity: "", content: "" },
+    message: { identity: "", content: "" },
+    part: { identity: "", content: "" },
+  };
+
+  for (const table of ["session", "message", "part"] as const) {
+    const proof = streamSelectedTableProof(db, table, tableName);
+    selected[table] = proof.count;
+    selectedHashes[table] = { identity: proof.identity, content: proof.content };
+  }
+
+  return {
+    global: {
+      session: count("SELECT COUNT(*) AS cnt FROM session"),
+      message: count("SELECT COUNT(*) AS cnt FROM message"),
+      part: count("SELECT COUNT(*) AS cnt FROM part"),
+    },
+    selected,
+    selected_hashes: selectedHashes,
+  };
+}
+
+function assertPreservationCounts(
+  before: PreservationEvidence,
+  after: PreservationEvidence,
+): void {
+  for (const scope of ["global", "selected"] as const) {
+    for (const table of ["session", "message", "part"] as const) {
+      if (before[scope][table] !== after[scope][table]) {
+        throw new Error(`event-only preservation invariant failed for ${scope} ${table} rows`);
+      }
+    }
+  }
+  for (const table of ["session", "message", "part"] as const) {
+    if (
+      before.selected_hashes[table].identity !== after.selected_hashes[table].identity ||
+      before.selected_hashes[table].content !== after.selected_hashes[table].content
+    ) {
+      throw new Error(`event-only preservation invariant failed for selected ${table} identity/content`);
+    }
+  }
+}
+
+function walCheckpointTruncate(db: Database): { busy: number } {
+  const row = db.query<{ busy?: unknown }, []>("PRAGMA wal_checkpoint(TRUNCATE)").get();
+  return { busy: Number(row?.busy ?? 0) };
+}
+
+export function pruneEvents(
+  db: Database,
+  sessionIds: string[],
+  dbPath: string,
+  dependencies: EventPruneDependencies = {},
+): EventPruneResult {
+  db.exec("PRAGMA foreign_keys=ON");
+  const autoVacuum = Number(db.query<{ auto_vacuum?: unknown }, []>("PRAGMA auto_vacuum").get()?.auto_vacuum ?? 0);
+  if (autoVacuum !== 2) {
+    throw new Error("event-only retention requires auto_vacuum=INCREMENTAL");
+  }
+
+  assertEventCascadeSchema(db);
+  const selectedTreeCount = countSessionTrees(db, sessionIds);
+  const estimatedReclaim = estimateReclaim(db, sessionIds);
+  const availableBytes = (dependencies.availableBytes ?? availableBytesForPath)(dirname(dbPath));
+  if (availableBytes < EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES) {
+    throw new Error(
+      `event-only retention requires ${bytesToHuman(EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES)} operational headroom; only ${bytesToHuman(availableBytes)} available`,
+    );
+  }
+
+  if (sessionIds.length > 0) {
+    assertPreservationIndexes(db);
+  }
+
+  const before = captureDbSnapshot(db, dbPath);
+  let eventSequenceRowsDeleted = 0;
+  let eventRowsDeleted = 0;
+
+  if (sessionIds.length > 0) {
+    withSessionIdCandidateTable(db, sessionIds, (tableName) => {
+      db.transaction(() => {
+        const preservedBefore = capturePreservationEvidence(db, tableName);
+        const selectedBefore = countSelectedEventRows(db, tableName);
+        db.exec(`DELETE FROM event_sequence WHERE aggregate_id IN (SELECT id FROM ${tableName})`);
+        const selectedAfter = countSelectedEventRows(db, tableName);
+        if (selectedAfter.event_sequence !== 0 || selectedAfter.event !== 0) {
+          throw new Error("event-only retention failed to remove all selected event rows");
+        }
+        assertPreservationCounts(preservedBefore, capturePreservationEvidence(db, tableName));
+        eventSequenceRowsDeleted = selectedBefore.event_sequence;
+        eventRowsDeleted = selectedBefore.event;
+      })();
+    });
+  }
+
+  const vacuumErrors: string[] = [];
+  const checkpoint = dependencies.walCheckpoint ?? walCheckpointTruncate;
+  const runCheckpoint = (label: string): void => {
+    try {
+      const result = checkpoint(db);
+      if (result.busy !== 0) {
+        throw new Error(`busy=${result.busy}`);
+      }
+    } catch (error) {
+      vacuumErrors.push(`${label} checkpoint: ${formatErrorMessage(error)}`);
+    }
+  };
+  runCheckpoint("initial");
+  try {
+    db.exec("PRAGMA incremental_vacuum");
+  } catch (error) {
+    vacuumErrors.push(`incremental_vacuum: ${formatErrorMessage(error)}`);
+  }
+  runCheckpoint("final");
+
+  const after = captureDbSnapshot(db, dbPath);
+
+  const fileSizeDelta = Math.max(0, before.file_size_bytes - after.file_size_bytes);
+  const result: EventPruneResult = {
+    mode: "event-only",
+    selected_tree_count: selectedTreeCount,
+    selected_session_count: sessionIds.length,
+    event_sequence_rows_deleted: eventSequenceRowsDeleted,
+    event_rows_deleted: eventRowsDeleted,
+    estimated_reclaim: estimatedReclaim,
+    operational_headroom_floor_bytes: EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES,
+    operational_headroom_floor_human: bytesToHuman(EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES),
+    before,
+    after,
+    file_size_delta_bytes: fileSizeDelta,
+    file_size_delta_human: bytesToHuman(fileSizeDelta),
+  };
+  if (vacuumErrors.length > 0) result.vacuum_error = vacuumErrors.join("; ");
+  return result;
+}
+
 /**
  * Classify a pgrep exit code into a process-check result.
  * Exported for unit testing.
@@ -854,8 +1168,16 @@ export function classifyPgrepExitCode(exitCode: number | null): "has_procs" | "n
   return "error";
 }
 
-function checkForOtherOpencodeProcesses(): { safe: boolean; count: number; pids: number[] } {
-  const result = Bun.spawnSync(["pgrep", "-f", "opencode"]);
+export type ProcessCheckDependencies = {
+  ownPid?: number;
+  spawnSync?: (args: string[]) => { exitCode: number | null; stdout?: unknown };
+};
+
+export function checkForOtherOpencodeProcesses(
+  dependencies: ProcessCheckDependencies = {},
+): { safe: boolean; count: number; pids: number[] } {
+  const spawnSync = dependencies.spawnSync ?? ((args: string[]) => Bun.spawnSync(args));
+  const result = spawnSync(["pgrep", "-f", "opencode"]);
   const classification = classifyPgrepExitCode(result.exitCode);
 
   if (classification === "error") {
@@ -871,25 +1193,11 @@ function checkForOtherOpencodeProcesses(): { safe: boolean; count: number; pids:
     ? result.stdout.toString("utf8")
     : String(result.stdout ?? "");
 
-  const ownPid = process.pid;
-  // Get parent PID via /proc or ps
-  let parentPid: number | null = null;
-  try {
-    const ppidResult = Bun.spawnSync(["ps", "-o", "ppid=", "-p", String(ownPid)]);
-    if (ppidResult.exitCode === 0) {
-      const ppidOut = ppidResult.stdout instanceof Buffer
-        ? ppidResult.stdout.toString("utf8")
-        : String(ppidResult.stdout ?? "");
-      parentPid = parseInt(ppidOut.trim(), 10) || null;
-    }
-  } catch {
-    // ignore
-  }
-
+  const ownPid = dependencies.ownPid ?? process.pid;
   const pids = output
     .split("\n")
     .map((line) => parseInt(line.trim(), 10))
-    .filter((pid) => !isNaN(pid) && pid !== ownPid && pid !== parentPid);
+    .filter((pid) => !isNaN(pid) && pid !== ownPid);
 
   return { safe: pids.length === 0, count: pids.length, pids };
 }
@@ -1169,6 +1477,124 @@ async function runDbPruneExecute(options: CliOptions): Promise<SectionResult> {
     return { label: "DB Prune (executed)", data };
   } catch (error) {
     return { label: "DB Prune (executed)", data: null, error: formatErrorMessage(error) };
+  } finally {
+    db?.close();
+  }
+}
+
+function eventRetentionDaysOrRefusal(
+  days: number | null,
+  refusal: string | null,
+): SectionResult | null {
+  if (refusal != null) {
+    return {
+      label: "DB Event Prune (refused)",
+      data: {
+        mode: "event-only",
+        refused: true,
+        reason: refusal,
+      },
+    };
+  }
+  if (days == null || Number.isFinite(days) && days >= 1) return null;
+  return {
+    label: "DB Event Prune (refused)",
+    data: {
+      mode: "event-only",
+      refused: true,
+      reason: `--prune-events-older must be >= 1 day (got ${String(days)}).`,
+    },
+  };
+}
+
+async function runDbEventPruneDryRun(options: CliOptions): Promise<SectionResult> {
+  const invalid = eventRetentionDaysOrRefusal(options.pruneEventsOlderDays, options.pruneEventsOlderRefusal);
+  if (invalid != null) return invalid;
+
+  const days = options.pruneEventsOlderDays as number;
+  const cutoffMs = Date.now() - days * 24 * 3600 * 1000;
+  const cutoffDate = new Date(cutoffMs).toISOString().slice(0, 10);
+  let db: Database | null = null;
+  try {
+    const uri = "file:" + options.dbPath + "?mode=ro";
+    db = new Database(uri, { readonly: true });
+    db.exec("PRAGMA busy_timeout=5000");
+
+    const sessionIds = await withSqliteBusyRetry(() => selectOldSessionIds(db!, cutoffMs));
+    const reclaim = await withSqliteBusyRetry(() => estimateReclaim(db!, sessionIds));
+    const selectedTreeCount = countSessionTrees(db, sessionIds);
+    const autoVacuum = Number(db.query<{ auto_vacuum?: unknown }, []>("PRAGMA auto_vacuum").get()?.auto_vacuum ?? 0);
+
+    return {
+      label: "DB Event Prune (dry-run)",
+      data: {
+        mode: "event-only",
+        cutoff_date: cutoffDate,
+        prune_events_older_than_days: days,
+        selected_tree_count: selectedTreeCount,
+        selected_session_count: sessionIds.length,
+        deleted_event_rows: 0,
+        deleted_event_sequence_rows: 0,
+        estimated_event_bytes: reclaim.event_bytes,
+        estimated_file_size_delta_bytes: reclaim.event_bytes,
+        reclaimed_file_size_delta_bytes: 0,
+        operational_headroom_floor_bytes: EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES,
+        operational_headroom_floor_human: bytesToHuman(EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES),
+        reclaimable_estimate: reclaim,
+        auto_vacuum: autoVacuum,
+        notice: "DRY RUN — no changes. Re-run with --execute to delete event rows only.",
+      },
+    };
+  } catch (error) {
+    return { label: "DB Event Prune (dry-run)", data: null, error: formatErrorMessage(error) };
+  } finally {
+    db?.close();
+  }
+}
+
+async function runDbEventPruneExecute(options: CliOptions): Promise<SectionResult> {
+  const invalid = eventRetentionDaysOrRefusal(options.pruneEventsOlderDays, options.pruneEventsOlderRefusal);
+  if (invalid != null) return invalid;
+
+  const days = options.pruneEventsOlderDays as number;
+  const cutoffMs = Date.now() - days * 24 * 3600 * 1000;
+  const cutoffDate = new Date(cutoffMs).toISOString().slice(0, 10);
+  const procRefusal = refuseIfOtherOpencodeProcesses();
+  if (procRefusal != null) {
+    return {
+      label: "DB Event Prune (refused)",
+      data: { mode: "event-only", ...procRefusal },
+    };
+  }
+
+  let db: Database | null = null;
+  try {
+    db = new Database(options.dbPath);
+    db.exec("PRAGMA busy_timeout=5000");
+    db.exec("PRAGMA foreign_keys=ON");
+    const sessionIds = await withSqliteBusyRetry(() => selectOldSessionIds(db!, cutoffMs));
+    const result = pruneEvents(db, sessionIds, options.dbPath);
+    const data = {
+      cutoff_date: cutoffDate,
+      prune_events_older_than_days: days,
+      estimated_event_bytes: result.estimated_reclaim.event_bytes,
+      estimated_file_size_delta_bytes: result.estimated_reclaim.event_bytes,
+      reclaimed_file_size_delta_bytes: result.file_size_delta_bytes,
+      ...result,
+    };
+    return {
+      label: result.vacuum_error == null ? "DB Event Prune (executed)" : "DB Event Prune (failed)",
+      data,
+    };
+  } catch (error) {
+    return {
+      label: "DB Event Prune (refused)",
+      data: {
+        mode: "event-only",
+        refused: true,
+        reason: formatErrorMessage(error),
+      },
+    };
   } finally {
     db?.close();
   }
@@ -1553,15 +1979,21 @@ function summarize(value: unknown, limit: number): unknown {
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
+  const eventPruneRequested = options.pruneEventsOlderDays != null || options.pruneEventsOlderRefusal != null;
 
   // DB-only path: if any db flag is present, skip server entirely.
   // Also route here if --execute is set alone (to give a clear error).
-  const isDbMode = options.dbHealth || options.pruneOlderDays != null || options.execute || options.setIncrementalVacuum;
+  const isDbMode =
+    options.dbHealth ||
+    options.pruneOlderDays != null ||
+    eventPruneRequested ||
+    options.execute ||
+    options.setIncrementalVacuum;
 
   if (isDbMode) {
-    // Guard: --execute without --prune-older is a user error
-    if (options.execute && options.pruneOlderDays == null) {
-      console.error("Error: --execute requires --prune-older=<days>. Example: --prune-older=30 --execute");
+    // Guard: --execute without either prune mode is a user error.
+    if (options.execute && options.pruneOlderDays == null && !eventPruneRequested) {
+      console.error("Error: --execute requires --prune-older=<days> or --prune-events-older=<days>");
       process.exit(1);
     }
 
@@ -1574,7 +2006,17 @@ async function main(): Promise<void> {
       if (result.error != null) hasError = true;
     }
 
-    if (options.pruneOlderDays != null) {
+    if (options.pruneOlderDays != null && eventPruneRequested) {
+      sections.push({
+        label: "DB Event Prune (refused)",
+        data: {
+          mode: "event-only",
+          refused: true,
+          reason: "--prune-events-older and --prune-older are mutually exclusive",
+        },
+      });
+      hasError = true;
+    } else if (options.pruneOlderDays != null) {
       if (options.execute) {
         const result = await runDbPruneExecute(options);
         sections.push(result);
@@ -1587,6 +2029,20 @@ async function main(): Promise<void> {
         const result = await runDbPruneDryRun(options);
         sections.push(result);
         if (result.error != null) hasError = true;
+      }
+    }
+
+    if (eventPruneRequested && options.pruneOlderDays == null) {
+      const result = options.execute
+        ? await runDbEventPruneExecute(options)
+        : await runDbEventPruneDryRun(options);
+      sections.push(result);
+      if (result.error != null) hasError = true;
+      if (isPlainObject(result.data) && (result.data as { refused?: boolean }).refused) {
+        hasError = true;
+      }
+      if (isPlainObject(result.data) && (result.data as { vacuum_error?: unknown }).vacuum_error != null) {
+        hasError = true;
       }
     }
 
