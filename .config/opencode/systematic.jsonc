@@ -25,9 +25,9 @@
       "model": "github-copilot/gemini-3.5-flash"
     },
     "systematic-implementer": {
-      "model": "openai/gpt-5.6-luna",
-      "variant": "xhigh",
-      "temperature": 0.1
+      "model": "anthropic/claude-sonnet-4-6",
+      "variant": "high",
+      "temperature": 0
     }
   }
 }
