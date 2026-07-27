@@ -36,8 +36,8 @@
         "mcps": []
       },
       "fixer": {
-        "model": "openai/gpt-5.6-luna",
-        "variant": "xhigh",
+        "model": "anthropic/claude-sonnet-4-6",
+        "variant": "high",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       }
@@ -98,13 +98,13 @@
         "model": "openai/gpt-5.6-sol"
       },
       "librarian": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "github-copilot/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": ["websearch", "context7", "grep_app"]
       },
       "explorer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "github-copilot/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": []
@@ -138,13 +138,13 @@
         "model": "openai/gpt-5.6-sol"
       },
       "librarian": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "github-copilot/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": ["websearch", "context7", "grep_app"]
       },
       "explorer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "github-copilot/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": []
