@@ -36,8 +36,8 @@
         "mcps": []
       },
       "fixer": {
-        "model": "anthropic/claude-sonnet-4-6",
-        "variant": "high",
+        "model": "anthropic/claude-sonnet-5",
+        "variant": "medium",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       }
