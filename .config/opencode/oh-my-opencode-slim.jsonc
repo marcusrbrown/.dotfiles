@@ -1,5 +1,5 @@
 {
-  "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
+  "$schema": "https://unpkg.com/oh-my-opencode-slim@1.1.2/oh-my-opencode-slim.schema.json",
   "preset": "openai",
   "presets": {
     "openai": {
@@ -19,13 +19,13 @@
         "model": "openai/gpt-5.6-sol"
       },
       "librarian": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "github-copilot/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": ["websearch", "context7", "grep_app"]
       },
       "explorer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "github-copilot/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": []
@@ -173,9 +173,10 @@
       "mcps": []
     }
   },
-  "backgroundJobs": {
-    "continueOnIdle": false
-  },
+  // Only valid in oh-my-opencode-slim v2
+  // "backgroundJobs": {
+  //   "continueOnIdle": false
+  // },
   "council": {
     "presets": {
       "default": {
