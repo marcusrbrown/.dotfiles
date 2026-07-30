@@ -31,6 +31,12 @@ For repo-wide search, external research, multi-module refactors, or complex debu
 When the work is big or ambiguous: delegate / parallelize (subagents) instead of brute-forcing sequentially.
 
 Subagent continuation invariant: when correcting or continuing a delegated task, resume the existing session with its `task_id`. Before dispatch, verify `task_id` is present. If a new session is accidentally created, stop after the first occurrence — never retry by spawning more sessions in a loop.
+
+Delegated completion invariant: every subagent must return the requested artifact or an explicit blocker/timeout. Progress narration alone is incomplete. For manifests and checklists, require a disposition for every supplied item before accepting completion.
+
+Source-authority invariant: when a task names a repository, ref, or tag, confirm that exact authority before searching. Inspect the authoritative tree directly; search-index misses are not evidence of absence, and deployment pins, forks, or adjacent repositories are not substitutes.
+
+Workflow guard invariant: check guard availability once per execution unit. If the guard reports `unavailable`, do not retry guarded start/completion calls; use the documented fallback and report the unavailable state once.
 </tool_preferences>
 
 <definition_of_done>
