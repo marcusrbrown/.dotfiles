@@ -69,6 +69,7 @@
 **/sessions/
 **/transcripts/
 **/history.jsonl
+/.config/opencode/oh-my-opencode-slim/reflections/
 
 # Ollama distillation pipeline
 !/.config/opencode/scripts/ollama-distill.ts
