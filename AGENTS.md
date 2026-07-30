@@ -73,7 +73,7 @@ git status  # now works on dotfiles
 | Git settings | `.config/git/config` | GPG signing on, rebase defaults, autoStash |
 | Mise tool versions | `.config/mise/config.toml` | Node, Python, Rust, etc. — `nvm` is disabled |
 | Mise tasks | `.config/mise/tasks/` | File-based shebang scripts; subdirs map to `:` (e.g. `mise/tools/install` -> `mise:tools:install`); auto-discovered, no `task_config.includes` needed |
-| Project docs | `.dotfiles/docs/` | `brainstorms/` (requirements), `plans/` (implementation plans), `runbooks/` (operational procedures), `solutions/` (compound knowledge captures) |
+| Project docs | `.dotfiles/docs/` | `brainstorms/` (requirements), `plans/` (implementation plans), `runbooks/` (operational procedures), `solutions/` entries searchable by YAML frontmatter (`module`, `tags`, `problem_type`) when implementing or debugging documented areas |
 | OpenCode scripts | `.config/opencode/scripts/` | Bun + TypeScript utilities. `opencode-doctor.ts` (config diagnostic), `ollama-distill.ts` (local session distillation pipeline) |
 | Brewfile | `Brewfile` | macOS apps + casks + mas + 140+ vscode extensions |
 | Claude Code agents/rules | `.claude/agents/`, `.claude/rules/` | Custom agent + rule definitions |
