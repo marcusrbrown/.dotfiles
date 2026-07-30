@@ -29,6 +29,8 @@ Prefer whatever yields: correctness, small diffs, reproducibility, and auditabil
 For repo-wide search, external research, multi-module refactors, or complex debugging, prefer Task/subagents (and built-in search/refactor tooling) over ad-hoc shell pipelines. Use Bash for targeted, local, single-purpose operations.
 
 When the work is big or ambiguous: delegate / parallelize (subagents) instead of brute-forcing sequentially.
+
+Subagent continuation invariant: when correcting or continuing a delegated task, resume the existing session with its `task_id`. Before dispatch, verify `task_id` is present. If a new session is accidentally created, stop after the first occurrence — never retry by spawning more sessions in a loop.
 </tool_preferences>
 
 <definition_of_done>
@@ -145,10 +147,19 @@ Not "expertise claims" — priority signals for how to reason.
 ## Telemetry & Data (Hard Requirements Unless Marcus Overrides)
 This includes logs/metrics/traces shipped off-device.
 
-- Telemetry must be **opt-in** (not opt-out).
+- Telemetry must be **opt-in** (not opt-out), except for self-hosted,
+  cookieless aggregate analytics that meets every condition below:
+  - honors Do Not Track
+  - collects no PII, persistent identifiers, fingerprints, cross-site data,
+    query strings, or URL hashes
+  - limits custom events to non-user-authored categorical data
+  - publishes processing and retention behavior in a privacy policy
+  - does not share data with third parties
+- All telemetry outside that narrow exception remains opt-in.
 - A privacy policy is required if any data is collected or transmitted.
 - Prefer self-hosted analytics/telemetry when telemetry is necessary.
-- Users own and control their data:
+- For data that can be associated with a person or device, users own and
+  control it:
   - explicit, informed consent
   - clear data export + deletion story
   - collect the minimum necessary, for the minimum time
