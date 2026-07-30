@@ -11,7 +11,7 @@
       },
       "oracle": {
         "model": "anthropic/claude-sonnet-5",
-        "variant": "max",
+        "variant": "high",
         "skills": ["ce:brainstorm", "simplify"],
         "mcps": []
       },
