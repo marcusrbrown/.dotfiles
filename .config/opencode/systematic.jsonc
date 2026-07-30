@@ -28,5 +28,9 @@
       "model": "anthropic/claude-sonnet-5",
       "variant": "medium"
     }
+  },
+  "workflow_guard": {
+    "mode": "protected",
+    "debug": false
   }
 }
