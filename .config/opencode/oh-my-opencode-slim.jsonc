@@ -10,7 +10,7 @@
         "mcps": ["*", "!context7", "!grep_app", "!websearch"]
       },
       "oracle": {
-        "model": "anthropic/claude-sonnet-5",
+        "model": "anthropic/claude-opus-4-8",
         "variant": "high",
         "skills": ["ce:brainstorm", "simplify"],
         "mcps": []
@@ -36,8 +36,8 @@
         "mcps": []
       },
       "fixer": {
-        "model": "anthropic/claude-sonnet-5",
-        "variant": "medium",
+        "model": "opencode-go/deepseek-v4-flash",
+        "variant": "high",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       }
