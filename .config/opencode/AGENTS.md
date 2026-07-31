@@ -156,15 +156,18 @@ This includes logs/metrics/traces shipped off-device.
 - Telemetry must be **opt-in** (not opt-out), except for self-hosted,
   cookieless aggregate analytics that meets every condition below:
   - honors Do Not Track
-  - collects no PII, persistent identifiers, fingerprints, cross-site data,
-    query strings, or URL hashes
+  - does not store raw IP addresses or directly identifying PII
+  - may use disclosed, first-party pseudonymous session identifiers with
+    bounded rotation and transient request metadata for local geolocation
+  - collects no fingerprints, cross-site data, query strings, or URL hashes
   - limits custom events to non-user-authored categorical data
   - publishes processing and retention behavior in a privacy policy
   - does not share data with third parties
 - All telemetry outside that narrow exception remains opt-in.
 - A privacy policy is required if any data is collected or transmitted.
 - Prefer self-hosted analytics/telemetry when telemetry is necessary.
-- For data that can be associated with a person or device, users own and
+- Outside that aggregate-analytics exception, for data that can be associated
+  with a person or device, users own and
   control it:
   - explicit, informed consent
   - clear data export + deletion story
