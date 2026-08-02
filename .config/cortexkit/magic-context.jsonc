@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/cortexkit/magic-context/master/assets/magic-context.schema.json",
   "historian": {
-    "model": "opencode-go/deepseek-v4-flash",
+    "model": "anthropic/claude-sonnet-5",
     "temperature": 0.1,
     "variant": "medium",
     "tools": {
