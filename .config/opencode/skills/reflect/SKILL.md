@@ -37,7 +37,7 @@ repeated patterns, friction, and improvement opportunities.
 
 1. **Load recent sessions** - Query the SQLite database directly:
    ```bash
-   bun -e "import Database from 'bun:sqlite'; const db = new Database('/home/mhenke/.local/share/opencode/opencode.db'); console.log(db.query('SELECT id, directory, title, agent, model, time_created, cost, tokens_input, tokens_output FROM session ORDER BY time_created DESC LIMIT 50').all())"
+   bun -e "import Database from 'bun:sqlite'; const db = new Database(process.env.HOME + '/.local/share/opencode/opencode.db'); console.log(db.query('SELECT id, directory, title, agent, model, time_created, cost, tokens_input, tokens_output FROM session ORDER BY time_created DESC LIMIT 50').all())"
    ```
    Adjust `LIMIT 50` to `--last N` if specified.
 
@@ -45,7 +45,7 @@ repeated patterns, friction, and improvement opportunities.
 
 2. **Load session messages** - For each session ID, query the message table:
    ```bash
-   bun -e "import Database from 'bun:sqlite'; const db = new Database('/home/mhenke/.local/share/opencode/opencode.db'); console.log(db.query('SELECT data FROM message WHERE session_id = ?').all('ses_14de9c68effegtZtlATm42wnz7'))"
+   bun -e "import Database from 'bun:sqlite'; const db = new Database(process.env.HOME + '/.local/share/opencode/opencode.db'); console.log(db.query('SELECT data FROM message WHERE session_id = ?').all('<session_id>'))"
    ```
 
    **Message table columns:** `id, session_id, time_created, time_updated, data` (data is JSON with role, agent, model, summary, etc.)
