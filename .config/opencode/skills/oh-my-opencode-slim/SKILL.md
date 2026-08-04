@@ -131,7 +131,7 @@ Edit the active preset under `presets.<preset>.<agent>`:
         "model": "openai/gpt-5.6-luna",
         "variant": "low",
         "skills": [],
-        "mcps": ["websearch", "context7", "gh_grep"]
+        "mcps": ["context7", "gh_grep"]
       }
     }
   }
