@@ -1,5 +1,5 @@
 {
-  "$schema": "https://unpkg.com/oh-my-opencode-slim@1.1.2/oh-my-opencode-slim.schema.json",
+  "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
   "preset": "openai",
   "presets": {
     "openai": {
@@ -173,10 +173,9 @@
       "mcps": []
     }
   },
-  // Only valid in oh-my-opencode-slim v2
-  // "backgroundJobs": {
-  //   "continueOnIdle": false
-  // },
+  "backgroundJobs": {
+    "continueOnIdle": false
+  },
   "council": {
     "presets": {
       "default": {
