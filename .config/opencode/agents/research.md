@@ -8,8 +8,7 @@ permission:
   bash: deny
 tools:
   context7_*: true
-  grep_app_*: true
-  websearch_*: true
+  gh_grep_*: true
 ---
 
 # Research Agent
