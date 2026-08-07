@@ -10,7 +10,7 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "anthropic/claude-opus-4-8",
+        "model": "anthropic/claude-opus-5",
         "variant": "high",
         "skills": ["ce:brainstorm", "simplify"],
         "mcps": []
@@ -86,7 +86,7 @@
     },
     "mixed": {
       "orchestrator": {
-        "model": "anthropic/claude-opus-4-8",
+        "model": "anthropic/claude-opus-5",
         "variant": "high",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
@@ -183,7 +183,7 @@
     "presets": {
       "default": {
         "alpha": {
-          "model": "anthropic/claude-opus-4-8",
+          "model": "anthropic/claude-opus-5",
           "variant": "high"
         },
         "beta": {
