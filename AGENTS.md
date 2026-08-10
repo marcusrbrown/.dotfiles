@@ -1,12 +1,12 @@
 # DOTFILES KNOWLEDGE BASE
 
-**Generated:** 2026-05-23
-**Commit:** ed15ddc
+**Generated:** 2026-08-11
+**Commit:** c479fb6
 **Branch:** main
 
 ## OVERVIEW
 
-Bare git dotfiles repo. `GIT_DIR=~/.dotfiles`, `GIT_WORK_TREE=~/`. 195 tracked files spanning shell init, dev tooling, AI agent configs, devcontainer setup, CI, and project documentation (plans, brainstorms, solutions, runbooks). Sync across machines via allowlist `.gitignore`.
+Bare git dotfiles repo. `GIT_DIR=~/.dotfiles`, `GIT_WORK_TREE=~/`. 196 tracked files spanning shell init, dev tooling, AI agent configs, devcontainer setup, CI, and project documentation (plans, brainstorms, solutions, runbooks). Sync across machines via allowlist `.gitignore`.
 
 ## GIT OPERATIONS
 
@@ -43,6 +43,7 @@ git status  # now works on dotfiles
 │   ├── git/             # Global git config (GPG, rebase defaults)
 │   ├── mise/            # Tool versions + tasks (.config/mise/tasks/)
 │   ├── sheldon/         # Zsh plugin manifest
+│   ├── cortexkit/       # CortexKit agent-fine-tuning config (aft.jsonc, magic-context.jsonc)
 │   ├── opencode/        # OpenCode AI (own AGENTS.md = system prompt, not structural)
 │   ├── starship.toml    # Prompt
 │   └── ghostty/, bat/, gh/, ... # Other tool configs
