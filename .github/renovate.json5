@@ -21,6 +21,16 @@
       ],
       datasourceTemplate: 'npm',
       versioningTemplate: 'semver'
+    },
+    {
+      customType: 'regex',
+      description: 'Update pinned npm schema versions in OpenCode config files.',
+      managerFilePatterns: ['/(^|/)\\.config/opencode/oh-my-opencode-slim\\.jsonc$/'],
+      matchStrings: [
+        'https://unpkg\\.com/(?<depName>oh-my-opencode-slim)@(?<currentValue>\\d+\\.\\d+\\.\\d+(?:[-+][a-z0-9.-]+)?)/oh-my-opencode-slim\\.schema\\.json'
+      ],
+      datasourceTemplate: 'npm',
+      versioningTemplate: 'semver'
     }
   ],
   ignorePresets: ['mergeConfidence:age-confidence-badges', 'mergeConfidence:all-badges'],
@@ -89,6 +99,11 @@
       description: 'Hold @cortexkit/aft-opencode at 0.32.0; v0.33.0 has regressions.',
       matchPackageNames: ['@cortexkit/aft-opencode'],
       allowedVersions: '0.32.0'
+    },
+    {
+      description: 'Hold oh-my-opencode-slim at 2.2.11.',
+      matchPackageNames: ['oh-my-opencode-slim'],
+      allowedVersions: '2.2.11'
     }
   ],
   prCreation: 'immediate',
