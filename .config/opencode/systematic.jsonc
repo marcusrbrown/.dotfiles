@@ -19,14 +19,16 @@
   },
   "agents": {
     "repo-research-analyst": {
-      "model": "github-copilot/gpt-5.4-mini"
+      "model": "openai/gpt-5.6-luna",
+      "variant": "low"
     },
     "spec-flow-analyzer": {
-      "model": "github-copilot/gemini-3.5-flash"
+      "model": "github-copilot/gemini-3.5-flash",
+      "variant": "high"
     },
     "systematic-implementer": {
       "model": "openai/gpt-5.6-luna",
-      "variant": "max"
+      "variant": "high"
     }
   },
   "workflow_guard": {
