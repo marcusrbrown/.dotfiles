@@ -177,6 +177,7 @@
     }
   },
   "backgroundJobs": {
+    "strategy": "checkpoint-compatible",
     "continueOnIdle": false
   },
   "council": {
