@@ -5,9 +5,9 @@
     "@cortexkit/opencode-openai-auth@0.5.2",
     "oh-my-opencode-slim@2.2.11",
     "@cortexkit/opencode-magic-context@0.37.0",
-    "@cortexkit/aft-opencode@0.50.2",
+    "@cortexkit/aft-opencode@0.50.3",
     "opencode-copilot-delegate@0.12.1",
-    "@fro.bot/systematic@3.9.0"
+    "@fro.bot/systematic@3.9.1"
   ],
   "mcp": {
     "context7": {
