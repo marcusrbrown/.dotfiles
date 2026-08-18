@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # shellcheck disable=SC1071
 
-export ZDOTDIR="${XDG_CONFIG_HOME:-~/.config}/zsh"
+export ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
 
 if [ -f "${ZDOTDIR}/.zshenv" ]; then
   source "${ZDOTDIR}/.zshenv"
