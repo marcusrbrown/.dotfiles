@@ -4,10 +4,10 @@
     "@cortexkit/opencode-anthropic-auth@1.19.0",
     "@cortexkit/opencode-openai-auth@0.5.2",
     "oh-my-opencode-slim@2.2.11",
-    "@cortexkit/opencode-magic-context@0.37.0",
-    "@cortexkit/aft-opencode@0.50.3",
+    "@cortexkit/opencode-magic-context@0.38.0",
+    "@cortexkit/aft-opencode@0.51.2",
     "opencode-copilot-delegate@0.12.1",
-    "@fro.bot/systematic@3.10.2"
+    "@fro.bot/systematic@3.11.0"
   ],
   "mcp": {
     "context7": {
