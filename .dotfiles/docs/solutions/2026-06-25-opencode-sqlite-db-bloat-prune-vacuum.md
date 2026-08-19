@@ -2,7 +2,7 @@
 title: OpenCode SQLite event bloat and bounded retention
 date: 2026-06-25
 last_updated: 2026-07-30
-category: docs/solutions/database-issues/
+category: database-issues
 module: opencode-doctor
 problem_type: database_issue
 component: tooling

@@ -1,7 +1,7 @@
 ---
 title: Destructive-operation gate failed open because pgrep cannot see the OpenCode process tree from inside it
 date: 2026-08-19
-category: docs/solutions/logic-errors/
+category: logic-errors
 module: opencode-doctor
 problem_type: logic_error
 component: tooling
