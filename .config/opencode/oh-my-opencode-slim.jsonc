@@ -206,7 +206,7 @@
       },
       "fast-generic": {
         "model": "opencode-go/deepseek-v4-flash",
-        "variant": "high"
+        "variant": "low"
       }
     }
   },
