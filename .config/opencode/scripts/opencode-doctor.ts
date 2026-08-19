@@ -1643,7 +1643,12 @@ async function spawnOpencodeServer(
   port: number,
   timeoutMs = 10000
 ): Promise<{ proc: ChildProcess; url: string }> {
-  const proc = spawn("opencode", ["serve", `--hostname=${hostname}`, `--port=${port}`], {
+  // The `opencode` shim is broken on this machine (stale unpinned npm:opencode-ai
+  // owns it and always fails). The `harness` CLI is a pass-through wrapper around
+  // the same patched OpenCode binary and IS on PATH. Keep it overridable via
+  // OPENCODE_BIN so the path isn't hardcoded.
+  const bin = process.env.OPENCODE_BIN ?? "harness";
+  const proc = spawn(bin, ["serve", `--hostname=${hostname}`, `--port=${port}`], {
     env: process.env,
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,
