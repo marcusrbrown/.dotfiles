@@ -40,6 +40,10 @@
         "variant": "high",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
+      },
+      "fast-generic": {
+        "model": "openai/gpt-5.3-codex-spark",
+        "variant": "low"
       }
     },
     "opencode-go": {
@@ -82,6 +86,10 @@
         "variant": "high",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
+      },
+      "fast-generic": {
+        "model": "opencode-go/deepseek-v4-flash",
+        "variant": "low"
       }
     },
     "mixed": {
@@ -122,6 +130,10 @@
         "variant": "high",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
+      },
+      "fast-generic": {
+        "model": "openai/gpt-5.3-codex-spark",
+        "variant": "low"
       }
     },
     "mixed-fable": {
@@ -162,6 +174,10 @@
         "variant": "high",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
+      },
+      "fast-generic": {
+        "model": "openai/gpt-5.3-codex-spark",
+        "variant": "low"
       }
     },
     "mixed-go": {
@@ -199,7 +215,7 @@
         "mcps": []
       },
       "fixer": {
-        "model": "opencode-go/deepseek-v4-flash",
+        "model": "opencode-go/gpt-5.6-luna",
         "variant": "high",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
@@ -213,8 +229,6 @@
   "autoUpdate": false,
   "agents": {
     "fast-generic": {
-      "model": "openai/gpt-5.3-codex-spark",
-      "variant": "low",
       "prompt": "You are a fast generic execution agent for routine mechanical command work. Run requested shell commands, inspect results, and report concise outcomes. Prefer small single-purpose commands. Separate state changes from readback, use temporary files for multiline bodies instead of nested shell quoting, and verify supported CLI fields or endpoints before querying. Stop immediately when scoped status or diff shows there is nothing to do. Keep commit/PR creation, monitoring/merge, and local cleanup as separate steps. For git commits, inspect git status, git diff, and recent log first; stage only intended files; avoid secrets; preserve repository commit-message style; never amend, rebase, reset --hard, clean, push, force-push, delete branches, or perform destructive history operations unless the user explicitly requested that exact operation. Do not edit code or make architecture/design decisions.",
       "orchestratorPrompt": "Delegate to @fast-generic for routine mechanical command work: git status/diff/log reconnaissance, normal commit preparation, creating commits, and no-edit command validation such as lint, typecheck, static verification, tests, builds, or package-manager equivalents. Scope each delegation to one phase: commit/PR creation, monitoring/merge, or local cleanup. Ask it to inspect diffs before committing, stage only intended files, avoid secrets, preserve repository commit-message style, and report final commit hashes or push results. Do not use it for code edits, design work, architecture, debugging strategy, docs research, or destructive git history operations such as amend, rebase, reset --hard, clean, force-push, or deleting branches unless the user explicitly requested that exact operation.",
       "skills": [],
