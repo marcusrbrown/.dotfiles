@@ -4,7 +4,7 @@
 
 `opencode-doctor` is a diagnostic utility for OpenCode environments. It inspects various aspects of the running OpenCode server, project configuration, and integrated tools to provide a comprehensive health check and debugging information.
 
-If an OpenCode server is not already running on the target port, the doctor will attempt to spawn a temporary server instance for the duration of the diagnostic run.
+If an OpenCode server is not already running on the target port, the doctor will attempt to spawn a temporary server instance for the duration of the diagnostic run. The binary is resolved in order: `OPENCODE_BIN` if set (used verbatim), then `harness`, then `opencode`. If none is on `PATH`, server-backed diagnostics fail. The database-only flags below never spawn a server.
 
 ---
 
@@ -115,8 +115,8 @@ OpenCode never prunes its SQLite session DB (`~/.local/share/opencode/opencode.d
 
 - `--db-health` — read-only metrics: file/WAL/shm sizes, page and freelist counts, free %, journal mode, `auto_vacuum`, per-table row counts, and a session age histogram. Safe to run anytime.
 - `--prune-older=<days>` — **dry-run by default**: reports how many sessions have not been used in `<days>` and the reclaimable bytes per table. Deletes nothing without `--execute`. Selection is based on last-use (`time_updated`), not creation time, and is tree-aware: a session tree (root + all descendants via `parent_id`) is only selected if *no* session in the tree was touched within the window — one active leaf keeps the whole tree.
-- `--prune-older=<days> --execute` — **IRREVERSIBLE.** Deletes old sessions and their messages, parts, and events, then runs `VACUUM` to reclaim space. Refuses to run if other OpenCode processes are active (a full VACUUM needs exclusive access), if the current free-space check cannot satisfy the calculated working-space budget, or if `<days>` is less than 1.
-- `--prune-events-older=<days>` — **dry-run by default**: reports event streams selected from session trees not used in `<days>`, while preserving sessions, messages, and parts. `--execute` requires no active OpenCode process, preservation indexes, `auto_vacuum=INCREMENTAL`, and a fixed 8 GiB operational headroom floor; it deletes only selected event streams, checkpoints, runs `PRAGMA incremental_vacuum`, and never runs a full `VACUUM`. The event-only and whole-session prune modes are mutually exclusive.
+- `--prune-older=<days> --execute` — **IRREVERSIBLE.** Deletes old sessions and their messages, parts, and events, then runs `VACUUM` to reclaim space. Refuses to run if any process is holding the database or its WAL/SHM sidecars (a full VACUUM needs exclusive access), if the current free-space check cannot satisfy the calculated working-space budget, or if `<days>` is less than 1.
+- `--prune-events-older=<days>` — **dry-run by default**: reports event streams selected from session trees not used in `<days>`, while preserving sessions, messages, and parts. `--execute` requires that nothing is holding the database, preservation indexes, `auto_vacuum=INCREMENTAL`, and a fixed 8 GiB operational headroom floor; it deletes only selected event streams, checkpoints, runs `PRAGMA incremental_vacuum`, and never runs a full `VACUUM`. The event-only and whole-session prune modes are mutually exclusive.
 
 ```bash
 # Inspect DB health
@@ -143,7 +143,7 @@ Pruning events is only safe for local-first usage — `event` rows back OpenCode
 mise run opencode:doctor -- --set-incremental-vacuum
 ```
 
-Converts the DB from `auto_vacuum=NONE` to `INCREMENTAL` (sets the pragma, then runs a full `VACUUM` to rewrite the file). After this, future prunes free pages that can be reclaimed incrementally without a full exclusive VACUUM each time. Same constraints as `--execute` (close other OpenCode instances; needs ~1.1× DB size free disk). Safe to re-run — it re-attempts the full VACUUM until the conversion is confirmed.
+Converts the DB from `auto_vacuum=NONE` to `INCREMENTAL` (sets the pragma, then runs a full `VACUUM` to rewrite the file). After this, future prunes free pages that can be reclaimed incrementally without a full exclusive VACUUM each time. Same constraints as `--execute` (nothing may hold the database; needs ~1.1× DB size free disk). Safe to re-run — a no-op once the database is already `INCREMENTAL`.
 
 ---
 
