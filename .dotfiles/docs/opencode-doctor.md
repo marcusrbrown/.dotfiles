@@ -143,7 +143,7 @@ Pruning events is only safe for local-first usage — `event` rows back OpenCode
 mise run opencode:doctor -- --set-incremental-vacuum
 ```
 
-Converts the DB from `auto_vacuum=NONE` to `INCREMENTAL` (sets the pragma, then runs a full `VACUUM` to rewrite the file). After this, future prunes free pages that can be reclaimed incrementally without a full exclusive VACUUM each time. Same constraints as `--execute` (nothing may hold the database; needs ~1.1× DB size free disk). Safe to re-run — a no-op once the database is already `INCREMENTAL`.
+Converts the DB from `auto_vacuum=NONE` to `INCREMENTAL` (sets the pragma, then runs a full `VACUUM` to rewrite the file). After this, future prunes free pages that can be reclaimed incrementally without a full exclusive VACUUM each time. Same constraints as `--execute` (nothing may hold the database; needs ~1.1× DB size free disk). Safe to re-run, but not free: the `PRAGMA` is a no-op once set, while the full `VACUUM` runs every time — deliberately, since a previous run may have set the pragma and died before the rewrite finished.
 
 ---
 
