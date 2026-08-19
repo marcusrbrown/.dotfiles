@@ -10,10 +10,10 @@ import {
   estimateReclaim,
   pruneSessions,
   pruneEvents,
-  classifyPgrepExitCode,
   autoVacuumModeName,
   convertToIncrementalVacuum,
   checkForOtherOpencodeProcesses,
+  refuseIfOtherOpencodeProcesses,
   resolveOpencodeBin,
 } from "./opencode-doctor";
 import {
@@ -760,18 +760,6 @@ describe("event-only retention (unit)", () => {
     }
   });
 
-  test("refuses an active OpenCode parent instead of excluding the parent PID", () => {
-    const result = checkForOtherOpencodeProcesses({
-      ownPid: 100,
-      spawnSync: (args: string[]) => args[0] === "pgrep"
-        ? { exitCode: 0, stdout: "100\n200\n" }
-        : { exitCode: 0, stdout: "200\n" },
-    });
-
-    expect(result.safe).toBe(false);
-    expect(result.pids).toEqual([200]);
-  });
-
   test("deletes selected event streams while preserving sessions, messages, and parts", () => {
     const dir = makeTempDir();
     try {
@@ -1352,31 +1340,6 @@ describe("event-only retention CLI", () => {
     { timeout: TEST_TIMEOUT },
   );
 
-  test(
-    "refuses event-only execute while another OpenCode process is active",
-    async () => {
-      const dir = makeTempDir();
-      const active = Bun.spawn(["bash", "-c", "exec -a opencode-active-retention-test sleep 30"], {
-        stdout: "ignore",
-        stderr: "ignore",
-      });
-      try {
-        const { db, dbPath } = createTestDb(dir, { autoVacuum: 2 });
-        db.close();
-
-        const result = await $`bun ${SCRIPT_PATH} --prune-events-older=30 --execute --json --db-path=${dbPath}`.quiet().nothrow();
-        expect(result.exitCode).toBe(1);
-        const sections = JSON.parse(result.stdout.toString()) as Array<{ data?: Record<string, unknown> }>;
-        expect(sections[0]?.data?.refused).toBe(true);
-        expect(String(sections[0]?.data?.reason)).toMatch(/opencode|process|close/i);
-      } finally {
-        active.kill();
-        await active.exited;
-        removeTempDir(dir);
-      }
-    },
-    { timeout: TEST_TIMEOUT },
-  );
 });
 
 // ─── Existing CLI Tests ───────────────────────────────────────────────────────
@@ -1662,26 +1625,127 @@ describe("resolveOpencodeBin", () => {
 // ─── DB Guard Tests ───────────────────────────────────────────────────────────
 
 describe("DB guards (unit)", () => {
-  // ── classifyPgrepExitCode ──────────────────────────────────────────────────
+  const dbPath = "/tmp/opencode.db";
+  const walPath = `${dbPath}-wal`;
 
-  test("classifyPgrepExitCode: exit 0 → has_procs", () => {
-    expect(classifyPgrepExitCode(0)).toBe("has_procs");
+  test("holder on the main database refuses and names the holder", () => {
+    const refusal = refuseIfOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: (args) => args[3] === dbPath
+        ? { exitCode: 0, stdout: "p200\ncmagic-context-dashboard\nf12\n" }
+        : { exitCode: 1, stdout: "" },
+    });
+
+    expect(refusal).toEqual({
+      refused: true,
+      reason: expect.stringContaining("magic-context-dashboard (PID 200)"),
+      instruction: "Close all OpenCode instances and re-run.",
+    });
   });
 
-  test("classifyPgrepExitCode: exit 1 → no_procs (safe)", () => {
-    expect(classifyPgrepExitCode(1)).toBe("no_procs");
+  test("holder found only on the WAL refuses", () => {
+    const result = checkForOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: (args) => args[3] === dbPath
+        ? { exitCode: 1, stdout: "" }
+        : args[3] === walPath
+          ? { exitCode: 0, stdout: "p200\ncopencode\nf12\n" }
+          : { exitCode: 1, stdout: "" },
+    });
+
+    expect(result.safe).toBe(false);
+    expect(result.count).toBe(1);
+    expect(result.pids).toEqual([200]);
   });
 
-  test("classifyPgrepExitCode: exit 127 (command not found) → error (unsafe)", () => {
-    expect(classifyPgrepExitCode(127)).toBe("error");
+  test("deduplicates a PID across file descriptors and database paths", () => {
+    const result = checkForOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: (args) => args[3] === dbPath
+        ? { exitCode: 0, stdout: "p200\ncopencode\nf12\nf24\n" }
+        : args[3] === walPath
+          ? { exitCode: 0, stdout: "p200\ncopencode\nf37\n" }
+          : { exitCode: 1, stdout: "" },
+    });
+
+    expect(result.safe).toBe(false);
+    expect(result.count).toBe(1);
+    expect(result.pids).toEqual([200]);
   });
 
-  test("classifyPgrepExitCode: exit 2 → error (unsafe)", () => {
-    expect(classifyPgrepExitCode(2)).toBe("error");
+  test("does not filter holders by command name", () => {
+    const result = checkForOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: (args) => args[3] === dbPath
+        ? { exitCode: 0, stdout: "p200\ncmagic-context-dashboard\nf12\n" }
+        : { exitCode: 1, stdout: "" },
+    });
+
+    expect(result.safe).toBe(false);
+    expect(result.holders).toEqual([{ pid: 200, command: "magic-context-dashboard" }]);
   });
 
-  test("classifyPgrepExitCode: null exit code → error (unsafe)", () => {
-    expect(classifyPgrepExitCode(null)).toBe("error");
+  test("own PID as the sole holder is safe", () => {
+    const result = checkForOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: (args) => args[3] === dbPath
+        ? { exitCode: 0, stdout: "p100\ncopencode\nf12\n" }
+        : { exitCode: 1, stdout: "" },
+    });
+
+    expect(result).toMatchObject({ safe: true, count: 0, pids: [] });
+  });
+
+  test("no holders on any database path is safe", () => {
+    const result = checkForOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: () => ({ exitCode: 1, stdout: "" }),
+    });
+
+    expect(result).toMatchObject({ safe: true, count: 0, pids: [] });
+  });
+
+  test("non-0/1 lsof exit code refuses closed", () => {
+    const refusal = refuseIfOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: () => ({ exitCode: 2, stdout: "" }),
+    });
+
+    expect(refusal).toEqual({
+      refused: true,
+      reason: expect.stringContaining("lsof"),
+      instruction: "Close all OpenCode instances and re-run.",
+    });
+  });
+
+  test("lsof spawn failure refuses closed", () => {
+    const refusal = refuseIfOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: () => {
+        throw new Error("spawn failed");
+      },
+    });
+
+    expect(refusal).toEqual({
+      refused: true,
+      reason: expect.stringContaining("spawn failed"),
+      instruction: "Close all OpenCode instances and re-run.",
+    });
+  });
+
+  test("unparseable lsof output refuses closed", () => {
+    const refusal = refuseIfOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: (args) => args[3] === dbPath
+        ? { exitCode: 0, stdout: "not-lsof-output\n" }
+        : { exitCode: 1, stdout: "" },
+    });
+
+    expect(refusal).toEqual({
+      refused: true,
+      reason: expect.stringContaining("lsof"),
+      instruction: "Close all OpenCode instances and re-run.",
+    });
   });
 
   // ── prune-older floor ──────────────────────────────────────────────────────
