@@ -163,6 +163,5 @@ Note that `main()` short-circuits to a DB-only path when any database flag is pr
 
 - `docs/solutions/2026-06-25-opencode-sqlite-db-bloat-prune-vacuum.md` — the retention and reclaim side of the same maintenance surface. That doc covers what the destructive operations do; this one covers whether they are allowed to start.
 - `docs/solutions/2026-05-22-bun-sqlite-readonly-wal-pattern.md` — reading the same live database without disturbing the writer.
-- `docs/runbooks/aft-legacy-index-cleanup.md` — instructs quitting OpenCode and running from a normal Terminal before cleanup. Still correct, and now enforced by the gate rather than left to procedure.
 - marcusrbrown/.dotfiles#2366 — the Bun test suites under `.config/opencode/scripts/` do not run in CI.
 - marcusrbrown/.dotfiles#2368 — follow-ups: no non-mocked holder test, `lsof` exit 1 with empty stdout is assumed to mean "no holder" though `lsof` also returns 1 on permission errors, `lsof` availability in the devcontainer is unverified, and a time-of-check/time-of-use window remains.
