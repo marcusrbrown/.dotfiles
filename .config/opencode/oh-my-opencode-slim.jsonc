@@ -215,7 +215,7 @@
         "mcps": []
       },
       "fixer": {
-        "model": "opencode-go/deepseek-v4-flash",
+        "model": "opencode-go/gpt-5.6-luna",
         "variant": "high",
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
