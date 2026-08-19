@@ -1155,65 +1155,148 @@ export function pruneEvents(
   return result;
 }
 
-/**
- * Classify a pgrep exit code into a process-check result.
- * Exported for unit testing.
- *   0  → pgrep found matches (processes exist)
- *   1  → pgrep found no matches (safe)
- *   other → pgrep itself failed / unavailable (treat as UNSAFE)
- */
-export function classifyPgrepExitCode(exitCode: number | null): "has_procs" | "no_procs" | "error" {
-  if (exitCode === 0) return "has_procs";
-  if (exitCode === 1) return "no_procs";
-  return "error";
-}
+type ProcessHolder = {
+  pid: number;
+  command: string;
+};
 
 export type ProcessCheckDependencies = {
   ownPid?: number;
   spawnSync?: (args: string[]) => { exitCode: number | null; stdout?: unknown };
 };
 
+type ProcessCheckResult = {
+  safe: boolean;
+  count: number;
+  pids: number[];
+  holders: ProcessHolder[];
+  error?: string;
+};
+
+function outputToString(output: unknown): string | null {
+  if (typeof output === "string") return output;
+  if (output instanceof Uint8Array) return new TextDecoder().decode(output);
+  return null;
+}
+
+function parseLsofOutput(output: unknown): ProcessHolder[] | null {
+  const text = outputToString(output);
+  if (text == null || text.trim() === "") return null;
+
+  const holders = new Map<number, ProcessHolder>();
+  let currentPid: number | null = null;
+  let currentCommand: string | null = null;
+
+  for (const rawLine of text.split("\n")) {
+    const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
+    if (line === "") continue;
+
+    const field = line[0];
+    const value = line.slice(1);
+    if (field === "p") {
+      if (!/^\d+$/.test(value)) return null;
+      const pid = Number(value);
+      if (!Number.isSafeInteger(pid) || pid < 1) return null;
+      if (currentPid != null && currentCommand == null) return null;
+      currentPid = pid;
+      currentCommand = null;
+    } else if (field === "c") {
+      if (currentPid == null || value === "" || currentCommand != null) return null;
+      currentCommand = value;
+      holders.set(currentPid, { pid: currentPid, command: value });
+    } else if (field === "f") {
+      if (currentPid == null || currentCommand == null || value === "") return null;
+    } else {
+      return null;
+    }
+  }
+
+  return currentPid != null && currentCommand != null ? [...holders.values()] : null;
+}
+
 export function checkForOtherOpencodeProcesses(
+  dbPath: string = DEFAULT_DB_PATH,
   dependencies: ProcessCheckDependencies = {},
-): { safe: boolean; count: number; pids: number[] } {
+): ProcessCheckResult {
   const spawnSync = dependencies.spawnSync ?? ((args: string[]) => Bun.spawnSync(args));
-  const result = spawnSync(["pgrep", "-f", "opencode"]);
-  const classification = classifyPgrepExitCode(result.exitCode);
-
-  if (classification === "error") {
-    // pgrep unavailable or crashed — cannot verify safety, refuse to proceed
-    return { safe: false, count: -1, pids: [] };
-  }
-
-  if (classification === "no_procs") {
-    return { safe: true, count: 0, pids: [] };
-  }
-
-  const output = result.stdout instanceof Buffer
-    ? result.stdout.toString("utf8")
-    : String(result.stdout ?? "");
-
   const ownPid = dependencies.ownPid ?? process.pid;
-  const pids = output
-    .split("\n")
-    .map((line) => parseInt(line.trim(), 10))
-    .filter((pid) => !isNaN(pid) && pid !== ownPid);
+  const holdersByPid = new Map<number, ProcessHolder>();
+  const paths = [dbPath, `${dbPath}-wal`, `${dbPath}-shm`];
 
-  return { safe: pids.length === 0, count: pids.length, pids };
+  for (const path of paths) {
+    let result: { exitCode: number | null; stdout?: unknown };
+    try {
+      result = spawnSync(["lsof", "-F", "pc", path]);
+    } catch (error) {
+      return {
+        safe: false,
+        count: -1,
+        pids: [],
+        holders: [],
+        error: `lsof failed for ${path}: ${formatErrorMessage(error)}`,
+      };
+    }
+
+    if (result.exitCode === 1) {
+      const output = result.stdout == null ? "" : outputToString(result.stdout);
+      if (output == null || output.trim() !== "") {
+        return {
+          safe: false,
+          count: -1,
+          pids: [],
+          holders: [],
+          error: `lsof returned unparseable output for ${path}`,
+        };
+      }
+      continue;
+    }
+
+    if (result.exitCode !== 0) {
+      return {
+        safe: false,
+        count: -1,
+        pids: [],
+        holders: [],
+        error: `lsof returned exit code ${String(result.exitCode)} for ${path}`,
+      };
+    }
+
+    const holders = parseLsofOutput(result.stdout);
+    if (holders == null) {
+      return {
+        safe: false,
+        count: -1,
+        pids: [],
+        holders: [],
+        error: `lsof returned unparseable output for ${path}`,
+      };
+    }
+    for (const holder of holders) {
+      if (holder.pid !== ownPid) holdersByPid.set(holder.pid, holder);
+    }
+  }
+
+  const holders = [...holdersByPid.values()];
+  const pids = holders.map(({ pid }) => pid);
+
+  return { safe: holders.length === 0, count: holders.length, pids, holders };
 }
 
 // ─── Safety Gate Helpers ──────────────────────────────────────────────────────
 
 /**
- * Returns a refused SectionResultData if other OpenCode processes are running,
+ * Returns a refused SectionResultData if another process holds the database,
  * or null if it is safe to proceed with a destructive DB operation.
  */
-function refuseIfOtherOpencodeProcesses(): SectionResultData | null {
-  const procCheck = checkForOtherOpencodeProcesses();
+export function refuseIfOtherOpencodeProcesses(
+  dbPath: string = DEFAULT_DB_PATH,
+  dependencies: ProcessCheckDependencies = {},
+): SectionResultData | null {
+  const procCheck = checkForOtherOpencodeProcesses(dbPath, dependencies);
   if (!procCheck.safe) {
     const reason = procCheck.count === -1
-      ? "Could not verify other OpenCode processes are stopped (pgrep unavailable); refusing to run this destructive operation. Re-run where process detection works."
-      : `Found ${procCheck.count} other opencode process(es) running (PIDs: ${procCheck.pids.join(", ")}). Close all OpenCode instances and re-run.`;
+      ? `Could not verify database holders with lsof (${procCheck.error ?? "unknown error"}); refusing to run this destructive operation. Re-run where process detection works.`
+      : `Found ${procCheck.count} process(es) holding the OpenCode database: ${procCheck.holders.map(({ command, pid }) => `${command} (PID ${pid})`).join(", ")}. Close all OpenCode instances and re-run.`;
     return {
       refused: true,
       reason,
@@ -1446,7 +1529,7 @@ async function runDbPruneExecute(options: CliOptions): Promise<SectionResult> {
   const cutoffDate = new Date(cutoffMs).toISOString().slice(0, 10);
 
   // Safety gate: check for other opencode processes
-  const procRefusal = refuseIfOtherOpencodeProcesses();
+  const procRefusal = refuseIfOtherOpencodeProcesses(options.dbPath);
   if (procRefusal != null) {
     return { label: "DB Prune (refused)", data: procRefusal };
   }
@@ -1559,7 +1642,7 @@ async function runDbEventPruneExecute(options: CliOptions): Promise<SectionResul
   const days = options.pruneEventsOlderDays as number;
   const cutoffMs = Date.now() - days * 24 * 3600 * 1000;
   const cutoffDate = new Date(cutoffMs).toISOString().slice(0, 10);
-  const procRefusal = refuseIfOtherOpencodeProcesses();
+  const procRefusal = refuseIfOtherOpencodeProcesses(options.dbPath);
   if (procRefusal != null) {
     return {
       label: "DB Event Prune (refused)",
@@ -1604,7 +1687,7 @@ async function runSetIncrementalVacuum(options: CliOptions): Promise<SectionResu
   const label = "DB Set Incremental Vacuum";
 
   // Safety gate: check for other opencode processes
-  const procRefusal = refuseIfOtherOpencodeProcesses();
+  const procRefusal = refuseIfOtherOpencodeProcesses(options.dbPath);
   if (procRefusal != null) {
     return { label: `${label} (refused)`, data: procRefusal };
   }
