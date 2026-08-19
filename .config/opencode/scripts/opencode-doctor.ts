@@ -2208,8 +2208,13 @@ async function main(): Promise<void> {
   process.exit(0);
 }
 
-main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(`OpenCode doctor failed: ${message}`);
-  process.exit(1);
-});
+// Only run the CLI when executed directly. Without this guard, importing the
+// module for tests runs the full doctor, which spawns a server and floods
+// test output with report text.
+if (import.meta.main) {
+  main().catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`OpenCode doctor failed: ${message}`);
+    process.exit(1);
+  });
+}
