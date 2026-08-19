@@ -110,6 +110,24 @@ Important schema boundary:
 - Unknown keys under top-level `agents` are custom agents. Custom agents may use
   `prompt` and `orchestratorPrompt` directly in config.
 
+Preset scope and merge semantics:
+
+- Preset agent blocks **merge into** the top-level `agents` config; they do not
+  replace it. A preset may therefore list a custom agent with only `model` and
+  `variant` to re-route it per preset while its global `prompt` and
+  `orchestratorPrompt` survive untouched.
+- Only agents already present in the resolved config receive preset overrides.
+  A preset entry for an agent that is defined nowhere else is ignored.
+- Preset agent names are unconstrained strings, so custom agents are valid preset
+  keys alongside the built-ins.
+- The active preset is the root `preset` key, overridable per machine with the
+  `OH_MY_OPENCODE_SLIM_PRESET` environment variable. Prefer the environment
+  variable for machine-specific routing so the config file stays portable.
+- Council seats are **not** preset-scoped. `council.presets.<name>.<seat>` lives
+  at the config root with no binding to the active agent preset, so an agent
+  preset cannot override a seat model. Changing a seat changes it for every
+  preset.
+
 ## Config Shapes
 
 ### Tune a built-in agent model/skills/MCPs

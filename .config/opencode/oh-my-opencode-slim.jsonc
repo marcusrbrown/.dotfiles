@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@2.2.11/oh-my-opencode-slim.schema.json",
-  "preset": "openai",
+  "preset": "mixed-go",
   "presets": {
     "openai": {
       "orchestrator": {
@@ -163,6 +163,51 @@
         "skills": ["agent-browser", "impeccable", "systematic:*"],
         "mcps": []
       }
+    },
+    "mixed-go": {
+      "orchestrator": {
+        "model": "anthropic/claude-opus-5",
+        "variant": "high",
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "opencode-go/qwen3.7-max",
+        "variant": "max",
+        "skills": ["ce:brainstorm", "simplify"],
+        "mcps": []
+      },
+      "council": {
+        "model": "opencode-go/deepseek-v4-pro",
+        "variant": "high"
+      },
+      "librarian": {
+        "model": "github-copilot/gpt-5.4-mini",
+        "variant": "low",
+        "skills": [],
+        "mcps": ["context7", "gh_grep"]
+      },
+      "explorer": {
+        "model": "github-copilot/gpt-5.4-mini",
+        "variant": "low",
+        "skills": [],
+        "mcps": []
+      },
+      "designer": {
+        "model": "github-copilot/gemini-3.5-flash",
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "mcps": []
+      },
+      "fixer": {
+        "model": "opencode-go/deepseek-v4-flash",
+        "variant": "high",
+        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "mcps": []
+      },
+      "fast-generic": {
+        "model": "opencode-go/deepseek-v4-flash",
+        "variant": "low"
+      }
     }
   },
   "autoUpdate": false,
@@ -192,7 +237,7 @@
           "variant": "high"
         },
         "gamma": {
-          "model": "openai/gpt-5.6-sol",
+          "model": "opencode-go/deepseek-v4-pro",
           "variant": "high"
         }
       }
