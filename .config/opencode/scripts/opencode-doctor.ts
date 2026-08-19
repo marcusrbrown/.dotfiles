@@ -1638,12 +1638,52 @@ async function runSetIncrementalVacuum(options: CliOptions): Promise<SectionResu
 
 // ─── Server / Section Collection ─────────────────────────────────────────────
 
+export type ServerSpawnDependencies = {
+  resolveBin?: (name: string) => string | null;
+  env?: Record<string, string | undefined>;
+};
+
+/**
+ * Resolve the binary used to spawn the OpenCode server.
+ *
+ * Precedence:
+ *   1. OPENCODE_BIN, if set — explicit override always wins, used verbatim.
+ *   2. `harness` — the Fro Bot pass-through wrapper around the patched OpenCode
+ *      binary (this machine's runtime). Preferred when present.
+ *   3. `opencode` — the stock binary. Used only when `harness` is absent.
+ *   4. Otherwise throw, naming both candidates.
+ *
+ * "Resolvable" is a PATH lookup (Bun.which). We deliberately do NOT probe
+ * runnability here: a dead shim (e.g. a stale npm:opencode-ai install) may
+ * resolve but fail at spawn, and that error surfaces with a clear message
+ * rather than paying a slow probe on the hot path.
+ */
+export function resolveOpencodeBin(
+  dependencies: ServerSpawnDependencies = {},
+): string {
+  const resolveBin = dependencies.resolveBin ?? ((name: string) => Bun.which(name));
+  const env = dependencies.env ?? process.env;
+  const explicit = env.OPENCODE_BIN;
+  if (explicit) {
+    return explicit;
+  }
+  for (const candidate of ["harness", "opencode"]) {
+    if (resolveBin(candidate)) {
+      return candidate;
+    }
+  }
+  throw new Error(
+    `Could not resolve an OpenCode binary: tried "harness" and "opencode", neither is on PATH. Set OPENCODE_BIN to an explicit binary to override.`,
+  );
+}
+
 async function spawnOpencodeServer(
   hostname: string,
   port: number,
   timeoutMs = 10000
 ): Promise<{ proc: ChildProcess; url: string }> {
-  const proc = spawn("opencode", ["serve", `--hostname=${hostname}`, `--port=${port}`], {
+  const bin = resolveOpencodeBin();
+  const proc = spawn(bin, ["serve", `--hostname=${hostname}`, `--port=${port}`], {
     env: process.env,
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,

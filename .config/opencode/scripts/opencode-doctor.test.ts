@@ -14,6 +14,7 @@ import {
   autoVacuumModeName,
   convertToIncrementalVacuum,
   checkForOtherOpencodeProcesses,
+  resolveOpencodeBin,
 } from "./opencode-doctor";
 import {
   selectOldSessionIds as selectOldSessionIdsFromRetention,
@@ -1617,6 +1618,45 @@ describe("error handling", () => {
     },
     { timeout: TEST_TIMEOUT }
   );
+});
+
+// ─── Server Binary Resolution Tests ───────────────────────────────────────────
+
+describe("resolveOpencodeBin", () => {
+  test("explicit OPENCODE_BIN wins verbatim, without probing", () => {
+    const bin = resolveOpencodeBin({
+      env: { OPENCODE_BIN: "/custom/opencode" },
+      resolveBin: () => {
+        throw new Error("resolveBin should not be called when OPENCODE_BIN is set");
+      },
+    });
+    expect(bin).toBe("/custom/opencode");
+  });
+
+  test("harness preferred over opencode when both resolvable", () => {
+    const bin = resolveOpencodeBin({
+      env: {},
+      resolveBin: (name) => (name === "harness" ? "/bin/harness" : "/bin/opencode"),
+    });
+    expect(bin).toBe("harness");
+  });
+
+  test("opencode used when harness absent", () => {
+    const bin = resolveOpencodeBin({
+      env: {},
+      resolveBin: (name) => (name === "opencode" ? "/bin/opencode" : null),
+    });
+    expect(bin).toBe("opencode");
+  });
+
+  test("throws clear error naming both candidates when neither exists", () => {
+    expect(() =>
+      resolveOpencodeBin({
+        env: {},
+        resolveBin: () => null,
+      })
+    ).toThrow(/harness.*opencode|opencode.*harness/i);
+  });
 });
 
 // ─── DB Guard Tests ───────────────────────────────────────────────────────────
