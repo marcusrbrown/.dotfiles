@@ -30,7 +30,7 @@ ast-grep = "0.44.1"
 "npm:@github/copilot" = "1.0.80"
 "npm:agent-browser" = "0.34.0"
 "npm:skills" = "1.5.22"
-"npm:ocx" = "2.0.14"
+"npm:ocx" = "2.0.15"
 "npm:@marcusrbrown/infra" = "latest"
 
 # Language Servers
