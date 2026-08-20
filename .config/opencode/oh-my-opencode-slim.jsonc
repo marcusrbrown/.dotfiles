@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@2.2.11/oh-my-opencode-slim.schema.json",
-  "preset": "mixed-go",
+  "preset": "mixed",
   "presets": {
     "openai": {
       "orchestrator": {
