@@ -12,7 +12,7 @@
       "oracle": {
         "model": "anthropic/claude-opus-5",
         "variant": "high",
-        "skills": ["ce:brainstorm", "simplify"],
+        "skills": ["ce:brainstorm", "simplify", "systematic:*"],
         "mcps": []
       },
       "council": {
@@ -56,7 +56,7 @@
       "oracle": {
         "model": "opencode-go/qwen3.7-max",
         "variant": "max",
-        "skills": ["ce:brainstorm", "simplify"],
+        "skills": ["ce:brainstorm", "simplify", "systematic:*"],
         "mcps": []
       },
       "council": {
@@ -102,7 +102,7 @@
       "oracle": {
         "model": "openai/gpt-5.6-sol",
         "variant": "high",
-        "skills": ["ce:brainstorm", "simplify"],
+        "skills": ["ce:brainstorm", "simplify", "systematic:*"],
         "mcps": []
       },
       "council": {
@@ -146,7 +146,7 @@
       "oracle": {
         "model": "openai/gpt-5.6-sol",
         "variant": "high",
-        "skills": ["ce:brainstorm", "simplify"],
+        "skills": ["ce:brainstorm", "simplify", "systematic:*"],
         "mcps": []
       },
       "council": {
@@ -190,7 +190,7 @@
       "oracle": {
         "model": "opencode-go/qwen3.7-max",
         "variant": "max",
-        "skills": ["ce:brainstorm", "simplify"],
+        "skills": ["ce:brainstorm", "simplify", "systematic:*"],
         "mcps": []
       },
       "council": {
