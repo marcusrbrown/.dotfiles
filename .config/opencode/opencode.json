@@ -2,12 +2,12 @@
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
     "@cortexkit/opencode-anthropic-auth@1.19.1",
-    "@cortexkit/opencode-openai-auth@0.5.2",
+    "@cortexkit/opencode-openai-auth@0.6.3",
     "oh-my-opencode-slim@2.2.11",
     "@cortexkit/opencode-magic-context@0.38.1",
-    "@cortexkit/aft-opencode@0.51.3",
+    "@cortexkit/aft-opencode@0.52.1",
     "opencode-copilot-delegate@0.12.1",
-    "@fro.bot/systematic@3.13.1"
+    "@fro.bot/systematic@3.13.3"
   ],
   "mcp": {
     "context7": {
