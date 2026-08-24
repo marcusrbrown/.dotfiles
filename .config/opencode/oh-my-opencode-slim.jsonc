@@ -19,13 +19,13 @@
         "model": "openai/gpt-5.6-sol"
       },
       "librarian": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "openai/gpt-5.6-luna",
         "variant": "low",
         "skills": [],
         "mcps": ["context7", "gh_grep"]
       },
       "explorer": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "openai/gpt-5.6-luna",
         "variant": "low",
         "skills": [],
         "mcps": []
@@ -109,13 +109,13 @@
         "model": "openai/gpt-5.6-sol"
       },
       "librarian": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "openai/gpt-5.6-luna",
         "variant": "low",
         "skills": [],
         "mcps": ["context7", "gh_grep"]
       },
       "explorer": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "openai/gpt-5.6-luna",
         "variant": "low",
         "skills": [],
         "mcps": []
@@ -153,13 +153,13 @@
         "model": "openai/gpt-5.6-sol"
       },
       "librarian": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "openai/gpt-5.6-luna",
         "variant": "low",
         "skills": [],
         "mcps": ["context7", "gh_grep"]
       },
       "explorer": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "openai/gpt-5.6-luna",
         "variant": "low",
         "skills": [],
         "mcps": []
@@ -198,13 +198,13 @@
         "variant": "high"
       },
       "librarian": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "opencode-go/gpt-5.6-luna",
         "variant": "low",
         "skills": [],
         "mcps": ["context7", "gh_grep"]
       },
       "explorer": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "opencode-go/gpt-5.6-luna",
         "variant": "low",
         "skills": [],
         "mcps": []
