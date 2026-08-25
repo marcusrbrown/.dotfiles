@@ -115,11 +115,20 @@ const holders = [...holdersByPid.values()];
 return {safe: holders.length === 0, count: holders.length, pids, holders};
 ```
 
-Refusals name the holders, which makes them actionable:
+Refusals name the holders, and the instruction points at those rather than at OpenCode — closing every OpenCode window would not clear a holder like the dashboard:
 
 ```text
-Found 1 process(es) holding the OpenCode database: opencode (PID 4444).
-Close all OpenCode instances and re-run.
+reason:      Found 2 process(es) holding the OpenCode database:
+             opencode (PID 86132), opencode (PID 90527).
+instruction: Close the process(es) listed above and re-run.
+```
+
+A failure to detect is a different problem and says so, since nothing was found and `lsof` could not look:
+
+```text
+reason:      Could not verify database holders with lsof (spawn failed);
+             refusing to run this destructive operation.
+instruction: Re-run where lsof can inspect the database.
 ```
 
 `pgrep` was removed entirely, along with `classifyPgrepExitCode`.
