@@ -396,7 +396,8 @@ DB Maintenance (no server required):
                             via PRAGMA incremental_vacuum without a full exclusive VACUUM.
                             Requires all other OpenCode instances to be closed and ~1.1x
                             the DB file size in free disk space (same constraints as prune
-                            --execute). Safe to re-run: no-op if already INCREMENTAL.
+                            --execute). Safe to re-run, but not free: the PRAGMA is a
+                            no-op once set, while the full VACUUM runs every time.
   --db-path <path>          Override DB path (default: ~/.local/share/opencode/opencode.db)
 
 Sections:
