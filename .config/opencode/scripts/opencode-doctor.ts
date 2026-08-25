@@ -1163,7 +1163,7 @@ type ProcessHolder = {
 
 export type ProcessCheckDependencies = {
   ownPid?: number;
-  spawnSync?: (args: string[]) => { exitCode: number | null; stdout?: unknown };
+  spawnSync?: (args: string[]) => { exitCode: number | null; stdout?: unknown; stderr?: unknown };
 };
 
 type ProcessCheckResult = {
@@ -1225,7 +1225,7 @@ export function checkForOtherOpencodeProcesses(
   const paths = [dbPath, `${dbPath}-wal`, `${dbPath}-shm`];
 
   for (const path of paths) {
-    let result: { exitCode: number | null; stdout?: unknown };
+    let result: { exitCode: number | null; stdout?: unknown; stderr?: unknown };
     try {
       result = spawnSync(["lsof", "-F", "pc", path]);
     } catch (error) {
@@ -1247,6 +1247,16 @@ export function checkForOtherOpencodeProcesses(
           pids: [],
           holders: [],
           error: `lsof returned unparseable output for ${path}`,
+        };
+      }
+      const errorOutput = result.stderr == null ? "" : outputToString(result.stderr);
+      if (errorOutput == null || errorOutput.trim() !== "") {
+        return {
+          safe: false,
+          count: -1,
+          pids: [],
+          holders: [],
+          error: `lsof returned an error for ${path}: ${errorOutput ?? "unparseable stderr"}`,
         };
       }
       continue;

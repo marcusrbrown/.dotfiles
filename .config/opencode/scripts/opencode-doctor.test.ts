@@ -1706,6 +1706,28 @@ describe("DB guards (unit)", () => {
     expect(result).toMatchObject({ safe: true, count: 0, pids: [] });
   });
 
+  test("lsof exit 1 with empty stdout and stderr is safe", () => {
+    const result = checkForOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: () => ({ exitCode: 1, stdout: "", stderr: "" }),
+    });
+
+    expect(result).toMatchObject({ safe: true, count: 0, pids: [] });
+  });
+
+  test("lsof exit 1 with empty stdout and non-empty stderr refuses closed", () => {
+    const refusal = refuseIfOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: () => ({ exitCode: 1, stdout: "", stderr: "permission denied" }),
+    });
+
+    expect(refusal).toEqual({
+      refused: true,
+      reason: expect.stringContaining("lsof"),
+      instruction: "Re-run where lsof can inspect the database.",
+    });
+  });
+
   test("non-0/1 lsof exit code refuses closed", () => {
     const refusal = refuseIfOtherOpencodeProcesses(dbPath, {
       ownPid: 100,
@@ -1945,6 +1967,8 @@ describe("DB guards (real lsof)", () => {
       const dbPath = join(dir, "held.db");
       const readyPath = join(dir, "holder.ready");
       writeFileSync(dbPath, "");
+      writeFileSync(`${dbPath}-wal`, "");
+      writeFileSync(`${dbPath}-shm`, "");
 
       let holder: ReturnType<typeof Bun.spawn> | undefined;
       try {
@@ -1996,6 +2020,8 @@ describe("DB guards (real lsof)", () => {
       const dir = makeTempDir();
       const dbPath = join(dir, "unheld.db");
       writeFileSync(dbPath, "");
+      writeFileSync(`${dbPath}-wal`, "");
+      writeFileSync(`${dbPath}-shm`, "");
 
       try {
         const result = checkForOtherOpencodeProcesses(dbPath);
