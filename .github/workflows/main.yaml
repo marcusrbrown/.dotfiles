@@ -91,12 +91,9 @@ jobs:
 
       - name: Run opencode-doctor tests
         working-directory: .config/opencode/scripts
-        # These CLI and signal tests require a real OpenCode server binary,
-        # which is intentionally not installed on this lightweight runner.
-        run: >-
-          bun test
-          --test-name-pattern='^(?!.*(?:spawns server and retrieves health section|--only flag filters to specified sections only|--json outputs parseable JSON array of sections|--format=json is equivalent to --json flag|invalid --only value warns but continues with valid sections|invalid --port value warns and uses default|SIGTERM triggers cleanup of spawned server|SIGINT triggers cleanup of spawned server)).*$'
-          opencode-doctor.test.ts
+        # Tests needing a real OpenCode server binary skip themselves when none
+        # resolves, so no runner is installed and no name filter is needed here.
+        run: bun test opencode-doctor.test.ts
 
       - name: Run ollama-distill tests
         working-directory: .config/opencode/scripts
