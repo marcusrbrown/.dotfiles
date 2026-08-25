@@ -5,7 +5,6 @@ import { existsSync, statfsSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname } from "node:path";
 import { Database } from "bun:sqlite";
-import { createOpencodeClient } from "@opencode-ai/sdk";
 import {
   bytesToHuman,
   estimateReclaim,
@@ -1871,12 +1870,16 @@ async function waitForExit(proc: ChildProcess, timeoutMs = 8000): Promise<void> 
 }
 
 async function startOpencode(options: CliOptions): Promise<{
-  client: ReturnType<typeof createOpencodeClient>;
+  client: ReturnType<typeof import("@opencode-ai/sdk").createOpencodeClient>;
   proc?: ChildProcess;
   url: string;
   port: number;
   mode: "existing" | "spawned";
 }> {
+  // Loaded on demand so the module imports without the SDK present. Only
+  // server-backed sections need it; the DB-only paths -- including the
+  // destructive-operation gate -- never reach here.
+  const { createOpencodeClient } = await import("@opencode-ai/sdk");
   const baseUrl = `http://${options.host}:${options.port}`;
 
   if (options.portProvided) {
