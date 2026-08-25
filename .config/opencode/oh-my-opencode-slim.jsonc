@@ -42,7 +42,7 @@
         "mcps": []
       },
       "fast-generic": {
-        "model": "openai/gpt-5.3-codex-spark",
+        "model": ["openai/gpt-5.3-codex-spark", "github-copilot/gpt-5.4-mini"],
         "variant": "low"
       }
     },
@@ -132,7 +132,7 @@
         "mcps": []
       },
       "fast-generic": {
-        "model": "openai/gpt-5.3-codex-spark",
+        "model": ["openai/gpt-5.3-codex-spark", "github-copilot/gpt-5.4-mini"],
         "variant": "low"
       }
     },
@@ -176,7 +176,7 @@
         "mcps": []
       },
       "fast-generic": {
-        "model": "openai/gpt-5.3-codex-spark",
+        "model": ["openai/gpt-5.3-codex-spark", "github-copilot/gpt-5.4-mini"],
         "variant": "low"
       }
     },
