@@ -1639,7 +1639,7 @@ describe("DB guards (unit)", () => {
     expect(refusal).toEqual({
       refused: true,
       reason: expect.stringContaining("magic-context-dashboard (PID 200)"),
-      instruction: "Close all OpenCode instances and re-run.",
+      instruction: "Close the process(es) listed above and re-run.",
     });
   });
 
@@ -1714,7 +1714,7 @@ describe("DB guards (unit)", () => {
     expect(refusal).toEqual({
       refused: true,
       reason: expect.stringContaining("lsof"),
-      instruction: "Close all OpenCode instances and re-run.",
+      instruction: "Re-run where lsof can inspect the database.",
     });
   });
 
@@ -1729,7 +1729,7 @@ describe("DB guards (unit)", () => {
     expect(refusal).toEqual({
       refused: true,
       reason: expect.stringContaining("spawn failed"),
-      instruction: "Close all OpenCode instances and re-run.",
+      instruction: "Re-run where lsof can inspect the database.",
     });
   });
 
@@ -1744,7 +1744,7 @@ describe("DB guards (unit)", () => {
     expect(refusal).toEqual({
       refused: true,
       reason: expect.stringContaining("lsof"),
-      instruction: "Close all OpenCode instances and re-run.",
+      instruction: "Re-run where lsof can inspect the database.",
     });
   });
 
