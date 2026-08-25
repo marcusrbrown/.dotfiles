@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { spawn, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
-import { statfsSync, statSync } from "node:fs";
+import { existsSync, statfsSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname } from "node:path";
 import { Database } from "bun:sqlite";
@@ -1225,6 +1225,10 @@ export function checkForOtherOpencodeProcesses(
   const paths = [dbPath, `${dbPath}-wal`, `${dbPath}-shm`];
 
   for (const path of paths) {
+    // Keep injected process checks deterministic: mocked tests may model a
+    // holder on a sidecar without creating that filesystem path.
+    if (dependencies.spawnSync == null && path !== dbPath && !existsSync(path)) continue;
+
     let result: { exitCode: number | null; stdout?: unknown; stderr?: unknown };
     try {
       result = spawnSync(["lsof", "-F", "pc", path]);

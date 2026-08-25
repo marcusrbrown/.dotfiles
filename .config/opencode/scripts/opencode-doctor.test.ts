@@ -25,6 +25,10 @@ import {
 const SCRIPT_PATH = "./opencode-doctor.ts";
 const TEST_TIMEOUT = 90000;
 const lsofTest = Bun.which("lsof") === null ? test.skip : test;
+const opencodeBin = process.env.OPENCODE_BIN
+  ? Bun.which(process.env.OPENCODE_BIN)
+  : Bun.which("harness") ?? Bun.which("opencode");
+const opencodeTest = opencodeBin === null ? test.skip : test;
 
 let spawnedProcs: Array<Pick<ReturnType<typeof Bun.spawn>, "kill" | "exited">> = [];
 
@@ -1381,7 +1385,7 @@ describe("opencode-doctor CLI", () => {
     { timeout: TEST_TIMEOUT }
   );
 
-  test(
+  opencodeTest(
     "spawns server and retrieves health section",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --only=health --no-tui`.nothrow().text();
@@ -1392,7 +1396,7 @@ describe("opencode-doctor CLI", () => {
     { timeout: TEST_TIMEOUT }
   );
 
-  test(
+  opencodeTest(
     "--only flag filters to specified sections only",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --only=server,health --no-tui`.nothrow().text();
@@ -1406,7 +1410,7 @@ describe("opencode-doctor CLI", () => {
     { timeout: TEST_TIMEOUT }
   );
 
-  test(
+  opencodeTest(
     "--json outputs parseable JSON array of sections",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --only=health --json`.nothrow().text();
@@ -1424,7 +1428,7 @@ describe("opencode-doctor CLI", () => {
     { timeout: TEST_TIMEOUT }
   );
 
-  test(
+  opencodeTest(
     "--format=json is equivalent to --json flag",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --only=server --format=json`.nothrow().text();
@@ -1554,7 +1558,7 @@ describe("signal handling", () => {
 });
 
 describe("error handling", () => {
-  test(
+  opencodeTest(
     "invalid --only value warns but continues with valid sections",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --only=invalid_section,server`
@@ -1569,7 +1573,7 @@ describe("error handling", () => {
     { timeout: TEST_TIMEOUT }
   );
 
-  test(
+  opencodeTest(
     "invalid --port value warns and uses default",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --port=invalid --only=server`
@@ -1967,8 +1971,6 @@ describe("DB guards (real lsof)", () => {
       const dbPath = join(dir, "held.db");
       const readyPath = join(dir, "holder.ready");
       writeFileSync(dbPath, "");
-      writeFileSync(`${dbPath}-wal`, "");
-      writeFileSync(`${dbPath}-shm`, "");
 
       let holder: ReturnType<typeof Bun.spawn> | undefined;
       try {
@@ -2015,17 +2017,18 @@ describe("DB guards (real lsof)", () => {
   );
 
   lsofTest(
-    "reports no holder for an unheld temporary database path",
+    "reports no holder for a clean-shutdown database with absent sidecars",
     () => {
       const dir = makeTempDir();
       const dbPath = join(dir, "unheld.db");
       writeFileSync(dbPath, "");
-      writeFileSync(`${dbPath}-wal`, "");
-      writeFileSync(`${dbPath}-shm`, "");
 
       try {
+        expect(existsSync(`${dbPath}-wal`)).toBe(false);
+        expect(existsSync(`${dbPath}-shm`)).toBe(false);
         const result = checkForOtherOpencodeProcesses(dbPath);
         expect(result).toMatchObject({ safe: true, count: 0, pids: [], holders: [] });
+        console.log(`real lsof clean-shutdown safe=${result.safe} count=${result.count} sidecars=absent`);
       } finally {
         removeTempDir(dir);
       }
