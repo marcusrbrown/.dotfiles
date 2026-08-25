@@ -2215,6 +2215,7 @@ async function main(): Promise<void> {
       ? JSON.stringify(redactSecrets(sections.map((section) => ({
           label: section.label,
           ...extractData(section.data),
+          ...(section.error == null ? {} : { error: section.error }),
         }))), null, 2)
       : sections.map((section) => renderSection(section, options)).join("\n");
 
@@ -2227,6 +2228,7 @@ async function main(): Promise<void> {
     ? JSON.stringify(redactSecrets(sections.map((section) => ({
         label: section.label,
         ...extractData(section.data),
+        ...(section.error == null ? {} : { error: section.error }),
       }))), null, 2)
     : sections.map((section) => renderSection(section, options)).join("\n");
 
