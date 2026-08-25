@@ -383,7 +383,7 @@ DB Maintenance (no server required):
   --prune-events-older <days>
                              Event-only retention: delete selected event streams while preserving
                              sessions, messages, and parts. Tree-aware and dry-run by default.
-                             --execute requires no active OpenCode process, indexed preservation
+                             --execute requires that nothing holds the DB, indexed preservation
                              predicates, auto_vacuum=INCREMENTAL, and 8 GiB operational headroom;
                              it uses incremental vacuum and never runs full VACUUM.
                              Mutually exclusive with --prune-older.
@@ -394,9 +394,10 @@ DB Maintenance (no server required):
                             then runs a full VACUUM to rewrite the file with the new mode.
                             After this, future prunes can reclaim free pages incrementally
                             via PRAGMA incremental_vacuum without a full exclusive VACUUM.
-                            Requires all other OpenCode instances to be closed and ~1.1x
-                            the DB file size in free disk space (same constraints as prune
-                            --execute). Safe to re-run: no-op if already INCREMENTAL.
+                            Requires that nothing holds the DB or its WAL/SHM siblings,
+                            and ~1.1x the DB file size free (same constraints as prune
+                            --execute). Safe to re-run, but not free: the PRAGMA is a
+                            no-op once set, while the full VACUUM runs every time.
   --db-path <path>          Override DB path (default: ~/.local/share/opencode/opencode.db)
 
 Sections:
