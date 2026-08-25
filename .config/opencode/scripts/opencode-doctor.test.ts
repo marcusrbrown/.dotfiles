@@ -1,7 +1,7 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { $ } from "bun";
 import { Database } from "bun:sqlite";
-import { mkdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -24,6 +24,7 @@ import {
 
 const SCRIPT_PATH = "./opencode-doctor.ts";
 const TEST_TIMEOUT = 90000;
+const lsofTest = Bun.which("lsof") === null ? test.skip : test;
 
 let spawnedProcs: Array<Pick<ReturnType<typeof Bun.spawn>, "kill" | "exited">> = [];
 
@@ -1933,6 +1934,77 @@ describe("DB guards (unit)", () => {
       expect(result.exitCode).not.toBe(0);
     },
     { timeout: TEST_TIMEOUT }
+  );
+});
+
+describe("DB guards (real lsof)", () => {
+  lsofTest(
+    "detects a real external process holding the database path",
+    async () => {
+      const dir = makeTempDir();
+      const dbPath = join(dir, "held.db");
+      const readyPath = join(dir, "holder.ready");
+      writeFileSync(dbPath, "");
+
+      let holder: ReturnType<typeof Bun.spawn> | undefined;
+      try {
+        holder = Bun.spawn([process.execPath, "-e", `
+          const { openSync, writeFileSync } = require("node:fs");
+          openSync(process.env.HOLDER_PATH, "r");
+          writeFileSync(process.env.READY_PATH, "ready");
+          setInterval(() => {}, 1000);
+        `], {
+          env: {
+            ...process.env,
+            HOLDER_PATH: dbPath,
+            READY_PATH: readyPath,
+          },
+          stdout: "pipe",
+          stderr: "pipe",
+        });
+        spawnedProcs.push(holder);
+
+        const deadline = Date.now() + 5000;
+        while (!existsSync(readyPath) && Date.now() < deadline) await Bun.sleep(25);
+        expect(existsSync(readyPath)).toBe(true);
+
+        const result = checkForOtherOpencodeProcesses(dbPath);
+        expect(result.safe).toBe(false);
+        expect(result.pids).toContain(holder.pid);
+        const detectedHolder = result.holders.find(({ pid }) => pid === holder?.pid);
+        expect(detectedHolder?.command).toEqual(expect.any(String));
+        expect(detectedHolder?.command.length).toBeGreaterThan(0);
+        console.log(`real lsof detected holder pid=${holder.pid} command=${detectedHolder?.command}`);
+      } finally {
+        if (holder) {
+          try {
+            holder.kill("SIGTERM");
+            await Promise.race([holder.exited, Bun.sleep(2000)]);
+          } catch {
+            /* already exited */
+          }
+        }
+        removeTempDir(dir);
+      }
+    },
+    { timeout: TEST_TIMEOUT },
+  );
+
+  lsofTest(
+    "reports no holder for an unheld temporary database path",
+    () => {
+      const dir = makeTempDir();
+      const dbPath = join(dir, "unheld.db");
+      writeFileSync(dbPath, "");
+
+      try {
+        const result = checkForOtherOpencodeProcesses(dbPath);
+        expect(result).toMatchObject({ safe: true, count: 0, pids: [], holders: [] });
+      } finally {
+        removeTempDir(dir);
+      }
+    },
+    { timeout: TEST_TIMEOUT },
   );
 });
 
