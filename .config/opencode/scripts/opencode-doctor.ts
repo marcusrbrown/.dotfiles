@@ -1295,13 +1295,21 @@ export function refuseIfOtherOpencodeProcesses(
 ): SectionResultData | null {
   const procCheck = checkForOtherOpencodeProcesses(dbPath, dependencies);
   if (!procCheck.safe) {
-    const reason = procCheck.count === -1
-      ? `Could not verify database holders with lsof (${procCheck.error ?? "unknown error"}); refusing to run this destructive operation. Re-run where process detection works.`
-      : `Found ${procCheck.count} process(es) holding the OpenCode database: ${procCheck.holders.map(({ command, pid }) => `${command} (PID ${pid})`).join(", ")}. Close all OpenCode instances and re-run.`;
+    // The gate refuses on any holder, not just OpenCode, so the instruction
+    // points at the processes actually named rather than telling the operator
+    // to close OpenCode -- which would not clear a holder like the Magic
+    // Context dashboard. The detection-failure branch is a different problem
+    // and gets its own instruction.
+    const detectionFailed = procCheck.count === -1;
+    const reason = detectionFailed
+      ? `Could not verify database holders with lsof (${procCheck.error ?? "unknown error"}); refusing to run this destructive operation.`
+      : `Found ${procCheck.count} process(es) holding the OpenCode database: ${procCheck.holders.map(({ command, pid }) => `${command} (PID ${pid})`).join(", ")}.`;
     return {
       refused: true,
       reason,
-      instruction: "Close all OpenCode instances and re-run.",
+      instruction: detectionFailed
+        ? "Re-run where lsof can inspect the database."
+        : "Close the process(es) listed above and re-run.",
     };
   }
   return null;
