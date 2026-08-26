@@ -1,11 +1,10 @@
 #!/usr/bin/env bun
 import { spawn, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
-import { statfsSync, statSync } from "node:fs";
+import { existsSync, statfsSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname } from "node:path";
 import { Database } from "bun:sqlite";
-import { createOpencodeClient } from "@opencode-ai/sdk";
 import {
   bytesToHuman,
   estimateReclaim,
@@ -1163,7 +1162,7 @@ type ProcessHolder = {
 
 export type ProcessCheckDependencies = {
   ownPid?: number;
-  spawnSync?: (args: string[]) => { exitCode: number | null; stdout?: unknown };
+  spawnSync?: (args: string[]) => { exitCode: number | null; stdout?: unknown; stderr?: unknown };
 };
 
 type ProcessCheckResult = {
@@ -1225,7 +1224,11 @@ export function checkForOtherOpencodeProcesses(
   const paths = [dbPath, `${dbPath}-wal`, `${dbPath}-shm`];
 
   for (const path of paths) {
-    let result: { exitCode: number | null; stdout?: unknown };
+    // Keep injected process checks deterministic: mocked tests may model a
+    // holder on a sidecar without creating that filesystem path.
+    if (dependencies.spawnSync == null && path !== dbPath && !existsSync(path)) continue;
+
+    let result: { exitCode: number | null; stdout?: unknown; stderr?: unknown };
     try {
       result = spawnSync(["lsof", "-F", "pc", path]);
     } catch (error) {
@@ -1247,6 +1250,16 @@ export function checkForOtherOpencodeProcesses(
           pids: [],
           holders: [],
           error: `lsof returned unparseable output for ${path}`,
+        };
+      }
+      const errorOutput = result.stderr == null ? "" : outputToString(result.stderr);
+      if (errorOutput == null || errorOutput.trim() !== "") {
+        return {
+          safe: false,
+          count: -1,
+          pids: [],
+          holders: [],
+          error: `lsof returned an error for ${path}: ${errorOutput ?? "unparseable stderr"}`,
         };
       }
       continue;
@@ -1479,9 +1492,7 @@ export function convertToIncrementalVacuum(db: Database, dbPath: string): Increm
 async function runDbHealth(options: CliOptions): Promise<SectionResult> {
   let db: Database | null = null;
   try {
-    const uri = "file:" + options.dbPath + "?mode=ro";
-    db = new Database(uri, { readonly: true });
-    db.exec("PRAGMA busy_timeout=5000");
+    db = openReadOnlyDb(options.dbPath);
 
     const data = await withSqliteBusyRetry(() => computeDbHealth(db!, options.dbPath));
     return { label: "DB Health", data };
@@ -1492,6 +1503,23 @@ async function runDbHealth(options: CliOptions): Promise<SectionResult> {
   }
 }
 
+/**
+ * Opens the database read-only.
+ *
+ * `readonly: true` is the real guard -- it maps to SQLITE_OPEN_READONLY. A
+ * `file:...?mode=ro` URI is not used: URI filenames require SQLite's URI
+ * handling to be enabled, and where it is not the whole string is treated as a
+ * literal path, so the open fails with "unable to open database file". That is
+ * platform-dependent in practice, so the plain path gives the same guarantee
+ * everywhere. `query_only` is deliberately not set: it also blocks the temp
+ * tables the reclaim estimate builds, and it adds nothing over READONLY.
+ */
+function openReadOnlyDb(dbPath: string): Database {
+  const db = new Database(dbPath, { readonly: true });
+  db.exec("PRAGMA busy_timeout=5000");
+  return db;
+}
+
 async function runDbPruneDryRun(options: CliOptions): Promise<SectionResult> {
   const days = options.pruneOlderDays ?? DEFAULT_PRUNE_DAYS;
   const cutoffMs = Date.now() - days * 24 * 3600 * 1000;
@@ -1499,9 +1527,7 @@ async function runDbPruneDryRun(options: CliOptions): Promise<SectionResult> {
 
   let db: Database | null = null;
   try {
-    const uri = "file:" + options.dbPath + "?mode=ro";
-    db = new Database(uri, { readonly: true });
-    db.exec("PRAGMA busy_timeout=5000");
+    db = openReadOnlyDb(options.dbPath);
 
     const sessionIds = await withSqliteBusyRetry(() => selectOldSessionIds(db!, cutoffMs));
     const reclaim = await withSqliteBusyRetry(() => estimateReclaim(db!, sessionIds));
@@ -1608,9 +1634,7 @@ async function runDbEventPruneDryRun(options: CliOptions): Promise<SectionResult
   const cutoffDate = new Date(cutoffMs).toISOString().slice(0, 10);
   let db: Database | null = null;
   try {
-    const uri = "file:" + options.dbPath + "?mode=ro";
-    db = new Database(uri, { readonly: true });
-    db.exec("PRAGMA busy_timeout=5000");
+    db = openReadOnlyDb(options.dbPath);
 
     const sessionIds = await withSqliteBusyRetry(() => selectOldSessionIds(db!, cutoffMs));
     const reclaim = await withSqliteBusyRetry(() => estimateReclaim(db!, sessionIds));
@@ -1857,12 +1881,16 @@ async function waitForExit(proc: ChildProcess, timeoutMs = 8000): Promise<void> 
 }
 
 async function startOpencode(options: CliOptions): Promise<{
-  client: ReturnType<typeof createOpencodeClient>;
+  client: ReturnType<typeof import("@opencode-ai/sdk").createOpencodeClient>;
   proc?: ChildProcess;
   url: string;
   port: number;
   mode: "existing" | "spawned";
 }> {
+  // Loaded on demand so the module imports without the SDK present. Only
+  // server-backed sections need it; the DB-only paths -- including the
+  // destructive-operation gate -- never reach here.
+  const { createOpencodeClient } = await import("@opencode-ai/sdk");
   const baseUrl = `http://${options.host}:${options.port}`;
 
   if (options.portProvided) {
@@ -2084,8 +2112,11 @@ async function collectSections(options: CliOptions): Promise<SectionResult[]> {
 
 function renderSection(section: SectionResult, options: CliOptions): string {
   const extracted = extractData(section.data);
-  if (extracted.error != null) {
-    return `${formatHeader(section.label, options)}\n${formatError(extracted.error, options)}`;
+  // section.error is set when the section threw; without this the failure
+  // renders as a bare null with no reason.
+  const error = extracted.error ?? section.error;
+  if (error != null) {
+    return `${formatHeader(section.label, options)}\n${formatError(error, options)}`;
   }
 
   const output = options.full ? extracted.data : summarize(extracted.data, options.limit);
@@ -2198,6 +2229,7 @@ async function main(): Promise<void> {
       ? JSON.stringify(redactSecrets(sections.map((section) => ({
           label: section.label,
           ...extractData(section.data),
+          ...(section.error == null ? {} : { error: section.error }),
         }))), null, 2)
       : sections.map((section) => renderSection(section, options)).join("\n");
 
@@ -2210,6 +2242,7 @@ async function main(): Promise<void> {
     ? JSON.stringify(redactSecrets(sections.map((section) => ({
         label: section.label,
         ...extractData(section.data),
+        ...(section.error == null ? {} : { error: section.error }),
       }))), null, 2)
     : sections.map((section) => renderSection(section, options)).join("\n");
 

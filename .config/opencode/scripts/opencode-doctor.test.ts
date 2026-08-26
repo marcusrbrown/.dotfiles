@@ -1,7 +1,7 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { $ } from "bun";
 import { Database } from "bun:sqlite";
-import { mkdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -24,6 +24,11 @@ import {
 
 const SCRIPT_PATH = "./opencode-doctor.ts";
 const TEST_TIMEOUT = 90000;
+const lsofTest = Bun.which("lsof") === null ? test.skip : test;
+const opencodeBin = process.env.OPENCODE_BIN
+  ? Bun.which(process.env.OPENCODE_BIN)
+  : Bun.which("harness") ?? Bun.which("opencode");
+const opencodeTest = opencodeBin === null ? test.skip : test;
 
 let spawnedProcs: Array<Pick<ReturnType<typeof Bun.spawn>, "kill" | "exited">> = [];
 
@@ -1380,7 +1385,7 @@ describe("opencode-doctor CLI", () => {
     { timeout: TEST_TIMEOUT }
   );
 
-  test(
+  opencodeTest(
     "spawns server and retrieves health section",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --only=health --no-tui`.nothrow().text();
@@ -1391,7 +1396,7 @@ describe("opencode-doctor CLI", () => {
     { timeout: TEST_TIMEOUT }
   );
 
-  test(
+  opencodeTest(
     "--only flag filters to specified sections only",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --only=server,health --no-tui`.nothrow().text();
@@ -1405,7 +1410,7 @@ describe("opencode-doctor CLI", () => {
     { timeout: TEST_TIMEOUT }
   );
 
-  test(
+  opencodeTest(
     "--json outputs parseable JSON array of sections",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --only=health --json`.nothrow().text();
@@ -1423,7 +1428,7 @@ describe("opencode-doctor CLI", () => {
     { timeout: TEST_TIMEOUT }
   );
 
-  test(
+  opencodeTest(
     "--format=json is equivalent to --json flag",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --only=server --format=json`.nothrow().text();
@@ -1553,7 +1558,7 @@ describe("signal handling", () => {
 });
 
 describe("error handling", () => {
-  test(
+  opencodeTest(
     "invalid --only value warns but continues with valid sections",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --only=invalid_section,server`
@@ -1568,7 +1573,7 @@ describe("error handling", () => {
     { timeout: TEST_TIMEOUT }
   );
 
-  test(
+  opencodeTest(
     "invalid --port value warns and uses default",
     async () => {
       const result = await $`bun ${SCRIPT_PATH} --port=invalid --only=server`
@@ -1703,6 +1708,28 @@ describe("DB guards (unit)", () => {
     });
 
     expect(result).toMatchObject({ safe: true, count: 0, pids: [] });
+  });
+
+  test("lsof exit 1 with empty stdout and stderr is safe", () => {
+    const result = checkForOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: () => ({ exitCode: 1, stdout: "", stderr: "" }),
+    });
+
+    expect(result).toMatchObject({ safe: true, count: 0, pids: [] });
+  });
+
+  test("lsof exit 1 with empty stdout and non-empty stderr refuses closed", () => {
+    const refusal = refuseIfOtherOpencodeProcesses(dbPath, {
+      ownPid: 100,
+      spawnSync: () => ({ exitCode: 1, stdout: "", stderr: "permission denied" }),
+    });
+
+    expect(refusal).toEqual({
+      refused: true,
+      reason: expect.stringContaining("lsof"),
+      instruction: "Re-run where lsof can inspect the database.",
+    });
   });
 
   test("non-0/1 lsof exit code refuses closed", () => {
@@ -1933,6 +1960,80 @@ describe("DB guards (unit)", () => {
       expect(result.exitCode).not.toBe(0);
     },
     { timeout: TEST_TIMEOUT }
+  );
+});
+
+describe("DB guards (real lsof)", () => {
+  lsofTest(
+    "detects a real external process holding the database path",
+    async () => {
+      const dir = makeTempDir();
+      const dbPath = join(dir, "held.db");
+      const readyPath = join(dir, "holder.ready");
+      writeFileSync(dbPath, "");
+
+      let holder: ReturnType<typeof Bun.spawn> | undefined;
+      try {
+        holder = Bun.spawn([process.execPath, "-e", `
+          const { openSync, writeFileSync } = require("node:fs");
+          openSync(process.env.HOLDER_PATH, "r");
+          writeFileSync(process.env.READY_PATH, "ready");
+          setInterval(() => {}, 1000);
+        `], {
+          env: {
+            ...process.env,
+            HOLDER_PATH: dbPath,
+            READY_PATH: readyPath,
+          },
+          stdout: "pipe",
+          stderr: "pipe",
+        });
+        spawnedProcs.push(holder);
+
+        const deadline = Date.now() + 5000;
+        while (!existsSync(readyPath) && Date.now() < deadline) await Bun.sleep(25);
+        expect(existsSync(readyPath)).toBe(true);
+
+        const result = checkForOtherOpencodeProcesses(dbPath);
+        expect(result.safe).toBe(false);
+        expect(result.pids).toContain(holder.pid);
+        const detectedHolder = result.holders.find(({ pid }) => pid === holder?.pid);
+        expect(detectedHolder?.command).toEqual(expect.any(String));
+        expect(detectedHolder?.command.length).toBeGreaterThan(0);
+        console.log(`real lsof detected holder pid=${holder.pid} command=${detectedHolder?.command}`);
+      } finally {
+        if (holder) {
+          try {
+            holder.kill("SIGTERM");
+            await Promise.race([holder.exited, Bun.sleep(2000)]);
+          } catch {
+            /* already exited */
+          }
+        }
+        removeTempDir(dir);
+      }
+    },
+    { timeout: TEST_TIMEOUT },
+  );
+
+  lsofTest(
+    "reports no holder for a clean-shutdown database with absent sidecars",
+    () => {
+      const dir = makeTempDir();
+      const dbPath = join(dir, "unheld.db");
+      writeFileSync(dbPath, "");
+
+      try {
+        expect(existsSync(`${dbPath}-wal`)).toBe(false);
+        expect(existsSync(`${dbPath}-shm`)).toBe(false);
+        const result = checkForOtherOpencodeProcesses(dbPath);
+        expect(result).toMatchObject({ safe: true, count: 0, pids: [], holders: [] });
+        console.log(`real lsof clean-shutdown safe=${result.safe} count=${result.count} sidecars=absent`);
+      } finally {
+        removeTempDir(dir);
+      }
+    },
+    { timeout: TEST_TIMEOUT },
   );
 });
 
