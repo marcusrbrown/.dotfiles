@@ -74,9 +74,13 @@ jobs:
         with:
           version: ${{ env.MISE_VERSION }}
 
-  script-tests:
-    name: Script Tests
-    runs-on: ubuntu-latest
+  script-tests-matrix:
+    name: Script Tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -98,3 +102,24 @@ jobs:
       - name: Run ollama-distill tests
         working-directory: .config/opencode/scripts
         run: bun test ollama-distill.test.ts
+
+  # Aggregates the matrix into one stable status context. Branch protection
+  # requires 'Script Tests'; a matrix reports per-leg names instead, so without
+  # this the required check would never report and every PR would block.
+  # `if: always()` matters for the same reason -- a skipped required check
+  # blocks just as hard as a missing one.
+  script-tests:
+    name: Script Tests
+    runs-on: ubuntu-latest
+    needs: [script-tests-matrix]
+    if: always()
+    steps:
+      - name: Check matrix result
+        env:
+          RESULT: ${{ needs.script-tests-matrix.result }}
+        run: |
+          if [ "$RESULT" != "success" ]; then
+            echo "Script Tests matrix did not succeed: $RESULT"
+            exit 1
+          fi
+          echo "All Script Tests legs passed."
