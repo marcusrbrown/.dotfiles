@@ -2112,8 +2112,11 @@ async function collectSections(options: CliOptions): Promise<SectionResult[]> {
 
 function renderSection(section: SectionResult, options: CliOptions): string {
   const extracted = extractData(section.data);
-  if (extracted.error != null) {
-    return `${formatHeader(section.label, options)}\n${formatError(extracted.error, options)}`;
+  // section.error is set when the section threw; without this the failure
+  // renders as a bare null with no reason.
+  const error = extracted.error ?? section.error;
+  if (error != null) {
+    return `${formatHeader(section.label, options)}\n${formatError(error, options)}`;
   }
 
   const output = options.full ? extracted.data : summarize(extracted.data, options.limit);
