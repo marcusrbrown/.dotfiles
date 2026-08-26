@@ -48,7 +48,7 @@ tags
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Credential-shape safety net (cross-repo, applies via core.excludesfile).
-# The dotfiles bare repo overrides core.excludesfile to .dotfiles/.gitignore,
+# The dotfiles bare repo overrides core.excludesfile to .dotfiles/ignore,
 # so these rules do NOT protect dotfiles itself — dotfiles relies on its
 # allowlist + gitleaks pre-commit hook for the same coverage.
 # Pair with `gitleaks detect --source <repo>` for content-based scanning.

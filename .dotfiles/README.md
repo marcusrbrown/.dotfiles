@@ -40,12 +40,14 @@ alias .dotfiles='GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME'
 
 Extends the local Git configuration with settings specific to the dotfiles repository:
 
-- Sets `core.excludesFile` to use this directory's `.gitignore`
+- Sets `core.excludesFile` to use this directory's `ignore` file
 - Configures `status.showUntrackedFiles = no` to hide untracked home directory files
 
-### `.gitignore`
+### `ignore`
 
 Uses an **allowlist pattern** to explicitly track only specific files while ignoring everything else in `$HOME`.
+
+Deliberately not named `.gitignore`: a file by that name inside `.dotfiles/` is also read as an ordinary per-directory ignore file, where `/*` re-anchors to `.dotfiles/` and the `!/.dotfiles/...` negations resolve to a path that never exists. Renaming a file back to `.gitignore` here reintroduces that bug.
 
 #### How the Allowlist Works
 
@@ -65,10 +67,10 @@ Before adding a new file to version control, you must add an allowlist entry:
 
 ```sh
 # 1. Add the allowlist entry
-echo '!/path/to/new/file' >> ~/.dotfiles/.gitignore
+echo '!/path/to/new/file' >> ~/.dotfiles/ignore
 
 # 2. Add both files
-.dotfiles git add ~/.dotfiles/.gitignore ~/path/to/new/file
+.dotfiles git add ~/.dotfiles/ignore ~/path/to/new/file
 
 # 3. Commit
 .dotfiles git commit -m "Track new file"
@@ -112,14 +114,14 @@ echo 'alias proj="cd ~/work/project"' >> ~/.zshrc.local
 
 ### Cannot add new file
 
-Ensure the file is allowlisted in `.dotfiles/.gitignore`:
+Ensure the file is allowlisted in `.dotfiles/ignore`:
 
 ```sh
 # Check if file would be ignored
 .dotfiles git check-ignore -v ~/path/to/file
 
 # Add to allowlist if needed
-echo '!/path/to/file' >> ~/.dotfiles/.gitignore
+echo '!/path/to/file' >> ~/.dotfiles/ignore
 ```
 
 ### Status shows no changes

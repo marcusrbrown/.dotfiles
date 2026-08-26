@@ -38,7 +38,7 @@ env:
     Read AGENTS.md for full project conventions before reviewing.
 
     This repo has an allowlist .gitignore pattern: everything is ignored by
-    default, then specific paths are un-ignored. Changes to .dotfiles/.gitignore
+    default, then specific paths are un-ignored. Changes to .dotfiles/ignore
     affect what CAN be tracked. Verify new files are properly allowlisted.
 
     Focus your review on:
@@ -148,7 +148,7 @@ env:
        code-aware agent can catch:
        - Verify the devcontainer builds: check the most recent Main
          workflow run. If it failed, diagnose from logs.
-       - Check .dotfiles/.gitignore for consistency: are there allowlist
+       - Check .dotfiles/ignore for consistency: are there allowlist
          entries for files that no longer exist? Are there tracked files
          that probably shouldn't be (large binaries, generated files)?
        - Scan for stale TODO/FIXME/HACK annotations older than 90 days
@@ -246,7 +246,7 @@ env:
 
     Dotfiles conventions (MUST follow for changes):
     - Allowlist .gitignore: everything ignored by default, specific paths
-      un-ignored. New files must be allowlisted in .dotfiles/.gitignore.
+      un-ignored. New files must be allowlisted in .dotfiles/ignore.
     - Shell config organization: init.d/ with numbered prefixes, local.d/
       for machine-specific (never committed), shared exports in
       .config/bash/exports.

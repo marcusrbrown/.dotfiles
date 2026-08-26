@@ -96,7 +96,7 @@ mkdir -p ~/.dotfiles-backup
 │       └── keychain/          # SSH/GPG agent management
 ├── .dotfiles/                 # Bare repo metadata
 │   ├── .gitconfig             # Dotfiles-specific git config
-│   └── .gitignore             # Allowlist-based ignore file
+│   └── ignore                 # Allowlist-based ignore file
 ├── .github/                   # GitHub configuration
 │   └── workflows/             # CI workflows
 ├── Brewfile                   # macOS Homebrew dependencies
@@ -111,7 +111,7 @@ mkdir -p ~/.dotfiles-backup
 # Check status (shows only tracked files)
 .dotfiles git status
 
-# Add a file (must be allowlisted in .dotfiles/.gitignore first)
+# Add a file (must be allowlisted in .dotfiles/ignore first)
 .dotfiles git add ~/.config/some-new-config
 
 # Commit changes
@@ -126,11 +126,11 @@ mkdir -p ~/.dotfiles-backup
 The repository uses an **allowlist pattern** - everything is ignored by default:
 
 ```bash
-# 1. Add allowlist entry to .dotfiles/.gitignore
-echo '!/path/to/new/file' >> ~/.dotfiles/.gitignore
+# 1. Add allowlist entry to .dotfiles/ignore
+echo '!/path/to/new/file' >> ~/.dotfiles/ignore
 
 # 2. Stage and commit
-.dotfiles git add ~/.dotfiles/.gitignore ~/path/to/new/file
+.dotfiles git add ~/.dotfiles/ignore ~/path/to/new/file
 .dotfiles git commit -m "Track new file"
 ```
 

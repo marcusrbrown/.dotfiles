@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-Bare git dotfiles repo. `GIT_DIR=~/.dotfiles`, `GIT_WORK_TREE=~/`. 196 tracked files spanning shell init, dev tooling, AI agent configs, devcontainer setup, CI, and project documentation (plans, brainstorms, solutions, runbooks). Sync across machines via allowlist `.gitignore`.
+Bare git dotfiles repo. `GIT_DIR=~/.dotfiles`, `GIT_WORK_TREE=~/`. 196 tracked files spanning shell init, dev tooling, AI agent configs, devcontainer setup, CI, and project documentation (plans, brainstorms, solutions, runbooks). Sync across machines via the allowlist in `.dotfiles/ignore`.
 
 ## GIT OPERATIONS
 
@@ -64,7 +64,7 @@ git status  # now works on dotfiles
 
 | Task | Location | Notes |
 |------|----------|-------|
-| Add tracked file | Test with `git add -n` first | Only update `.dotfiles/.gitignore` allowlist if blocked |
+| Add tracked file | Test with `git add -n` first | Only update `.dotfiles/ignore` allowlist if blocked |
 | Shell aliases | `.config/bash/aliases` | `.dotfiles` alias defined here |
 | Environment vars | `.config/bash/exports` | Sourced by both bash and zsh |
 | Tool-specific init | `.config/bash/init.d/` | Numbered prefix = load order; `d`-prefix = disabled (e.g., `dnvm.bash`) |
@@ -87,9 +87,9 @@ git status  # now works on dotfiles
 
 ## CONVENTIONS
 
-### Allowlist `.gitignore` Pattern
+### Allowlist Ignore Pattern
 
-Repo ignores EVERYTHING by default, allowlists tracked paths in `.dotfiles/.gitignore`:
+Repo ignores EVERYTHING by default, allowlists tracked paths in `.dotfiles/ignore`:
 
 ```gitignore
 /*                  # Ignore everything
@@ -99,13 +99,13 @@ Repo ignores EVERYTHING by default, allowlists tracked paths in `.dotfiles/.giti
 
 **To add a new file**:
 1. Try `git add -n <file>` first
-2. If ignored, add `!/path/to/file` to `.dotfiles/.gitignore` and retry
+2. If ignored, add `!/path/to/file` to `.dotfiles/ignore` and retry
 
 ### Defense-in-Depth Layers
 
 The dotfiles allowlist is the primary defense. Two cross-repo backstops catch what slips through anywhere on the machine:
 
-1. **Name-based safety net** — `~/.config/git/ignore` (XDG global gitignore) catches credential-shape names by **shape and extension** (`**/.env.*`, `**/auth.json`, `**/*.pem`, `**/*.key`, `**/*.p12`, `**/*.pfx`, `**/id_rsa*`, `**/id_ed25519*`) in **every repo on the machine**. Carves out `**/.env.example`, `**/.env.template`, `**/.env.sample` so documented templates stay tracked. The broad name wildcards (`**/*secret*`, `**/*token*`, `**/*credential*`, `**/*password*`) were removed in PR #1694 because they false-positive on legitimately-named source files (`secret-manager.ts`, `token.rs`, etc.) across the machine — content-scanning via `gitleaks` (layer 2) catches the actual credential strings without the name-shape collisions. Note: the dotfiles bare repo overrides `core.excludesfile` to `.dotfiles/.gitignore`, so this file does NOT protect dotfiles itself — dotfiles relies on its allowlist + gitleaks for the same coverage. AI-tool noise dirs (`**/sessions/`, `**/transcripts/`, `**/history.jsonl`) stay in `.dotfiles/.gitignore` because they're too false-positive-prone globally.
+1. **Name-based safety net** — `~/.config/git/ignore` (XDG global gitignore) catches credential-shape names by **shape and extension** (`**/.env.*`, `**/auth.json`, `**/*.pem`, `**/*.key`, `**/*.p12`, `**/*.pfx`, `**/id_rsa*`, `**/id_ed25519*`) in **every repo on the machine**. Carves out `**/.env.example`, `**/.env.template`, `**/.env.sample` so documented templates stay tracked. The broad name wildcards (`**/*secret*`, `**/*token*`, `**/*credential*`, `**/*password*`) were removed in PR #1694 because they false-positive on legitimately-named source files (`secret-manager.ts`, `token.rs`, etc.) across the machine — content-scanning via `gitleaks` (layer 2) catches the actual credential strings without the name-shape collisions. Note: the dotfiles bare repo overrides `core.excludesfile` to `.dotfiles/ignore`, so this file does NOT protect dotfiles itself — dotfiles relies on its allowlist + gitleaks for the same coverage. AI-tool noise dirs (`**/sessions/`, `**/transcripts/`, `**/history.jsonl`) stay in `.dotfiles/ignore` because they're too false-positive-prone globally.
 2. **By-content scanning** — `gitleaks` (installed via `aqua:gitleaks/gitleaks` in `~/.config/mise/config.toml`) runs as a local pre-commit hook at `~/.config/git/hooks/pre-commit`. Blocks commits containing detected secrets in any repo where the hook is activated. Bypass with `git commit --no-verify` for known false positives.
 
 **One-time hook activation** (per machine, dotfiles bare repo):
