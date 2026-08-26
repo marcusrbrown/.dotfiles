@@ -1,5 +1,6 @@
 ---
 date: 2026-05-22
+last_updated: 2026-08-25
 category: pattern
 tags: [bun, sqlite, wal, read-only, opencode]
 problem-area: reading a live WAL SQLite database from a Bun CLI without disturbing the writer
@@ -16,7 +17,7 @@ A Bun/TypeScript CLI needs to read OpenCode's live SQLite session store (`~/.loc
 3. Handle the case where OpenCode commits a schema migration while the CLI holds a connection
 4. Survive transient SQLITE_BUSY / SQLITE_LOCKED returns during WAL checkpoints or short writer transactions
 
-Standard SQLite "open read-only" guidance is the URI mode (`file:path?mode=ro`) OR `PRAGMA query_only=ON`. Neither alone is sufficient for a connection that lives across multiple queries against a heavily-active writer.
+Standard SQLite "open read-only" guidance is the URI mode (`file:path?mode=ro`) OR `PRAGMA query_only=ON`. Neither alone is sufficient for a connection that lives across multiple queries against a heavily-active writer — and the URI form is not portable at all (see the 2026-08-25 correction below).
 
 ## Solution
 
@@ -26,8 +27,9 @@ Defense-in-depth read-only enforcement, verified empirically at startup:
 import { Database } from "bun:sqlite"
 
 function openReadOnly(dbPath: string): Database {
-  // 1. URI mode + readonly option (the real guard — bun:sqlite honors both)
-  const db = new Database(`file:${dbPath}?mode=ro`, { readonly: true })
+  // 1. SQLITE_OPEN_READONLY via the readonly option — this is the real guard.
+  //    Do NOT use a `file:${dbPath}?mode=ro` URI here: it is not portable.
+  const db = new Database(dbPath, { readonly: true })
 
   // 2. PRAGMA query_only as belt-and-suspenders (per-connection;
   //    enforced by the SQLite library, not the OS file mode)
@@ -98,6 +100,18 @@ function withBusyRetry<T>(fn: () => T, attempts = 3, backoffMs = 100): T {
   throw lastErr
 }
 ```
+
+### Correction, 2026-08-25: do not use a `file:` URI
+
+This pattern originally opened with ``new Database(`file:${dbPath}?mode=ro`, { readonly: true })`` and described the URI as part of the guard. That is wrong, and it fails outright on Linux.
+
+URI filenames only mean anything when SQLite's URI handling is enabled. Where it is not, the entire string is treated as a literal path, so the open throws `unable to open database file`. Verified with bun 1.4.0 on both platforms: it works on macOS and fails on `ubuntu-latest`. The symptom is easy to misread, because only read paths use the URI — writes keep working.
+
+`{ readonly: true }` maps to `SQLITE_OPEN_READONLY` and carries the guarantee on its own. Layers 2-4 below are unaffected.
+
+One caveat if you adopt layer 2 elsewhere: `PRAGMA query_only=ON` also blocks temp tables. It is right here, because the probe in layer 4 depends on `CREATE TEMP TABLE` being rejected — but it will break a read-only connection that builds temp tables for analysis. `opencode-doctor.ts` omits it for exactly that reason.
+
+See [`2026-08-25-bun-sqlite-readonly-opencode-ci-failures.md`](2026-08-25-bun-sqlite-readonly-opencode-ci-failures.md).
 
 ## What this does not protect against
 
