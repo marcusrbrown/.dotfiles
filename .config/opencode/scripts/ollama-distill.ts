@@ -145,7 +145,7 @@ export async function withSqliteBusyRetry<T>(
 
 /**
  * Open a read-only SQLite connection with R17 hardening:
- * - URI mode with `mode=ro`
+ * - SQLITE_OPEN_READONLY via `readonly: true`
  * - PRAGMA query_only=ON
  * - PRAGMA busy_timeout=5000
  * - Read-only verification probe (CREATE TEMP TABLE must throw)
@@ -155,8 +155,12 @@ export async function withSqliteBusyRetry<T>(
  * // See: docs/solutions/2026-05-22-bun-sqlite-readonly-wal-pattern.md
  */
 export function openDatabase(dbPath: string): Database {
-  const uri = "file:" + dbPath + "?mode=ro";
-  const db = new Database(uri, { readonly: true });
+  // A `file:...?mode=ro` URI is deliberately not used: URI filenames require
+  // SQLite's URI handling to be enabled, and where it is not the whole string
+  // is treated as a literal path, so the open fails with "unable to open
+  // database file". `readonly: true` maps to SQLITE_OPEN_READONLY and carries
+  // the guarantee on its own; the pragma and probe below still apply.
+  const db = new Database(dbPath, { readonly: true });
 
   db.exec("PRAGMA query_only=ON");
   db.exec("PRAGMA busy_timeout=5000");
@@ -166,7 +170,7 @@ export function openDatabase(dbPath: string): Database {
   //
   // This probe is bun:sqlite-specific. Standard SQLite routes TEMP tables to a
   // separate temp file that bypasses the main-db read-only enforcement, but
-  // bun:sqlite with `{ readonly: true }` + `mode=ro` rejects TEMP writes too
+  // bun:sqlite with `{ readonly: true }` + `query_only` rejects TEMP writes too
   // (verified empirically). If a future Bun release changes that, the probe
   // will silently stop rejecting and leave the connection unverified — re-test
   // this after Bun upgrades and consider switching to a probe that writes to
