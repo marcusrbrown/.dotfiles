@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-Bare git dotfiles repo. `GIT_DIR=~/.dotfiles`, `GIT_WORK_TREE=~/`. 196 tracked files spanning shell init, dev tooling, AI agent configs, devcontainer setup, CI, and project documentation (plans, brainstorms, solutions, runbooks). Sync across machines via allowlist `.gitignore`.
+Bare git dotfiles repo. `GIT_DIR=~/.dotfiles`, `GIT_WORK_TREE=~/`. 196 tracked files spanning shell init, dev tooling, AI agent configs, devcontainer setup, CI, and project documentation (plans, brainstorms, solutions, runbooks). Sync across machines via the allowlist in `.dotfiles/ignore`.
 
 ## GIT OPERATIONS
 
@@ -87,7 +87,7 @@ git status  # now works on dotfiles
 
 ## CONVENTIONS
 
-### Allowlist `.gitignore` Pattern
+### Allowlist Ignore Pattern
 
 Repo ignores EVERYTHING by default, allowlists tracked paths in `.dotfiles/ignore`:
 

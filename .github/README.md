@@ -96,7 +96,7 @@ mkdir -p ~/.dotfiles-backup
 │       └── keychain/          # SSH/GPG agent management
 ├── .dotfiles/                 # Bare repo metadata
 │   ├── .gitconfig             # Dotfiles-specific git config
-│   └── .gitignore             # Allowlist-based ignore file
+│   └── ignore                 # Allowlist-based ignore file
 ├── .github/                   # GitHub configuration
 │   └── workflows/             # CI workflows
 ├── Brewfile                   # macOS Homebrew dependencies
