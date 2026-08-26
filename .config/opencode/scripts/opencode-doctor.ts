@@ -1492,9 +1492,7 @@ export function convertToIncrementalVacuum(db: Database, dbPath: string): Increm
 async function runDbHealth(options: CliOptions): Promise<SectionResult> {
   let db: Database | null = null;
   try {
-    const uri = "file:" + options.dbPath + "?mode=ro";
-    db = new Database(uri, { readonly: true });
-    db.exec("PRAGMA busy_timeout=5000");
+    db = openReadOnlyDb(options.dbPath);
 
     const data = await withSqliteBusyRetry(() => computeDbHealth(db!, options.dbPath));
     return { label: "DB Health", data };
@@ -1505,6 +1503,23 @@ async function runDbHealth(options: CliOptions): Promise<SectionResult> {
   }
 }
 
+/**
+ * Opens the database read-only.
+ *
+ * `readonly: true` is the real guard -- it maps to SQLITE_OPEN_READONLY. A
+ * `file:...?mode=ro` URI is not used: URI filenames require SQLite's URI
+ * handling to be enabled, and where it is not the whole string is treated as a
+ * literal path, so the open fails with "unable to open database file". That is
+ * platform-dependent in practice, so the plain path gives the same guarantee
+ * everywhere. `query_only` is deliberately not set: it also blocks the temp
+ * tables the reclaim estimate builds, and it adds nothing over READONLY.
+ */
+function openReadOnlyDb(dbPath: string): Database {
+  const db = new Database(dbPath, { readonly: true });
+  db.exec("PRAGMA busy_timeout=5000");
+  return db;
+}
+
 async function runDbPruneDryRun(options: CliOptions): Promise<SectionResult> {
   const days = options.pruneOlderDays ?? DEFAULT_PRUNE_DAYS;
   const cutoffMs = Date.now() - days * 24 * 3600 * 1000;
@@ -1512,9 +1527,7 @@ async function runDbPruneDryRun(options: CliOptions): Promise<SectionResult> {
 
   let db: Database | null = null;
   try {
-    const uri = "file:" + options.dbPath + "?mode=ro";
-    db = new Database(uri, { readonly: true });
-    db.exec("PRAGMA busy_timeout=5000");
+    db = openReadOnlyDb(options.dbPath);
 
     const sessionIds = await withSqliteBusyRetry(() => selectOldSessionIds(db!, cutoffMs));
     const reclaim = await withSqliteBusyRetry(() => estimateReclaim(db!, sessionIds));
@@ -1621,9 +1634,7 @@ async function runDbEventPruneDryRun(options: CliOptions): Promise<SectionResult
   const cutoffDate = new Date(cutoffMs).toISOString().slice(0, 10);
   let db: Database | null = null;
   try {
-    const uri = "file:" + options.dbPath + "?mode=ro";
-    db = new Database(uri, { readonly: true });
-    db.exec("PRAGMA busy_timeout=5000");
+    db = openReadOnlyDb(options.dbPath);
 
     const sessionIds = await withSqliteBusyRetry(() => selectOldSessionIds(db!, cutoffMs));
     const reclaim = await withSqliteBusyRetry(() => estimateReclaim(db!, sessionIds));
