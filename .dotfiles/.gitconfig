@@ -1,2 +1,5 @@
+# Not named .gitignore: a file by that name inside .dotfiles/ is also read as an
+# ordinary per-directory ignore file, where /* re-anchors to .dotfiles/ and the
+# !/.dotfiles/... negations resolve to a path that never exists.
 [core]
-excludesFile = .dotfiles/.gitignore
+excludesFile = .dotfiles/ignore
