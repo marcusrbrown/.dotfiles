@@ -198,13 +198,13 @@
         "variant": "high"
       },
       "librarian": {
-        "model": "opencode-go/gpt-5.6-luna",
+        "model": "github-copilot/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": ["context7", "gh_grep"]
       },
       "explorer": {
-        "model": "opencode-go/gpt-5.6-luna",
+        "model": "github-copilot/gpt-5.4-mini",
         "variant": "low",
         "skills": [],
         "mcps": []
@@ -221,7 +221,7 @@
         "mcps": []
       },
       "fast-generic": {
-        "model": "opencode-go/deepseek-v4-flash",
+        "model": "github-copilot/gpt-5.4-mini",
         "variant": "low"
       }
     }
