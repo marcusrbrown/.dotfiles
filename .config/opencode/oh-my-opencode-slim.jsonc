@@ -6,13 +6,13 @@
       "orchestrator": {
         "model": "openai/gpt-5.6-terra",
         "variant": "high",
-        "skills": ["*"],
+        "skills": ["*", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "anthropic/claude-opus-5",
         "variant": "high",
-        "skills": ["ce:brainstorm", "simplify", "systematic:*"],
+        "skills": ["ce:brainstorm", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
       "council": {
@@ -32,13 +32,20 @@
       },
       "designer": {
         "model": "github-copilot/gemini-3.5-flash",
-        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "skills": [
+          "agent-browser",
+          "brand-voice",
+          "content-research-writer",
+          "impeccable",
+          "openai-imagegen",
+          "systematic:*"
+        ],
         "mcps": []
       },
       "fixer": {
         "model": "openai/gpt-5.6-luna",
         "variant": "high",
-        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "clonedeps", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fast-generic": {
@@ -50,13 +57,13 @@
       "orchestrator": {
         "model": "opencode-go/minimax-m3",
         "variant": "thinking",
-        "skills": ["*"],
+        "skills": ["*", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "opencode-go/qwen3.7-max",
         "variant": "max",
-        "skills": ["ce:brainstorm", "simplify", "systematic:*"],
+        "skills": ["ce:brainstorm", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
       "council": {
@@ -78,13 +85,20 @@
       "designer": {
         "model": "opencode-go/kimi-k2.6",
         "variant": "medium",
-        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "skills": [
+          "agent-browser",
+          "brand-voice",
+          "content-research-writer",
+          "impeccable",
+          "openai-imagegen",
+          "systematic:*"
+        ],
         "mcps": []
       },
       "fixer": {
         "model": "opencode-go/deepseek-v4-flash",
         "variant": "high",
-        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "clonedeps", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fast-generic": {
@@ -96,13 +110,13 @@
       "orchestrator": {
         "model": "anthropic/claude-opus-5",
         "variant": "high",
-        "skills": ["*"],
+        "skills": ["*", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "openai/gpt-5.6-sol",
         "variant": "high",
-        "skills": ["ce:brainstorm", "simplify", "systematic:*"],
+        "skills": ["ce:brainstorm", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
       "council": {
@@ -122,13 +136,20 @@
       },
       "designer": {
         "model": "github-copilot/gemini-3.5-flash",
-        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "skills": [
+          "agent-browser",
+          "brand-voice",
+          "content-research-writer",
+          "impeccable",
+          "openai-imagegen",
+          "systematic:*"
+        ],
         "mcps": []
       },
       "fixer": {
         "model": "openai/gpt-5.6-luna",
         "variant": "high",
-        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "clonedeps", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fast-generic": {
@@ -140,13 +161,13 @@
       "orchestrator": {
         "model": "anthropic/claude-fable-5",
         "variant": "high",
-        "skills": ["*"],
+        "skills": ["*", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "openai/gpt-5.6-sol",
         "variant": "high",
-        "skills": ["ce:brainstorm", "simplify", "systematic:*"],
+        "skills": ["ce:brainstorm", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
       "council": {
@@ -166,13 +187,20 @@
       },
       "designer": {
         "model": "github-copilot/gemini-3.5-flash",
-        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "skills": [
+          "agent-browser",
+          "brand-voice",
+          "content-research-writer",
+          "impeccable",
+          "openai-imagegen",
+          "systematic:*"
+        ],
         "mcps": []
       },
       "fixer": {
         "model": "openai/gpt-5.6-luna",
         "variant": "high",
-        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "clonedeps", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fast-generic": {
@@ -184,13 +212,13 @@
       "orchestrator": {
         "model": "anthropic/claude-opus-5",
         "variant": "high",
-        "skills": ["*"],
+        "skills": ["*", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "opencode-go/qwen3.7-max",
         "variant": "max",
-        "skills": ["ce:brainstorm", "simplify", "systematic:*"],
+        "skills": ["ce:brainstorm", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
       "council": {
@@ -211,13 +239,20 @@
       },
       "designer": {
         "model": "github-copilot/gemini-3.5-flash",
-        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "skills": [
+          "agent-browser",
+          "brand-voice",
+          "content-research-writer",
+          "impeccable",
+          "openai-imagegen",
+          "systematic:*"
+        ],
         "mcps": []
       },
       "fixer": {
         "model": "opencode-go/gpt-5.6-luna",
         "variant": "high",
-        "skills": ["agent-browser", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "clonedeps", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
       "fast-generic": {
