@@ -1,9 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/cortexkit/magic-context/master/assets/magic-context.schema.json",
   "historian": {
-    "model": "anthropic/claude-sonnet-5",
     "temperature": 0.1,
-    "variant": "medium",
+
     "tools": {
       "bash": false,
       "write": false,
@@ -13,10 +12,11 @@
       "bash": "deny",
       "webfetch": "deny",
       "edit": "deny"
-    }
+    },
+    "opencode": { "model": "anthropic/claude-sonnet-5", "variant": "medium" },
+    "pi": { "model": "anthropic/claude-sonnet-5" }
   },
   "dreamer": {
-    "model": "anthropic/claude-sonnet-5",
     "inject_docs": true,
     "tasks": {
       "verify": {
@@ -47,7 +47,9 @@
         "schedule": "0 0 * * *",
         "promotion_threshold": 3
       }
-    }
+    },
+    "opencode": { "model": "anthropic/claude-sonnet-5" },
+    "pi": { "model": "anthropic/claude-sonnet-5" }
   },
   "sidekick": {
     "disabled": true,
