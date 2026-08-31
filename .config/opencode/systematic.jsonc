@@ -17,13 +17,13 @@
       "variant": "low"
     },
     "workflow": {
-      "model": "opencode-go/gpt-5.6-luna",
+      "model": "github-copilot/claude-sonnet-4.6",
       "variant": "low"
     }
   },
   "agents": {
     "repo-research-analyst": {
-      "model": "opencode-go/gpt-5.6-luna",
+      "model": "github-copilot/gemini-3.5-flash",
       "variant": "low"
     },
     "spec-flow-analyzer": {
@@ -31,7 +31,7 @@
       "variant": "high"
     },
     "systematic-implementer": {
-      "model": "opencode-go/gpt-5.6-luna",
+      "model": "openai/gpt-5.6-luna",
       "variant": "high"
     }
   },
