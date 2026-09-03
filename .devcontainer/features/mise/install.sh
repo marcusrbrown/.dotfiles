@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-set -e
+# pipefail matters for the pinned installers below: a versioned URL that 404s
+# pipes an empty script into `sh`, which exits 0 and would hide a bad pin.
+set -eo pipefail
 
 if [ "$(id -u)" -ne 0 ]; then
     echo -e 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
@@ -19,7 +21,11 @@ MISE_VERSION=2026.9.1
 curl https://mise.run | MISE_INSTALL_PATH="$MISE_INSTALL_PATH" MISE_VERSION="$MISE_VERSION" sh
 
 echo "(*) Installing uv (required by mise pipx backend)..."
-curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+# The uv installer bakes its version in, so pin via the versioned URL rather
+# than an env var.
+# renovate: datasource=github-releases packageName=astral-sh/uv
+UV_VERSION=0.12.9
+curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | env UV_INSTALL_DIR=/usr/local/bin sh
 
 # Validation and activation of mise taken from:
 # https://github.com/RouL/devcontainer-features/blob/2ba3812809d9c933cf459f1413e67f63a9a894e3/src/mise/install.sh
