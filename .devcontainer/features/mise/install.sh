@@ -14,7 +14,9 @@ echo "(*) Installing mise-en-place..."
 apt-get update && apt-get install -y --no-install-recommends zstd && rm -rf /var/lib/apt/lists/*
 
 MISE_INSTALL_PATH=/usr/local/bin/mise
-curl https://mise.run | MISE_INSTALL_PATH="$MISE_INSTALL_PATH" sh
+# renovate: datasource=github-releases packageName=jdx/mise
+MISE_VERSION=2026.9.0
+curl https://mise.run | MISE_INSTALL_PATH="$MISE_INSTALL_PATH" MISE_VERSION="$MISE_VERSION" sh
 
 echo "(*) Installing uv (required by mise pipx backend)..."
 curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh

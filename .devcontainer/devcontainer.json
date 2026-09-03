@@ -73,10 +73,11 @@
         "XDG_STATE_HOME": "${containerWorkspaceFolder}/.local/state",
         "ZDOTDIR": "${containerWorkspaceFolder}/.config/zsh"
     },
+    // GIT_DIR/GIT_WORK_TREE are deliberately not set here: exporting them globally
+    // hijacks every git invocation in the container, including ones tools make
+    // internally. Use the `.dotfiles` alias, which scopes them per command.
     "remoteEnv": {
-        "GH_TOKEN": "${localEnv:GH_TOKEN}",
-        "GIT_DIR": "${containerWorkspaceFolder}/.dotfiles",
-        "GIT_WORK_TREE": "${containerWorkspaceFolder}"
+        "GH_TOKEN": "${localEnv:GH_TOKEN}"
     },
     "remoteUser": "vscode",
     "workspaceFolder": "/home/vscode",

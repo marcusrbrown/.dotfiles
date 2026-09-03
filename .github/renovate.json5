@@ -4,8 +4,12 @@
   customManagers: [
     {
       customType: 'regex',
-      description: 'Update _VERSION variables in the global Mise config file.',
-      managerFilePatterns: ['/(^|/)\\.?mise\\.toml$/', '/(^|/)\\.?mise/config\\.toml$/'],
+        description: 'Update _VERSION variables in the global Mise config file and the devcontainer mise feature.',
+        managerFilePatterns: [
+          '/(^|/)\\.?mise\\.toml$/',
+          '/(^|/)\\.?mise/config\\.toml$/',
+          '/(^|/)\\.devcontainer/features/mise/install\\.sh$/'
+        ],
       matchStrings: [
         '# renovate: datasource=(?<datasource>[a-z-.]+?)(?: depName=(?<depName>.+?))?(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+?.+?_VERSION=(?<currentValue>.+?)\\s'
       ],
