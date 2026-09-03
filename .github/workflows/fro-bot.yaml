@@ -164,8 +164,15 @@ env:
          * .config/bash/aliases uses `command_exists` guard for optional
            tools.
        - Check that AGENTS.md accurately reflects the current directory
-         structure. If drift is found, open a PR with corrections.
-       Report findings but put actual fixes into category 4.
+          structure and documented behavior. If drift is found, deliver the
+          correction: create a branch, commit it, push, and open a PR. This
+          is the one exception to this category's report-only default, so do
+          not defer it to another category. Editing the working tree without
+          opening a PR does not persist and will silently recur every run.
+          Before documenting shell load order, verify it against a live
+          shell rather than reading the files — several scripts under
+          .config/bash/ have no referrer and never execute.
+        Everything else in this category is report-only.
 
     4. DEVELOPER EXPERIENCE
         Report on static analysis findings only. Do not run formatting tools
