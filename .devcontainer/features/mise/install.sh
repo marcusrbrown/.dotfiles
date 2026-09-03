@@ -15,7 +15,7 @@ apt-get update && apt-get install -y --no-install-recommends zstd && rm -rf /var
 
 MISE_INSTALL_PATH=/usr/local/bin/mise
 # renovate: datasource=github-releases packageName=jdx/mise
-MISE_VERSION=2026.9.0
+MISE_VERSION=2026.9.1
 curl https://mise.run | MISE_INSTALL_PATH="$MISE_INSTALL_PATH" MISE_VERSION="$MISE_VERSION" sh
 
 echo "(*) Installing uv (required by mise pipx backend)..."
