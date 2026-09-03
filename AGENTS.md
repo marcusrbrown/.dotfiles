@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-Bare git dotfiles repo. `GIT_DIR=~/.dotfiles`, `GIT_WORK_TREE=~/`. 196 tracked files spanning shell init, dev tooling, AI agent configs, devcontainer setup, CI, and project documentation (plans, brainstorms, solutions, runbooks). Sync across machines via the allowlist in `.dotfiles/ignore`.
+Bare git dotfiles repo. `GIT_DIR=~/.dotfiles`, `GIT_WORK_TREE=~/`. 203 tracked files spanning shell init, dev tooling, AI agent configs, devcontainer setup, CI, and project documentation (plans, brainstorms, solutions, runbooks). Sync across machines via the allowlist in `.dotfiles/ignore`.
 
 ## GIT OPERATIONS
 
@@ -32,7 +32,7 @@ git status  # now works on dotfiles
 
 ```
 ~/
-├── .bashrc              # → sources .config/bash/main
+├── .bashrc              # → sheldon (bash): mise + starship only
 ├── .zshenv              # → sets ZDOTDIR, sources .config/zsh/.zshenv
 ├── .profile             # Login entry; sources .config/bash/exports
 ├── AGENTS.md            # This file
@@ -51,7 +51,7 @@ git status  # now works on dotfiles
 │   └── skills/          # Loadable by Claude Code, OpenCode, etc.
 ├── .claude/             # Claude Code: agents/, rules/, commands/, settings.json
 ├── .devcontainer/       # Devcontainer + custom features (dotfiles-dev, mise, sheldon, keychain)
-├── .dotfiles/           # Bare repo metadata (.gitignore allowlist, .gitconfig)
+├── .dotfiles/           # Bare repo metadata (ignore allowlist, .gitconfig)
 │   └── docs/            # Project docs: brainstorms/, plans/, runbooks/, solutions/
 ├── .github/             # CI workflows + settings.yml (branch protection)
 ├── .ssh/                # SSH config only (no credentials)
@@ -67,8 +67,8 @@ git status  # now works on dotfiles
 | Add tracked file | Test with `git add -n` first | Only update `.dotfiles/ignore` allowlist if blocked |
 | Shell aliases | `.config/bash/aliases` | `.dotfiles` alias defined here |
 | Environment vars | `.config/bash/exports` | Sourced by both bash and zsh |
-| Tool-specific init | `.config/bash/init.d/` | Numbered prefix = load order; `d`-prefix = disabled (e.g., `dnvm.bash`) |
-| Machine-local overrides | `.config/bash/local.d/` | Gitignored; sourced last by main |
+| Tool-specific init | `.config/bash/init.d/` | **Not loaded by any live shell** — see Shell Config Organization |
+| Machine-local overrides | `.config/bash/local.d/` | Gitignored; **not loaded by any live shell** |
 | Zsh plugins | `.config/sheldon/plugins.toml` | sheldon is the active plugin manager |
 | Prompt | `.config/starship.toml` | Starship; installed via devcontainer feature |
 | Git settings | `.config/git/config` | GPG signing on, rebase defaults, autoStash |
@@ -119,10 +119,10 @@ git --git-dir=$HOME/.dotfiles config core.hooksPath $HOME/.config/git/hooks
 
 ### Shell Config Organization
 
-- **Bash entry**: `.bashrc` → `.config/bash/main` → `functions` → `aliases` → `init.d/*` (alphabetical) → `local.d/*`
-- **Zsh entry**: `.zshenv` → `ZDOTDIR/.zshenv` (sources `.config/bash/exports`) → `.zshrc` → sheldon
-- **init.d/ numbering**: numeric prefix sets load order (e.g., `002-prompt.bash`, `003-history.bash`); `d`-prefix disables a script (e.g., `dnvm.bash` skips nvm init since mise owns Node)
-- **local.d/**: gitignored except `.gitkeep`; sourced last for machine-specific overrides
+- **Zsh entry** (the daily shell): `.zshenv` → `ZDOTDIR/.zshenv` → `.zshrc` (sources `.config/bash/exports`) → sheldon → `[plugins.aliases]` loads `.config/bash/aliases`
+- **Bash entry**: `.profile` → `.config/bash/exports` → `.bashrc` → sheldon (`plugins.bash.toml`) → `mise activate` + `starship init`. Nothing else is sourced — `aliases` is zsh-only, so the `.dotfiles` alias does not exist in an interactive bash shell.
+- **Only two files are live**: `.config/bash/exports` and `.config/bash/aliases`. `main`, `functions`, `init.d/*` (19 files), and `local.d/*` are orphaned — no shell sources them. Verified: `PAGER` is unset despite `init.d/pager.bash` exporting it, and the live `ls` alias comes from `aliases`, not `init.d/ls.bash`.
+- **init.d/ conventions** (dormant): numeric prefix sets load order (e.g., `002-prompt.bash`); `d`-prefix disables a script (e.g., `dnvm.bash`). Relevant only if the chain is ever restored.
 - **Helper functions** (defined in `exports`): `command_exists`, `ensure_dir`, `prepend_to_path`, `append_to_path`, `remove_from_path`
 - **Host detection**: `HOST_OS`, `HOST_MACHINE`, `HOST_VERSION`, `HOST_PLATFORM` derived from `uname`; `REMOTE=1` if `SSH_CONNECTION` is set
 
@@ -168,7 +168,7 @@ git --git-dir=$HOME/.dotfiles config core.hooksPath $HOME/.config/git/hooks
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
-- **DO NOT** add files to `.gitignore` without first running `git check-ignore -v <file>`
+- **DO NOT** add files to `.dotfiles/ignore` without first running `git check-ignore -v <file>`
 - **DO NOT** run `git` commands without `.dotfiles` env vars set
 - **NEVER** commit machine-specific values (use `*.local` files or `local.d/`)
 - **NEVER** commit secrets (SSH keys, API tokens, credentials)
@@ -218,6 +218,6 @@ mise run distill -- --help                    # Full flag reference (env, exit c
 - **mise `task_config.includes` portability**: this field doesn't expand `~`/`$HOME`/`{{config_root}}`/`{{xdg_config_home}}` and silently ignores relative paths in global config (`project_root` is `None`). Avoid it entirely — use file-based shebang tasks under `.config/mise/tasks/` instead (auto-discovered, no expansion needed).
 - **Broken cache-clean LaunchAgent**: `~/Library/LaunchAgents/dev.mrbro.cache-clean.plist` references a nonexistent path. Sunday 4AM cleanup does not run. Plist is not tracked in dotfiles. Manual cleanup: `brew cleanup --prune=all`, `uv cache clean`, `mise prune`.
 - **Disk monitoring**: macOS root FS occasionally hits ENOSPC (seen with <300MB free on a 926GB disk). pnpm rename errors are the canary. Run cleanup when tight.
-- **`command_exists` guard**: used throughout `.config/bash/init.d/` and `.config/bash/aliases` for conditional tool setup — required pattern.
+- **`command_exists` guard**: defined in `.config/bash/exports`, used throughout `.config/bash/aliases` for conditional tool setup — required pattern. Also used in the dormant `init.d/` scripts.
 - **OpenCode AGENTS.md** at `.config/opencode/AGENTS.md` is NOT a structural index — it's the primary collaboration system prompt for OpenCode sessions. Don't repurpose it for directory documentation.
 - **`.agents/skills/` is the cross-platform skill bus**: skills here load into both Claude Code and OpenCode. The active `skills` CLI lockfile is `~/.local/state/skills/.skill-lock.json` (XDG state, untracked); `~/.agents/.skill-lock.json` was a legacy path and is no longer used.
