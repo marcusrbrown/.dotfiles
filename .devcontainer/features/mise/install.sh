@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-set -e
+# pipefail matters for the pinned installers below: a versioned URL that 404s
+# pipes an empty script into `sh`, which exits 0 and would hide a bad pin.
+set -eo pipefail
 
 if [ "$(id -u)" -ne 0 ]; then
     echo -e 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
