@@ -163,7 +163,7 @@ env:
          * Mise tasks in .config/mise/tasks/ follow naming conventions.
          * .config/bash/aliases uses `command_exists` guard for optional
            tools.
-        - Check that AGENTS.md accurately reflects the current directory
+       - Check that AGENTS.md accurately reflects the current directory
           structure and documented behavior. If drift is found, deliver the
           correction: create a branch, commit it, push, and open a PR. This
           is the one exception to this category's report-only default, so do
