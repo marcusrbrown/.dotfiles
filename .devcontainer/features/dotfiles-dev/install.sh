@@ -39,7 +39,9 @@ fi
 
 if ! command -v starship > /dev/null 2>&1; then
     # Install Starship
-    curl -fsSL https://starship.rs/install.sh | sh -s -- -y
+    # renovate: datasource=github-releases packageName=starship/starship
+    STARSHIP_VERSION=v1.26.0
+    curl -fsSL https://starship.rs/install.sh | sh -s -- -y -v "${STARSHIP_VERSION}"
 fi
 
 if [ ! -d "${DOTFILES_DEV_PATH}" ]; then
