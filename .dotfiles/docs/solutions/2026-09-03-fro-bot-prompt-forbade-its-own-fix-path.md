@@ -65,17 +65,17 @@ Instruction one grants a delivery path. Instruction two routes the fix to anothe
         Everything else in this category is report-only.
 ```
 
-Three things changed there, and each does separate work:
+Three changes, each doing separate work:
 
-1. **The delivery mechanism is named concretely** — branch, commit, push, PR. "Open a PR" is an outcome; an agent that cannot infer the steps will substitute whatever action is still permitted.
+1. **The delivery mechanism is named concretely** — branch, commit, push, PR. "Open a PR" is an outcome, not a step.
 2. **The routing is removed.** The exception lives where the instruction lives.
-3. **The failure mode is stated in the prompt**, so the agent can recognize the trap rather than fall into it silently.
+3. **The failure mode is stated in the prompt**, so the agent can recognize the trap.
 
-**Treat a repeated identical "fixed" report as a missing delivery path.** It is the signature of this bug. A genuinely flaky commit step produces intermittent success; a closed delivery path produces a perfectly consistent no-op.
+**Treat a repeated identical "fixed" report as a missing delivery path.** A flaky commit step produces intermittent success; a closed delivery path produces a perfectly consistent no-op.
 
-**Be skeptical of an agent's diagnosis of its own harness.** It can observe that it made an edit and that the edit is gone. It cannot see that its instructions never permitted the edit to leave the container. That gap makes "the caller is broken" the natural conclusion and the wrong one.
+**Be skeptical of an agent's diagnosis of its own harness.** It can see that it made an edit and that the edit is gone. It cannot see that its instructions never permitted the edit to leave the container.
 
-**Grep for the shape.** This class is mechanically detectable in prompt text:
+**Grep for the shape:**
 
 ```bash
 # Cross-category routing that may strip permissions
@@ -94,9 +94,9 @@ Any instruction that grants a delivery path deserves a check that no later instr
 
 Contradictory instructions do not raise an error. They narrow the action space. The agent takes the only action still permitted, and reports it honestly — from inside a single run it really did apply the fix.
 
-That makes the failure self-reinforcing in both directions. The success report suppresses escalation, so no human investigates. The drift survives, so the next run detects it again and repeats. The loop is stable and can run indefinitely; this one was caught only because the report happened to say "again."
+That makes the failure self-reinforcing in both directions. The success report suppresses escalation, so no human investigates. The drift survives, so the next run detects it again. The loop is stable and can run indefinitely; this one was caught only because the report happened to say "again."
 
-The cost is not the stale documentation. It is that a maintenance agent's reports become unreliable in a way that reads as reliable — the one category it could not fix looked identical to the ones it could.
+The cost is not the stale documentation — it is that the agent's reports read as reliable while the one category it could not deliver looked identical to the ones it could.
 
 ## When to Apply
 
@@ -109,9 +109,9 @@ Review the prompt whenever an agent is expected to produce a durable change rath
 
 ## A Second Failure of the Same Kind
 
-The drift being reported was itself understated. `AGENTS.md` documented a Bash load chain — `.bashrc` → `.config/bash/main` → `functions` → `aliases` → `init.d/*` → `local.d/*` — that never ran. `.bashrc` sources sheldon, which loads `mise activate` and `starship init` and nothing else.
+The drift being reported was itself understated. Before this fix, `AGENTS.md` documented a Bash load chain — `.bashrc` → `.config/bash/main` → `functions` → `aliases` → `init.d/*` → `local.d/*` — that never ran. `.bashrc` sources sheldon, which loads `mise activate` and `starship init` and nothing else.
 
-Reading the files supports the documented chain: the scripts exist, they are well-formed, they use consistent conventions. Only a live shell disproves it:
+Reading the files supports the documented chain: the scripts exist, are well-formed, and follow consistent conventions. Only a live shell disproves it:
 
 ```console
 $ zsh -ic 'echo "PAGER=$PAGER"'     # init.d/pager.bash exports PAGER
@@ -123,9 +123,9 @@ ls='LC_COLLATE=C lsd --color=auto --group-directories-first'
 $ bash -ic 'type .dotfiles'          # zsh-only, via sheldon's [plugins.aliases]
 ```
 
-Nineteen `init.d/` scripts plus `main` and `functions` are dead code that the documentation presented as live configuration. The corrected prompt now requires verifying load order against a live shell, because the file contents are actively misleading.
+Nineteen `init.d/` scripts plus `main` and `functions` are dead code the documentation presented as live configuration.
 
-This has a real consequence beyond documentation: `docs/runbooks/discord-admin-agent.md` instructs exporting `DISCORD_TOKEN` from `.config/bash/local.d/discord.bash`. That file exists on this machine, and `DISCORD_TOKEN` is empty in a live shell — `local.d/` is never sourced, so the runbook's setup step silently does nothing.
+The consequence reaches past documentation: `docs/runbooks/discord-admin-agent.md` instructs exporting `DISCORD_TOKEN` from `.config/bash/local.d/discord.bash`. That file exists on this machine, and `DISCORD_TOKEN` is empty in a live shell — `local.d/` is never sourced, so the runbook's credential setup silently does nothing.
 
 Both failures share a shape: a plausible-looking artifact that never executes, reported as working by something that could not observe the difference.
 
