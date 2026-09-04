@@ -159,7 +159,7 @@
     },
     "mixed-fable": {
       "orchestrator": {
-        "model": "anthropic/claude-fable-5",
+        "model": "anthropic/claude-fable-5-1",
         "variant": "high",
         "skills": ["*", "!worktrees"],
         "mcps": ["*", "!context7"]
