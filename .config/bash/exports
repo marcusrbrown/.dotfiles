@@ -311,6 +311,17 @@ if [ -d "$HOME/Library/Android/sdk" ]; then
     append_to_path "$ANDROID_HOME/platform-tools"
 fi
 
+# Editor and pager defaults
+
+: "${EDITOR:=vim}"
+: "${VISUAL:=$EDITOR}"
+: "${PAGER:=less}"
+export EDITOR VISUAL PAGER
+
+# Telemetry opt-out (kept unconditional — also applies in Linux containers)
+
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
 # Pagers
 
 if command_exists bat; then
