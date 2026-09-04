@@ -67,11 +67,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # Cache deliberately disabled. Nothing downstream consumes these tools --
+      # this job exists to prove every tool in .config/mise/config.toml installs
+      # cleanly, and a cache hit skips the install being verified. It also cost
+      # far more than it saved: keyed on mise version x config hash x ref, it
+      # accumulated nine ~993MB entries (8.9GB of the repo's 10GB cache budget)
+      # and LRU-evicted every other cache, including the ~40KB agent session
+      # caches that carry continuity between runs.
       - name: Install mise
         env:
           MISE_VERSION: 2026.9.1 # renovate: datasource=github-releases packageName=jdx/mise
         uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
+          cache: false
           version: ${{ env.MISE_VERSION }}
 
   script-tests-matrix:
