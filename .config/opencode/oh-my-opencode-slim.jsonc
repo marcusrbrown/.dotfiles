@@ -147,8 +147,8 @@
         "mcps": []
       },
       "fixer": {
-        "model": "openai/gpt-5.6-luna",
-        "variant": "high",
+        "model": "anthropic/claude-sonnet-5",
+        "variant": "medium",
         "skills": ["agent-browser", "ce:*", "clonedeps", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
@@ -198,8 +198,8 @@
         "mcps": []
       },
       "fixer": {
-        "model": "openai/gpt-5.6-luna",
-        "variant": "high",
+        "model": "anthropic/claude-sonnet-5",
+        "variant": "medium",
         "skills": ["agent-browser", "ce:*", "clonedeps", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
@@ -250,8 +250,8 @@
         "mcps": []
       },
       "fixer": {
-        "model": "opencode-go/gpt-5.6-luna",
-        "variant": "high",
+        "model": "anthropic/claude-sonnet-5",
+        "variant": "medium",
         "skills": ["agent-browser", "ce:*", "clonedeps", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
