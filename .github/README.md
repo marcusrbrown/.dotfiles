@@ -59,18 +59,13 @@ mkdir -p ~/.dotfiles-backup
 
 ```
 ~/
-├── .bashrc                    # Sources .config/bash/main
+├── .bashrc                    # Sources bash exports/aliases; loads Sheldon (mise + starship)
 ├── .zshenv                    # Sources .config/zsh/.zshenv
 ├── .profile                   # Login shell entry
 ├── .config/
 │   ├── bash/                  # Bash configuration
-│   │   ├── main               # Core setup, sources all other files
 │   │   ├── aliases            # Shell aliases (.dotfiles alias defined here)
-│   │   ├── exports            # Environment variables (shared by bash/zsh)
-│   │   ├── functions          # Shell functions
-│   │   ├── init.d/            # Per-tool initialization scripts
-│   │   ├── completion.d/      # Tab completion scripts
-│   │   └── local.d/           # Machine-local overrides (gitignored)
+│   │   └── exports            # Environment variables (shared by bash/zsh)
 │   ├── zsh/                   # Zsh configuration
 │   │   ├── .zshenv            # Environment setup
 │   │   ├── .zshrc             # Interactive shell config
@@ -136,14 +131,14 @@ echo '!/path/to/new/file' >> ~/.dotfiles/ignore
 
 ### Machine-Local Overrides
 
-Files ending in `.local` or placed in `local.d/` directories are gitignored:
+Files ending in `.local` are gitignored:
 
 ```bash
-# Create local bash overrides
-echo 'export MY_SECRET_TOKEN="..."' > ~/.config/bash/local.d/secrets
+# Create local shell overrides
+echo 'export MY_SECRET_TOKEN="..."' > ~/.zshrc.local
 
 # Create local zshrc additions
-echo 'alias work="cd ~/work"' > ~/.zshrc.local
+echo 'alias work="cd ~/work"' >> ~/.zshrc.local
 ```
 
 ## Configuration Details
@@ -152,18 +147,14 @@ echo 'alias work="cd ~/work"' > ~/.zshrc.local
 
 **Bash**:
 
-1. `.bashrc` sources `.config/bash/main`
-2. `main` sets up paths, shell options, and sources:
-   - `exports` - Environment variables
-   - `functions` - Shell functions
-   - `aliases` - Command aliases
-   - `init.d/*` - Tool-specific initialization
-   - `local.d/*` - Machine-local overrides
+1. `.profile` sources `.config/bash/exports`
+2. `.bashrc` sources `.config/bash/exports` if needed, then `.config/bash/aliases`
+3. Sheldon loads `mise activate` and `starship init`
 
 **Zsh**:
 
 1. `.zshenv` sources `.config/zsh/.zshenv`
-2. `.zshrc` uses Sheldon for plugin management with:
+2. `.zshrc` sources `.config/bash/exports` and `~/.zshrc.local`, then uses Sheldon for plugin management with:
    - Deferred loading for better startup performance
    - Compiled cache for faster subsequent loads
    - Prezto modules for core functionality
@@ -299,15 +290,16 @@ The `cacheFrom` option pulls cached Docker layers from the published image, so s
 
 ## Customization
 
-### Adding Tool Initialization
+### Adding Shell Configuration
 
-Create a new file in `.config/bash/init.d/`:
+Add shared environment variables to `.config/bash/exports` or aliases to `.config/bash/aliases`:
 
 ```bash
-# ~/.config/bash/init.d/099-mytool
-if command_exists mytool; then
-    eval "$(mytool init bash)"
-fi
+# Shared environment variable
+export MY_TOOL_HOME="$HOME/.local/share/mytool"
+
+# Shared alias
+alias mytool="$MY_TOOL_HOME/bin/mytool"
 ```
 
 ### Adding Zsh Plugins

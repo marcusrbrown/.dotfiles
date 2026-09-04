@@ -98,13 +98,12 @@ This allows seamless tracking of dotfiles without symlinks or special tooling.
 Files and directories matching these patterns are gitignored:
 
 - `*.local` - E.g., `~/.zshrc.local`
-- `local.d/` directories - E.g., `~/.config/bash/local.d/`
 
 Use these for machine-specific settings, secrets, or overrides:
 
 ```sh
 # Machine-specific environment
-echo 'export WORK_EMAIL="me@company.com"' > ~/.config/bash/local.d/work
+echo 'export WORK_EMAIL="me@company.com"' > ~/.zshrc.local
 
 # Local zsh customizations
 echo 'alias proj="cd ~/work/project"' >> ~/.zshrc.local
@@ -158,4 +157,4 @@ mkdir -p ~/.dotfiles-backup
 - Database connection strings
 - Machine-specific paths containing usernames
 
-Use `local.d/` directories or `*.local` files for sensitive configuration.
+Use `*.local` files for sensitive configuration.

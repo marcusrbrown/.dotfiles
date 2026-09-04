@@ -45,10 +45,8 @@ env:
     - Correctness: will this config break shell startup or tool initialization?
     - Portability: does this work on both macOS and Linux (devcontainer)?
     - Security: no secrets, credentials, API keys, or PII in tracked files.
-      Machine-specific config belongs in *.local files or local.d/ (gitignored).
+      Machine-specific config belongs in *.local files (gitignored).
     - Convention compliance:
-      * Shell init scripts in .config/bash/init.d/ use numbered prefixes
-      * Machine-local overrides go in .config/bash/local.d/ (not committed)
       * Shared env vars live in .config/bash/exports (sourced by bash and zsh)
       * XDG compliance: configs use ~/.config, ~/.local/share, ~/.cache
       * GPG signing enabled on commits
@@ -112,7 +110,7 @@ env:
        such as Renovate/Dependabot). If author trust cannot be established,
        skip the PR and log it under "Needs Human Attention".
        If the PR touches workflows, automation prompts, or shell init
-       scripts (.bashrc, .zshenv, .config/bash/main, .config/zsh/),
+       scripts (.bashrc, .zshenv, .config/bash/exports, .config/bash/aliases, .config/zsh/),
        do not run commands from that branch. Skip it and log why.
        For each fixable PR:
        a. Check out the PR branch.
@@ -138,7 +136,7 @@ env:
        Scan tracked files for accidental secret exposure:
        - Search for patterns: API keys, tokens, passwords, private keys,
          hardcoded IPs/hostnames that look internal.
-       - Check .config/bash/exports for values that should be in local.d/.
+       - Check .config/bash/exports for values that should be in *.local files.
        - Verify .ssh/config doesn't contain credentials (only structure).
        If any secrets are found, create an issue immediately with severity
        "critical" — do NOT include the secret value in the issue body.
@@ -155,8 +153,8 @@ env:
          (use git blame). Collect them into a single issue or update an
          existing "Stale TODOs" issue.
        - Verify convention compliance:
-         * Shell init scripts in .config/bash/init.d/ use numbered prefixes
-           for ordering.
+         * Shared shell configuration lives in .config/bash/exports and
+           .config/bash/aliases.
          * No machine-specific values in committed files (IPs, hostnames,
            usernames that aren't "mrbrown" or generic).
          * LaunchAgents use dev.mrbro.* label prefix.
@@ -242,7 +240,7 @@ env:
       assertions, weakening lint rules, or editing workflows/configuration
       only to suppress failures.
     - Do not modify .github/workflows/, shell init files (.bashrc, .zshenv,
-      .config/bash/main, .config/zsh/), devcontainer config, or automation
+      .config/bash/exports, .config/bash/aliases, .config/zsh/), devcontainer config, or automation
       prompt files unless the failing run is caused by a genuine bug in
       that file, the change is narrowly scoped, and the summary explains
       why.
@@ -254,9 +252,9 @@ env:
     Dotfiles conventions (MUST follow for changes):
     - Allowlist .gitignore: everything ignored by default, specific paths
       un-ignored. New files must be allowlisted in .dotfiles/ignore.
-    - Shell config organization: init.d/ with numbered prefixes, local.d/
-      for machine-specific (never committed), shared exports in
-      .config/bash/exports.
+    - Shell config organization: shared exports in .config/bash/exports and
+      aliases in .config/bash/aliases; machine-specific values stay in *.local
+      files and are never committed.
     - XDG compliance: ~/.config, ~/.local/share, ~/.cache.
     - GPG signing on commits.
     - `command_exists` guard for optional tool aliases/init.
