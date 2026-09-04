@@ -93,7 +93,7 @@ Verify in a new shell before starting a session — an empty result here is the 
 zsh -ic '[ -n "$DISCORD_TOKEN" ] && echo "token ok (${#DISCORD_TOKEN} chars)" || echo "TOKEN EMPTY"'
 ```
 
-Use `~/.zshrc.local` for these exports; `.config/zsh/.zshrc` sources it and the file remains untracked. This hook is zsh-only; interactive bash has no machine-local hook, so export the variables inline there if you need them.
+Use `~/.zshrc.local` for these exports; `.config/zsh/.zshrc` sources it and the file remains untracked. Earlier versions of this runbook pointed at `.config/bash/local.d/`, which no shell ever sourced — the exports silently never took effect. This hook is zsh-only; interactive bash has no machine-local hook, so export the variables inline there if you need them.
 
 ### Option B — plaintext local-only env file
 

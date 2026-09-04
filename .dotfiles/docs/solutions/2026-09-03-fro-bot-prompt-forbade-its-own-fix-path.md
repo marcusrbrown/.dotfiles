@@ -109,23 +109,23 @@ Review the prompt whenever an agent is expected to produce a durable change rath
 
 ## A Second Failure of the Same Kind
 
-The drift being reported was itself understated. Before this fix, `AGENTS.md` documented a Bash load chain through a former entry point and several dormant subsystems that never ran. `.bashrc` sources sheldon, which loads `mise activate` and `starship init` and nothing else.
+The drift being reported was itself understated. Before this fix, `AGENTS.md` documented a Bash load chain — `.bashrc` → `.config/bash/main` → `functions` → `aliases` → `init.d/*` → `local.d/*` — that never ran. `.bashrc` sources sheldon, which loads `mise activate` and `starship init` and nothing else.
 
 Reading the files supports the documented chain: the scripts exist, are well-formed, and follow consistent conventions. Only a live shell disproves it:
 
 ```console
-$ zsh -ic 'echo "PAGER=$PAGER"'     # the deleted pager script was expected to export PAGER
+$ zsh -ic 'echo "PAGER=$PAGER"'     # init.d/pager.bash exports PAGER
 PAGER=
 
-$ zsh -ic 'alias ls'                 # resolves to the live aliases file, not the deleted script
+$ zsh -ic 'alias ls'                 # resolves to aliases:37, not init.d/ls.bash:23
 ls='LC_COLLATE=C lsd --color=auto --group-directories-first'
 
 $ bash -ic 'type .dotfiles'          # zsh-only, via sheldon's [plugins.aliases]
 ```
 
-Nineteen per-tool initialization scripts plus the former entry point and helper file were dead code the documentation presented as live configuration.
+Nineteen `init.d/` scripts plus `main` and `functions` are dead code the documentation presented as live configuration.
 
-The consequence reaches past documentation: `docs/runbooks/discord-admin-agent.md` instructed exporting `DISCORD_TOKEN` from an ignored Bash override file. That file exists on this machine, and `DISCORD_TOKEN` is empty in a live shell — the override directory is never sourced, so the runbook's credential setup silently does nothing.
+The consequence reaches past documentation: `docs/runbooks/discord-admin-agent.md` instructs exporting `DISCORD_TOKEN` from `.config/bash/local.d/discord.bash`. That file exists on this machine, and `DISCORD_TOKEN` is empty in a live shell — `local.d/` is never sourced, so the runbook's credential setup silently does nothing.
 
 Both failures share a shape: a plausible-looking artifact that never executes, reported as working by something that could not observe the difference.
 
