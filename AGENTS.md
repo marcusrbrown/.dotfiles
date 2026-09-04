@@ -119,7 +119,7 @@ git --git-dir=$HOME/.dotfiles config core.hooksPath $HOME/.config/git/hooks
 ### Shell Config Organization
 
 - **Zsh entry** (the daily shell): `.zshenv` → `ZDOTDIR/.zshenv` → `.zshrc` (sources `.config/bash/exports`) → sheldon → `[plugins.aliases]` loads `.config/bash/aliases`
-- **Bash entry**: `.profile` → `.config/bash/exports` → `.bashrc` → sheldon (`plugins.bash.toml`) → `mise activate` + `starship init`. Nothing else is sourced — `aliases` is zsh-only, so the `.dotfiles` alias does not exist in an interactive bash shell.
+- **Bash entry**: `.profile` → `.config/bash/exports` → `.bashrc`, which sources `exports` (only if `command_exists` is undefined, i.e. a non-login shell) then `aliases`, then sheldon (`plugins.bash.toml`) → `mise activate` + `starship init`.
 - **Only two files are live**: `.config/bash/exports` and `.config/bash/aliases`. The Bash subsystem now contains only those shared files; machine-local Zsh additions belong in `~/.zshrc.local`.
 - **Helper functions** (defined in `exports`): `command_exists`, `ensure_dir`, `prepend_to_path`, `append_to_path`, `remove_from_path`
 - **Host detection**: `HOST_OS`, `HOST_MACHINE`, `HOST_VERSION`, `HOST_PLATFORM` derived from `uname`; `REMOTE=1` if `SSH_CONNECTION` is set

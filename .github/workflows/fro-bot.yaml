@@ -136,7 +136,7 @@ env:
        Scan tracked files for accidental secret exposure:
        - Search for patterns: API keys, tokens, passwords, private keys,
          hardcoded IPs/hostnames that look internal.
-        - Check .config/bash/exports for values that should be in *.local files.
+       - Check .config/bash/exports for values that should be in *.local files.
        - Verify .ssh/config doesn't contain credentials (only structure).
        If any secrets are found, create an issue immediately with severity
        "critical" — do NOT include the secret value in the issue body.
@@ -153,8 +153,8 @@ env:
          (use git blame). Collect them into a single issue or update an
          existing "Stale TODOs" issue.
        - Verify convention compliance:
-          * Shared shell configuration lives in .config/bash/exports and
-            .config/bash/aliases.
+         * Shared shell configuration lives in .config/bash/exports and
+           .config/bash/aliases.
          * No machine-specific values in committed files (IPs, hostnames,
            usernames that aren't "mrbrown" or generic).
          * LaunchAgents use dev.mrbro.* label prefix.
