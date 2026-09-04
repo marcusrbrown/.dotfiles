@@ -80,27 +80,29 @@ security add-generic-password \
   -U
 ```
 
-Export it at shell startup via a gitignored file under `.config/bash/local.d/`:
+Export it at shell startup from `~/.zshrc.local`, which `.config/zsh/.zshrc` sources and the `*.local` allowlist rule keeps untracked:
 
 ```bash
-# .config/bash/local.d/discord.bash  (gitignored — DO NOT commit)
+# ~/.zshrc.local  (untracked — DO NOT commit)
 if command -v security >/dev/null 2>&1; then
   export DISCORD_TOKEN="$(security find-generic-password -s discord-bot-fro-bot -w 2>/dev/null)"
   export DISCORD_GUILD_ID="<your-guild-id>"
 fi
 ```
 
+Do **not** use `.config/bash/local.d/` — no shell sources it, so the exports never take effect. See the Shell Config Organization section of `AGENTS.md`. This hook is zsh-only; interactive bash has no machine-local hook, so export the variables inline there if you need them.
+
 ### Option B — plaintext local-only env file
 
 If you don't want to use Keychain, set the env vars directly in a gitignored file:
 
 ```bash
-# .config/bash/local.d/discord.bash  (gitignored — DO NOT commit)
+# ~/.zshrc.local  (untracked — DO NOT commit)
 export DISCORD_TOKEN="<paste-discord-bot-token>"
 export DISCORD_GUILD_ID="<your-guild-id>"
 ```
 
-Filesystem permissions: `chmod 600 ~/.config/bash/local.d/discord.bash` so only your user can read it.
+Filesystem permissions: `chmod 600 ~/.zshrc.local` so only your user can read it.
 
 ### Option C — 1Password CLI (future)
 
@@ -113,11 +115,11 @@ export DISCORD_TOKEN="$(op read 'op://Personal/discord-fro-bot/credential')"
 ### Where the token MUST NOT live
 
 - Any tracked file under `~/.dotfiles/` (including this runbook, the plan, AGENTS.md, opencode.json)
-- `~/.config/bash/exports` (tracked) or `~/.config/bash/init.d/*.bash` (tracked)
+- `~/.config/bash/exports` (tracked) or `~/.config/bash/init.d/*.bash` (tracked, and never sourced)
 - Any `.env` in a tracked directory
 - Any Discord MCP server config snippet that gets committed
 
-The dotfiles' `.gitignore` allowlist + `~/.config/git/ignore` global-credential-shape patterns + the gitleaks pre-commit hook are the three defense layers; rely on all three.
+The dotfiles' `.dotfiles/ignore` allowlist + `~/.config/git/ignore` global-credential-shape patterns + the gitleaks pre-commit hook are the three defense layers; rely on all three.
 
 ---
 
