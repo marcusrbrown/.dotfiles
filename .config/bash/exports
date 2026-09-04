@@ -78,6 +78,7 @@ if [[ "$HOST_OS" == "darwin" ]]; then
     export HOMEBREW_DEVELOPER=1
     # Disable 'anonymous' analytics
     export HOMEBREW_NO_ANALYTICS=1
+    export DOTNET_CLI_TELEMETRY_OPTOUT=1
     # Remove previously installed versions of insalled/upgraded formulae
     export HOMEBREW_INSTALL_CLEANUP=1
     # Do not permit redirects from HTTPS to HTTP
@@ -310,6 +311,13 @@ if [ -d "$HOME/Library/Android/sdk" ]; then
     append_to_path "$ANDROID_HOME/tools"
     append_to_path "$ANDROID_HOME/platform-tools"
 fi
+
+# Editor and pager defaults
+
+: "${EDITOR:=vim}"
+: "${VISUAL:=$EDITOR}"
+: "${PAGER:=less}"
+export EDITOR VISUAL PAGER
 
 # Pagers
 
