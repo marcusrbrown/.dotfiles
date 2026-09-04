@@ -38,7 +38,7 @@ git status  # now works on dotfiles
 ├── AGENTS.md            # This file
 ├── Brewfile             # macOS Homebrew + mas + casks source of truth
 ├── .config/             # XDG_CONFIG_HOME — most config lives here
-│   ├── bash/            # Bash entry, init.d/ load order, local.d/ overrides
+│   ├── bash/            # Shared Bash/Zsh exports and aliases
 │   ├── zsh/             # Zsh + sheldon plugin manager
 │   ├── git/             # Global git config (GPG, rebase defaults)
 │   ├── mise/            # Tool versions + tasks (.config/mise/tasks/)
@@ -67,8 +67,7 @@ git status  # now works on dotfiles
 | Add tracked file | Test with `git add -n` first | Only update `.dotfiles/ignore` allowlist if blocked |
 | Shell aliases | `.config/bash/aliases` | `.dotfiles` alias defined here |
 | Environment vars | `.config/bash/exports` | Sourced by both bash and zsh |
-| Tool-specific init | `.config/bash/init.d/` | **Not loaded by any live shell** — see Shell Config Organization |
-| Machine-local overrides | `.config/bash/local.d/` | Gitignored; **not loaded by any live shell** |
+| Machine-local overrides | `~/.zshrc.local` | Gitignored; sourced by interactive Zsh |
 | Zsh plugins | `.config/sheldon/plugins.toml` | sheldon is the active plugin manager |
 | Prompt | `.config/starship.toml` | Starship; installed via devcontainer feature |
 | Git settings | `.config/git/config` | GPG signing on, rebase defaults, autoStash |
@@ -121,14 +120,13 @@ git --git-dir=$HOME/.dotfiles config core.hooksPath $HOME/.config/git/hooks
 
 - **Zsh entry** (the daily shell): `.zshenv` → `ZDOTDIR/.zshenv` → `.zshrc` (sources `.config/bash/exports`) → sheldon → `[plugins.aliases]` loads `.config/bash/aliases`
 - **Bash entry**: `.profile` → `.config/bash/exports` → `.bashrc` → sheldon (`plugins.bash.toml`) → `mise activate` + `starship init`. Nothing else is sourced — `aliases` is zsh-only, so the `.dotfiles` alias does not exist in an interactive bash shell.
-- **Only two files are live**: `.config/bash/exports` and `.config/bash/aliases`. `main`, `functions`, `init.d/*` (19 files), and `local.d/*` are orphaned — no shell sources them. Verified: `PAGER` is unset despite `init.d/pager.bash` exporting it, and the live `ls` alias comes from `aliases`, not `init.d/ls.bash`.
-- **init.d/ conventions** (dormant): numeric prefix sets load order (e.g., `002-prompt.bash`); `d`-prefix disables a script (e.g., `dnvm.bash`). Relevant only if the chain is ever restored.
+- **Only two files are live**: `.config/bash/exports` and `.config/bash/aliases`. The Bash subsystem now contains only those shared files; machine-local Zsh additions belong in `~/.zshrc.local`.
 - **Helper functions** (defined in `exports`): `command_exists`, `ensure_dir`, `prepend_to_path`, `append_to_path`, `remove_from_path`
 - **Host detection**: `HOST_OS`, `HOST_MACHINE`, `HOST_VERSION`, `HOST_PLATFORM` derived from `uname`; `REMOTE=1` if `SSH_CONNECTION` is set
 
 ### Tool Ownership
 
-- **Node**: mise (nvm explicitly disabled via `dnvm.bash`)
+- **Node**: mise (nvm is disabled)
 - **Global npm packages**: bun (via `[settings.npm] bun = true` in mise config)
 - **Container runtime (macOS)**: Rancher Desktop (Docker Desktop is removed)
 - **macOS app inventory**: Brewfile (with `mas` for App Store apps)
@@ -170,7 +168,7 @@ git --git-dir=$HOME/.dotfiles config core.hooksPath $HOME/.config/git/hooks
 
 - **DO NOT** add files to `.dotfiles/ignore` without first running `git check-ignore -v <file>`
 - **DO NOT** run `git` commands without `.dotfiles` env vars set
-- **NEVER** commit machine-specific values (use `*.local` files or `local.d/`)
+- **NEVER** commit machine-specific values (use `*.local` files)
 - **NEVER** commit secrets (SSH keys, API tokens, credentials)
 
 ## DEVCONTAINER SETUP
@@ -218,6 +216,6 @@ mise run distill -- --help                    # Full flag reference (env, exit c
 - **mise `task_config.includes` portability**: this field doesn't expand `~`/`$HOME`/`{{config_root}}`/`{{xdg_config_home}}` and silently ignores relative paths in global config (`project_root` is `None`). Avoid it entirely — use file-based shebang tasks under `.config/mise/tasks/` instead (auto-discovered, no expansion needed).
 - **Broken cache-clean LaunchAgent**: `~/Library/LaunchAgents/dev.mrbro.cache-clean.plist` references a nonexistent path. Sunday 4AM cleanup does not run. Plist is not tracked in dotfiles. Manual cleanup: `brew cleanup --prune=all`, `uv cache clean`, `mise prune`.
 - **Disk monitoring**: macOS root FS occasionally hits ENOSPC (seen with <300MB free on a 926GB disk). pnpm rename errors are the canary. Run cleanup when tight.
-- **`command_exists` guard**: defined in `.config/bash/exports`, used throughout `.config/bash/aliases` for conditional tool setup — required pattern. Also used in the dormant `init.d/` scripts.
+- **`command_exists` guard**: defined in `.config/bash/exports`, used throughout `.config/bash/aliases` for conditional tool setup — required pattern.
 - **OpenCode AGENTS.md** at `.config/opencode/AGENTS.md` is NOT a structural index — it's the primary collaboration system prompt for OpenCode sessions. Don't repurpose it for directory documentation.
 - **`.agents/skills/` is the cross-platform skill bus**: skills here load into both Claude Code and OpenCode. The active `skills` CLI lockfile is `~/.local/state/skills/.skill-lock.json` (XDG state, untracked); `~/.agents/.skill-lock.json` was a legacy path and is no longer used.

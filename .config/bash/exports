@@ -315,7 +315,11 @@ fi
 
 : "${EDITOR:=vim}"
 : "${VISUAL:=$EDITOR}"
-: "${PAGER:=less}"
+if command_exists less; then
+    : "${PAGER:=less}"
+else
+    : "${PAGER:=more}"
+fi
 export EDITOR VISUAL PAGER
 
 # Telemetry opt-out (kept unconditional — also applies in Linux containers)

@@ -93,7 +93,7 @@ Verify in a new shell before starting a session — an empty result here is the 
 zsh -ic '[ -n "$DISCORD_TOKEN" ] && echo "token ok (${#DISCORD_TOKEN} chars)" || echo "TOKEN EMPTY"'
 ```
 
-Do **not** use `.config/bash/local.d/` — no shell sources it, so the exports never take effect. See the Shell Config Organization section of `AGENTS.md`. This hook is zsh-only; interactive bash has no machine-local hook, so export the variables inline there if you need them.
+Use `~/.zshrc.local` for these exports; `.config/zsh/.zshrc` sources it and the file remains untracked. This hook is zsh-only; interactive bash has no machine-local hook, so export the variables inline there if you need them.
 
 ### Option B — plaintext local-only env file
 
@@ -118,7 +118,7 @@ export DISCORD_TOKEN="$(op read 'op://Personal/discord-fro-bot/credential')"
 ### Where the token MUST NOT live
 
 - Any tracked file under `~/.dotfiles/` (including this runbook, the plan, AGENTS.md, opencode.json)
-- `~/.config/bash/exports` (tracked) or `~/.config/bash/init.d/*.bash` (tracked, and never sourced)
+- `~/.config/bash/exports` or `~/.config/bash/aliases` (tracked)
 - Any `.env` in a tracked directory
 - Any Discord MCP server config snippet that gets committed
 
