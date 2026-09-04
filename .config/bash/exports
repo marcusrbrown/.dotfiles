@@ -78,7 +78,6 @@ if [[ "$HOST_OS" == "darwin" ]]; then
     export HOMEBREW_DEVELOPER=1
     # Disable 'anonymous' analytics
     export HOMEBREW_NO_ANALYTICS=1
-    export DOTNET_CLI_TELEMETRY_OPTOUT=1
     # Remove previously installed versions of insalled/upgraded formulae
     export HOMEBREW_INSTALL_CLEANUP=1
     # Do not permit redirects from HTTPS to HTTP
@@ -318,6 +317,10 @@ fi
 : "${VISUAL:=$EDITOR}"
 : "${PAGER:=less}"
 export EDITOR VISUAL PAGER
+
+# Telemetry opt-out (kept unconditional — also applies in Linux containers)
+
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 # Pagers
 
