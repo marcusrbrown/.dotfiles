@@ -32,7 +32,7 @@
     },
     "systematic-implementer": {
       "model": "anthropic/claude-sonnet-5",
-      "variant": "high"
+      "variant": "medium"
     }
   },
   "workflow_guard": {
