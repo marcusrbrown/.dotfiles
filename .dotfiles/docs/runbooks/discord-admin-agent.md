@@ -70,24 +70,27 @@ If any check fails, do NOT start the session. The admin-agent path is non-destru
 
 ### Option A — macOS Keychain (recommended)
 
-Store the token once:
+Two separate keychain entries are used — `discord-bot-fro-bot-token` and `discord-bot-fro-bot-guild-id`. Store them once:
 
 ```bash
-security add-generic-password \
-  -a "$USER" \
-  -s "discord-bot-fro-bot" \
-  -w "<paste-discord-bot-token>" \
-  -U
+security add-generic-password -a "$USER" -s "discord-bot-fro-bot-token" -w "<paste-discord-bot-token>" -U
+security add-generic-password -a "$USER" -s "discord-bot-fro-bot-guild-id" -w "<your-guild-id>" -U
 ```
 
-Export it at shell startup from `~/.zshrc.local`, which `.config/zsh/.zshrc` sources and the `*.local` allowlist rule keeps untracked:
+Export them at shell startup from `~/.zshrc.local`, which `.config/zsh/.zshrc` sources and the `*.local` allowlist rule keeps untracked:
 
 ```bash
 # ~/.zshrc.local  (untracked — DO NOT commit)
 if command -v security >/dev/null 2>&1; then
-  export DISCORD_TOKEN="$(security find-generic-password -s discord-bot-fro-bot -w 2>/dev/null)"
-  export DISCORD_GUILD_ID="<your-guild-id>"
+  export DISCORD_TOKEN="$(security find-generic-password -s discord-bot-fro-bot-token -w 2>/dev/null)"
+  export DISCORD_GUILD_ID="$(security find-generic-password -s discord-bot-fro-bot-guild-id -w 2>/dev/null)"
 fi
+```
+
+Verify in a new shell before starting a session — an empty result here is the failure mode this section exists to prevent:
+
+```bash
+zsh -ic '[ -n "$DISCORD_TOKEN" ] && echo "token ok (${#DISCORD_TOKEN} chars)" || echo "TOKEN EMPTY"'
 ```
 
 Do **not** use `.config/bash/local.d/` — no shell sources it, so the exports never take effect. See the Shell Config Organization section of `AGENTS.md`. This hook is zsh-only; interactive bash has no machine-local hook, so export the variables inline there if you need them.
