@@ -24,7 +24,7 @@ echo "(*) Installing uv (required by mise pipx backend)..."
 # The uv installer bakes its version in, so pin via the versioned URL rather
 # than an env var.
 # renovate: datasource=github-releases packageName=astral-sh/uv
-UV_VERSION=0.12.9
+UV_VERSION=0.12.10
 curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | env UV_INSTALL_DIR=/usr/local/bin sh
 
 # Validation and activation of mise taken from:
