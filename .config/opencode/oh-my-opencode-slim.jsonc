@@ -4,7 +4,7 @@
   "presets": {
     "openai": {
       "orchestrator": {
-        "model": "openai/gpt-5.6-terra",
+        "model": "openai/gpt-6-astra",
         "variant": "high",
         "skills": ["*", "!worktrees"],
         "mcps": ["*", "!context7"]
@@ -114,7 +114,7 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-5.6-sol",
+        "model": "openai/gpt-6-astra",
         "variant": "high",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
@@ -165,7 +165,7 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-5.6-sol",
+        "model": "openai/gpt-6-astra",
         "variant": "high",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
