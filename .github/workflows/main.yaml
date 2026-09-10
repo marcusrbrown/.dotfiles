@@ -76,7 +76,7 @@ jobs:
       # caches that carry continuity between runs.
       - name: Install mise
         env:
-          MISE_VERSION: 2026.9.3 # renovate: datasource=github-releases packageName=jdx/mise
+          MISE_VERSION: 2026.9.4 # renovate: datasource=github-releases packageName=jdx/mise
         uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
           cache: false
