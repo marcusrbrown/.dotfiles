@@ -108,7 +108,9 @@ const DEFAULT_CONTEXT_DB_PATH = join(homedir(), ".local/share/cortexkit/magic-co
  * SQLITE_OPEN_READONLY and works on both macOS and Linux.
  */
 export function openReadOnlyDb(dbPath: string): Database {
-  return new Database(dbPath, { readonly: true });
+  const db = new Database(dbPath, { readonly: true });
+  db.exec("PRAGMA busy_timeout=5000");
+  return db;
 }
 
 /**

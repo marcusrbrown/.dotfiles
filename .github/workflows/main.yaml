@@ -111,6 +111,10 @@ jobs:
         working-directory: .config/opencode/scripts
         run: bun test ollama-distill.test.ts
 
+      - name: Run cache-plateau tests
+        working-directory: .config/opencode/scripts
+        run: bun test cache-plateau.test.ts
+
   # Aggregates the matrix into one stable status context. Branch protection
   # requires 'Script Tests'; a matrix reports per-leg names instead, so without
   # this the required check would never report and every PR would block.
