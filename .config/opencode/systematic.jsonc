@@ -17,8 +17,8 @@
       "variant": "low"
     },
     "workflow": {
-      "model": "anthropic/claude-sonnet-5",
-      "variant": "low"
+      "model": "opencode-go/deepseek-v4.1-flash",
+      "variant": "high"
     }
   },
   "agents": {
@@ -31,8 +31,8 @@
       "variant": "high"
     },
     "systematic-implementer": {
-      "model": "anthropic/claude-sonnet-5",
-      "variant": "medium"
+      "model": "opencode-go/deepseek-v4.1-flash",
+      "variant": "high"
     }
   },
   "workflow_guard": {
