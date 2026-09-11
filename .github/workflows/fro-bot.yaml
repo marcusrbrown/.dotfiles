@@ -376,6 +376,8 @@ jobs:
               || ''
             }}
           token: ${{ secrets.FRO_BOT_PAT }}
+          persist-credentials: >-
+            ${{ !contains(fromJSON('["pull_request", "issue_comment", "issues"]'), github.event_name) }}
 
       - name: Run Fro Bot
         uses: fro-bot/agent@2a9e2dd610db6006ad92aedc7991d1375a415b4c # v0.110.1
