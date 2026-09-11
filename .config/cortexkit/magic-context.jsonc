@@ -13,8 +13,12 @@
       "webfetch": "deny",
       "edit": "deny"
     },
-    "opencode": { "model": "anthropic/claude-sonnet-5", "variant": "medium" },
-    "pi": { "model": "anthropic/claude-sonnet-5" }
+    "opencode": {
+      "model": "anthropic/claude-sonnet-5",
+      "variant": "medium",
+      "fallback_models": ["opencode-go/deepseek-v4.1-flash"]
+    },
+    "pi": { "model": "anthropic/claude-sonnet-5", "fallback_models": ["opencode-go/deepseek-v4.1-flash"] }
   },
   "dreamer": {
     "inject_docs": true,
@@ -48,8 +52,8 @@
         "promotion_threshold": 3
       }
     },
-    "opencode": { "model": "anthropic/claude-sonnet-5" },
-    "pi": { "model": "anthropic/claude-sonnet-5" }
+    "opencode": { "model": "anthropic/claude-sonnet-5", "fallback_models": ["opencode-go/deepseek-v4.1-flash"] },
+    "pi": { "model": "anthropic/claude-sonnet-5", "fallback_models": ["opencode-go/deepseek-v4.1-flash"] }
   },
   "sidekick": {
     "disabled": true,
