@@ -10,8 +10,8 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "anthropic/claude-opus-5",
-        "variant": "high",
+        "model": "opencode-go/qwen3.8-max",
+        "variant": "max",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
