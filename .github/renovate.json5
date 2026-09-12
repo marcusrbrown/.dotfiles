@@ -4,13 +4,13 @@
   customManagers: [
     {
       customType: 'regex',
-        description: 'Update _VERSION variables in the global Mise config file and the devcontainer mise feature.',
-        managerFilePatterns: [
-          '/(^|/)\\.?mise\\.toml$/',
-          '/(^|/)\\.?mise/config\\.toml$/',
-          '/(^|/)\\.devcontainer/features/mise/install\\.sh$/',
-          '/(^|/)\\.devcontainer/features/dotfiles-dev/install\\.sh$/'
-        ],
+      description: 'Update _VERSION variables in the global Mise config file and the devcontainer mise feature.',
+      managerFilePatterns: [
+        '/(^|/)\\.?mise\\.toml$/',
+        '/(^|/)\\.?mise/config\\.toml$/',
+        '/(^|/)\\.devcontainer/features/mise/install\\.sh$/',
+        '/(^|/)\\.devcontainer/features/dotfiles-dev/install\\.sh$/'
+      ],
       matchStrings: [
         '# renovate: datasource=(?<datasource>[a-z-.]+?)(?: depName=(?<depName>.+?))?(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+?.+?_VERSION=(?<currentValue>.+?)\\s'
       ],
@@ -93,17 +93,13 @@
         '@franlol/opencode-md-table-formatter',
         'agent-browser',
         'ast-grep',
+        'astral-sh/uv',
         'opencode-copilot-delegate'
       ],
       matchUpdateTypes: ['minor', 'patch'],
       extends: ['github>bfra-me/renovate-config:automerge.json5#5.2.7'],
       groupName: null,
       dependencyDashboardApproval: false
-    },
-    {
-      description: 'Hold @cortexkit/aft-opencode at 0.32.0; v0.33.0 has regressions.',
-      matchPackageNames: ['@cortexkit/aft-opencode'],
-      allowedVersions: '0.32.0'
     },
     {
       description: 'Hold oh-my-opencode-slim at 2.2.11.',
