@@ -2,36 +2,37 @@
   "$schema": "https://fro.bot/systematic/schemas/v3/systematic-config.schema.json",
   "categories": {
     "design": {
-      "model": "github-copilot/gemini-3.5-flash"
+      "model": "github-copilot/gemini-3.5-flash",
+      "variant": "high"
     },
     "document-review": {
       "model": "github-copilot/gpt-5.4-mini",
-      "variant": "low"
+      "variant": "medium"
     },
     "research": {
       "model": "github-copilot/gpt-5.4-mini",
-      "variant": "low"
+      "variant": "medium"
     },
     "review": {
       "model": "github-copilot/gpt-5.4-mini",
-      "variant": "low"
+      "variant": "medium"
     },
     "workflow": {
-      "model": "opencode-go/deepseek-v4.1-flash",
-      "variant": "high"
+      "model": "anthropic/claude-sonnet-5",
+      "variant": "medium"
     }
   },
   "agents": {
     "repo-research-analyst": {
       "model": "github-copilot/gpt-5.4-mini",
-      "variant": "low"
+      "variant": "high"
     },
     "spec-flow-analyzer": {
       "model": "github-copilot/gemini-3.5-flash",
       "variant": "high"
     },
     "systematic-implementer": {
-      "model": "opencode-go/deepseek-v4.1-flash",
+      "model": "anthropic/claude-sonnet-5",
       "variant": "high"
     }
   },
