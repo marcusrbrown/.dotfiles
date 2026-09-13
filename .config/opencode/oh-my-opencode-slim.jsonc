@@ -1,5 +1,5 @@
 {
-  "$schema": "https://unpkg.com/oh-my-opencode-slim@2.2.11/oh-my-opencode-slim.schema.json",
+  "$schema": "https://unpkg.com/oh-my-opencode-slim@2.2.19/oh-my-opencode-slim.schema.json",
   "preset": "mixed",
   "presets": {
     "openai": {
@@ -327,7 +327,9 @@
   },
   "backgroundJobs": {
     "strategy": "checkpoint-compatible",
-    "continueOnIdle": false
+    "orchestratorWake": {
+      "enabled": false
+    }
   },
   "council": {
     "presets": {
