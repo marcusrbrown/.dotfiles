@@ -10,11 +10,20 @@
 !/.agents/
 !/.claude/
 /.claude/*
- !/.claude/agents/
- !/.claude/agents/*.md
- !/.claude/commands/
- !/.claude/rules/
-!/.claude/settings.json
+!/.claude/agents/
+/.claude/agents/*
+!/.claude/agents/*.md
+!/.claude/commands/
+/.claude/commands/*
+!/.claude/commands/*.md
+!/.claude/rules/
+/.claude/rules/*
+!/.claude/rules/*.md
+!/.claude/scripts/
+/.claude/scripts/*
+!/.claude/scripts/*.ts
+!/.claude/scripts/tsconfig.json
+!/.claude/settings.template.json
 !/.config/
 !/.devcontainer/
 /.devcontainer/.*Marker

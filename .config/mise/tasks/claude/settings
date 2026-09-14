@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Sync tracked Claude settings template into the local settings file"
+#MISE dir="{{cwd}}"
+exec bun "$HOME/.claude/scripts/settings-sync.ts" "$@"
