@@ -1,0 +1,7 @@
+# Global skills are installed per machine (`npx skills add <repo>`), so nothing
+# here is tracked by default. Add an explicit negation below to check a skill in.
+/*
+!/.gitignore
+!/copilot-cli/
+!/openai-imagegen/
+!/probing-mcp-oauth/
