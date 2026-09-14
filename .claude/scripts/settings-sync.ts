@@ -10,7 +10,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { homedir } from "node:os";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -184,7 +184,7 @@ function readJsonObject(path: string, label: string): JsonObject {
  */
 function writeFileAtomic(path: string, content: string): void {
   const dir = dirname(path);
-  const tmpPath = join(dir, `.${basenameOf(path)}.${process.pid}.tmp`);
+  const tmpPath = join(dir, `.${basename(path)}.${process.pid}.tmp`);
 
   let mode: number | undefined;
   if (existsSync(path)) {
@@ -202,11 +202,6 @@ function writeFileAtomic(path: string, content: string): void {
     }
     throw err;
   }
-}
-
-function basenameOf(path: string): string {
-  const parts = path.split("/");
-  return parts[parts.length - 1] ?? path;
 }
 
 function writeJsonObject(path: string, obj: JsonObject): void {
