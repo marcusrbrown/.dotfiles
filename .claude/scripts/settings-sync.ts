@@ -36,6 +36,7 @@ export type CliOptions = {
   targetPath: string;
   backupDir: string | null;
   keep: number;
+  keepError: string | null;
   check: boolean;
   dryRun: boolean;
   json: boolean;
@@ -188,7 +189,8 @@ function writeFileAtomic(path: string, content: string): void {
 
   let mode: number | undefined;
   if (existsSync(path)) {
-    mode = statSync(path).mode;
+    // Mask off file-type bits; only the permission bits are meaningful here.
+    mode = statSync(path).mode & 0o777;
   }
 
   try {
@@ -223,9 +225,13 @@ const BACKUP_FILENAME_RE = /^settings\.json\.(\d+)\.bak$/;
  * Only files matching the exact `settings.json.<digits>.bak` shape are
  * touched — everything else (e.g. Claude Code's own `.claude.json.backup.*`)
  * is left alone. `keep <= 0` is a no-op (keep everything).
+ *
+ * Defensive guard: a non-integer `keep` (NaN, Infinity, fractional) is treated
+ * as a no-op rather than falling through to `slice`, where `slice(NaN)`
+ * coerces to `slice(0)` and would delete every backup.
  */
 function pruneBackups(backupDir: string, keep: number): number {
-  if (keep <= 0) return 0;
+  if (!Number.isInteger(keep) || keep <= 0) return 0;
   if (!existsSync(backupDir)) return 0;
 
   const entries = readdirSync(backupDir)
@@ -317,11 +323,25 @@ export function parseArgs(argv: string[]): CliOptions {
   const backupDirValue = args.get("--backup-dir");
   const keepValue = args.get("--keep");
 
+  let keep = DEFAULT_KEEP;
+  let keepError: string | null = null;
+  if (keepValue != null && keepValue !== true) {
+    const parsed = Number(keepValue);
+    if (!Number.isInteger(parsed) || parsed < 0) {
+      keepError = `--keep expects a non-negative integer, got "${String(keepValue)}"`;
+    } else {
+      keep = parsed;
+    }
+  } else if (keepValue === true) {
+    keepError = "--keep expects a value, e.g. --keep 10";
+  }
+
   return {
     templatePath: templateValue != null && templateValue !== true ? String(templateValue) : DEFAULT_TEMPLATE_PATH,
     targetPath: targetValue != null && targetValue !== true ? String(targetValue) : DEFAULT_TARGET_PATH,
     backupDir: backupDirValue != null && backupDirValue !== true ? String(backupDirValue) : null,
-    keep: keepValue != null && keepValue !== true ? Number(keepValue) : DEFAULT_KEEP,
+    keep,
+    keepError,
     check: args.get("--check") === true,
     dryRun: args.get("--dry-run") === true,
     json: args.get("--json") === true,
@@ -344,8 +364,9 @@ OPTIONS:
   --backup-dir <path>     Backup directory. Default: <dir of target>/backups
   --keep <N>              Backups to retain after a successful apply, oldest
                           pruned first by embedded epoch. Default: 10.
-                          0 disables pruning (keep everything). Never runs
-                          in --check or --dry-run mode.
+                          0 disables pruning (keep everything). Must be a
+                          non-negative integer; anything else is an error.
+                          Never runs in --check or --dry-run mode.
   --check                 Report drift and exit 1 if out of sync. Never writes.
   --dry-run               Print the merge summary and exit 0. Never writes.
   --json                  Machine-readable output.
@@ -387,6 +408,15 @@ export async function main(): Promise<number> {
   if (options.help) {
     console.log(USAGE);
     return 0;
+  }
+
+  if (options.keepError != null) {
+    if (options.json) {
+      console.log(JSON.stringify([{ label: "settings-sync", error: options.keepError }], null, 2));
+    } else {
+      console.error(`Error: ${options.keepError}`);
+    }
+    return 1;
   }
 
   let template: JsonObject;
@@ -459,12 +489,22 @@ export async function main(): Promise<number> {
   const backupDir = options.backupDir ?? join(dirname(options.targetPath), "backups");
 
   let backupPath: string | null = null;
-  if (targetExists) {
-    backupPath = backupTarget(options.targetPath, backupDir);
+  let prunedCount = 0;
+  try {
+    if (targetExists) {
+      backupPath = backupTarget(options.targetPath, backupDir);
+    }
+    writeJsonObject(options.targetPath, merged);
+    prunedCount = pruneBackups(backupDir, options.keep);
+  } catch (err) {
+    const message = formatErrorMessage(err);
+    if (options.json) {
+      console.log(JSON.stringify([{ label: "settings-sync", error: message }], null, 2));
+    } else {
+      console.error(`Error: ${message}`);
+    }
+    return 1;
   }
-  writeJsonObject(options.targetPath, merged);
-
-  const prunedCount = pruneBackups(backupDir, options.keep);
 
   const data = {
     mode: "apply" as const,

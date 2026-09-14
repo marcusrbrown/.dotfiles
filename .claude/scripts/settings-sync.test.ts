@@ -355,6 +355,55 @@ describe("CLI backup retention (--keep)", () => {
     expect(Math.max(...remaining)).toBeGreaterThan(5000);
   });
 
+  test.each([["abc"], ["NaN"], ["Infinity"], ["-1"], ["2.9"]])(
+    "--keep %s is rejected and prunes nothing",
+    (badValue) => {
+      const dir = makeTempDir();
+      const backupDir = join(dir, "backups");
+      const epochs = [1000, 2000, 3000];
+      for (const epoch of epochs) makeBackup(backupDir, epoch);
+
+      const templatePath = join(dir, "settings.template.json");
+      const targetPath = join(dir, "settings.json");
+      writeJson(templatePath, { a: 2 });
+      writeJson(targetPath, { a: 1 });
+
+      const result = runCli([
+        "--template",
+        templatePath,
+        "--target",
+        targetPath,
+        "--backup-dir",
+        backupDir,
+        "--keep",
+        badValue,
+      ]);
+
+      // A malformed --keep must fail loudly rather than coercing to NaN, where
+      // `slice(NaN)` would collapse to `slice(0)` and delete every backup.
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("--keep expects a non-negative integer");
+
+      const remaining = readdirSync(backupDir).filter((name) => /^settings\.json\.\d+\.bak$/.test(name));
+      expect(remaining.length).toBe(epochs.length);
+
+      // the target must be left exactly as it was, since apply never ran
+      expect(JSON.parse(readFileSync(targetPath, "utf8"))).toEqual({ a: 1 });
+    },
+  );
+
+  test("--keep with no value is rejected", () => {
+    const dir = makeTempDir();
+    const templatePath = join(dir, "settings.template.json");
+    const targetPath = join(dir, "settings.json");
+    writeJson(templatePath, { a: 2 });
+    writeJson(targetPath, { a: 1 });
+
+    const result = runCli(["--template", templatePath, "--target", targetPath, "--keep"]);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("--keep expects a value");
+  });
+
   test("--keep 0 prunes nothing", () => {
     const dir = makeTempDir();
     const backupDir = join(dir, "backups");
