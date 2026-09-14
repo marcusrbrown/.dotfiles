@@ -49,7 +49,7 @@ git status  # now works on dotfiles
 │   └── ghostty/, bat/, gh/, ... # Other tool configs
 ├── .agents/             # Global AI-skill bus (cross-platform)
 │   └── skills/          # Loadable by Claude Code, OpenCode, etc.
-├── .claude/             # Claude Code: agents/, rules/, commands/, settings.json
+├── .claude/             # Claude Code: agents/, rules/, commands/, scripts/, settings.template.json
 ├── .devcontainer/       # Devcontainer + custom features (dotfiles-dev, mise, sheldon, keychain)
 ├── .dotfiles/           # Bare repo metadata (ignore allowlist, .gitconfig)
 │   └── docs/            # Project docs: brainstorms/, plans/, runbooks/, solutions/
@@ -77,6 +77,8 @@ git status  # now works on dotfiles
 | OpenCode scripts | `.config/opencode/scripts/` | Bun + TypeScript utilities. `opencode-doctor.ts` (config diagnostic), `ollama-distill.ts` (local session distillation pipeline) |
 | Brewfile | `Brewfile` | macOS apps + casks + mas + 140+ vscode extensions |
 | Claude Code agents/rules | `.claude/agents/`, `.claude/rules/` | Custom agent + rule definitions |
+| Claude Code settings | `.claude/settings.template.json` | Tracked shared baseline; `~/.claude/settings.json` itself is untracked/machine-local, synced via `mise run claude:settings` |
+| Claude settings sync script | `.claude/scripts/settings-sync.ts` | Merge logic for `mise run claude:settings`; tests in `.claude/scripts/settings-sync.test.ts` |
 | OpenCode config | `.config/opencode/` | Has own AGENTS.md (collaboration system prompt) |
 | Global agent skills | `.agents/skills/` | Cross-platform skill bus; active lockfile at `~/.local/state/skills/.skill-lock.json` (XDG state, not tracked) |
 | Devcontainer features | `.devcontainer/features/` | dotfiles-dev, mise, sheldon, keychain |
@@ -204,6 +206,10 @@ mise run distill -- --since=7d                # Override window
 mise run distill -- --session=ses_<id>        # Single session, no cursor mutation
 mise run distill -- --help                    # Full flag reference (env, exit codes, output paths)
 
+# Sync tracked Claude settings template into the local settings file
+mise run claude:settings                      # Apply the merge
+mise run claude:settings -- --check           # Report drift only, exit 1 if out of sync
+
 # Dotfiles git operations (use the alias)
 .dotfiles git status
 .dotfiles git add path/to/file
@@ -219,3 +225,4 @@ mise run distill -- --help                    # Full flag reference (env, exit c
 - **`command_exists` guard**: defined in `.config/bash/exports`, used throughout `.config/bash/aliases` for conditional tool setup — required pattern.
 - **OpenCode AGENTS.md** at `.config/opencode/AGENTS.md` is NOT a structural index — it's the primary collaboration system prompt for OpenCode sessions. Don't repurpose it for directory documentation.
 - **`.agents/skills/` is the cross-platform skill bus**: skills here load into both Claude Code and OpenCode. The active `skills` CLI lockfile is `~/.local/state/skills/.skill-lock.json` (XDG state, untracked); `~/.agents/.skill-lock.json` was a legacy path and is no longer used.
+- **`.claude/settings.json` can't be tracked**: Claude Code self-writes machine-local state into it (`enabledPlugins`, `extraKnownMarketplaces`, granted `permissions`); `~/.claude/settings.local.json` is not a supported user-level scope, so `.claude/settings.template.json` is tracked instead and merged in via `mise run claude:settings`.
