@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -274,5 +274,201 @@ describe("CLI malformed JSON", () => {
     expect(result.stderr.length > 0 || result.stdout.length > 0).toBe(true);
     expect(readFileSync(targetPath, "utf8")).toBe("{ not valid json");
     expect(existsSync(join(dir, "backups"))).toBe(false);
+  });
+});
+
+describe("CLI atomic writes", () => {
+  test("destination content is correct after apply and no leftover *.tmp files remain", () => {
+    const dir = makeTempDir();
+    const templatePath = join(dir, "settings.template.json");
+    const targetPath = join(dir, "settings.json");
+    writeJson(templatePath, { a: 2, b: { c: 3 } });
+    writeJson(targetPath, { a: 1, enabledPlugins: { foo: true } });
+
+    const result = runCli(["--template", templatePath, "--target", targetPath]);
+    expect(result.exitCode).toBe(0);
+    const written = JSON.parse(readFileSync(targetPath, "utf8"));
+    expect(written).toEqual({ a: 2, b: { c: 3 }, enabledPlugins: { foo: true } });
+
+    const leftoverTmp = readdirSync(dir).filter((name) => name.endsWith(".tmp"));
+    expect(leftoverTmp).toEqual([]);
+  });
+
+  test("a failed write (read-only destination directory) leaves the original file intact and exits non-zero", () => {
+    const dir = makeTempDir();
+    const targetDir = join(dir, "ro-target");
+    mkdirSync(targetDir, { recursive: true });
+    const templatePath = join(dir, "settings.template.json");
+    const targetPath = join(targetDir, "settings.json");
+    const backupDir = join(dir, "backups"); // outside the read-only dir, so backup succeeds
+
+    writeJson(templatePath, { a: 2 });
+    writeJson(targetPath, { a: 1 });
+    const before = readFileSync(targetPath, "utf8");
+
+    chmodSync(targetDir, 0o555);
+    try {
+      const result = runCli(["--template", templatePath, "--target", targetPath, "--backup-dir", backupDir]);
+      expect(result.exitCode).not.toBe(0);
+      expect(readFileSync(targetPath, "utf8")).toBe(before);
+    } finally {
+      chmodSync(targetDir, 0o755);
+    }
+  });
+});
+
+describe("CLI backup retention (--keep)", () => {
+  function makeBackup(backupDir: string, epoch: number, content: unknown = { a: 1 }): void {
+    mkdirSync(backupDir, { recursive: true });
+    writeJson(join(backupDir, `settings.json.${epoch}.bak`), content);
+  }
+
+  test("--keep N retains exactly the N newest backups by embedded epoch", () => {
+    const dir = makeTempDir();
+    const backupDir = join(dir, "backups");
+    const epochs = [1000, 2000, 3000, 4000, 5000];
+    for (const epoch of epochs) makeBackup(backupDir, epoch);
+
+    const templatePath = join(dir, "settings.template.json");
+    const targetPath = join(dir, "settings.json");
+    writeJson(templatePath, { a: 2 });
+    writeJson(targetPath, { a: 1 });
+
+    const result = runCli([
+      "--template",
+      templatePath,
+      "--target",
+      targetPath,
+      "--backup-dir",
+      backupDir,
+      "--keep",
+      "2",
+    ]);
+    expect(result.exitCode).toBe(0);
+
+    const remaining = readdirSync(backupDir)
+      .filter((name) => /^settings\.json\.\d+\.bak$/.test(name))
+      .map((name) => Number(/^settings\.json\.(\d+)\.bak$/.exec(name)?.[1]));
+    // the apply itself creates a new backup of the prior target, so the newest
+    // 2 by epoch should survive: the freshly-created one plus the next newest.
+    expect(remaining.length).toBe(2);
+    expect(Math.max(...remaining)).toBeGreaterThan(5000);
+  });
+
+  test("--keep 0 prunes nothing", () => {
+    const dir = makeTempDir();
+    const backupDir = join(dir, "backups");
+    const epochs = [1000, 2000, 3000];
+    for (const epoch of epochs) makeBackup(backupDir, epoch);
+
+    const templatePath = join(dir, "settings.template.json");
+    const targetPath = join(dir, "settings.json");
+    writeJson(templatePath, { a: 2 });
+    writeJson(targetPath, { a: 1 });
+
+    const result = runCli([
+      "--template",
+      templatePath,
+      "--target",
+      targetPath,
+      "--backup-dir",
+      backupDir,
+      "--keep",
+      "0",
+    ]);
+    expect(result.exitCode).toBe(0);
+
+    const remaining = readdirSync(backupDir).filter((name) => /^settings\.json\.\d+\.bak$/.test(name));
+    // 3 pre-existing + 1 created by this apply
+    expect(remaining.length).toBe(4);
+  });
+
+  test("default retention is 10", () => {
+    const dir = makeTempDir();
+    const backupDir = join(dir, "backups");
+    const epochs = Array.from({ length: 15 }, (_, i) => 1000 + i);
+    for (const epoch of epochs) makeBackup(backupDir, epoch);
+
+    const templatePath = join(dir, "settings.template.json");
+    const targetPath = join(dir, "settings.json");
+    writeJson(templatePath, { a: 2 });
+    writeJson(targetPath, { a: 1 });
+
+    const result = runCli(["--template", templatePath, "--target", targetPath, "--backup-dir", backupDir]);
+    expect(result.exitCode).toBe(0);
+
+    const remaining = readdirSync(backupDir).filter((name) => /^settings\.json\.\d+\.bak$/.test(name));
+    expect(remaining.length).toBe(10);
+  });
+
+  test("unrelated files in the backups directory survive pruning untouched", () => {
+    const dir = makeTempDir();
+    const backupDir = join(dir, "backups");
+    mkdirSync(backupDir, { recursive: true });
+    for (let i = 0; i < 5; i++) makeBackup(backupDir, 1000 + i);
+    writeFileSync(join(backupDir, ".claude.json.backup.1787634437646"), "{}");
+    writeFileSync(join(backupDir, "notes.txt"), "do not touch");
+
+    const templatePath = join(dir, "settings.template.json");
+    const targetPath = join(dir, "settings.json");
+    writeJson(templatePath, { a: 2 });
+    writeJson(targetPath, { a: 1 });
+
+    const result = runCli([
+      "--template",
+      templatePath,
+      "--target",
+      targetPath,
+      "--backup-dir",
+      backupDir,
+      "--keep",
+      "1",
+    ]);
+    expect(result.exitCode).toBe(0);
+
+    expect(existsSync(join(backupDir, ".claude.json.backup.1787634437646"))).toBe(true);
+    expect(existsSync(join(backupDir, "notes.txt"))).toBe(true);
+    expect(readFileSync(join(backupDir, "notes.txt"), "utf8")).toBe("do not touch");
+  });
+
+  test("pruning does not run in --check or --dry-run", () => {
+    const dir = makeTempDir();
+    const backupDir = join(dir, "backups");
+    const epochs = [1000, 2000, 3000];
+    for (const epoch of epochs) makeBackup(backupDir, epoch);
+
+    const templatePath = join(dir, "settings.template.json");
+    const targetPath = join(dir, "settings.json");
+    writeJson(templatePath, { a: 2 });
+    writeJson(targetPath, { a: 1 });
+
+    const checkResult = runCli([
+      "--check",
+      "--template",
+      templatePath,
+      "--target",
+      targetPath,
+      "--backup-dir",
+      backupDir,
+      "--keep",
+      "1",
+    ]);
+    expect(checkResult.exitCode).toBe(1);
+
+    const dryRunResult = runCli([
+      "--dry-run",
+      "--template",
+      templatePath,
+      "--target",
+      targetPath,
+      "--backup-dir",
+      backupDir,
+      "--keep",
+      "1",
+    ]);
+    expect(dryRunResult.exitCode).toBe(0);
+
+    const remaining = readdirSync(backupDir).filter((name) => /^settings\.json\.\d+\.bak$/.test(name));
+    expect(remaining.length).toBe(3);
   });
 });
