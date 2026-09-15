@@ -1,6 +1,16 @@
 #!/usr/bin/env bun
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { basename, dirname, join } from "node:path";
 import { homedir } from "node:os";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -24,6 +34,9 @@ export type MergeResult = {
 export type CliOptions = {
   templatePath: string;
   targetPath: string;
+  backupDir: string | null;
+  keep: number;
+  keepError: string | null;
   check: boolean;
   dryRun: boolean;
   json: boolean;
@@ -164,16 +177,76 @@ function readJsonObject(path: string, label: string): JsonObject {
   return parsed;
 }
 
-function writeJsonObject(path: string, obj: JsonObject): void {
-  writeFileSync(path, `${JSON.stringify(obj, null, 2)}\n`);
+/**
+ * Write `content` to `path` atomically: serialize to a temp file in the same
+ * directory (same filesystem, so rename is atomic), then rename over the
+ * destination. Preserves the destination's existing file mode. Cleans up the
+ * temp file on failure and rethrows the original error.
+ */
+function writeFileAtomic(path: string, content: string): void {
+  const dir = dirname(path);
+  const tmpPath = join(dir, `.${basename(path)}.${process.pid}.tmp`);
+
+  let mode: number | undefined;
+  if (existsSync(path)) {
+    // Mask off file-type bits; only the permission bits are meaningful here.
+    mode = statSync(path).mode & 0o777;
+  }
+
+  try {
+    writeFileSync(tmpPath, content, mode != null ? { mode } : undefined);
+    renameSync(tmpPath, path);
+  } catch (err) {
+    try {
+      if (existsSync(tmpPath)) unlinkSync(tmpPath);
+    } catch {
+      // best-effort cleanup; the original error is what matters
+    }
+    throw err;
+  }
 }
 
-function backupTarget(targetPath: string): string {
-  const backupDir = join(dirname(targetPath), "backups");
+function writeJsonObject(path: string, obj: JsonObject): void {
+  writeFileAtomic(path, `${JSON.stringify(obj, null, 2)}\n`);
+}
+
+function backupTarget(targetPath: string, backupDir: string): string {
   mkdirSync(backupDir, { recursive: true });
   const backupPath = join(backupDir, `settings.json.${Date.now()}.bak`);
   copyFileSync(targetPath, backupPath);
   return backupPath;
+}
+
+const BACKUP_FILENAME_RE = /^settings\.json\.(\d+)\.bak$/;
+
+/**
+ * Delete the oldest backups in `backupDir` so at most `keep` remain, ordered
+ * by the epoch value embedded in the filename (not mtime, not lexical sort).
+ * Only files matching the exact `settings.json.<digits>.bak` shape are
+ * touched — everything else (e.g. Claude Code's own `.claude.json.backup.*`)
+ * is left alone. `keep <= 0` is a no-op (keep everything).
+ *
+ * Defensive guard: a non-integer `keep` (NaN, Infinity, fractional) is treated
+ * as a no-op rather than falling through to `slice`, where `slice(NaN)`
+ * coerces to `slice(0)` and would delete every backup.
+ */
+function pruneBackups(backupDir: string, keep: number): number {
+  if (!Number.isInteger(keep) || keep <= 0) return 0;
+  if (!existsSync(backupDir)) return 0;
+
+  const entries = readdirSync(backupDir)
+    .map((name) => {
+      const match = BACKUP_FILENAME_RE.exec(name);
+      return match ? { name, epoch: Number(match[1]) } : null;
+    })
+    .filter((entry): entry is { name: string; epoch: number } => entry !== null)
+    .sort((a, b) => b.epoch - a.epoch);
+
+  const toDelete = entries.slice(keep);
+  for (const entry of toDelete) {
+    unlinkSync(join(backupDir, entry.name));
+  }
+  return toDelete.length;
 }
 
 function formatErrorMessage(error: unknown): string {
@@ -182,7 +255,19 @@ function formatErrorMessage(error: unknown): string {
 
 // ─── CLI: Flag Parsing ──────────────────────────────────────────────────────────
 
-const KNOWN_FLAGS = new Set(["--template", "--target", "--check", "--dry-run", "--json", "--help", "-h"]);
+const DEFAULT_KEEP = 10;
+
+const KNOWN_FLAGS = new Set([
+  "--template",
+  "--target",
+  "--backup-dir",
+  "--keep",
+  "--check",
+  "--dry-run",
+  "--json",
+  "--help",
+  "-h",
+]);
 
 function warnUnknownFlag(flag: string): void {
   console.warn(`Warning: Unknown flag "${flag}" ignored`);
@@ -235,10 +320,28 @@ export function parseArgs(argv: string[]): CliOptions {
 
   const templateValue = args.get("--template");
   const targetValue = args.get("--target");
+  const backupDirValue = args.get("--backup-dir");
+  const keepValue = args.get("--keep");
+
+  let keep = DEFAULT_KEEP;
+  let keepError: string | null = null;
+  if (keepValue != null && keepValue !== true) {
+    const parsed = Number(keepValue);
+    if (!Number.isInteger(parsed) || parsed < 0) {
+      keepError = `--keep expects a non-negative integer, got "${String(keepValue)}"`;
+    } else {
+      keep = parsed;
+    }
+  } else if (keepValue === true) {
+    keepError = "--keep expects a value, e.g. --keep 10";
+  }
 
   return {
     templatePath: templateValue != null && templateValue !== true ? String(templateValue) : DEFAULT_TEMPLATE_PATH,
     targetPath: targetValue != null && targetValue !== true ? String(targetValue) : DEFAULT_TARGET_PATH,
+    backupDir: backupDirValue != null && backupDirValue !== true ? String(backupDirValue) : null,
+    keep,
+    keepError,
     check: args.get("--check") === true,
     dryRun: args.get("--dry-run") === true,
     json: args.get("--json") === true,
@@ -258,6 +361,12 @@ OPTIONS:
   -h, --help              Show this message.
   --template <path>       Template path. Default: ~/.claude/settings.template.json
   --target <path>         Target path. Default: ~/.claude/settings.json
+  --backup-dir <path>     Backup directory. Default: <dir of target>/backups
+  --keep <N>              Backups to retain after a successful apply, oldest
+                          pruned first by embedded epoch. Default: 10.
+                          0 disables pruning (keep everything). Must be a
+                          non-negative integer; anything else is an error.
+                          Never runs in --check or --dry-run mode.
   --check                 Report drift and exit 1 if out of sync. Never writes.
   --dry-run               Print the merge summary and exit 0. Never writes.
   --json                  Machine-readable output.
@@ -299,6 +408,15 @@ export async function main(): Promise<number> {
   if (options.help) {
     console.log(USAGE);
     return 0;
+  }
+
+  if (options.keepError != null) {
+    if (options.json) {
+      console.log(JSON.stringify([{ label: "settings-sync", error: options.keepError }], null, 2));
+    } else {
+      console.error(`Error: ${options.keepError}`);
+    }
+    return 1;
   }
 
   let template: JsonObject;
@@ -368,11 +486,25 @@ export async function main(): Promise<number> {
     return 0;
   }
 
+  const backupDir = options.backupDir ?? join(dirname(options.targetPath), "backups");
+
   let backupPath: string | null = null;
-  if (targetExists) {
-    backupPath = backupTarget(options.targetPath);
+  let prunedCount = 0;
+  try {
+    if (targetExists) {
+      backupPath = backupTarget(options.targetPath, backupDir);
+    }
+    writeJsonObject(options.targetPath, merged);
+    prunedCount = pruneBackups(backupDir, options.keep);
+  } catch (err) {
+    const message = formatErrorMessage(err);
+    if (options.json) {
+      console.log(JSON.stringify([{ label: "settings-sync", error: message }], null, 2));
+    } else {
+      console.error(`Error: ${message}`);
+    }
+    return 1;
   }
-  writeJsonObject(options.targetPath, merged);
 
   const data = {
     mode: "apply" as const,
@@ -380,6 +512,7 @@ export async function main(): Promise<number> {
     targetPath: options.targetPath,
     targetExisted: targetExists,
     backupPath,
+    prunedCount,
     changes,
   };
 
@@ -389,6 +522,7 @@ export async function main(): Promise<number> {
     console.log(targetExists ? "Applied:" : "Target missing — wrote template verbatim:");
     renderChanges(changes);
     if (backupPath) console.log(`Backup: ${backupPath}`);
+    if (prunedCount > 0) console.log(`Pruned ${prunedCount} old backup${prunedCount === 1 ? "" : "s"}.`);
   }
 
   return 0;
