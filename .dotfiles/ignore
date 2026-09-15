@@ -29,6 +29,11 @@
 /.devcontainer/.*Marker
 !/.dotfiles/
 /.dotfiles/*
+!/.dotfiles/.gitconfig
+!/.dotfiles/.prettierignore
+!/.dotfiles/.prettierrc.yaml
+!/.dotfiles/README.md
+!/.dotfiles/ignore
 !/.dotfiles/docs/
 !/.dotfiles/docs/*.md
 !/.dotfiles/docs/brainstorms/
@@ -53,9 +58,9 @@
 !/.vscode/settings.json
 !/.vscode/spellright.dict
 !/.bashrc
- !/.editorconfig
- !/.markdownlint-cli2.yaml
- !/.prettierignore
+!/.editorconfig
+!/.markdownlint-cli2.yaml
+!/.prettierignore
 !/.profile
 !/.vimrc
 !/.zshenv
