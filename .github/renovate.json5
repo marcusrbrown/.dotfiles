@@ -9,7 +9,8 @@
         '/(^|/)\\.?mise\\.toml$/',
         '/(^|/)\\.?mise/config\\.toml$/',
         '/(^|/)\\.devcontainer/features/mise/install\\.sh$/',
-        '/(^|/)\\.devcontainer/features/dotfiles-dev/install\\.sh$/'
+        '/(^|/)\\.devcontainer/features/dotfiles-dev/install\\.sh$/',
+        '/(^|/)\\.devcontainer/features/keychain/install\\.sh$/'
       ],
       matchStrings: [
         '# renovate: datasource=(?<datasource>[a-z-.]+?)(?: depName=(?<depName>.+?))?(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+?.+?_VERSION=(?<currentValue>.+?)\\s'
