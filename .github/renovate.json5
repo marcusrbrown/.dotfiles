@@ -84,10 +84,10 @@
       groupName: null
     },
     {
-      description: 'Group the pinned script type-checking toolchain (.dotfiles/package.json) into one PR.',
-      matchFileNames: ['.dotfiles/package.json'],
+      description: 'Group the pinned script toolchain into one PR. TypeScript and Prettier are pinned twice -- once for the scripts, once as machine-wide tools -- and must move together.',
+      matchFileNames: ['.dotfiles/package.json', '.config/mise/config.toml'],
       matchPackageNames: ['typescript', '@types/bun', 'prettier'],
-      groupName: 'script typecheck toolchain'
+      groupName: 'script toolchain'
     },
     {
       description: ['Automerge unstable minor updates of some packages.'],
