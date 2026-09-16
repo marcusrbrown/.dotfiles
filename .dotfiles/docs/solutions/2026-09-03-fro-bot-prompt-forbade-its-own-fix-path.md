@@ -6,10 +6,10 @@ module: fro-bot
 problem_type: workflow_issue
 component: development_workflow
 severity: medium
-applies_when: "Writing or reviewing a prompt for an autonomous agent that is expected to deliver changes, not just report them — especially a scheduled job whose checkout is discarded at run end."
+applies_when: 'Writing or reviewing a prompt for an autonomous agent that is expected to deliver changes, not just report them — especially a scheduled job whose checkout is discarded at run end.'
 symptoms:
-  - "An agent reports the same fix as applied on every run, and the fix is never present on the next run"
-  - "The run reports success, so nothing escalates and the loop continues indefinitely"
+  - 'An agent reports the same fix as applied on every run, and the fix is never present on the next run'
+  - 'The run reports success, so nothing escalates and the loop continues indefinitely'
   - "The agent's own root-cause claim points at the calling harness rather than its instructions"
 root_cause: missing_workflow_step
 resolution_type: workflow_improvement
@@ -39,14 +39,14 @@ The agent's diagnosis in that last sentence was wrong, and following it would ha
 The prompt contradicted itself across three instructions in two categories:
 
 ```yaml
-     3. CONFIG QUALITY & REPO HYGIENE
-        - Check that AGENTS.md accurately reflects the current directory
-          structure. If drift is found, open a PR with corrections.
-        Report findings but put actual fixes into category 4.
+3. CONFIG QUALITY & REPO HYGIENE
+- Check that AGENTS.md accurately reflects the current directory
+structure. If drift is found, open a PR with corrections.
+Report findings but put actual fixes into category 4.
 
-     4. DEVELOPER EXPERIENCE
-         Report on static analysis findings only. Do not run formatting tools
-         or open formatting PRs.
+4. DEVELOPER EXPERIENCE
+Report on static analysis findings only. Do not run formatting tools
+or open formatting PRs.
 ```
 
 Instruction one grants a delivery path. Instruction two routes the fix to another category. That category revokes the path. Nothing remained except editing the ephemeral Actions checkout, which is discarded when the run ends.

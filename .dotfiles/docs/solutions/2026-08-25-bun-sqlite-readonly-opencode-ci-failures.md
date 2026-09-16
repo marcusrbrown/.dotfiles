@@ -1,14 +1,14 @@
 ---
-title: "Read-only SQLite opens via a file: URI failed on Linux, hidden until the scripts first ran in CI"
+title: 'Read-only SQLite opens via a file: URI failed on Linux, hidden until the scripts first ran in CI'
 date: 2026-08-25
 category: database-issues
 module: opencode-doctor
 problem_type: database_issue
 component: tooling
 symptoms:
-  - "every read-only section failed on ubuntu-latest with `unable to open database file` while the read-write `--execute` path worked"
+  - 'every read-only section failed on ubuntu-latest with `unable to open database file` while the read-write `--execute` path worked'
   - "`Cannot find module '@opencode-ai/sdk'` on a clean checkout, so zero tests ran"
-  - "a section that threw rendered as `\"data\": null` in JSON and a bare `null` in text, with exit 1 and no reason given"
+  - 'a section that threw rendered as `"data": null` in JSON and a bare `null` in text, with exit 1 and no reason given'
 root_cause: wrong_api
 resolution_type: code_fix
 severity: high
@@ -54,12 +54,12 @@ Two Bun test suites under `.config/opencode/scripts/` had never run in any CI wo
 
 ```ts
 // before — fails on Linux
-new Database("file:" + dbPath + "?mode=ro", { readonly: true })
+new Database('file:' + dbPath + '?mode=ro', { readonly: true });
 
 // after
 function openReadOnlyDb(dbPath: string): Database {
   const db = new Database(dbPath, { readonly: true });
-  db.exec("PRAGMA busy_timeout=5000");
+  db.exec('PRAGMA busy_timeout=5000');
   return db;
 }
 ```
@@ -68,8 +68,8 @@ Applied to three call sites in `opencode-doctor.ts` and to `openDatabase` in `ol
 
 ```ts
 const db = new Database(dbPath, { readonly: true });
-db.exec("PRAGMA query_only=ON");
-db.exec("PRAGMA busy_timeout=5000");
+db.exec('PRAGMA query_only=ON');
+db.exec('PRAGMA busy_timeout=5000');
 // probe: CREATE TEMP TABLE must throw, or the connection is not read-only
 ```
 
@@ -77,10 +77,10 @@ db.exec("PRAGMA busy_timeout=5000");
 
 ```ts
 // before — top-level, on a dependency nothing declared
-import { createOpencodeClient } from "@opencode-ai/sdk";
+import { createOpencodeClient } from '@opencode-ai/sdk';
 
 // after — inside startOpencode, with the type erased at build time
-const { createOpencodeClient } = await import("@opencode-ai/sdk");
+const { createOpencodeClient } = await import('@opencode-ai/sdk');
 ```
 
 The type reference becomes `ReturnType<typeof import("@opencode-ai/sdk").createOpencodeClient>`, erased under `verbatimModuleSyntax`. DB-only paths — including the destructive-operation gate — never reach the import.

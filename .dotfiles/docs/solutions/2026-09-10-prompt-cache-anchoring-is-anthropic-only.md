@@ -6,10 +6,10 @@ module: opencode-provider
 problem_type: best_practice
 component: tooling
 severity: medium
-applies_when: "Diagnosing prompt-cache reuse in a multi-provider agent harness, or evaluating a context-management threshold change on the strength of a token-waste number."
+applies_when: 'Diagnosing prompt-cache reuse in a multi-provider agent harness, or evaluating a context-management threshold change on the strength of a token-waste number.'
 symptoms:
-  - "Cached tokens pin at a fixed value while the prompt keeps growing, across adjacent turns seconds apart"
-  - "One model family holds ~100% cache reuse while every other family degrades in the same harness"
+  - 'Cached tokens pin at a fixed value while the prompt keeps growing, across adjacent turns seconds apart'
+  - 'One model family holds ~100% cache reuse while every other family degrades in the same harness'
   - "A subjective report that a model 'busts cache a lot', with no per-turn measurement behind it"
 root_cause: scope_issue
 resolution_type: workflow_improvement
@@ -51,14 +51,14 @@ A model on `@ai-sdk/openai` matches none of the disjuncts, so the function never
 
 Measured over 10 days, the split follows model **family**, not provider:
 
-| provider/model | family | turns | reuse | collapsed |
-|---|---|---|---|---|
-| anthropic/claude-sonnet-5 | claude | 17,615 | 100.0% | 0.0% |
-| anthropic/claude-opus-5 | claude | 11,499 | 100.0% | 0.1% |
-| openai/gpt-6-astra | other | 1,691 | 92.1% | 8.5% |
-| openai/gpt-5.6-sol | other | 343 | 64.9% | 27.4% |
-| github-copilot/gpt-5.4-mini | other | 2,768 | 80.1% | 18.3% |
-| github-copilot/gemini-3.5-flash | other | 693 | 91.3% | 4.6% |
+| provider/model                  | family | turns  | reuse  | collapsed |
+| ------------------------------- | ------ | ------ | ------ | --------- |
+| anthropic/claude-sonnet-5       | claude | 17,615 | 100.0% | 0.0%      |
+| anthropic/claude-opus-5         | claude | 11,499 | 100.0% | 0.1%      |
+| openai/gpt-6-astra              | other  | 1,691  | 92.1%  | 8.5%      |
+| openai/gpt-5.6-sol              | other  | 343    | 64.9%  | 27.4%     |
+| github-copilot/gpt-5.4-mini     | other  | 2,768  | 80.1%  | 18.3%     |
+| github-copilot/gemini-3.5-flash | other  | 693    | 91.3%  | 4.6%      |
 
 `github-copilot` serves Claude at 100% and its own GPT and Gemini models at 80.1% and 91.3% — same provider, opposite behaviour. That distinction is what made the diagnosis correct; a provider-shaped reading would have missed it.
 
@@ -72,7 +72,7 @@ Filed upstream as `anomalyco/opencode#48246`. There is no local fix: placing a b
 sqlite3.connect("file:%s?mode=ro" % db, uri=True)
 ```
 
-**Normalise for the provider's reporting convention.** Anthropic reports `input` *exclusive* of cache reads; OpenAI reports it *inclusive*:
+**Normalise for the provider's reporting convention.** Anthropic reports `input` _exclusive_ of cache reads; OpenAI reports it _inclusive_:
 
 ```
 reuse = cached / (input + cached)
@@ -80,7 +80,7 @@ reuse = cached / (input + cached)
 
 `cached / input` yields nonsense across providers — an Anthropic row measured that way came out at 12,509,400%.
 
-**Collapse run-lengths into episodes before reading the numbers.** A collapsed turn is a symptom; an episode is the event. Group by model *family*, not provider — one provider can serve both.
+**Collapse run-lengths into episodes before reading the numbers.** A collapsed turn is a symptom; an episode is the event. Group by model _family_, not provider — one provider can serve both.
 
 **Read the formula in the installed bundle, not the config key name.** Knobs can be capped.
 
@@ -88,19 +88,19 @@ reuse = cached / (input + cached)
 
 The headline number invited the wrong fix. "8.5% of turns cause 89% of the waste" reads as a systemic condition worth tuning against. Decomposed into episodes it isn't:
 
-| | |
-|---|---|
-| collapsed turns | 144 |
-| collapse **onsets** | 84 |
-| median episode length | **1 turn** |
-| single-turn episodes | 64 of 84, carrying **48.2%** of all waste |
-| onsets following a compaction | 13 of 84 |
+|                               |                                           |
+| ----------------------------- | ----------------------------------------- |
+| collapsed turns               | 144                                       |
+| collapse **onsets**           | 84                                        |
+| median episode length         | **1 turn**                                |
+| single-turn episodes          | 64 of 84, carrying **48.2%** of all waste |
+| onsets following a compaction | 13 of 84                                  |
 
 Half the waste is ordinary single-turn rewarming that recovers by itself. The actionable remainder is two long episodes carrying 30.5% between them — a targeted-recovery problem, not a threshold problem.
 
 Three hypotheses were reasoned to confidently and then killed by measurement. Each is a dead end worth not re-walking:
 
-- **Encrypted reasoning items are not being requested** (the gate at `:1340` excludes `gpt-6-astra`). It has 3,233 of 5,114 reasoning parts *with* encrypted content — the include arrives via an npm-keyed switch at `:1809`, not that gate.
+- **Encrypted reasoning items are not being requested** (the gate at `:1340` excludes `gpt-6-astra`). It has 3,233 of 5,114 reasoning parts _with_ encrypted content — the include arrives via an npm-keyed switch at `:1809`, not that gate.
 - **Compaction causes the collapse.** One affected session never compacted; only 13 of 84 onsets follow one.
 - **Lowering `execute_threshold_percentage` cuts the blast radius.** The knob is capped at 80, and the waste is not threshold-shaped.
 
@@ -126,7 +126,7 @@ Turn 21 ran **12 seconds** after turn 20 and reused 38,912 tokens of a ~100k pre
 **The capped knob.** Magic Context computes the history-summary budget as:
 
 ```js
-Math.floor(displayContextLimit * (Math.min(executeThresholdPercentage, 80) / 100) * historyBudgetPercentage)
+Math.floor(displayContextLimit * (Math.min(executeThresholdPercentage, 80) / 100) * historyBudgetPercentage);
 ```
 
 `Math.min(…, 80)` makes 80 a ceiling. Lowering `execute_threshold_percentage` to 65 cuts the history budget by exactly 18.75% and buys nothing, while raising it above 80 does nothing at all. Reading the config key alone would not have shown this.
