@@ -9,7 +9,6 @@
 /.config/opencode/*
 !/.config/opencode/**/*.json*
 
-
 # Git internal directories
 /.dotfiles/logs/
 /.dotfiles/objects/
