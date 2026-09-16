@@ -86,7 +86,7 @@
     {
       description: 'Group the pinned script type-checking toolchain (.dotfiles/package.json) into one PR.',
       matchFileNames: ['.dotfiles/package.json'],
-      matchPackageNames: ['typescript', '@types/bun'],
+      matchPackageNames: ['typescript', '@types/bun', 'prettier'],
       groupName: 'script typecheck toolchain'
     },
     {

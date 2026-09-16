@@ -122,6 +122,7 @@ Never enable auto-merge.
 
 ```sh
 mise run format          # prettier over .devcontainer, .dotfiles, .github
+mise run format-check    # prettier --check over the same paths
 mise run install         # install mise-managed tools
 mise run typecheck       # type-check both Bun script projects
 mise run ignore:audit    # assert the allowlist has no dead negations
@@ -129,7 +130,8 @@ mise run claude:settings # merge the tracked Claude settings template into the l
 mise run opencode:doctor # inspect OpenCode config and metadata
 ```
 
-`mise run typecheck` needs a one-time `bun install --cwd ~/.dotfiles`.
+`mise run typecheck` and `mise run format`/`format-check` need a one-time
+`bun install --cwd ~/.dotfiles`.
 
 Mise tasks are **file-based shebang scripts** under `.config/mise/tasks/`,
 auto-discovered. Subdirectories map to `:` (`mise/tools/install` →

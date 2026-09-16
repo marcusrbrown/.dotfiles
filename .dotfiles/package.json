@@ -5,6 +5,7 @@
   "devDependencies": {
     "@opencode-ai/sdk": "1.18.31",
     "@types/bun": "1.4.2",
+    "prettier": "3.9.6",
     "typescript": "7.0.2"
   }
 }
