@@ -210,5 +210,8 @@
   "statusLine": {
     "type": "command",
     "command": "bun x ccusage@latest statusline"
-  }
+  },
+  "enabledPlugins": {},
+  "extraKnownMarketplaces": {},
+  "theme": "auto"
 }
