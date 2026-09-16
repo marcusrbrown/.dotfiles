@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 #MISE description="Type-check the Bun script projects (.config/opencode/scripts, .claude/scripts)"
 #MISE dir="{{cwd}}"
-"$HOME/.dotfiles/node_modules/.bin/tsc" --noEmit -p "$HOME/.config/opencode/scripts/tsconfig.json" || exit $?
-exec "$HOME/.dotfiles/node_modules/.bin/tsc" --noEmit -p "$HOME/.claude/scripts/tsconfig.json"
+set -euo pipefail
+
+TSC="$HOME/.dotfiles/node_modules/.bin/tsc"
+if [[ ! -x $TSC ]]; then
+  echo "Type-checking toolchain is not installed. Run:" >&2
+  echo "  bun install --cwd \"\$HOME/.dotfiles\"" >&2
+  exit 1
+fi
+
+"$TSC" --noEmit -p "$HOME/.config/opencode/scripts/tsconfig.json"
+"$TSC" --noEmit -p "$HOME/.claude/scripts/tsconfig.json"

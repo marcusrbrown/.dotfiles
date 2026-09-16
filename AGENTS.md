@@ -213,6 +213,9 @@ mise run claude:settings -- --check           # Report drift only, exit 1 if out
 # Audit .dotfiles/ignore for dead allowlist negations
 mise run ignore:audit
 
+# Type-check the Bun script projects (needs `bun install --cwd ~/.dotfiles` once)
+mise run typecheck
+
 # Dotfiles git operations (use the alias)
 .dotfiles git status
 .dotfiles git add path/to/file
