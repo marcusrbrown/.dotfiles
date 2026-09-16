@@ -32,7 +32,7 @@ check_packages() {
 
 export DEBIAN_FRONTEND=noninteractive
 
-# renovate: datasource=github-releases packageName=funtoo/keychain
+# renovate: datasource=github-releases packageName=danielrobbins/keychain
 KEYCHAIN_VERSION=3.0.4
 
 # Install dependencies
@@ -40,13 +40,13 @@ check_packages curl python3
 
 # Use a temporary location for the keychain zipapp
 export TMP_DIR="/tmp/tmp-keychain"
-mkdir -p ${TMP_DIR}
-chmod 700 ${TMP_DIR}
+mkdir -p "${TMP_DIR}"
+chmod 700 "${TMP_DIR}"
 
 # Install keychain from the published, checksum-verified zipapp release
 echo "(*) Installing keychain ${KEYCHAIN_VERSION}..."
 KEYCHAIN_ARCHIVE="keychain-${KEYCHAIN_VERSION}.pyz"
-KEYCHAIN_BASE_URL="https://github.com/funtoo/keychain/releases/download/${KEYCHAIN_VERSION}"
+KEYCHAIN_BASE_URL="https://github.com/danielrobbins/keychain/releases/download/${KEYCHAIN_VERSION}"
 curl -fsSL -o "${TMP_DIR}/${KEYCHAIN_ARCHIVE}" "${KEYCHAIN_BASE_URL}/${KEYCHAIN_ARCHIVE}"
 curl -fsSL -o "${TMP_DIR}/SHA256SUMS" "${KEYCHAIN_BASE_URL}/SHA256SUMS"
 
@@ -54,7 +54,7 @@ curl -fsSL -o "${TMP_DIR}/SHA256SUMS" "${KEYCHAIN_BASE_URL}/SHA256SUMS"
 
 mv "${TMP_DIR}/${KEYCHAIN_ARCHIVE}" /usr/local/bin/keychain
 chmod 0755 /usr/local/bin/keychain
-rm -rf ${TMP_DIR}
+rm -rf "${TMP_DIR}"
 
 keychain --version
 

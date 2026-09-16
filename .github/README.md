@@ -251,15 +251,15 @@ The image includes devcontainer metadata labels, so consumers inherit the full c
 
 Built on [`mcr.microsoft.com/devcontainers/base`](https://github.com/devcontainers/images/tree/main/src/base-debian) with:
 
-| Tool                                                | Source                                                     |
-| --------------------------------------------------- | ---------------------------------------------------------- |
-| [mise](https://mise.jdx.dev/)                       | Custom feature — manages Node, Python, Rust, Go, Bun, Deno |
-| [Sheldon](https://github.com/rossmacarthur/sheldon) | Custom feature — Zsh plugin manager with deferred loading  |
-| [keychain](https://github.com/funtoo/keychain)      | Custom feature — SSH/GPG agent management                  |
-| [Starship](https://starship.rs/)                    | Installed by `dotfiles-dev` — cross-shell prompt           |
-| [GitHub CLI](https://cli.github.com/)               | Remote feature                                             |
-| [Node.js](https://nodejs.org/)                      | Remote feature                                             |
-| [ShellCheck](https://www.shellcheck.net/)           | Remote feature                                             |
+| Tool                                                  | Source                                                     |
+| ----------------------------------------------------- | ---------------------------------------------------------- |
+| [mise](https://mise.jdx.dev/)                         | Custom feature — manages Node, Python, Rust, Go, Bun, Deno |
+| [Sheldon](https://github.com/rossmacarthur/sheldon)   | Custom feature — Zsh plugin manager with deferred loading  |
+| [keychain](https://github.com/danielrobbins/keychain) | Custom feature — SSH/GPG agent management                  |
+| [Starship](https://starship.rs/)                      | Installed by `dotfiles-dev` — cross-shell prompt           |
+| [GitHub CLI](https://cli.github.com/)                 | Remote feature                                             |
+| [Node.js](https://nodejs.org/)                        | Remote feature                                             |
+| [ShellCheck](https://www.shellcheck.net/)             | Remote feature                                             |
 
 ### Feature Architecture
 
