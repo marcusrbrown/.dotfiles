@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#MISE description="Format dotfiles"
+#MISE description="Check formatting without writing"
 #MISE dir="{{cwd}}"
 set -euo pipefail
 
@@ -10,4 +10,4 @@ if [[ ! -x $PRETTIER ]]; then
   exit 1
 fi
 
-"$PRETTIER" --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .github
+"$PRETTIER" --config .dotfiles/.prettierrc.yaml --check .devcontainer .dotfiles .github
