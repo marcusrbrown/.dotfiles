@@ -123,7 +123,7 @@ $ bash -ic 'type .dotfiles'
 
 ## A Note on Cleaning Up References
 
-Scrubbing the deleted names is correct for live reference docs — `AGENTS.md` and the READMEs should not point readers at directories that no longer exist. It is wrong for records of the failure: a first pass also rewrote learning docs, replacing `init.d/pager.bash` and `local.d/discord.bash` with prose like "a former entry point," deleting the evidence those docs existed to preserve. The test is whether a document *recommends* the path or *explains why it failed*.
+Scrubbing the deleted names is correct for live reference docs — `AGENTS.md` and the READMEs should not point readers at directories that no longer exist. It is wrong for records of the failure: a first pass also rewrote learning docs, replacing `init.d/pager.bash` and `local.d/discord.bash` with prose like "a former entry point," deleting the evidence those docs existed to preserve. The test is whether a document _recommends_ the path or _explains why it failed_.
 
 ## Related
 

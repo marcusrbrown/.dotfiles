@@ -116,12 +116,12 @@ See [`2026-08-25-bun-sqlite-readonly-opencode-ci-failures.md`](2026-08-25-bun-sq
 ## What this does not protect against
 
 - **SQLITE_SCHEMA mid-run.** If OpenCode commits a schema migration between two queries, you'll see SQLITE_SCHEMA on the next prepare. Treat as fatal: a parser tuned for the old schema may produce garbage from new-shape rows. Exit and require re-validation. Do not retry.
-- **Schema additions** (new tables, new columns). The invariant check above asserts *minimum* columns. New optional columns won't break the check or the parser. This is the desired posture — forward-compat for additions.
+- **Schema additions** (new tables, new columns). The invariant check above asserts _minimum_ columns. New optional columns won't break the check or the parser. This is the desired posture — forward-compat for additions.
 - **Whole-DB corruption.** Out of scope.
 
 ## Why this matters
 
-OpenCode is a long-running process that holds the SQLite handle and writes continuously. A naive reader CLI that opens writable and runs a query is technically safe (writes nothing) but doesn't *prove* it. The runtime probe converts a per-connection invariant into a per-startup assertion, so we fail closed on the day someone copies this pattern and forgets `{ readonly: true }`.
+OpenCode is a long-running process that holds the SQLite handle and writes continuously. A naive reader CLI that opens writable and runs a query is technically safe (writes nothing) but doesn't _prove_ it. The runtime probe converts a per-connection invariant into a per-startup assertion, so we fail closed on the day someone copies this pattern and forgets `{ readonly: true }`.
 
 The `busy_timeout` + per-query retry combination handles the realistic failure mode where OpenCode is mid-transaction or the WAL is being checkpointed.
 

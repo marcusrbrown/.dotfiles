@@ -31,11 +31,11 @@ Space recovery is an expectation, not authority to broaden the target set.
 
 ## Canonical roles and targets
 
-| Role | Canonical location | Required proof |
-| --- | --- | --- |
-| Active shared CortexKit root | `$HOME/.local/share/cortexkit/aft` | Preserve the entire root, including current indexes, backups, and checkpoints. |
-| OpenCode legacy root / target | Root: `$HOME/.local/share/opencode/storage/plugin/aft`; target: `index` | Root is the expected directory, target is its `index` directory, and the root carries `.migrated_to_cortexkit`. |
-| Pre-v0.10.1 cache root / target | Root: `$HOME/.cache/aft`; target: `index` | Root is the documented legacy cache directory and target is its `index` directory. |
+| Role                            | Canonical location                                                      | Required proof                                                                                                  |
+| ------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Active shared CortexKit root    | `$HOME/.local/share/cortexkit/aft`                                      | Preserve the entire root, including current indexes, backups, and checkpoints.                                  |
+| OpenCode legacy root / target   | Root: `$HOME/.local/share/opencode/storage/plugin/aft`; target: `index` | Root is the expected directory, target is its `index` directory, and the root carries `.migrated_to_cortexkit`. |
+| Pre-v0.10.1 cache root / target | Root: `$HOME/.cache/aft`; target: `index`                               | Root is the documented legacy cache directory and target is its `index` directory.                              |
 
 The only permitted target paths are the resolved canonical paths of the two
 documented legacy `index` locations. The shared root is never a target.

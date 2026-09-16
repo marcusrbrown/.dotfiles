@@ -13,7 +13,7 @@ config right on the first attempt, and keeping credentials out of tracked files.
 The core technique — probing a server's OAuth discovery chain before writing any
 config — is documented as a reusable skill at
 `~/.agents/skills/probing-mcp-oauth/SKILL.md`. This runbook is the machine-specific
-companion: where files go on *this* machine, how secrets are sourced, and the
+companion: where files go on _this_ machine, how secrets are sourced, and the
 results of servers already configured.
 
 > **Tenant identifiers are placeholdered** (`<tenant>`, `<work-repo>`) throughout.
@@ -26,13 +26,13 @@ results of servers already configured.
 Three servers were configured by probing first. In all three cases the probe beat
 the documentation:
 
-| Server    | What the docs implied                        | What probing established                                              |
-| --------- | -------------------------------------------- | --------------------------------------------------------------------- |
-| Aha!      | (setup docs describe a UI flow)              | RFC 7591 DCR available → config is a bare URL, zero setup             |
+| Server    | What the docs implied                          | What probing established                                               |
+| --------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
+| Aha!      | (setup docs describe a UI flow)                | RFC 7591 DCR available → config is a bare URL, zero setup              |
 | Box       | Admin Console Integration Credentials required | A self-serve Developer Console app authenticates fine; no admin needed |
-| Atlassian | research and older docs pointed at `/v1/mcp`  | Only `/v1/mcp/authv2` serves RFC 9728; `/v1/mcp` has no discovery      |
+| Atlassian | research and older docs pointed at `/v1/mcp`   | Only `/v1/mcp/authv2` serves RFC 9728; `/v1/mcp` has no discovery      |
 
-Vendor docs describe the *supported* path, not the *minimum* path, and they lag
+Vendor docs describe the _supported_ path, not the _minimum_ path, and they lag
 endpoint changes. The metadata a server actually serves is authoritative.
 
 ---
@@ -58,8 +58,8 @@ curl -s "https://<as-host>/.well-known/oauth-authorization-server" | jq \
 
 Decision:
 
-| `registration_endpoint` | `none` in auth methods | Config shape                               |
-| ----------------------- | ---------------------- | ------------------------------------------ |
+| `registration_endpoint` | `none` in auth methods | Config shape                                |
+| ----------------------- | ---------------------- | ------------------------------------------- |
 | present                 | yes                    | URL only — omit `oauth`, DCR self-registers |
 | present                 | no                     | DCR, but a secret is still issued           |
 | **absent**              | —                      | Pre-create an OAuth app; clientId + secret  |
@@ -75,11 +75,11 @@ you no way to reduce the grant later.
 `~/.config/opencode/opencode.json` is **tracked** and this repo is **public**. Never
 put a work tenant URL or any credential in it.
 
-| Location                                    | Tracked?               | Use for                                     |
-| ------------------------------------------- | ---------------------- | ------------------------------------------- |
-| `~/.config/opencode/opencode.json`          | **tracked, public**    | Vendor-neutral servers only                 |
-| `<work-repo>/.opencode/opencode.json`       | gitignored in that repo | Work servers — preferred                    |
-| `~/.local/state/opencode/private.jsonc`     | ignored by allowlist   | User-wide private, via `OPENCODE_CONFIG`    |
+| Location                                | Tracked?                | Use for                                  |
+| --------------------------------------- | ----------------------- | ---------------------------------------- |
+| `~/.config/opencode/opencode.json`      | **tracked, public**     | Vendor-neutral servers only              |
+| `<work-repo>/.opencode/opencode.json`   | gitignored in that repo | Work servers — preferred                 |
+| `~/.local/state/opencode/private.jsonc` | ignored by allowlist    | User-wide private, via `OPENCODE_CONFIG` |
 
 Everything under `~/.config/` is **not** ignored by the dotfiles allowlist (`.config/`
 is allowlisted as a directory), so a "private" file there shows as untracked in
@@ -147,11 +147,11 @@ just added Keychain exports.
 
 Config lives in `<work-repo>/.opencode/opencode.json` (gitignored).
 
-| Name        | Endpoint                                | Auth                        | Secrets  |
-| ----------- | --------------------------------------- | --------------------------- | -------- |
-| `aha`       | `https://<tenant>.aha.io/api/v1/mcp`    | DCR, public client          | none     |
-| `box`       | `https://mcp.box.com`                   | confidential, clientId+secret | Keychain |
-| `atlassian` | `https://mcp.atlassian.com/v1/mcp/authv2` | DCR, public client        | none     |
+| Name        | Endpoint                                  | Auth                          | Secrets  |
+| ----------- | ----------------------------------------- | ----------------------------- | -------- |
+| `aha`       | `https://<tenant>.aha.io/api/v1/mcp`      | DCR, public client            | none     |
+| `box`       | `https://mcp.box.com`                     | confidential, clientId+secret | Keychain |
+| `atlassian` | `https://mcp.atlassian.com/v1/mcp/authv2` | DCR, public client            | none     |
 
 Per-server notes:
 
@@ -171,14 +171,14 @@ Per-server notes:
 
 ## Troubleshooting
 
-| Symptom                                | Cause                                                   |
-| -------------------------------------- | ------------------------------------------------------- |
-| `redirect_uri_mismatch`                | App's registered URI ≠ `http://127.0.0.1:19876/mcp/oauth/callback` |
-| `invalid_client`                       | Wrong or unset client ID — check `${#VAR}` in a new shell |
-| Consent succeeds, MCP still 401        | Server gates on an admin-minted client; app-level creds insufficient |
-| "app not authorized" / "pending"       | Enterprise blocks unpublished apps; needs admin approval |
+| Symptom                                 | Cause                                                                  |
+| --------------------------------------- | ---------------------------------------------------------------------- |
+| `redirect_uri_mismatch`                 | App's registered URI ≠ `http://127.0.0.1:19876/mcp/oauth/callback`     |
+| `invalid_client`                        | Wrong or unset client ID — check `${#VAR}` in a new shell              |
+| Consent succeeds, MCP still 401         | Server gates on an admin-minted client; app-level creds insufficient   |
+| "app not authorized" / "pending"        | Enterprise blocks unpublished apps; needs admin approval               |
 | Connects but no auth actually happening | `{env:VAR}` resolved empty — config implies auth that is not occurring |
-| Handshake never opens a browser        | Callback port 19876 occupied, or DCR rejected            |
+| Handshake never opens a browser         | Callback port 19876 occupied, or DCR rejected                          |
 
 A server reporting `connected` does **not** prove authentication succeeded. Some
 servers accept anonymous requests and silently degrade to a free tier. Verify by

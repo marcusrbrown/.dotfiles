@@ -132,7 +132,7 @@ State directory created at runtime (untracked):
 
 ## High-Level Technical Design
 
-> *This illustrates the intended approach and is directional guidance for review, not implementation specification. The implementing agent should treat it as context, not code to reproduce.*
+> _This illustrates the intended approach and is directional guidance for review, not implementation specification. The implementing agent should treat it as context, not code to reproduce._
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -205,11 +205,13 @@ State directory created at runtime (untracked):
 **Dependencies:** None.
 
 **Files:**
+
 - Create: `.config/opencode/scripts/ollama-distill.ts` (initial: imports, types, SQLite reader module, extract function)
 - Create: `.config/opencode/scripts/ollama-distill.test.ts` (Unit 1 tests)
 - Modify: `.dotfiles/.gitignore` (allowlist `.config/opencode/scripts/ollama-distill.ts` and `.test.ts`)
 
 **Approach:**
+
 - Open SQLite via `new Database("file:" + dbPath + "?mode=ro", { readonly: true })` from `bun:sqlite`
 - After open: `PRAGMA query_only=ON; PRAGMA busy_timeout=5000`
 - Read-only verification probe: `CREATE TEMP TABLE _verify(x)` — MUST throw SQLITE_READONLY; if it succeeds, abort with explicit error
@@ -222,10 +224,12 @@ State directory created at runtime (untracked):
 - SQLITE_SCHEMA: throw `SchemaError`; caller maps to exit 1
 
 **Patterns to follow:**
+
 - `.config/opencode/scripts/opencode-doctor.ts` for module/error/exit conventions
 - AGENTS.md gitignore allowlist quirk: new files may need `git add -f`
 
 **Test scenarios:**
+
 - **Happy path:** session with 3 messages (each with one text part) → 3 role-labeled lines in chronological order, stats correct
 - **Mixed part types:** session with text + reasoning + tool + step-start parts → only text/reasoning emit; others recorded in skipped_types
 - **Truncation:** session with >60K chars text → truncated content + marker + `stats.truncated === true`
@@ -235,6 +239,7 @@ State directory created at runtime (untracked):
 - **JSON decode failure:** part row with malformed JSON → part skipped, extract continues, stats records skipped_parts
 
 **Verification:**
+
 - `bun test .config/opencode/scripts/ollama-distill.test.ts` passes all Unit 1 scenarios
 - Manual cross-check: extracted transcript for a known session matches what `/tmp/r5-distill-v2.py` produced (compare against Round C R5 output for the same session)
 
@@ -249,10 +254,12 @@ State directory created at runtime (untracked):
 **Dependencies:** Unit 1 (uses extract function).
 
 **Files:**
+
 - Modify: `.config/opencode/scripts/ollama-distill.ts` (add cursor, selection, Ollama client, report/log writer modules)
 - Modify: `.config/opencode/scripts/ollama-distill.test.ts` (add Unit 2 tests with mocked fetch)
 
 **Approach:**
+
 - Cursor at `~/.local/state/ollama-distill/cursor.json` as `{ last_run_timestamp: number | null }` (epoch ms). File-missing bootstrap: `now() - 7d`.
 - Selection (normal mode): `SELECT id, time_updated FROM session WHERE time_updated > ? AND parent_id IS NULL ORDER BY time_updated ASC`. Iterate, call extract for byte count, stop when 50 sessions OR cumulative bytes ≥ 1.5MB. Track `max_processed_time_updated`.
 - Cursor advances on success to `max_processed_time_updated` (NOT to `now()` — unprocessed sessions remain visible next run by natural recency filter).
@@ -262,11 +269,13 @@ State directory created at runtime (untracked):
 - JSONL log writer: append to `~/.local/state/ollama-distill/runs.jsonl`. Record per run: `{ ts, ts_ms, duration_ms, mode: "normal" | "session", model, sessions_read, report_blocks_generated, report_path, success, errors[] }`. On per-session error: append to `errors` as `{ session_id, phase, message }`. `success` mirrors process exit code (true = exit 0).
 
 **Patterns to follow:**
+
 - `.config/opencode/scripts/opencode-doctor.ts` module organization
 - Bun: `bun:sqlite`, `Bun.file().json()`, `Bun.write()`, `node:fs` `renameSync` for atomic write
 - AbortController/AbortSignal for fetch timeout
 
 **Test scenarios:**
+
 - **Cursor bootstrap:** missing file → bootstraps to `now() - 7d`
 - **Cap reached at 50 sessions:** 75 small candidates → first 50 selected, cursor advances to time_updated of 50th
 - **Cap reached at 1.5MB:** cumulative extracted text just over 1.5MB after the 7th of 10 sessions → first 7 selected
@@ -279,6 +288,7 @@ State directory created at runtime (untracked):
 - **Partial failure:** 3 sessions, 1 Ollama call fails → report has 2 session blocks + JSONL `errors` has one entry + JSONL `success: false`
 
 **Verification:**
+
 - `bun test` passes all Unit 2 scenarios
 - Manual: run pipeline twice quickly → second run reports zero new sessions and exits clean
 - Manual: smoke test against 1-2 real sessions → output matches Round C R5 output within model temperature variation
@@ -294,10 +304,12 @@ State directory created at runtime (untracked):
 **Dependencies:** Units 1, 2.
 
 **Files:**
+
 - Modify: `.config/opencode/scripts/ollama-distill.ts` (main entry + flag parser)
 - Modify: `.config/opencode/scripts/ollama-distill.test.ts` (Unit 3 tests for flag parsing + dispatch)
 
 **Approach:**
+
 - Simple positional + `--flag=value` parsing via `Bun.argv` (no full arg-parsing lib)
 - Flags:
   - `--since=<value>` — recency filter override; accepts ISO date, `Nd` relative, or epoch ms. Cursor still updates after success.
@@ -310,10 +322,12 @@ State directory created at runtime (untracked):
 - Exit codes (collapsed per F8): `0` = clean success (report written, every session processed without error), `1` = any failure (no-ollama, schema error, partial-success with errors, fatal SQLite error). JSONL carries cause detail.
 
 **Patterns to follow:**
+
 - `.config/opencode/scripts/opencode-doctor.ts` for exit code + stderr conventions
 - Don't spawn `ollama serve` — user-managed lifecycle (brainstorm's "Ollama as ffmpeg")
 
 **Test scenarios:**
+
 - **Flag parsing happy path:** `--since=2026-05-15 --out=/tmp/r.md` → `{ since: <ms>, out: "/tmp/r.md" }`
 - **`--since` formats accepted:** `7d`, `2026-05-15`, `1747267200000` all parse correctly
 - **`--session` does not advance cursor (R20):** passing `--session=ses_xxx` runs against that one session, does NOT touch cursor.json, does NOT acquire run lock; output goes to stdout when no --out
@@ -324,6 +338,7 @@ State directory created at runtime (untracked):
 - **Unknown flag:** `--foo=bar` → exit 1 + usage to stderr
 
 **Verification:**
+
 - `bun test` passes all Unit 3 scenarios
 - Manual: `bun run .config/opencode/scripts/ollama-distill.ts --help` shows usage
 - Manual: smoke test producing same outputs as `/tmp/r5-distill-v2.py` Round C against the same samples
@@ -339,6 +354,7 @@ State directory created at runtime (untracked):
 **Dependencies:** Unit 3 (CLI must work first); implementation must be complete to write the compound entry.
 
 **Files:**
+
 - Create: `.config/mise/tasks/distill` (executable Bun-wrapper task)
 - Modify: `.dotfiles/.gitignore` (add `.config/mise/tasks/distill` allowlist; verify the plan doc + ts files are also allowlisted; verify `docs/solutions/*.md`)
 - Create: `docs/solutions/2026-05-22-bun-sqlite-readonly-wal-pattern.md` (thin compound doc — only captures the Bun-specific WAL/read-only enforcement pattern that wasn't pre-validated by R5 or the brainstorm)
@@ -346,6 +362,7 @@ State directory created at runtime (untracked):
 **Approach:**
 
 Task file:
+
 ```
 #!/usr/bin/env bash
 #MISE description="Run local Ollama distillation against recent OpenCode sessions; writes Markdown report to ~/.local/state/ollama-distill/reports/"
@@ -355,6 +372,7 @@ exec bun run "$HOME/.config/opencode/scripts/ollama-distill.ts" "$@"
 ```
 
 Allowlist entries appended to `.dotfiles/.gitignore`:
+
 ```
 !/.config/opencode/scripts/ollama-distill.ts
 !/.config/opencode/scripts/ollama-distill.test.ts
@@ -368,14 +386,17 @@ Make `tasks/distill` executable: `chmod +x .config/mise/tasks/distill`.
 Compound doc scope (per F7): NOT a retelling of the brainstorm/plan/memories. Captures only the implementation-discovered pattern: how Bun's `bun:sqlite` honors URI mode + PRAGMA query_only against a live OpenCode WAL database, what the runtime probe pattern looks like, what `busy_timeout` value worked in practice. Approximate length: 1-2 screens. References the plan + memories rather than duplicating them.
 
 **Patterns to follow:**
+
 - `.config/mise/tasks/opencode/doctor` for exact wrapper-script style + header conventions
 - AGENTS.md gitignore quirk: even with allowlist entries, may need `git add -f` first commit
 - Per the `ce:compound` skill template if invoked: YAML frontmatter + Problem/Solution/Learnings sections
 
 **Test scenarios:**
+
 - Test expectation: none — Unit 4 is config + docs. Verification is structural.
 
 **Verification:**
+
 - `mise tasks ls | grep distill` shows task discovered
 - `mise tasks info distill` shows description from `#MISE` header
 - `mise run distill --help` runs wrapper successfully and prints CLI usage
@@ -397,15 +418,15 @@ Compound doc scope (per F7): NOT a retelling of the brainstorm/plan/memories. Ca
 
 ## Risks & Dependencies
 
-| Risk | Mitigation |
-|------|------------|
-| OpenCode upgrades `message.data` / `part.data` JSON shape; parser silently produces garbage | Schema-invariant check fails closed on missing columns (Unit 1). Per-session JSON decode failures skip the affected session (R9). If new part types appear, they're logged in stats as unknown skipped_types — visible in JSONL. |
-| SQLite WAL checkpoint or busy-write during pipeline run | `PRAGMA busy_timeout=5000` at connection + per-query SQLITE_BUSY/LOCKED retry (3x, 100ms backoff). Transcript SELECT is one quick query per session; not a long transaction. |
-| `qwen3:8b` quality regresses on real-world sessions vs R5 sample | Re-validation pattern from R5 is preserved. Marcus can re-run `/tmp/r5-distill-v2.py` (throwaway, recoverable from git history if archived) against fresh samples. Brainstorm's Deferred section names retrieval-first as the persistent-failure pivot. |
-| Bun version drift breaks `bun:sqlite` or `Bun.write` API surface (revision-1 F11 partial) | Pipeline is small enough to repair; Bun API stability across minor versions is generally good. If breakage happens, it surfaces immediately (test suite). No production deploy → no urgency. |
-| Append-only daily reports + JSONL grow unbounded (revision-1 F10) | Acceptable for v1. Daily report ~5-50KB even with 5 runs/day; 1 year of daily runs <50MB total state. If becomes a problem in v2: add `--rollover` flag or `--max-runs-per-day` cap. |
+| Risk                                                                                                             | Mitigation                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OpenCode upgrades `message.data` / `part.data` JSON shape; parser silently produces garbage                      | Schema-invariant check fails closed on missing columns (Unit 1). Per-session JSON decode failures skip the affected session (R9). If new part types appear, they're logged in stats as unknown skipped_types — visible in JSONL.                                                                                                                                     |
+| SQLite WAL checkpoint or busy-write during pipeline run                                                          | `PRAGMA busy_timeout=5000` at connection + per-query SQLITE_BUSY/LOCKED retry (3x, 100ms backoff). Transcript SELECT is one quick query per session; not a long transaction.                                                                                                                                                                                         |
+| `qwen3:8b` quality regresses on real-world sessions vs R5 sample                                                 | Re-validation pattern from R5 is preserved. Marcus can re-run `/tmp/r5-distill-v2.py` (throwaway, recoverable from git history if archived) against fresh samples. Brainstorm's Deferred section names retrieval-first as the persistent-failure pivot.                                                                                                              |
+| Bun version drift breaks `bun:sqlite` or `Bun.write` API surface (revision-1 F11 partial)                        | Pipeline is small enough to repair; Bun API stability across minor versions is generally good. If breakage happens, it surfaces immediately (test suite). No production deploy → no urgency.                                                                                                                                                                         |
+| Append-only daily reports + JSONL grow unbounded (revision-1 F10)                                                | Acceptable for v1. Daily report ~5-50KB even with 5 runs/day; 1 year of daily runs <50MB total state. If becomes a problem in v2: add `--rollover` flag or `--max-runs-per-day` cap.                                                                                                                                                                                 |
 | Concurrent OpenCode writer + pipeline reader produces inconsistent state across queries (revision-1 F11 partial) | Each query is its own statement; no multi-query transactions in v1 pipeline. WAL mode (which Bun's bun:sqlite supports) means readers see a snapshot at statement boundary. Different sessions' data may be from slightly different OpenCode write states but each session's own messages+parts are atomic. Acceptable for "distill the last few sessions" use case. |
-| State directory missing on first run | `mkdir -p` before write. |
+| State directory missing on first run                                                                             | `mkdir -p` before write.                                                                                                                                                                                                                                                                                                                                             |
 
 ## Documentation / Operational Notes
 

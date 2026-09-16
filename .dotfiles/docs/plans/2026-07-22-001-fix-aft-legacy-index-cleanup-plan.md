@@ -167,11 +167,13 @@ is removed.
 **Dependencies:** None.
 
 **Files:**
+
 - Create: `docs/runbooks/aft-legacy-index-cleanup.md`
 - Reference: `docs/opencode-doctor.md`
 - Reference: `docs/solutions/2026-06-25-opencode-sqlite-db-bloat-prune-vacuum.md`
 
 **Approach:**
+
 - Separate read-only inventory from the destructive phase.
 - Document the two exact canonical target paths and the per-target identity
   record: path, inode, device, type, parent/origin, and sentinel state.
@@ -191,6 +193,7 @@ is removed.
 against the observed legacy and shared layouts before use.
 
 **Verification:**
+
 - A reviewer can identify the two exact targets, both quiescence gates, the
   rollback decision, and every protected path without inferring paths or
   deleting data.
@@ -205,11 +208,13 @@ shared AFT state. This phase does not reclaim space.
 **Dependencies:** Unit 1 and explicit operator approval for quarantine.
 
 **Files:**
+
 - Modify: the two runtime legacy `index` directories only (not tracked
   repository files)
 - Preserve: the shared AFT storage root and all non-index legacy metadata
 
 **Approach:**
+
 - Capture before-state: available host space; each target's canonical path,
   inode, device, type, parent/origin, size, and sentinel; installed AFT version;
   and shared-root backup/checkpoint presence.
@@ -228,6 +233,7 @@ shared AFT state. This phase does not reclaim space.
 and postflight evidence is the behavioral verification.
 
 **Verification:**
+
 - The original paths are absent, each quarantine entry retains its recorded
   inode and device, legacy parents retain required metadata, and host free space
   has not been claimed as recovered.
@@ -241,9 +247,11 @@ and postflight evidence is the behavioral verification.
 **Dependencies:** Unit 2.
 
 **Files:**
+
 - Reference: `docs/runbooks/aft-legacy-index-cleanup.md`
 
 **Approach:**
+
 - Restart OpenCode normally and confirm AFT starts from the shared CortexKit
   storage path without migration, index, or schema errors while the quarantined
   copies remain intact.
@@ -257,6 +265,7 @@ and postflight evidence is the behavioral verification.
 **Test expectation:** none — operational validation of an existing runtime.
 
 **Verification:**
+
 - AFT/OpenCode starts successfully from the shared root, current indexes remain
   available, protected backups/checkpoints remain present, and no unexpected
   cold global re-index is triggered. Only this success permits Unit 4.
@@ -271,12 +280,14 @@ root validation and prove actual reclaim.
 **Dependencies:** Unit 3 succeeds and explicit operator approval for deletion.
 
 **Files:**
+
 - Modify: the two recorded quarantine directories only (not tracked repository
   files)
 - Preserve: all roots, the current shared root, backups, checkpoints, and
   non-index metadata
 
 **Approach:**
+
 - Quiesce again immediately before each permanent deletion. Require no
   OpenCode, Pi, or AFT process, no parent/supervisor restart risk, and no open
   descriptor on the quarantined target; inability to prove any condition
@@ -297,6 +308,7 @@ quiescence, restart, rollback, and postflight evidence is the behavioral
 verification.
 
 **Verification:**
+
 - Both quarantine entries and their recorded inodes are absent, both original
   canonical paths remain absent, no open descriptor retains deleted data, and
   free host space recovers after settling. Any delayed or missing reclaim is
@@ -319,16 +331,16 @@ verification.
 
 ## Risks & Dependencies
 
-| Risk | Mitigation |
-|---|---|
-| Active writer retains moved or deleted files | Repeat the hard quiescence gate immediately before each mutation; require no matching process, supervisor restart risk, or open descriptor. |
-| A path or project hash identifies the wrong index | Require the exact canonical path, directory type, parent/origin, device, and OpenCode migration sentinel; hashes are never authority. |
-| Offline diagnostic spawns OpenCode | Do not rely on `opencode-doctor`; use only filesystem/process metadata unless an AFT diagnostic is proven non-spawning, otherwise abort. |
-| Parent or supervisor restarts a writer during maintenance | Treat any unproven parent/supervisor state as a quiescence failure and abort. |
-| Restart unexpectedly needs quarantined data | Stop and rename quarantine back before further diagnosis; do not improvise broader cleanup. |
-| Final deletion is mistaken for quarantine | Keep phase one reversible and space-neutral; permit phase two only after successful restart validation and a second quiescence gate. |
-| Free space is not immediately visible | Wait for the settle interval, perform the no-open-FD check, verify inodes/paths, and account for delayed reclaim rather than claiming success from absence alone. |
-| Rebuild consumes available disk | Never remove shared indexes; preserve the shared root, backups, and checkpoints, and stop if restart behavior is unexpected. |
+| Risk                                                      | Mitigation                                                                                                                                                        |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Active writer retains moved or deleted files              | Repeat the hard quiescence gate immediately before each mutation; require no matching process, supervisor restart risk, or open descriptor.                       |
+| A path or project hash identifies the wrong index         | Require the exact canonical path, directory type, parent/origin, device, and OpenCode migration sentinel; hashes are never authority.                             |
+| Offline diagnostic spawns OpenCode                        | Do not rely on `opencode-doctor`; use only filesystem/process metadata unless an AFT diagnostic is proven non-spawning, otherwise abort.                          |
+| Parent or supervisor restarts a writer during maintenance | Treat any unproven parent/supervisor state as a quiescence failure and abort.                                                                                     |
+| Restart unexpectedly needs quarantined data               | Stop and rename quarantine back before further diagnosis; do not improvise broader cleanup.                                                                       |
+| Final deletion is mistaken for quarantine                 | Keep phase one reversible and space-neutral; permit phase two only after successful restart validation and a second quiescence gate.                              |
+| Free space is not immediately visible                     | Wait for the settle interval, perform the no-open-FD check, verify inodes/paths, and account for delayed reclaim rather than claiming success from absence alone. |
+| Rebuild consumes available disk                           | Never remove shared indexes; preserve the shared root, backups, and checkpoints, and stop if restart behavior is unexpected.                                      |
 
 ## Documentation / Operational Notes
 

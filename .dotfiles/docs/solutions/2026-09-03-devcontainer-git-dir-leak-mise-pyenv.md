@@ -47,7 +47,7 @@ postCreateCommand from Feature './features/mise' failed with exit code 1.
 ##[error]Dev container up failed: Command failed: /bin/sh -c mise install
 ```
 
-The diagnostic detail is what is **absent**. Python produced no progress lines at all while 26 other tools installed successfully. It failed during *version-list resolution*, so it never entered the install pipeline and never attempted the precompiled download that normally satisfies it.
+The diagnostic detail is what is **absent**. Python produced no progress lines at all while 26 other tools installed successfully. It failed during _version-list resolution_, so it never entered the install pipeline and never attempted the precompiled download that normally satisfies it.
 
 Onset was sharp: last passing run 2026-09-01T12:35, first failure 12:37.
 
@@ -109,14 +109,14 @@ The bug was latent because nothing in the container had previously made mise she
 
 Proof was a single-variable flip in the published image, holding mise version, image, user, and config constant:
 
-| `GIT_DIR` | result |
-|---|---|
-| exported as `remoteEnv` did | `fatal: not a git repository` ×3, then `python-build --definitions failed` |
-| unset | `Python 3.14.7 ✓ installed` from `cpython-3.14.7+20260901-x86_64-unknown-linux-gnu` |
+| `GIT_DIR`                   | result                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------- |
+| exported as `remoteEnv` did | `fatal: not a git repository` ×3, then `python-build --definitions failed`          |
+| unset                       | `Python 3.14.7 ✓ installed` from `cpython-3.14.7+20260901-x86_64-unknown-linux-gnu` |
 
 ## Prevention
 
-**Never export `GIT_DIR`/`GIT_WORK_TREE` process-wide.** Anything that shells out to `git` internally — a package manager, build tool, or language version manager — inherits them silently. Bare-repo dotfiles setups are unusually exposed because the pattern *requires* those variables, which makes exporting them look like the natural implementation.
+**Never export `GIT_DIR`/`GIT_WORK_TREE` process-wide.** Anything that shells out to `git` internally — a package manager, build tool, or language version manager — inherits them silently. Bare-repo dotfiles setups are unusually exposed because the pattern _requires_ those variables, which makes exporting them look like the natural implementation.
 
 ```bash
 # Scope per command

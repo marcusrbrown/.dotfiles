@@ -62,11 +62,11 @@ pgrep -f opencode -> 2661 2662 75090 (rc=0)
 
 ## What Didn't Work
 
-**Assuming `pgrep -f` only misses argv-less processes.** A spawned `harness serve --hostname=... --port=...` child *was* matched while the bare TUI was not, which made argv matching look like the variable. Refuted: PID 75090 has arguments (`-s ses_...`) and was still invisible, and `pgrep -x` matches on process name without touching argv — it missed the process too.
+**Assuming `pgrep -f` only misses argv-less processes.** A spawned `harness serve --hostname=... --port=...` child _was_ matched while the bare TUI was not, which made argv matching look like the variable. Refuted: PID 75090 has arguments (`-s ses_...`) and was still invisible, and `pgrep -x` matches on process name without touching argv — it missed the process too.
 
 **Unioning three `pgrep` probes.** A second attempt combined `pgrep -f opencode`, `pgrep -x opencode`, and `pgrep -x harness`, deduplicating PIDs and failing closed if any probe errored. It was written, unit-tested, and staged before being discarded: all three probes are blind in the same execution context, so the union added code without adding evidence.
 
-Both attempts shared a mistake — reasoning about *why* a probe missed instead of first establishing *what the probe can see at all*. Enumerating every visible PID (`pgrep .` → 603 processes) and finding the targets absent, while `ps` listed them and `pgrep -x Finder` worked, settled it in one command.
+Both attempts shared a mistake — reasoning about _why_ a probe missed instead of first establishing _what the probe can see at all_. Enumerating every visible PID (`pgrep .` → 603 processes) and finding the targets absent, while `ps` listed them and `pgrep -x Finder` worked, settled it in one command.
 
 ## Solution
 

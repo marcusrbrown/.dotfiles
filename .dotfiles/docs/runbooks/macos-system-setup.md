@@ -21,7 +21,7 @@ A fresh machine, or a wipe-and-restore, loses all of it with nothing to prompt a
 rebuild. This runbook is that prompt.
 
 > This repo is **public**. Never record credential values here — only the Keychain
-> item *names* used to retrieve them, and never employer-identifying hostnames.
+> item _names_ used to retrieve them, and never employer-identifying hostnames.
 
 ---
 
@@ -29,14 +29,14 @@ rebuild. This runbook is that prompt.
 
 Work top to bottom on a new machine. Each step is independently verifiable.
 
-| #   | Item                          | Verify                                                     |
-| --- | ----------------------------- | ---------------------------------------------------------- |
-| 1   | Touch ID for `sudo`           | `sudo -k && sudo true` prompts biometrically                |
-| 2   | gitleaks pre-commit hook      | `git config --get core.hooksPath` returns a path           |
-| 3   | GnuPG home permissions        | `stat -f '%Sp' ~/.config/gnupg` is `drwx------`             |
-| 4   | Machine-local git identity    | `git config --get user.signingKey` returns a fingerprint   |
-| 5   | Machine-local zsh secrets     | `~/.zshrc.local` exists and is sourced                     |
-| 6   | Keychain items                | see "Keychain inventory"                                    |
+| #   | Item                       | Verify                                                   |
+| --- | -------------------------- | -------------------------------------------------------- |
+| 1   | Touch ID for `sudo`        | `sudo -k && sudo true` prompts biometrically             |
+| 2   | gitleaks pre-commit hook   | `git config --get core.hooksPath` returns a path         |
+| 3   | GnuPG home permissions     | `stat -f '%Sp' ~/.config/gnupg` is `drwx------`          |
+| 4   | Machine-local git identity | `git config --get user.signingKey` returns a fingerprint |
+| 5   | Machine-local zsh secrets  | `~/.zshrc.local` exists and is sourced                   |
+| 6   | Keychain items             | see "Keychain inventory"                                 |
 
 ---
 
@@ -88,15 +88,15 @@ include target — verifiable by the fact that `sudo` works normally on a machin
 ### Behavior notes
 
 `sufficient` means Touch ID success short-circuits authentication, while Touch ID
-*failure* falls through to smartcard and then password. The password path is never
+_failure_ falls through to smartcard and then password. The password path is never
 removed.
 
-| Situation                | Result                                           |
-| ------------------------ | ------------------------------------------------ |
-| Local terminal           | Touch ID prompt                                   |
-| Over SSH                 | Password — no biometric hardware in the session   |
-| Apple Watch              | Not supported; `pam_tid` is Touch ID only         |
-| Inside `tmux` / `screen` | **Fails** without `pam_reattach` — see below      |
+| Situation                | Result                                          |
+| ------------------------ | ----------------------------------------------- |
+| Local terminal           | Touch ID prompt                                 |
+| Over SSH                 | Password — no biometric hardware in the session |
+| Apple Watch              | Not supported; `pam_tid` is Touch ID only       |
+| Inside `tmux` / `screen` | **Fails** without `pam_reattach` — see below    |
 
 ### tmux caveat
 
@@ -164,10 +164,10 @@ not — restore those from your offline key backup, not from this repo.
 
 Both are gitignored by design and must be recreated by hand.
 
-| File                              | Ignored by             | Purpose                                              |
-| --------------------------------- | ---------------------- | ---------------------------------------------------- |
-| `~/.config/git/.gitconfig.local`  | `*.local`              | `user.name`, `user.email`, `user.signingKey`, `gpg.program` |
-| `~/.zshrc.local`                  | `*.local`              | Machine-local env; sourced at the end of `.config/zsh/.zshrc` |
+| File                             | Ignored by | Purpose                                                       |
+| -------------------------------- | ---------- | ------------------------------------------------------------- |
+| `~/.config/git/.gitconfig.local` | `*.local`  | `user.name`, `user.email`, `user.signingKey`, `gpg.program`   |
+| `~/.zshrc.local`                 | `*.local`  | Machine-local env; sourced at the end of `.config/zsh/.zshrc` |
 
 Set `.gitconfig.local` to mode `600` — it carries identity, and on a work machine
 that identity is employer-attributable.
@@ -177,7 +177,7 @@ that identity is employer-attributable.
 does not exist and the login shell is zsh — so `.config/bash/local.d/` is dead code
 sourced by nothing. Do not put machine-local values there.
 
-Secrets in `~/.zshrc.local` should be *read from Keychain*, never written inline:
+Secrets in `~/.zshrc.local` should be _read from Keychain_, never written inline:
 
 ```zsh
 () {
@@ -200,10 +200,10 @@ Item **names** only. Retrieve with
 `security find-generic-password -s <name> -w`; create or update with
 `security add-generic-password -U -s <name> -a "$USER" -w '<value>'`.
 
-| Item name                 | Used by                              |
-| ------------------------- | ------------------------------------ |
-| `box-mcp-client-id`       | Box remote MCP OAuth confidential client |
-| `box-mcp-client-secret`   | Box remote MCP OAuth confidential client |
+| Item name               | Used by                                  |
+| ----------------------- | ---------------------------------------- |
+| `box-mcp-client-id`     | Box remote MCP OAuth confidential client |
+| `box-mcp-client-secret` | Box remote MCP OAuth confidential client |
 
 See `docs/runbooks/mcp-remote-server-setup.md` for how these reach the MCP config.
 
@@ -234,4 +234,4 @@ document, including this one.
 
 When a change is made that lives outside `$HOME` or outside the allowlist, add it
 here with: the exact command, a verification command, a rollback, and the failure
-mode if it is missing. Record the *shape* of secrets, never their values.
+mode if it is missing. Record the _shape_ of secrets, never their values.
