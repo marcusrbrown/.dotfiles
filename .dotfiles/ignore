@@ -33,7 +33,9 @@
 !/.dotfiles/.prettierignore
 !/.dotfiles/.prettierrc.yaml
 !/.dotfiles/README.md
+!/.dotfiles/bun.lock
 !/.dotfiles/ignore
+!/.dotfiles/package.json
 !/.dotfiles/docs/
 !/.dotfiles/docs/*.md
 !/.dotfiles/docs/brainstorms/

@@ -84,6 +84,12 @@
       groupName: null
     },
     {
+      description: 'Group the pinned script type-checking toolchain (.dotfiles/package.json) into one PR.',
+      matchFileNames: ['.dotfiles/package.json'],
+      matchPackageNames: ['typescript', '@types/bun'],
+      groupName: 'script typecheck toolchain'
+    },
+    {
       description: ['Automerge unstable minor updates of some packages.'],
       matchCurrentVersion: '/^v?0/',
       matchPackageNames: [

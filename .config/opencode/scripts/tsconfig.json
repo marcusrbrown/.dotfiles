@@ -6,7 +6,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ESNext"],
-    "types": ["bun-types"],
+    "types": ["bun"],
+    "typeRoots": ["../../../.dotfiles/node_modules/@types"],
 
     // Type checking - strict but practical
     // Note: @opencode-ai/sdk types lag behind runtime API (uses { query: {} } wrapper)
