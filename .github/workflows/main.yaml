@@ -144,6 +144,12 @@ jobs:
           .dotfiles/node_modules/.bin/tsc --noEmit -p .config/opencode/scripts/tsconfig.json
           .dotfiles/node_modules/.bin/tsc --noEmit -p .claude/scripts/tsconfig.json
 
+      # Formatting is platform-independent -- run it on a single matrix leg so
+      # it doesn't burn double the CI time for no extra signal.
+      - if: matrix.os == 'ubuntu-latest'
+        name: Check formatting
+        run: .dotfiles/node_modules/.bin/prettier --config .dotfiles/.prettierrc.yaml --check .devcontainer .dotfiles .github
+
   # Aggregates the matrix into one stable status context. Branch protection
   # requires 'Script Tests'; a matrix reports per-leg names instead, so without
   # this the required check would never report and every PR would block.
