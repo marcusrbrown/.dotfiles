@@ -6,10 +6,10 @@ module: devcontainer
 problem_type: integration_issue
 component: development_workflow
 symptoms:
-  - 'Devcontainer CI failed 8 consecutive runs, blocking every open PR on a required, admin-enforced check'
-  - 'mise install: Failed to resolve tool version list for python'
-  - 'python-build --definitions: No such file or directory (os error 2)'
-  - 'pipx:poetry@2.4.2: Skipped due to failed dependency'
+  - "Devcontainer CI failed 8 consecutive runs, blocking every open PR on a required, admin-enforced check"
+  - "mise install: Failed to resolve tool version list for python"
+  - "python-build --definitions: No such file or directory (os error 2)"
+  - "pipx:poetry@2.4.2: Skipped due to failed dependency"
 root_cause: config_error
 resolution_type: config_change
 severity: high

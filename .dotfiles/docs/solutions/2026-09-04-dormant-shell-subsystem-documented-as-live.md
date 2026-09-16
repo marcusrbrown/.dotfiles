@@ -6,11 +6,11 @@ module: shell
 problem_type: documentation_gap
 component: development_workflow
 severity: high
-applies_when: 'A repo documents a layered shell load chain (init.d/, conf.d/, local.d/, a main entry script) and no one has confirmed against a live shell that the chain still executes — especially after a shell framework migration.'
+applies_when: "A repo documents a layered shell load chain (init.d/, conf.d/, local.d/, a main entry script) and no one has confirmed against a live shell that the chain still executes — especially after a shell framework migration."
 symptoms:
-  - 'An environment variable a config script exports is empty in a live shell'
-  - 'A credential file exists, is readable and correct, and the variable it sets stays unset'
-  - 'Documentation describes a load chain whose entry point no live shell references'
+  - "An environment variable a config script exports is empty in a live shell"
+  - "A credential file exists, is readable and correct, and the variable it sets stays unset"
+  - "Documentation describes a load chain whose entry point no live shell references"
 root_cause: config_error
 resolution_type: documentation_update
 related_components:

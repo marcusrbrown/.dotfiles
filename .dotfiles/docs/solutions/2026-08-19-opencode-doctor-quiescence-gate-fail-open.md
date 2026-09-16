@@ -6,10 +6,10 @@ module: opencode-doctor
 problem_type: logic_error
 component: tooling
 symptoms:
-  - '`pgrep -f opencode` and `pgrep -x opencode` returned no matches from inside an OpenCode session while `ps` listed the same PIDs plainly'
-  - 'the quiescence gate reported `safe: true` with the database actively held open'
-  - '`--prune-older --execute` and `--set-incremental-vacuum` were cleared to run against a live 68 GB database'
-  - 'importing the module from the test suite executed the entire CLI and spawned a server'
+  - "`pgrep -f opencode` and `pgrep -x opencode` returned no matches from inside an OpenCode session while `ps` listed the same PIDs plainly"
+  - "the quiescence gate reported `safe: true` with the database actively held open"
+  - "`--prune-older --execute` and `--set-incremental-vacuum` were cleared to run against a live 68 GB database"
+  - "importing the module from the test suite executed the entire CLI and spawned a server"
 root_cause: wrong_api
 resolution_type: code_fix
 severity: critical
@@ -78,7 +78,7 @@ Check the database and both SQLite sidecars:
 const paths = [dbPath, `${dbPath}-wal`, `${dbPath}-shm`];
 
 for (const path of paths) {
-  result = spawnSync(['lsof', '-F', 'pc', path]);
+  result = spawnSync(["lsof", "-F", "pc", path]);
   // fail closed on spawn error, unexpected exit code, or unparseable output
 }
 ```
@@ -86,19 +86,19 @@ for (const path of paths) {
 `lsof -F pc` emits `p<PID>` and `c<COMMAND>` records interleaved with `f<FD>` lines, repeating a PID across descriptors. A holder is only recorded on a valid `c` following a valid `p`, and anything that breaks that sequence is unparseable rather than empty:
 
 ```ts
-if (field === 'p') {
+if (field === "p") {
   if (!/^\d+$/.test(value)) return null;
   const pid = Number(value);
   if (!Number.isSafeInteger(pid) || pid < 1) return null;
   if (currentPid != null && currentCommand == null) return null; // p with no c
   currentPid = pid;
   currentCommand = null;
-} else if (field === 'c') {
-  if (currentPid == null || value === '' || currentCommand != null) return null;
+} else if (field === "c") {
+  if (currentPid == null || value === "" || currentCommand != null) return null;
   currentCommand = value;
-  holders.set(currentPid, { pid: currentPid, command: value });
-} else if (field === 'f') {
-  if (currentPid == null || currentCommand == null || value === '') return null;
+  holders.set(currentPid, {pid: currentPid, command: value});
+} else if (field === "f") {
+  if (currentPid == null || currentCommand == null || value === "") return null;
 } else {
   return null; // unknown field -> unparseable -> refuse
 }
@@ -112,7 +112,7 @@ Exclude only the doctor's own PID, and refuse if anything else remains:
 if (holder.pid !== ownPid) holdersByPid.set(holder.pid, holder);
 
 const holders = [...holdersByPid.values()];
-return { safe: holders.length === 0, count: holders.length, pids, holders };
+return {safe: holders.length === 0, count: holders.length, pids, holders};
 ```
 
 Refusals name the holders, and the instruction points at those rather than at OpenCode — closing every OpenCode window would not clear a holder like the dashboard:

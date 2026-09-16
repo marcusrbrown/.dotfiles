@@ -1,5 +1,5 @@
 ---
-title: 'fix: reclaim stale AFT index storage'
+title: "fix: reclaim stale AFT index storage"
 type: fix
 status: active
 date: 2026-07-22

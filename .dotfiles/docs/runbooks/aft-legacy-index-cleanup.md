@@ -1,5 +1,5 @@
 ---
-title: 'AFT Legacy Index Cleanup — Runbook'
+title: "AFT Legacy Index Cleanup — Runbook"
 audience: Explicitly approved maintenance operator
 related-plan: docs/plans/2026-07-22-001-fix-aft-legacy-index-cleanup-plan.md
 ---

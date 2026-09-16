@@ -139,7 +139,7 @@ loading payloads into arrays:
 
 ```ts
 for (const row of query.iterate()) {
-  appendFramedText(digest, 'row');
+  appendFramedText(digest, "row");
   for (const column of columns) {
     appendFramedValue(digest, row[column]);
   }

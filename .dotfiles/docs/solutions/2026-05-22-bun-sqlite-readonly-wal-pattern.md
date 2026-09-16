@@ -24,36 +24,36 @@ Standard SQLite "open read-only" guidance is the URI mode (`file:path?mode=ro`) 
 Defense-in-depth read-only enforcement, verified empirically at startup:
 
 ```ts
-import { Database } from 'bun:sqlite';
+import { Database } from "bun:sqlite"
 
 function openReadOnly(dbPath: string): Database {
   // 1. SQLITE_OPEN_READONLY via the readonly option — this is the real guard.
   //    Do NOT use a `file:${dbPath}?mode=ro` URI here: it is not portable.
-  const db = new Database(dbPath, { readonly: true });
+  const db = new Database(dbPath, { readonly: true })
 
   // 2. PRAGMA query_only as belt-and-suspenders (per-connection;
   //    enforced by the SQLite library, not the OS file mode)
-  db.exec('PRAGMA query_only=ON');
+  db.exec("PRAGMA query_only=ON")
 
   // 3. Tunable busy_timeout (5s) so transient WAL checkpoints
   //    don't surface as immediate SQLITE_BUSY errors
-  db.exec('PRAGMA busy_timeout=5000');
+  db.exec("PRAGMA busy_timeout=5000")
 
   // 4. Runtime probe — verify read-only is *actually* active.
   //    Without this, a misconfigured connection silently allows writes.
   try {
-    db.exec('CREATE TEMP TABLE _verify_readonly (x INTEGER)');
-    db.exec('DROP TABLE _verify_readonly');
-    db.close();
-    throw new Error('Read-only enforcement failed: connection accepts writes.');
+    db.exec("CREATE TEMP TABLE _verify_readonly (x INTEGER)")
+    db.exec("DROP TABLE _verify_readonly")
+    db.close()
+    throw new Error("Read-only enforcement failed: connection accepts writes.")
   } catch (err) {
-    if (err instanceof Error && err.message.includes('Read-only enforcement failed')) {
-      throw err;
+    if (err instanceof Error && err.message.includes("Read-only enforcement failed")) {
+      throw err
     }
     // Expected: CREATE TEMP TABLE rejected because the connection is read-only.
   }
 
-  return db;
+  return db
 }
 ```
 
@@ -62,18 +62,19 @@ Pair the read-only enforcement with a schema-invariant check for fail-closed beh
 ```ts
 function assertSchemaInvariants(db: Database): void {
   const expected = {
-    session: ['id', 'project_id', 'parent_id', 'time_created', 'time_updated'],
-    message: ['id', 'session_id', 'time_created', 'data'],
-    part: ['id', 'message_id', 'session_id', 'time_created', 'data']
-  };
+    session: ["id", "project_id", "parent_id", "time_created", "time_updated"],
+    message: ["id", "session_id", "time_created", "data"],
+    part:    ["id", "message_id", "session_id", "time_created", "data"],
+  }
   for (const [table, columns] of Object.entries(expected)) {
-    const cols = db.query(`PRAGMA table_info(${table})`).all() as { name: string }[];
-    const names = new Set(cols.map((c) => c.name));
-    const missing = columns.filter((c) => !names.has(c));
+    const cols = db.query(`PRAGMA table_info(${table})`).all() as { name: string }[]
+    const names = new Set(cols.map((c) => c.name))
+    const missing = columns.filter((c) => !names.has(c))
     if (missing.length > 0) {
       throw new SchemaError(
-        `${table} missing columns: ${missing.join(', ')}. ` + `OpenCode may have upgraded; re-validate the schema.`
-      );
+        `${table} missing columns: ${missing.join(", ")}. ` +
+        `OpenCode may have upgraded; re-validate the schema.`,
+      )
     }
   }
 }
@@ -83,20 +84,20 @@ Per-query retry on SQLITE_BUSY / SQLITE_LOCKED:
 
 ```ts
 function withBusyRetry<T>(fn: () => T, attempts = 3, backoffMs = 100): T {
-  let lastErr: unknown;
+  let lastErr: unknown
   for (let i = 0; i < attempts; i++) {
     try {
-      return fn();
+      return fn()
     } catch (err) {
-      lastErr = err;
-      const msg = err instanceof Error ? err.message : String(err);
-      if (!msg.includes('SQLITE_BUSY') && !msg.includes('SQLITE_LOCKED')) {
-        throw err;
+      lastErr = err
+      const msg = err instanceof Error ? err.message : String(err)
+      if (!msg.includes("SQLITE_BUSY") && !msg.includes("SQLITE_LOCKED")) {
+        throw err
       }
-      if (i < attempts - 1) Bun.sleepSync(backoffMs);
+      if (i < attempts - 1) Bun.sleepSync(backoffMs)
     }
   }
-  throw lastErr;
+  throw lastErr
 }
 ```
 

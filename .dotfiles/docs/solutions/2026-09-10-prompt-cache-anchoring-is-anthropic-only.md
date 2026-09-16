@@ -6,10 +6,10 @@ module: opencode-provider
 problem_type: best_practice
 component: tooling
 severity: medium
-applies_when: 'Diagnosing prompt-cache reuse in a multi-provider agent harness, or evaluating a context-management threshold change on the strength of a token-waste number.'
+applies_when: "Diagnosing prompt-cache reuse in a multi-provider agent harness, or evaluating a context-management threshold change on the strength of a token-waste number."
 symptoms:
-  - 'Cached tokens pin at a fixed value while the prompt keeps growing, across adjacent turns seconds apart'
-  - 'One model family holds ~100% cache reuse while every other family degrades in the same harness'
+  - "Cached tokens pin at a fixed value while the prompt keeps growing, across adjacent turns seconds apart"
+  - "One model family holds ~100% cache reuse while every other family degrades in the same harness"
   - "A subjective report that a model 'busts cache a lot', with no per-turn measurement behind it"
 root_cause: scope_issue
 resolution_type: workflow_improvement
@@ -126,7 +126,7 @@ Turn 21 ran **12 seconds** after turn 20 and reused 38,912 tokens of a ~100k pre
 **The capped knob.** Magic Context computes the history-summary budget as:
 
 ```js
-Math.floor(displayContextLimit * (Math.min(executeThresholdPercentage, 80) / 100) * historyBudgetPercentage);
+Math.floor(displayContextLimit * (Math.min(executeThresholdPercentage, 80) / 100) * historyBudgetPercentage)
 ```
 
 `Math.min(…, 80)` makes 80 a ceiling. Lowering `execute_threshold_percentage` to 65 cuts the history budget by exactly 18.75% and buys nothing, while raising it above 80 does nothing at all. Reading the config key alone would not have shown this.
