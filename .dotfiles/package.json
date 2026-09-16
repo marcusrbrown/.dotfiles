@@ -1,0 +1,10 @@
+{
+  "name": "dotfiles-script-toolchain",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@opencode-ai/sdk": "1.18.31",
+    "@types/bun": "1.4.2",
+    "typescript": "7.0.2"
+  }
+}

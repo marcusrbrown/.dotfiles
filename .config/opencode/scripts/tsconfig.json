@@ -6,10 +6,22 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ESNext"],
-    "types": ["bun-types"],
+    "types": ["bun"],
+    "typeRoots": ["../../../.dotfiles/node_modules/@types"],
+    "allowImportingTsExtensions": true,
+
+    // `@opencode-ai/sdk` is an optional runtime dependency, dynamically imported
+    // so the module loads without it. Resolve its types from the pinned
+    // toolchain rather than whatever OpenCode happens to have installed locally
+    // -- that ambient copy does not exist in CI.
+    // The package is exports-only with no `types`/`main` field, so the mapping
+    // must name the declaration entry directly -- a bare directory target
+    // fails to resolve and silently falls back to the ambient copy.
+    "paths": {
+      "@opencode-ai/sdk": ["../../../.dotfiles/node_modules/@opencode-ai/sdk/dist/index.d.ts"]
+    },
 
     // Type checking - strict but practical
-    // Note: @opencode-ai/sdk types lag behind runtime API (uses { query: {} } wrapper)
     "strict": true,
 
     // Module behavior

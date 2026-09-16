@@ -32,6 +32,20 @@ import {
 // Save original fetch so we can restore it after each Ollama test
 const originalFetch = globalThis.fetch;
 
+/**
+ * Bun augments `fetch` with a `preconnect` static (see bun-types' `declare
+ * namespace fetch`), so a full replacement of `globalThis.fetch` must carry
+ * one too to satisfy `typeof fetch`. Tests never call it — the stub throws
+ * loudly instead of silently no-opping if that assumption ever breaks.
+ */
+function mockFetch(impl: (input: string | URL | Request, init?: RequestInit) => Promise<Response>): typeof fetch {
+  const fn = impl as typeof fetch;
+  fn.preconnect = () => {
+    throw new Error("mockFetch: preconnect should not be called in tests");
+  };
+  return fn;
+}
+
 // ─── Fixture helpers ──────────────────────────────────────────────────────────
 
 /** Create a minimal in-memory DB with the required schema. */
@@ -299,12 +313,12 @@ describe("extractTranscript", () => {
                     return originalAll(...(args as Parameters<typeof originalAll>));
                   };
                 }
-                return (stmtTarget as Record<string | symbol, unknown>)[stmtProp];
+                return Reflect.get(stmtTarget, stmtProp);
               },
             });
           };
         }
-        return (target as Record<string | symbol, unknown>)[prop];
+        return Reflect.get(target, prop);
       },
     });
 
@@ -636,11 +650,10 @@ describe("selectSessions", () => {
 
 describe("callOllama", () => {
   test("happy path: mocked fetch returns content → callOllama returns output + duration", async () => {
-    globalThis.fetch = async () =>
-      new Response(JSON.stringify({ message: { content: "## Block\n\nSome insight." } }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+    globalThis.fetch = mockFetch(async () => new Response(JSON.stringify({ message: { content: "## Block\n\nSome insight." } }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
 
     try {
       const result = await callOllama("test transcript");
@@ -653,9 +666,9 @@ describe("callOllama", () => {
   });
 
   test("network error: mocked fetch throws → returns error string", async () => {
-    globalThis.fetch = async () => {
+    globalThis.fetch = mockFetch(async () => {
       throw new Error("ECONNREFUSED");
-    };
+    });
 
     try {
       const result = await callOllama("test transcript");
@@ -667,11 +680,10 @@ describe("callOllama", () => {
   });
 
   test("empty response: Ollama returns 200 with empty content → error: 'empty response'", async () => {
-    globalThis.fetch = async () =>
-      new Response(JSON.stringify({ message: { content: "" } }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+    globalThis.fetch = mockFetch(async () => new Response(JSON.stringify({ message: { content: "" } }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
 
     try {
       const result = await callOllama("test transcript");
@@ -683,8 +695,7 @@ describe("callOllama", () => {
   });
 
   test("non-2xx response: returns HTTP error string", async () => {
-    globalThis.fetch = async () =>
-      new Response("Service Unavailable", { status: 503, statusText: "Service Unavailable" });
+    globalThis.fetch = mockFetch(async () => new Response("Service Unavailable", { status: 503, statusText: "Service Unavailable" }));
 
     try {
       const result = await callOllama("test transcript");
@@ -698,11 +709,11 @@ describe("callOllama", () => {
   test("timeout: AbortSignal.timeout fires → returns timeout error", async () => {
     // We can't easily test the 600s timeout, but we can verify the error path
     // by mocking fetch to throw a TimeoutError
-    globalThis.fetch = async () => {
+    globalThis.fetch = mockFetch(async () => {
       const err = new Error("The operation was aborted due to timeout");
       err.name = "TimeoutError";
       throw err;
-    };
+    });
 
     try {
       const result = await callOllama("test transcript");
@@ -716,11 +727,10 @@ describe("callOllama", () => {
 
   // Fix #9: malformed response shape
   test("Fix #9: response missing message field → returns malformed-response error, not crash", async () => {
-    globalThis.fetch = async () =>
-      new Response(JSON.stringify({ choices: [{ text: "something" }] }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+    globalThis.fetch = mockFetch(async () => new Response(JSON.stringify({ choices: [{ text: "something" }] }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
 
     try {
       const result = await callOllama("test transcript");
@@ -732,11 +742,10 @@ describe("callOllama", () => {
   });
 
   test("Fix #9: response with message but no content field → returns malformed-response error", async () => {
-    globalThis.fetch = async () =>
-      new Response(JSON.stringify({ message: { role: "assistant" } }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+    globalThis.fetch = mockFetch(async () => new Response(JSON.stringify({ message: { role: "assistant" } }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
 
     try {
       const result = await callOllama("test transcript");
@@ -897,7 +906,7 @@ function createFileDb(dbPath: string, sessions: Array<{ id: string; timeUpdated:
 
 /** Mock fetch for Ollama: health OK + chat response. */
 function mockOllamaOk(content = "## Insight\n\nSome durable insight."): typeof globalThis.fetch {
-  return async (url: string | URL | Request, _init?: RequestInit) => {
+  return mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
     const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
     if (urlStr.includes("/api/tags")) {
       return new Response(JSON.stringify({ models: [] }), { status: 200 });
@@ -906,14 +915,14 @@ function mockOllamaOk(content = "## Insight\n\nSome durable insight."): typeof g
       return new Response(JSON.stringify({ message: { content } }), { status: 200 });
     }
     throw new Error(`Unexpected URL: ${urlStr}`);
-  };
+  });
 }
 
 /** Mock fetch for Ollama: health fails. */
 function mockOllamaDown(): typeof globalThis.fetch {
-  return async () => {
+  return mockFetch(async () => {
     throw new Error("ECONNREFUSED");
-  };
+  });
 }
 
 // ── parseArgs tests ───────────────────────────────────────────────────────────
@@ -1018,7 +1027,7 @@ describe("parseArgs", () => {
 
 describe("checkOllamaReachable", () => {
   test("returns ok: true when /api/tags responds 200", async () => {
-    globalThis.fetch = async () => new Response(JSON.stringify({ models: [] }), { status: 200 });
+    globalThis.fetch = mockFetch(async () => new Response(JSON.stringify({ models: [] }), { status: 200 }));
     try {
       const result = await checkOllamaReachable();
       expect(result.ok).toBe(true);
@@ -1029,7 +1038,7 @@ describe("checkOllamaReachable", () => {
   });
 
   test("returns ok: false when fetch throws (connection refused)", async () => {
-    globalThis.fetch = async () => { throw new Error("ECONNREFUSED"); };
+    globalThis.fetch = mockFetch(async () => { throw new Error("ECONNREFUSED"); });
     try {
       const result = await checkOllamaReachable();
       expect(result.ok).toBe(false);
@@ -1219,7 +1228,7 @@ describe("main", () => {
     ]);
 
     // No cursor file exists — bootstrap default is 7 days ago
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) {
         return new Response(JSON.stringify({ models: [] }), { status: 200 });
@@ -1228,7 +1237,7 @@ describe("main", () => {
         return new Response("Internal Server Error", { status: 500, statusText: "Internal Server Error" });
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
     process.env.OPENCODE_DB_PATH = dbPath;
@@ -1274,7 +1283,7 @@ describe("main", () => {
     ]);
 
     let chatCallCount = 0;
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) {
         return new Response(JSON.stringify({ models: [] }), { status: 200 });
@@ -1288,7 +1297,7 @@ describe("main", () => {
         return new Response(JSON.stringify({ message: { content: "## Insight\n\nGood content." } }), { status: 200 });
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
     process.env.OPENCODE_DB_PATH = dbPath;
@@ -1356,7 +1365,7 @@ describe("main", () => {
     ]);
 
     let chatCallCount = 0;
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) {
         return new Response(JSON.stringify({ models: [] }), { status: 200 });
@@ -1370,7 +1379,7 @@ describe("main", () => {
         return new Response(JSON.stringify({ message: { content: "## Insight\n\nGood content." } }), { status: 200 });
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
     process.env.OPENCODE_DB_PATH = dbPath;
@@ -1413,7 +1422,7 @@ describe("main", () => {
     writeFileSync(join(stateDir, "cursor.json"), JSON.stringify({ last_run_timestamp: initialCursorTs }));
 
     let chatCallCount = 0;
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) {
         return new Response(JSON.stringify({ models: [] }), { status: 200 });
@@ -1424,7 +1433,7 @@ describe("main", () => {
         return new Response("Internal Server Error", { status: 500, statusText: "Internal Server Error" });
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
     process.env.OPENCODE_DB_PATH = dbPath;
@@ -1800,7 +1809,7 @@ describe("v1.2 end-to-end chunked inference", () => {
     ]);
 
     let ollamaCallCount = 0;
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) {
         return new Response(JSON.stringify({ models: [] }), { status: 200 });
@@ -1813,7 +1822,7 @@ describe("v1.2 end-to-end chunked inference", () => {
         );
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     const reportPath = join(stateDir, "test-report.md");
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
@@ -1863,7 +1872,7 @@ describe("v1.2 end-to-end chunked inference", () => {
     ]);
 
     let ollamaCallCount = 0;
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) {
         return new Response(JSON.stringify({ models: [] }), { status: 200 });
@@ -1880,7 +1889,7 @@ describe("v1.2 end-to-end chunked inference", () => {
         );
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
     process.env.OPENCODE_DB_PATH = dbPath;
@@ -1929,7 +1938,7 @@ describe("v1.2 end-to-end chunked inference", () => {
       },
     ]);
 
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) {
         return new Response(JSON.stringify({ models: [] }), { status: 200 });
@@ -1941,7 +1950,7 @@ describe("v1.2 end-to-end chunked inference", () => {
         );
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     const reportPath = join(stateDir, "test-report.md");
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
@@ -1970,11 +1979,11 @@ describe("v1.2 end-to-end chunked inference", () => {
 describe("v1.2 smoke fixes", () => {
   // Fix A: timeout string uses 600s
   test("Fix A: timeout error string contains '600s'", async () => {
-    globalThis.fetch = async () => {
+    globalThis.fetch = mockFetch(async () => {
       const err = new Error("The operation was aborted due to timeout");
       err.name = "TimeoutError";
       throw err;
-    };
+    });
     try {
       const result = await callOllama("test");
       expect(result.error).toContain("600s");
@@ -2016,7 +2025,7 @@ describe("v1.2 smoke fixes", () => {
     ]);
 
     let ollamaCallCount = 0;
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) {
         return new Response(JSON.stringify({ models: [] }), { status: 200 });
@@ -2033,7 +2042,7 @@ describe("v1.2 smoke fixes", () => {
         );
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     const reportPath = join(stateDir, "partial-report.md");
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
@@ -2077,7 +2086,7 @@ describe("v1.2 smoke fixes", () => {
       { id: "ses_total_fail", timeUpdated: now - 1000, text: "some content" },
     ]);
 
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) {
         return new Response(JSON.stringify({ models: [] }), { status: 200 });
@@ -2086,7 +2095,7 @@ describe("v1.2 smoke fixes", () => {
         return new Response("Internal Server Error", { status: 500 });
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     const reportPath = join(stateDir, "fail-report.md");
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
@@ -2131,7 +2140,7 @@ describe("v1.2 smoke fixes", () => {
     ]);
 
     let ollamaCallCount = 0;
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) {
         return new Response(JSON.stringify({ models: [] }), { status: 200 });
@@ -2149,7 +2158,7 @@ describe("v1.2 smoke fixes", () => {
         );
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     const reportPath = join(stateDir, "multi-report.md");
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
@@ -2281,8 +2290,7 @@ describe("main() process listener stability", () => {
 
 describe("callOllama malformed response handling", () => {
   test("HTML 200 response → error contains 'malformed' or 'parse'", async () => {
-    globalThis.fetch = async () =>
-      new Response("<html>Bad Gateway</html>", { status: 200 });
+    globalThis.fetch = mockFetch(async () => new Response("<html>Bad Gateway</html>", { status: 200 }));
 
     try {
       const result = await callOllama("test transcript");
@@ -2296,8 +2304,7 @@ describe("callOllama malformed response handling", () => {
   });
 
   test("valid JSON but wrong shape (missing message.content) → error", async () => {
-    globalThis.fetch = async () =>
-      new Response(JSON.stringify({ response: "wrong shape" }), { status: 200 });
+    globalThis.fetch = mockFetch(async () => new Response(JSON.stringify({ response: "wrong shape" }), { status: 200 }));
 
     try {
       const result = await callOllama("test transcript");
@@ -2327,7 +2334,7 @@ describe("cursor non-advancement on error", () => {
     db.run(`INSERT INTO session VALUES ('ses_fail1', ${now - 1000})`);
     db.close();
 
-    globalThis.fetch = async () => new Response("Internal Server Error", { status: 500 });
+    globalThis.fetch = mockFetch(async () => new Response("Internal Server Error", { status: 500 }));
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
     process.env.OPENCODE_DB_PATH = dbPath;
 
@@ -2472,7 +2479,7 @@ describe("--max-sessions integration", () => {
     db.close();
 
     let ollamaCallCount = 0;
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) return new Response(JSON.stringify({ models: [] }), { status: 200 });
       if (urlStr.includes("/api/chat")) {
@@ -2480,7 +2487,7 @@ describe("--max-sessions integration", () => {
         return new Response(JSON.stringify({ message: { content: `## Summary ${ollamaCallCount}\n\nDone.` } }), { status: 200 });
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
     process.env.OPENCODE_DB_PATH = dbPath;
@@ -2523,7 +2530,7 @@ describe("--max-sessions integration", () => {
     db.close();
 
     let ollamaCallCount = 0;
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) return new Response(JSON.stringify({ models: [] }), { status: 200 });
       if (urlStr.includes("/api/chat")) {
@@ -2531,7 +2538,7 @@ describe("--max-sessions integration", () => {
         return new Response(JSON.stringify({ message: { content: `## Summary ${ollamaCallCount}\n\nDone.` } }), { status: 200 });
       }
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
     process.env.OPENCODE_DB_PATH = dbPath;
@@ -2576,11 +2583,11 @@ describe("Item B: empty sessionResults guard", () => {
     db.run("INSERT INTO part VALUES (?, ?, ?, ?, ?)", ["part_trunc", "msg_trunc", "ses_trunc", now - 1000, JSON.stringify({ type: "text", text: bigText })]);
     db.close();
 
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) return new Response(JSON.stringify({ models: [] }), { status: 200 });
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     const reportPath = join(stateDir, "trunc-report.md");
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
@@ -2625,11 +2632,11 @@ describe("Item C: module-level cleanup handler", () => {
     `);
     db.close();
 
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) return new Response(JSON.stringify({ models: [] }), { status: 200 });
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
     process.env.OPENCODE_DB_PATH = dbPath;
@@ -2662,11 +2669,11 @@ describe("Item C: module-level cleanup handler", () => {
     `);
     db.close();
 
-    globalThis.fetch = async (url: string | URL | Request, _init?: RequestInit) => {
+    globalThis.fetch = mockFetch(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : (url as Request).url;
       if (urlStr.includes("/api/tags")) return new Response(JSON.stringify({ models: [] }), { status: 200 });
       throw new Error(`Unexpected URL: ${urlStr}`);
-    };
+    });
 
     process.env.OLLAMA_DISTILL_STATE_DIR = stateDir;
     process.env.OPENCODE_DB_PATH = dbPath;

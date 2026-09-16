@@ -131,6 +131,19 @@ jobs:
       - name: Audit .dotfiles/ignore for dead negations
         run: bun .config/opencode/scripts/ignore-audit.ts --git-dir .git --work-tree . --ignore-file .dotfiles/ignore
 
+      # Type-checking is platform-independent -- run it on a single matrix leg
+      # so it doesn't burn double the CI time for no extra signal.
+      - if: matrix.os == 'ubuntu-latest'
+        name: Install script type-checking toolchain
+        working-directory: .dotfiles
+        run: bun install --frozen-lockfile
+
+      - if: matrix.os == 'ubuntu-latest'
+        name: Type-check script projects
+        run: |
+          .dotfiles/node_modules/.bin/tsc --noEmit -p .config/opencode/scripts/tsconfig.json
+          .dotfiles/node_modules/.bin/tsc --noEmit -p .claude/scripts/tsconfig.json
+
   # Aggregates the matrix into one stable status context. Branch protection
   # requires 'Script Tests'; a matrix reports per-leg names instead, so without
   # this the required check would never report and every PR would block.
