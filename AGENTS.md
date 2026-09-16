@@ -210,6 +210,9 @@ mise run distill -- --help                    # Full flag reference (env, exit c
 mise run claude:settings                      # Apply the merge
 mise run claude:settings -- --check           # Report drift only, exit 1 if out of sync
 
+# Audit .dotfiles/ignore for dead allowlist negations
+mise run ignore:audit
+
 # Dotfiles git operations (use the alias)
 .dotfiles git status
 .dotfiles git add path/to/file

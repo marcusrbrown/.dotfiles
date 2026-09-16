@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Audit .dotfiles/ignore for dead allowlist negations"
+#MISE dir="{{cwd}}"
+exec bun "$HOME/.config/opencode/scripts/ignore-audit.ts" "$@"

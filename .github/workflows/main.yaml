@@ -119,6 +119,18 @@ jobs:
         working-directory: .claude/scripts
         run: bun test settings-sync.test.ts
 
+      - name: Run ignore-audit tests
+        working-directory: .config/opencode/scripts
+        run: bun test ignore-audit.test.ts
+
+      # A normal CI checkout has no core.excludesFile wired to .dotfiles/ignore
+      # (that binding is local-only, set by the bare-repo bootstrap) -- the
+      # audit takes --ignore-file explicitly instead of relying on it, and
+      # internally passes `-c core.excludesFile=<path>` per invocation so this
+      # check exercises the real allowlist rules rather than passing vacuously.
+      - name: Audit .dotfiles/ignore for dead negations
+        run: bun .config/opencode/scripts/ignore-audit.ts --git-dir .git --work-tree . --ignore-file .dotfiles/ignore
+
   # Aggregates the matrix into one stable status context. Branch protection
   # requires 'Script Tests'; a matrix reports per-leg names instead, so without
   # this the required check would never report and every PR would block.
