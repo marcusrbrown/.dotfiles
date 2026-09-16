@@ -10,4 +10,5 @@ if [[ ! -x $PRETTIER ]]; then
   exit 1
 fi
 
+cd "$HOME"
 "$PRETTIER" --config .dotfiles/.prettierrc.yaml --write .devcontainer .dotfiles .github
