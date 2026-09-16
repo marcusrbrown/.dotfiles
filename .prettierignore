@@ -9,8 +9,6 @@
 /.config/opencode/*
 !/.config/opencode/**/*.json*
 
-# AI-generated knowledge base
-/AGENTS.md
 
 # Git internal directories
 /.dotfiles/logs/

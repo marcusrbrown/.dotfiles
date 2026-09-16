@@ -82,7 +82,9 @@ Additional documentation for specific configurations.
 
 ### `AGENTS.md`
 
-Knowledge base for AI agents working with this repository.
+Guidance for AI agents working in this repository. Scoped to the things an agent
+is likely to get wrong — the bare-repo layout, the allowlist, and the CI
+conventions — rather than a full inventory.
 
 ## Directory Layout
 
