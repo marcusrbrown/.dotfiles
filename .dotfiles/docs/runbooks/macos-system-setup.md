@@ -121,7 +121,7 @@ for no benefit.
 
 ## 2. gitleaks pre-commit hook (dotfiles bare repo)
 
-Layer 2 of the secret-handling defense described in `~/AGENTS.md` is content-based
+Layer 2 of the secret-handling defense described in `~/.dotfiles/AGENTS.md` is content-based
 scanning via `gitleaks`. The hook script is tracked at `.config/git/hooks/pre-commit`,
 but **activation is per-machine local config** and is therefore not carried by a clone:
 

@@ -30,6 +30,7 @@
 !/.dotfiles/
 /.dotfiles/*
 !/.dotfiles/.gitconfig
+!/.dotfiles/AGENTS.md
 !/.dotfiles/.prettierignore
 !/.dotfiles/.prettierrc.yaml
 !/.dotfiles/README.md
@@ -66,7 +67,6 @@
 !/.profile
 !/.vimrc
 !/.zshenv
-!/AGENTS.md
 !/Brewfile
 !/Library/
 /Library/*
