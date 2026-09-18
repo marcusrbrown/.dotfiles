@@ -58,8 +58,8 @@
       "orchestrator": {
         "model": "opencode-go/minimax-m3",
         "variant": "thinking",
-        "skills": ["*", "!worktrees"],
-        "mcps": ["*", "!clonedeps", "!context7"]
+        "skills": ["*", "!clonedeps", "!worktrees"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "opencode-go/qwen3.7-max",
@@ -111,8 +111,8 @@
       "orchestrator": {
         "model": "anthropic/claude-opus-5",
         "variant": "high",
-        "skills": ["*", "!worktrees"],
-        "mcps": ["*", "!clonedeps", "!context7"]
+        "skills": ["*", "!clonedeps", "!worktrees"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "openai/gpt-6-astra",
@@ -163,8 +163,8 @@
       "orchestrator": {
         "model": "openai/gpt-6-astra",
         "variant": "medium",
-        "skills": ["*", "!worktrees"],
-        "mcps": ["*", "!clonedeps", "!context7"]
+        "skills": ["*", "!clonedeps", "!worktrees"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "anthropic/claude-opus-5",
@@ -215,8 +215,8 @@
       "orchestrator": {
         "model": "anthropic/claude-fable-5-1",
         "variant": "medium",
-        "skills": ["*", "!worktrees"],
-        "mcps": ["*", "!clonedeps", "!context7"]
+        "skills": ["*", "!clonedeps", "!worktrees"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "openai/gpt-6-astra",
@@ -267,8 +267,8 @@
       "orchestrator": {
         "model": "anthropic/claude-opus-5",
         "variant": "high",
-        "skills": ["*", "!worktrees"],
-        "mcps": ["*", "!clonedeps", "!context7"]
+        "skills": ["*", "!clonedeps", "!worktrees"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "opencode-go/qwen3.7-max",
