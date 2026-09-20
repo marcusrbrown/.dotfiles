@@ -52,12 +52,26 @@
         "promotion_threshold": 3
       }
     },
-    "opencode": { "model": "anthropic/claude-sonnet-5", "fallback_models": ["opencode-go/deepseek-v4.1-flash"] },
-    "pi": { "model": "anthropic/claude-sonnet-5", "fallback_models": ["opencode-go/deepseek-v4.1-flash"] }
-  },
-  "sidekick": {
-    "disabled": true,
-    "disable": true
+    "opencode": {
+      "model": "anthropic/claude-sonnet-5",
+      "fallback_models": ["opencode-go/deepseek-v4.1-flash"],
+      "tasks": {
+        "maintain-docs": {
+          "model": "anthropic/claude-opus-5",
+          "fallback_models": ["anthropic/claude-sonnet-5"]
+        }
+      }
+    },
+    "pi": {
+      "model": "anthropic/claude-sonnet-5",
+      "fallback_models": ["opencode-go/deepseek-v4.1-flash"],
+      "tasks": {
+        "maintain-docs": {
+          "model": "anthropic/claude-opus-5",
+          "fallback_models": ["anthropic/claude-sonnet-5"]
+        }
+      }
+    }
   },
   "cache_ttl": {
     "default": "5m",
