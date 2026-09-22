@@ -109,7 +109,7 @@
     },
     "mixed": {
       "orchestrator": {
-        "model": "anthropic/claude-opus-5",
+        "model": "anthropic/claude-opus-5-5",
         "variant": "high",
         "skills": ["*", "!clonedeps", "!worktrees"],
         "mcps": ["*", "!context7"]
@@ -167,7 +167,7 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "anthropic/claude-opus-5",
+        "model": "anthropic/claude-opus-5-5",
         "variant": "high",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
@@ -265,7 +265,7 @@
     },
     "mixed-go": {
       "orchestrator": {
-        "model": "anthropic/claude-opus-5",
+        "model": "anthropic/claude-opus-5-5",
         "variant": "high",
         "skills": ["*", "!clonedeps", "!worktrees"],
         "mcps": ["*", "!context7"]
@@ -335,7 +335,7 @@
     "presets": {
       "default": {
         "alpha": {
-          "model": "anthropic/claude-opus-5",
+          "model": "anthropic/claude-opus-5-5",
           "variant": "high"
         },
         "beta": {
