@@ -84,7 +84,7 @@
     "openai/gpt-5.6-terra-fast": "30m",
     "openai/gpt-5.6-luna": "30m",
     "openai/gpt-5.6-luna-fast": "30m",
-    "openai/gpt-6-*": "30m"
+    "openai/gpt-6": "30m"
   },
   "execute_threshold_percentage": {
     "default": 65,
@@ -103,7 +103,7 @@
     "openai/gpt-5.6-terra-fast": 80,
     "openai/gpt-5.6-luna": 80,
     "openai/gpt-5.6-luna-fast": 80,
-    "openai/gpt-6-*": 80
+    "openai/gpt-6": 80
   },
   "execute_threshold_tokens": {
     "github-copilot/claude-opus-4.7": 80000,
