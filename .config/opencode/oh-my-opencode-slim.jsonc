@@ -4,7 +4,7 @@
   "presets": {
     "openai": {
       "orchestrator": {
-        "model": "openai/gpt-5.6-sol",
+        "model": "openai/gpt-6-sol",
         "variant": "high",
         "skills": ["*", "!clonedeps", "!worktrees"],
         "mcps": ["*", "!context7"]
@@ -16,22 +16,22 @@
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-5.6-sol"
+        "model": "openai/gpt-6-sol"
       },
       "librarian": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "medium",
         "skills": [
           "agent-browser",
@@ -44,7 +44,7 @@
         "mcps": []
       },
       "fixer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "high",
         "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
@@ -121,22 +121,22 @@
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-5.6-sol"
+        "model": "openai/gpt-6-sol"
       },
       "librarian": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "medium",
         "skills": [
           "agent-browser",
@@ -173,22 +173,22 @@
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-5.6-sol"
+        "model": "openai/gpt-6-sol"
       },
       "librarian": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "medium",
         "skills": [
           "agent-browser",
@@ -225,22 +225,22 @@
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-5.6-sol"
+        "model": "openai/gpt-6-sol"
       },
       "librarian": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-5.6-luna",
+        "model": "openai/gpt-6-luna",
         "variant": "medium",
         "skills": [
           "agent-browser",
