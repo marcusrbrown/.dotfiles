@@ -380,7 +380,7 @@ jobs:
             ${{ !contains(fromJSON('["pull_request", "issue_comment", "issues"]'), github.event_name) }}
 
       - name: Run Fro Bot
-        uses: fro-bot/agent@dd5b53439608e481fbbf20382b79d046f1fe9cbe # v0.114.1
+        uses: fro-bot/agent@8e6494ed020b49cfb4c18aabe229514a4d00eca5 # v0.115.0
         env:
           OPENCODE_PROMPT_ARTIFACT: 'true'
           PROMPT: >-
