@@ -5,7 +5,7 @@
     "": {
       "name": "dotfiles-script-toolchain",
       "devDependencies": {
-        "@opencode-ai/sdk": "1.18.31",
+        "@opencode-ai/sdk": "1.18.32",
         "@types/bun": "1.4.2",
         "prettier": "3.9.8",
         "typescript": "7.0.2",
@@ -13,7 +13,7 @@
     },
   },
   "packages": {
-    "@opencode-ai/sdk": ["@opencode-ai/sdk@1.18.31", "", { "dependencies": { "cross-spawn": "7.0.6" } }, "sha512-Raouthf8Lhe9edjvYeeSK7SgvdoU6bBjH9qV3f70dHoa6h+z0X2TMz/e22/wKp/StlFUZ4kIRpYYxFnY8/k01w=="],
+    "@opencode-ai/sdk": ["@opencode-ai/sdk@1.18.32", "", { "dependencies": { "cross-spawn": "7.0.6" } }, "sha512-Wi3WtH/cLA3C0ga05lyDb7zac+SzbST9MPwCve1Ffod0xwzHdy9G2gnxvMAR4RBRhKJS32Rgk2cR+fxBhAVSQw=="],
 
     "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
 
