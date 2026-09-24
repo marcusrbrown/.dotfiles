@@ -20,19 +20,17 @@
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
-        "variant": "low",
         "skills": [],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
         "model": "openai/gpt-6-luna",
-        "variant": "low",
         "skills": [],
         "mcps": []
       },
       "designer": {
         "model": "openai/gpt-6-luna",
-        "variant": "medium",
+        "variant": "high",
         "skills": [
           "agent-browser",
           "brand-voice",
@@ -125,19 +123,17 @@
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
-        "variant": "low",
         "skills": [],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
         "model": "openai/gpt-6-luna",
-        "variant": "low",
         "skills": [],
         "mcps": []
       },
       "designer": {
         "model": "openai/gpt-6-luna",
-        "variant": "medium",
+        "variant": "high",
         "skills": [
           "agent-browser",
           "brand-voice",
@@ -177,19 +173,17 @@
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
-        "variant": "low",
         "skills": [],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
         "model": "openai/gpt-6-luna",
-        "variant": "low",
         "skills": [],
         "mcps": []
       },
       "designer": {
         "model": "openai/gpt-6-luna",
-        "variant": "medium",
+        "variant": "high",
         "skills": [
           "agent-browser",
           "brand-voice",
@@ -229,19 +223,17 @@
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
-        "variant": "low",
         "skills": [],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
         "model": "openai/gpt-6-luna",
-        "variant": "low",
         "skills": [],
         "mcps": []
       },
       "designer": {
         "model": "openai/gpt-6-luna",
-        "variant": "medium",
+        "variant": "high",
         "skills": [
           "agent-browser",
           "brand-voice",
@@ -282,13 +274,11 @@
       },
       "librarian": {
         "model": "github-copilot/gpt-5.4-mini",
-        "variant": "low",
         "skills": [],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
         "model": "github-copilot/gpt-5.4-mini",
-        "variant": "low",
         "skills": [],
         "mcps": []
       },
