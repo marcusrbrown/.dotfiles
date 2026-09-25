@@ -146,7 +146,7 @@
       },
       "fixer": {
         "model": "anthropic/claude-sonnet-5",
-        "variant": "medium",
+        "variant": "high",
         "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
@@ -196,7 +196,7 @@
       },
       "fixer": {
         "model": "anthropic/claude-sonnet-5",
-        "variant": "medium",
+        "variant": "high",
         "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
@@ -246,7 +246,7 @@
       },
       "fixer": {
         "model": "anthropic/claude-sonnet-5",
-        "variant": "medium",
+        "variant": "high",
         "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
@@ -296,7 +296,7 @@
       },
       "fixer": {
         "model": "anthropic/claude-sonnet-5",
-        "variant": "medium",
+        "variant": "high",
         "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
       },
