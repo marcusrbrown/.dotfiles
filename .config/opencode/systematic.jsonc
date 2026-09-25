@@ -37,7 +37,7 @@
     }
   },
   "workflow_guard": {
-    "mode": "protected",
+    "mode": "disabled",
     "debug": false
   }
 }
