@@ -20,7 +20,7 @@ ast-grep = "0.45.3"
 
 "npm:typescript" = "7.0.2"
 "npm:playwright" = "1.63.0"
-"npm:prettier" = "3.9.8"
+"npm:prettier" = "3.9.9"
 "npm:@bfra.me/prettier-config" = "0.16.11"
 "npm:@biomejs/biome" = "2.5.14"
 "npm:rimraf" = "6.1.3"
