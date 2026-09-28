@@ -18,7 +18,7 @@
       "variant": "medium"
     },
     "workflow": {
-      "model": "anthropic/claude-sonnet-5",
+      "model": "anthropic/claude-sonnet-5-5",
       "variant": "medium"
     }
   },
@@ -32,7 +32,7 @@
       "variant": "high"
     },
     "systematic-implementer": {
-      "model": "anthropic/claude-sonnet-5",
+      "model": "anthropic/claude-sonnet-5-5",
       "variant": "high"
     }
   },
