@@ -14,11 +14,11 @@
       "edit": "deny"
     },
     "opencode": {
-      "model": "anthropic/claude-sonnet-5",
+      "model": "anthropic/claude-sonnet-5-5",
       "variant": "medium",
       "fallback_models": ["opencode-go/deepseek-v4.1-flash"]
     },
-    "pi": { "model": "anthropic/claude-sonnet-5", "fallback_models": ["opencode-go/deepseek-v4.1-flash"] }
+    "pi": { "model": "anthropic/claude-sonnet-5-5", "fallback_models": ["opencode-go/deepseek-v4.1-flash"] }
   },
   "dreamer": {
     "inject_docs": true,
@@ -53,22 +53,22 @@
       }
     },
     "opencode": {
-      "model": "anthropic/claude-sonnet-5",
+      "model": "anthropic/claude-sonnet-5-5",
       "fallback_models": ["opencode-go/deepseek-v4.1-flash"],
       "tasks": {
         "maintain-docs": {
           "model": "anthropic/claude-opus-5-5",
-          "fallback_models": ["anthropic/claude-sonnet-5"]
+          "fallback_models": ["anthropic/claude-sonnet-5-5"]
         }
       }
     },
     "pi": {
-      "model": "anthropic/claude-sonnet-5",
+      "model": "anthropic/claude-sonnet-5-5",
       "fallback_models": ["opencode-go/deepseek-v4.1-flash"],
       "tasks": {
         "maintain-docs": {
           "model": "anthropic/claude-opus-5-5",
-          "fallback_models": ["anthropic/claude-sonnet-5"]
+          "fallback_models": ["anthropic/claude-sonnet-5-5"]
         }
       }
     }
@@ -90,6 +90,7 @@
     "default": 65,
     "anthropic/claude-sonnet-4-6": 55,
     "anthropic/claude-sonnet-5": 55,
+    "anthropic/claude-sonnet-5-5": 55,
     "anthropic/claude-opus-4-6": 55,
     "anthropic/claude-opus-4-7": 55,
     "anthropic/claude-opus-4-8": 65,

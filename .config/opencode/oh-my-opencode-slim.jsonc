@@ -10,8 +10,8 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "opencode-go/qwen3.8-max",
-        "variant": "max",
+        "model": "openai/gpt-6-astra",
+        "variant": "medium",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
@@ -145,7 +145,7 @@
         "mcps": []
       },
       "fixer": {
-        "model": "anthropic/claude-sonnet-5",
+        "model": "anthropic/claude-sonnet-5-5",
         "variant": "high",
         "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
@@ -195,7 +195,7 @@
         "mcps": []
       },
       "fixer": {
-        "model": "anthropic/claude-sonnet-5",
+        "model": "anthropic/claude-sonnet-5-5",
         "variant": "high",
         "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
@@ -245,7 +245,7 @@
         "mcps": []
       },
       "fixer": {
-        "model": "anthropic/claude-sonnet-5",
+        "model": "anthropic/claude-sonnet-5-5",
         "variant": "high",
         "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
@@ -295,7 +295,7 @@
         "mcps": []
       },
       "fixer": {
-        "model": "anthropic/claude-sonnet-5",
+        "model": "anthropic/claude-sonnet-5-5",
         "variant": "high",
         "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
         "mcps": []
