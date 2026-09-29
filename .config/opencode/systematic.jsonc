@@ -1,39 +1,62 @@
 {
   "$schema": "https://fro.bot/systematic/schemas/v3/systematic-config.schema.json",
-  "categories": {
-    "design": {
-      "model": "github-copilot/gemini-3.5-flash",
-      "variant": "high"
-    },
-    "document-review": {
-      "model": "github-copilot/gpt-5.4-mini",
-      "variant": "medium"
-    },
-    "research": {
-      "model": "github-copilot/gpt-5.4-mini",
-      "variant": "medium"
-    },
-    "review": {
-      "model": "github-copilot/gpt-5.4-mini",
-      "variant": "medium"
-    },
-    "workflow": {
-      "model": "anthropic/claude-sonnet-5-5",
-      "variant": "medium"
-    }
-  },
-  "agents": {
-    "repo-research-analyst": {
-      "model": "github-copilot/gpt-5.4-mini",
-      "variant": "high"
-    },
-    "spec-flow-analyzer": {
-      "model": "github-copilot/gemini-3.5-flash",
-      "variant": "high"
-    },
-    "systematic-implementer": {
-      "model": "anthropic/claude-sonnet-5-5",
-      "variant": "high"
+
+  // Let a repository define its own `profiles` map in .opencode/systematic.jsonc.
+  // User-owned: a project setting this field for itself has it ignored.
+  "allow_project_profiles": true,
+
+  // Default routing when a repository expresses no preference. A project's own
+  // `profile` overrides this selection, and when it does, the profile named here
+  // is not applied at all.
+  "profile": "direct",
+
+  // NOTHING IS SET AT TOP LEVEL ON PURPOSE. A project-defined bundle is advisory
+  // per field and per level: it supplies a field only where no user-sourced value
+  // exists for that same field at that same level. Routing left in a top-level
+  // `categories` or `agents` block would therefore beat any project bundle
+  // targeting the same entry, and the project's routing would read as active
+  // while changing nothing. Keeping the base empty is what makes a repository's
+  // own bundle effective.
+  "profiles": {
+    // Straight to the vendors, no gateway in front. This is the selection every
+    // repository gets unless it names another.
+    "direct": {
+      "categories": {
+        "design": {
+          "model": "github-copilot/gemini-3.5-flash",
+          "variant": "high"
+        },
+        "document-review": {
+          "model": "github-copilot/gpt-5.4-mini",
+          "variant": "medium"
+        },
+        "research": {
+          "model": "github-copilot/gpt-5.4-mini",
+          "variant": "medium"
+        },
+        "review": {
+          "model": "github-copilot/gpt-5.4-mini",
+          "variant": "medium"
+        },
+        "workflow": {
+          "model": "anthropic/claude-sonnet-5-5",
+          "variant": "medium"
+        }
+      },
+      "agents": {
+        "repo-research-analyst": {
+          "model": "github-copilot/gpt-5.4-mini",
+          "variant": "high"
+        },
+        "spec-flow-analyzer": {
+          "model": "github-copilot/gemini-3.5-flash",
+          "variant": "high"
+        },
+        "systematic-implementer": {
+          "model": "anthropic/claude-sonnet-5-5",
+          "variant": "high"
+        }
+      }
     }
   },
   "workflow_guard": {
