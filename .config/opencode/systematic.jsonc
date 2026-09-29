@@ -27,29 +27,29 @@
           "variant": "high"
         },
         "document-review": {
-          "model": "github-copilot/gpt-5.4-mini",
-          "variant": "medium"
+          "model": "github-copilot/gpt-5.5",
+          "variant": "high"
         },
         "research": {
-          "model": "github-copilot/gpt-5.4-mini",
-          "variant": "medium"
+          "model": "github-copilot/claude-opus-4.8",
+          "variant": "high"
         },
         "review": {
-          "model": "github-copilot/gpt-5.4-mini",
-          "variant": "medium"
+          "model": "github-copilot/gpt-5.5",
+          "variant": "high"
         },
         "workflow": {
           "model": "anthropic/claude-sonnet-5-5",
-          "variant": "medium"
+          "variant": "high"
         }
       },
       "agents": {
         "repo-research-analyst": {
-          "model": "github-copilot/gpt-5.4-mini",
+          "model": "github-copilot/gpt-5.5",
           "variant": "high"
         },
         "spec-flow-analyzer": {
-          "model": "github-copilot/gemini-3.5-flash",
+          "model": "github-copilot/claude-opus-4.8",
           "variant": "high"
         },
         "systematic-implementer": {
