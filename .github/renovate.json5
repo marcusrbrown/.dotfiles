@@ -109,9 +109,9 @@
       dependencyDashboardApproval: false
     },
     {
-      description: 'Hold oh-my-opencode-slim at 2.2.25.',
+      description: 'Hold oh-my-opencode-slim at 3.0.2.',
       matchPackageNames: ['oh-my-opencode-slim'],
-      allowedVersions: '2.2.25'
+      allowedVersions: '3.0.2'
     }
   ],
   prCreation: 'immediate',
