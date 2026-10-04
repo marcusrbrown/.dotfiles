@@ -308,7 +308,7 @@
     "mixed-sol": {
       "orchestrator": {
         "model": "openai/gpt-6.1-sol",
-        "variant": "high",
+        "variant": "medium",
         "skills": ["*", "!clonedeps", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
