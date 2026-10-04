@@ -4,7 +4,7 @@
   "presets": {
     "openai": {
       "orchestrator": {
-        "model": "openai/gpt-6-sol",
+        "model": "openai/gpt-6.1-sol",
         "variant": "high",
         "skills": ["*", "!clonedeps", "!worktrees"],
         "mcps": ["*", "!context7"]
@@ -16,7 +16,7 @@
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-6-sol"
+        "model": "openai/gpt-6.1-sol"
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
@@ -113,13 +113,13 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-6-astra",
-        "variant": "medium",
+        "model": "openai/gpt-6.1-sol",
+        "variant": "high",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-6-sol"
+        "model": "openai/gpt-6.1-sol"
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
@@ -169,7 +169,7 @@
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-6-sol"
+        "model": "openai/gpt-6.1-sol"
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
@@ -213,13 +213,13 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-6-astra",
-        "variant": "medium",
+        "model": "openai/gpt-6.1-sol",
+        "variant": "high",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-6-sol"
+        "model": "openai/gpt-6.1-sol"
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
@@ -284,6 +284,56 @@
       },
       "designer": {
         "model": "github-copilot/gemini-3.5-flash",
+        "skills": [
+          "agent-browser",
+          "brand-voice",
+          "content-research-writer",
+          "impeccable",
+          "openai-imagegen",
+          "systematic:*"
+        ],
+        "mcps": []
+      },
+      "fixer": {
+        "model": "anthropic/claude-sonnet-5-5",
+        "variant": "high",
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
+        "mcps": []
+      },
+      "fast-generic": {
+        "model": "github-copilot/gpt-5.4-mini",
+        "variant": "low"
+      }
+    },
+    "mixed-sol": {
+      "orchestrator": {
+        "model": "openai/gpt-6.1-sol",
+        "variant": "high",
+        "skills": ["*", "!clonedeps", "!worktrees"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "anthropic/claude-opus-5-5",
+        "variant": "high",
+        "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
+        "mcps": []
+      },
+      "council": {
+        "model": "openai/gpt-6.1-sol"
+      },
+      "librarian": {
+        "model": "openai/gpt-6-luna",
+        "skills": [],
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
+      },
+      "explorer": {
+        "model": "openai/gpt-6-luna",
+        "skills": [],
+        "mcps": []
+      },
+      "designer": {
+        "model": "openai/gpt-6-luna",
+        "variant": "high",
         "skills": [
           "agent-browser",
           "brand-voice",
