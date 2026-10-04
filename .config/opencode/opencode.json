@@ -7,7 +7,7 @@
     "@cortexkit/opencode-magic-context@0.44.4",
     "@cortexkit/aft-opencode@0.58.1",
     "opencode-copilot-delegate@0.12.1",
-    "@fro.bot/systematic@3.21.3"
+    "@fro.bot/systematic@3.21.4"
   ],
   "mcp": {
     "context7": {
