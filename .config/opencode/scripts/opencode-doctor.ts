@@ -17,7 +17,7 @@ export { estimateReclaim, selectOldSessionIds, type ReclaimEstimate };
 
 type OutputFormat = "text" | "json";
 
-type CliOptions = {
+export type CliOptions = {
   host: string;
   port: number;
   portProvided: boolean;
@@ -379,6 +379,9 @@ DB Maintenance (no server required):
                             Tree-aware: a session tree (root + descendants via parent_id) is
                             only selected if no session in it was updated within the window.
                             Dry-run unless --execute. Deletion is IRREVERSIBLE.
+                            With auto_vacuum=INCREMENTAL, --execute needs only 8 GiB free and
+                            reclaims via chunked PRAGMA incremental_vacuum (no full VACUUM);
+                            otherwise it runs a full VACUUM and needs ~1.1x the DB size free.
   --prune-events-older <days>
                              Event-only retention: delete selected event streams while preserving
                              sessions, messages, and parts. Tree-aware and dry-run by default.
@@ -691,8 +694,59 @@ export type PruneResult = {
   };
   bytes_reclaimed: number;
   bytes_reclaimed_human: string;
+  vacuum_mode: "incremental" | "full";
+  incremental_vacuum_chunks?: number;
   vacuum_error?: string;
 };
+
+export class PruneRefusedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PruneRefusedError";
+  }
+}
+
+export type PruneDependencies = {
+  availableBytes?: (path: string) => number;
+  headroomFloorBytes?: number;
+  incrementalChunkBytes?: number;
+  processCheck?: ProcessCheckDependencies;
+};
+
+const INCREMENTAL_VACUUM_CHUNK_BYTES = 256 * 1024 ** 2;
+
+function readAutoVacuum(db: Database): number {
+  return Number(db.query<{ auto_vacuum?: unknown }, []>("PRAGMA auto_vacuum").get()?.auto_vacuum ?? 0);
+}
+
+function readPragmaNumber(db: Database, pragma: "page_size" | "freelist_count"): number {
+  return Number(db.query<Record<string, unknown>, []>(`PRAGMA ${pragma}`).get()?.[pragma] ?? 0);
+}
+
+/**
+ * Frees pages in bounded chunks, checkpointing after each so the WAL never
+ * holds more than one chunk of relocated pages. Stops when the freelist is
+ * empty or a chunk frees nothing.
+ */
+function reclaimIncrementally(db: Database, chunkBytes: number): { chunks: number } {
+  const chunkPages = Math.max(1, Math.floor(chunkBytes / readPragmaNumber(db, "page_size")));
+  const checkpoint = (): void => {
+    const { busy } = walCheckpointTruncate(db);
+    if (busy !== 0) throw new Error(`wal_checkpoint busy=${busy}`);
+  };
+
+  checkpoint();
+  let chunks = 0;
+  for (;;) {
+    const freeBefore = readPragmaNumber(db, "freelist_count");
+    if (freeBefore === 0) break;
+    db.exec(`PRAGMA incremental_vacuum(${chunkPages})`);
+    chunks += 1;
+    checkpoint();
+    if (readPragmaNumber(db, "freelist_count") >= freeBefore) break;
+  }
+  return { chunks };
+}
 
 function captureDbSnapshot(db: Database, dbPath: string): PruneResult["before"] {
   type PragmaRow = { [key: string]: unknown };
@@ -720,7 +774,23 @@ function captureDbSnapshot(db: Database, dbPath: string): PruneResult["before"] 
   };
 }
 
-export function pruneSessions(db: Database, sessionIds: string[], dbPath: string): PruneResult {
+export function pruneSessions(
+  db: Database,
+  sessionIds: string[],
+  dbPath: string,
+  dependencies: PruneDependencies = {},
+): PruneResult {
+  const incremental = readAutoVacuum(db) === 2;
+  if (incremental) {
+    const floor = dependencies.headroomFloorBytes ?? EVENT_RETENTION_OPERATIONAL_HEADROOM_BYTES;
+    const availableBytes = (dependencies.availableBytes ?? availableBytesForPath)(dirname(dbPath));
+    if (availableBytes < floor) {
+      throw new PruneRefusedError(
+        `incremental prune requires ${bytesToHuman(floor)} operational headroom; only ${bytesToHuman(availableBytes)} available`,
+      );
+    }
+  }
+
   const before = captureDbSnapshot(db, dbPath);
 
   let sessionsDeleted = 0;
@@ -743,12 +813,16 @@ export function pruneSessions(db: Database, sessionIds: string[], dbPath: string
     });
   }
 
-  // Checkpoint WAL then VACUUM to reclaim space (VACUUM must run outside a transaction).
-  // Wrap in its own try/catch: if VACUUM fails, we still report what was deleted.
+  // Reclaim outside the delete transaction. Failure is non-fatal: the deletion is still reported.
   let vacuumError: string | undefined;
+  let incrementalChunks: number | undefined;
   try {
-    db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
-    db.exec("VACUUM");
+    if (incremental) {
+      incrementalChunks = reclaimIncrementally(db, dependencies.incrementalChunkBytes ?? INCREMENTAL_VACUUM_CHUNK_BYTES).chunks;
+    } else {
+      db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+      db.exec("VACUUM");
+    }
   } catch (err) {
     vacuumError = formatErrorMessage(err);
   }
@@ -763,8 +837,10 @@ export function pruneSessions(db: Database, sessionIds: string[], dbPath: string
     after,
     bytes_reclaimed: bytesReclaimed,
     bytes_reclaimed_human: bytesToHuman(bytesReclaimed),
+    vacuum_mode: incremental ? "incremental" : "full",
   };
 
+  if (incrementalChunks != null) result.incremental_vacuum_chunks = incrementalChunks;
   if (vacuumError != null) {
     result.vacuum_error = `Rows deleted but space reclamation failed: ${vacuumError}`;
   }
@@ -1333,10 +1409,23 @@ export function refuseIfOtherOpencodeProcesses(
  * a VACUUM operation (~1.1x the DB file size), or null if it is safe to proceed.
  * Best-effort: if df fails, returns null (let VACUUM itself be the real guard).
  */
-function refuseIfInsufficientDiskForVacuum(dbPath: string): SectionResultData | null {
+function refuseIfInsufficientDiskForVacuum(
+  dbPath: string,
+  availableBytesOverride?: (path: string) => number,
+): SectionResultData | null {
   const dbSize = safeStatSize(dbPath);
   if (dbSize > 0) {
     try {
+      if (availableBytesOverride != null) {
+        const availableBytes = availableBytesOverride(dirname(dbPath));
+        const requiredBytes = dbSize * 1.1;
+        return availableBytes < requiredBytes
+          ? {
+              refused: true,
+              reason: `VACUUM needs ~${bytesToHuman(Math.ceil(requiredBytes))} free; only ${bytesToHuman(availableBytes)} available. Free disk space and re-run.`,
+            }
+          : null;
+      }
       // -P forces POSIX output: one data line per filesystem, never wrapped
       // (plain `df -k` can split a long device name across two lines).
       const dfResult = Bun.spawnSync(["df", "-kP", dirname(dbPath)]);
@@ -1548,7 +1637,10 @@ async function runDbPruneDryRun(options: CliOptions): Promise<SectionResult> {
   }
 }
 
-async function runDbPruneExecute(options: CliOptions): Promise<SectionResult> {
+export async function runDbPruneExecute(
+  options: CliOptions,
+  dependencies: PruneDependencies = {},
+): Promise<SectionResult> {
   const days = options.pruneOlderDays ?? DEFAULT_PRUNE_DAYS;
 
   // Defense-in-depth: hard-refuse if pruneOlderDays < 1 even if parseArgs let it through.
@@ -1564,16 +1656,9 @@ async function runDbPruneExecute(options: CliOptions): Promise<SectionResult> {
   const cutoffDate = new Date(cutoffMs).toISOString().slice(0, 10);
 
   // Safety gate: check for other opencode processes
-  const procRefusal = refuseIfOtherOpencodeProcesses(options.dbPath);
+  const procRefusal = refuseIfOtherOpencodeProcesses(options.dbPath, dependencies.processCheck);
   if (procRefusal != null) {
     return { label: "DB Prune (refused)", data: procRefusal };
-  }
-
-  // Disk-space pre-check: VACUUM needs ~= DB size of free space for a temp copy.
-  // Check BEFORE any destructive operation so we never delete-then-fail-vacuum.
-  const diskRefusal = refuseIfInsufficientDiskForVacuum(options.dbPath);
-  if (diskRefusal != null) {
-    return { label: "DB Prune (refused)", data: diskRefusal };
   }
 
   let db: Database | null = null;
@@ -1582,9 +1667,18 @@ async function runDbPruneExecute(options: CliOptions): Promise<SectionResult> {
     db.exec("PRAGMA busy_timeout=5000");
     db.exec("PRAGMA foreign_keys=ON");
 
+    // A full VACUUM needs ~1.1x the DB size free; the incremental path is
+    // gated on a fixed headroom floor inside pruneSessions. Both run before any delete.
+    if (readAutoVacuum(db) !== 2) {
+      const diskRefusal = refuseIfInsufficientDiskForVacuum(options.dbPath, dependencies.availableBytes);
+      if (diskRefusal != null) {
+        return { label: "DB Prune (refused)", data: diskRefusal };
+      }
+    }
+
     const sessionIds = selectOldSessionIds(db, cutoffMs);
 
-    const result = pruneSessions(db, sessionIds, options.dbPath);
+    const result = pruneSessions(db, sessionIds, options.dbPath, dependencies);
 
     const data = {
       cutoff_date: cutoffDate,
@@ -1594,6 +1688,9 @@ async function runDbPruneExecute(options: CliOptions): Promise<SectionResult> {
 
     return { label: "DB Prune (executed)", data };
   } catch (error) {
+    if (error instanceof PruneRefusedError) {
+      return { label: "DB Prune (refused)", data: { refused: true, reason: error.message } };
+    }
     return { label: "DB Prune (executed)", data: null, error: formatErrorMessage(error) };
   } finally {
     db?.close();
