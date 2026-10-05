@@ -1,7 +1,7 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { $ } from "bun";
 import { Database } from "bun:sqlite";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -15,6 +15,8 @@ import {
   checkForOtherOpencodeProcesses,
   refuseIfOtherOpencodeProcesses,
   resolveOpencodeBin,
+  runDbPruneExecute,
+  type CliOptions,
 } from "./opencode-doctor";
 import {
   selectOldSessionIds as selectOldSessionIdsFromRetention,
@@ -2380,4 +2382,243 @@ describe("DB Set Incremental Vacuum (unit)", () => {
     },
     { timeout: TEST_TIMEOUT }
   );
+});
+
+// ─── --prune-older incremental reclaim ────────────────────────────────────────
+
+const PRUNE_HEADROOM_FLOOR = 8 * 1024 ** 3;
+const PRUNE_AGE_MS = 60 * 24 * 3600 * 1000;
+
+type PruneFixture = { db: Database; dbPath: string; oldIds: string[] };
+
+/** Several MB of old and recent session data, checkpointed into the main file. */
+function createPrunableDb(dir: string, options: { autoVacuum?: number } = {}): PruneFixture {
+  const { db, dbPath } = createTestDb(dir, options);
+  const now = Date.now();
+  const payload = "x".repeat(20_000);
+  const oldIds: string[] = [];
+
+  db.transaction(() => {
+    for (let i = 0; i < 40; i++) {
+      const id = `sess-old-${i}`;
+      oldIds.push(id);
+      insertSession(db, id, now - PRUNE_AGE_MS, { messages: 1, partsPerMessage: 0, events: 2 });
+      for (let p = 0; p < 5; p++) {
+        db.query("INSERT INTO part (id, message_id, session_id, time_created, data) VALUES (?, ?, ?, ?, ?)").run(
+          `${id}-bulk-${p}`, `${id}-msg-0`, id, now - PRUNE_AGE_MS, JSON.stringify({ text: payload }),
+        );
+      }
+    }
+    for (let i = 0; i < 4; i++) {
+      insertSession(db, `sess-recent-${i}`, now - 5 * 24 * 3600 * 1000);
+    }
+  })();
+  db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+
+  return { db, dbPath, oldIds };
+}
+
+function recordExec(db: Database): string[] {
+  const statements: string[] = [];
+  const originalExec = db.exec.bind(db);
+  (db as unknown as { exec: (sql: string) => void }).exec = (sql: string) => {
+    statements.push(sql);
+    originalExec(sql);
+  };
+  return statements;
+}
+
+function countRows(db: Database, table: string): number {
+  return db.query<{ cnt: number }, []>(`SELECT COUNT(*) AS cnt FROM ${table}`).get()?.cnt ?? 0;
+}
+
+function freelistCount(path: string): number {
+  const db = new Database(path, { readonly: true });
+  try {
+    return Number(db.query<{ freelist_count: number }, []>("PRAGMA freelist_count").get()?.freelist_count ?? 0);
+  } finally {
+    db.close();
+  }
+}
+
+function pruneCliOptions(dir: string, dbPath: string): CliOptions {
+  return {
+    host: "localhost",
+    port: 4096,
+    portProvided: false,
+    directory: dir,
+    format: "json",
+    only: null,
+    tui: false,
+    full: false,
+    limit: 10,
+    dbHealth: false,
+    pruneOlderDays: 30,
+    pruneEventsOlderDays: null,
+    pruneEventsOlderRefusal: null,
+    execute: true,
+    dbPath,
+    setIncrementalVacuum: false,
+  };
+}
+
+const noHolders = { spawnSync: () => ({ exitCode: 1, stdout: "", stderr: "" }) };
+
+describe("--prune-older incremental reclaim (unit)", () => {
+  test("incremental DB reclaims via incremental_vacuum, never a full VACUUM", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath, oldIds } = createPrunableDb(dir, { autoVacuum: 2 });
+      const statements = recordExec(db);
+
+      const result = pruneSessions(db, oldIds, dbPath, { availableBytes: () => PRUNE_HEADROOM_FLOOR + 1 });
+
+      expect(result.vacuum_mode).toBe("incremental");
+      expect(result.vacuum_error).toBeUndefined();
+      expect(result.sessions_deleted).toBe(40);
+      expect(result.after.file_size_bytes).toBeLessThan(result.before.file_size_bytes);
+      expect(result.bytes_reclaimed).toBe(result.before.file_size_bytes - result.after.file_size_bytes);
+      expect(result.after.freelist_count).toBe(0);
+      expect(countRows(db, "session")).toBe(4);
+      expect(statements.some((sql) => /^\s*VACUUM\b/i.test(sql))).toBe(false);
+      expect(statements.some((sql) => /incremental_vacuum/i.test(sql))).toBe(true);
+      db.close();
+      expect(freelistCount(dbPath)).toBe(0);
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("incremental DB below the headroom floor is refused before any deletion", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath, oldIds } = createPrunableDb(dir, { autoVacuum: 2 });
+      const sessionsBefore = countRows(db, "session");
+      const partsBefore = countRows(db, "part");
+
+      expect(() => pruneSessions(db, oldIds, dbPath, { availableBytes: () => PRUNE_HEADROOM_FLOOR - 1 }))
+        .toThrow(/operational headroom/i);
+
+      expect(countRows(db, "session")).toBe(sessionsBefore);
+      expect(countRows(db, "part")).toBe(partsBefore);
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("reclaims in bounded chunks until the freelist is empty", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath, oldIds } = createPrunableDb(dir, { autoVacuum: 2 });
+      const pageSize = Number(db.query<{ page_size: number }, []>("PRAGMA page_size").get()?.page_size);
+      const statements = recordExec(db);
+
+      const result = pruneSessions(db, oldIds, dbPath, {
+        availableBytes: () => PRUNE_HEADROOM_FLOOR + 1,
+        incrementalChunkBytes: 64 * pageSize,
+      });
+
+      const chunkStatements = statements.filter((sql) => /incremental_vacuum\(64\)/i.test(sql));
+      expect(chunkStatements.length).toBeGreaterThan(1);
+      expect(result.incremental_vacuum_chunks).toBe(chunkStatements.length);
+      expect(result.after.freelist_count).toBe(0);
+      expect(result.vacuum_error).toBeUndefined();
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("non-incremental DB keeps the full VACUUM path and ignores the headroom floor", () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath, oldIds } = createPrunableDb(dir);
+      const statements = recordExec(db);
+
+      const result = pruneSessions(db, oldIds, dbPath, { availableBytes: () => 0 });
+
+      expect(result.vacuum_mode).toBe("full");
+      expect(result.sessions_deleted).toBe(40);
+      expect(result.vacuum_error).toBeUndefined();
+      expect(statements.some((sql) => /^\s*VACUUM\b/i.test(sql))).toBe(true);
+      expect(statements.some((sql) => /incremental_vacuum/i.test(sql))).toBe(false);
+      db.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+});
+
+describe("--prune-older disk gates (runDbPruneExecute)", () => {
+  test("incremental DB is not subject to the 1.1x DB-size check", async () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createPrunableDb(dir, { autoVacuum: 2 });
+      db.close();
+      const dbSize = statSync(dbPath).size;
+
+      const result = await runDbPruneExecute(pruneCliOptions(dir, dbPath), {
+        processCheck: noHolders,
+        availableBytes: () => Math.floor(dbSize * 0.5),
+        headroomFloorBytes: 1024,
+      });
+
+      expect(result.label).toBe("DB Prune (executed)");
+      expect((result.data as { vacuum_mode: string }).vacuum_mode).toBe("incremental");
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("non-incremental DB is still refused below 1.1x DB size", async () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createPrunableDb(dir);
+      db.close();
+      const dbSize = statSync(dbPath).size;
+
+      const result = await runDbPruneExecute(pruneCliOptions(dir, dbPath), {
+        processCheck: noHolders,
+        availableBytes: () => Math.floor(dbSize * 0.5),
+        headroomFloorBytes: 1024,
+      });
+
+      expect(result.label).toBe("DB Prune (refused)");
+      expect((result.data as { reason: string }).reason).toMatch(/VACUUM needs/);
+      const check = new Database(dbPath, { readonly: true });
+      expect(countRows(check, "session")).toBe(44);
+      check.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("incremental DB below the headroom floor is refused with nothing deleted", async () => {
+    const dir = makeTempDir();
+    try {
+      const { db, dbPath } = createPrunableDb(dir, { autoVacuum: 2 });
+      db.close();
+
+      const result = await runDbPruneExecute(pruneCliOptions(dir, dbPath), {
+        processCheck: noHolders,
+        availableBytes: () => PRUNE_HEADROOM_FLOOR - 1,
+      });
+
+      expect(result.label).toBe("DB Prune (refused)");
+      const data = result.data as { refused: boolean; reason: string };
+      expect(data.refused).toBe(true);
+      expect(data.reason).toMatch(/operational headroom/i);
+      const check = new Database(dbPath, { readonly: true });
+      expect(countRows(check, "session")).toBe(44);
+      check.close();
+    } finally {
+      removeTempDir(dir);
+    }
+  });
+
+  test("--help describes the incremental reclaim path", async () => {
+    const result = await $`bun ${SCRIPT_PATH} --help`.text();
+    expect(result).toMatch(/--prune-older\[=<days>\](?:(?!--prune-events-older)[\s\S])*incremental_vacuum/);
+  });
 });
