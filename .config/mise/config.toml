@@ -48,3 +48,8 @@ idiomatic_version_file_enable_tools = ["node"]
 
 [settings.npm]
 bun = true
+
+# A source build deadlocks: CPython's configure runs `python3.14 -V`, which hits
+# the mise shim, which waits on the install lock held by the build itself.
+[settings.python]
+compile = false
