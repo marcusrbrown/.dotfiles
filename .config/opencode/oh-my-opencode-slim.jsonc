@@ -48,7 +48,7 @@
         "mcps": []
       },
       "fast-generic": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "anthropic/claude-haiku-5-5",
         "variant": "low"
       }
     },
@@ -151,7 +151,7 @@
         "mcps": []
       },
       "fast-generic": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "anthropic/claude-haiku-5-5",
         "variant": "low"
       }
     },
@@ -201,7 +201,7 @@
         "mcps": []
       },
       "fast-generic": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "anthropic/claude-haiku-5-5",
         "variant": "low"
       }
     },
@@ -251,7 +251,7 @@
         "mcps": []
       },
       "fast-generic": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "anthropic/claude-haiku-5-5",
         "variant": "low"
       }
     },
@@ -273,17 +273,18 @@
         "variant": "high"
       },
       "librarian": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "anthropic/claude-haiku-5-5",
         "skills": [],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "anthropic/claude-haiku-5-5",
         "skills": [],
         "mcps": []
       },
       "designer": {
-        "model": "github-copilot/gemini-3.5-flash",
+        "model": "anthropic/claude-sonnet-5-5",
+        "variant": "high",
         "skills": [
           "agent-browser",
           "brand-voice",
@@ -301,7 +302,7 @@
         "mcps": []
       },
       "fast-generic": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "anthropic/claude-haiku-5-5",
         "variant": "low"
       }
     },
@@ -351,7 +352,7 @@
         "mcps": []
       },
       "fast-generic": {
-        "model": "github-copilot/gpt-5.4-mini",
+        "model": "anthropic/claude-haiku-5-5",
         "variant": "low"
       }
     }
@@ -380,7 +381,7 @@
           "variant": "high"
         },
         "beta": {
-          "model": "github-copilot/gemini-3.5-flash",
+          "model": "openai/gpt-6.1-sol",
           "variant": "high"
         },
         "gamma": {

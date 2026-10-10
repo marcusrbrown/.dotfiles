@@ -23,19 +23,19 @@
     "direct": {
       "categories": {
         "design": {
-          "model": "github-copilot/gemini-3.5-flash",
+          "model": "openai/gpt-6-luna",
           "variant": "high"
         },
         "document-review": {
-          "model": "github-copilot/gpt-5.5",
+          "model": "anthropic/claude-haiku-5-5",
           "variant": "high"
         },
         "research": {
-          "model": "github-copilot/claude-opus-4.8",
+          "model": "openai/gpt-6-luna",
           "variant": "high"
         },
         "review": {
-          "model": "github-copilot/gpt-5.5",
+          "model": "anthropic/claude-haiku-5-5",
           "variant": "high"
         },
         "workflow": {
@@ -45,11 +45,11 @@
       },
       "agents": {
         "repo-research-analyst": {
-          "model": "github-copilot/gpt-5.5",
+          "model": "anthropic/claude-haiku-5-5",
           "variant": "high"
         },
         "spec-flow-analyzer": {
-          "model": "github-copilot/claude-opus-4.8",
+          "model": "anthropic/claude-sonnet-5-5",
           "variant": "high"
         },
         "systematic-implementer": {
