@@ -1,8 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/cortexkit/aft/main/assets/aft.schema.json",
   "restrict_to_project_root": false,
-  "search_index": false,
-  "semantic_search": false,
   "bash": {
     "rewrite": true,
     "compress": true,
@@ -11,5 +9,9 @@
   "bridge": {
     "hang_threshold": 5
   },
-  "auto_update": false
+  "auto_update": false,
+  "indexes": {
+    "trigram": false,
+    "semantic": false
+  }
 }
