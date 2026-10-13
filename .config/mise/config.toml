@@ -2,7 +2,7 @@
 node = "24.21.0"
 npm = "12.2.0"
 bun = "1.4.3"
-"aqua:pnpm/pnpm" = "12.12.1"
+"aqua:pnpm/pnpm" = "12.13.0"
 python = "3.15.0"
 pipx = "1.17.14"
 "pipx:poetry" = "2.5.1"
