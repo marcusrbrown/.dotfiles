@@ -1,5 +1,5 @@
 [tools]
-node = "24.21.0"
+node = "24.22.0"
 npm = "12.2.0"
 bun = "1.4.3"
 "aqua:pnpm/pnpm" = "12.13.0"
