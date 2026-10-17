@@ -40,7 +40,7 @@ fi
 if ! command -v starship > /dev/null 2>&1; then
     # Install Starship
     # renovate: datasource=github-releases packageName=starship/starship
-    STARSHIP_VERSION=v1.26.0
+    STARSHIP_VERSION=v1.27.0
     curl -fsSL https://starship.rs/install.sh | sh -s -- -y -v "${STARSHIP_VERSION}"
 fi
 
