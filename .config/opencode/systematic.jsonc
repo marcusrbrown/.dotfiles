@@ -58,9 +58,5 @@
         }
       }
     }
-  },
-  "workflow_guard": {
-    "mode": "disabled",
-    "debug": false
   }
 }
