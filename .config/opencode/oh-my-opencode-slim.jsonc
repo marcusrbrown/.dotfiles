@@ -127,7 +127,7 @@
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
-        "model": "openai/gpt-6-luna",
+        "model": "anthropic/claude-haiku-5-5",
         "skills": [],
         "mcps": []
       },
@@ -177,7 +177,7 @@
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
-        "model": "openai/gpt-6-luna",
+        "model": "anthropic/claude-haiku-5-5",
         "skills": [],
         "mcps": []
       },
@@ -227,7 +227,7 @@
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
-        "model": "openai/gpt-6-luna",
+        "model": "anthropic/claude-haiku-5-5",
         "skills": [],
         "mcps": []
       },
@@ -328,7 +328,7 @@
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
-        "model": "openai/gpt-6-luna",
+        "model": "anthropic/claude-haiku-5-5",
         "skills": [],
         "mcps": []
       },
