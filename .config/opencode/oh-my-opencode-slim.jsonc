@@ -37,6 +37,7 @@
           "content-research-writer",
           "impeccable",
           "openai-imagegen",
+          "romdev",
           "systematic:*"
         ],
         "mcps": ["romdev"]
@@ -44,7 +45,7 @@
       "fixer": {
         "model": "openai/gpt-6-luna",
         "variant": "high",
-        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
         "mcps": ["romdev"]
       },
       "fast-generic": {
@@ -90,6 +91,7 @@
           "content-research-writer",
           "impeccable",
           "openai-imagegen",
+          "romdev",
           "systematic:*"
         ],
         "mcps": ["romdev"]
@@ -97,7 +99,7 @@
       "fixer": {
         "model": "opencode-go/deepseek-v4-flash",
         "variant": "high",
-        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
         "mcps": ["romdev"]
       },
       "fast-generic": {
@@ -140,6 +142,7 @@
           "content-research-writer",
           "impeccable",
           "openai-imagegen",
+          "romdev",
           "systematic:*"
         ],
         "mcps": ["romdev"]
@@ -147,7 +150,7 @@
       "fixer": {
         "model": "anthropic/claude-sonnet-5-5",
         "variant": "high",
-        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
         "mcps": ["romdev"]
       },
       "fast-generic": {
@@ -190,6 +193,7 @@
           "content-research-writer",
           "impeccable",
           "openai-imagegen",
+          "romdev",
           "systematic:*"
         ],
         "mcps": ["romdev"]
@@ -197,7 +201,7 @@
       "fixer": {
         "model": "anthropic/claude-sonnet-5-5",
         "variant": "high",
-        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
         "mcps": ["romdev"]
       },
       "fast-generic": {
@@ -240,6 +244,7 @@
           "content-research-writer",
           "impeccable",
           "openai-imagegen",
+          "romdev",
           "systematic:*"
         ],
         "mcps": ["romdev"]
@@ -247,7 +252,7 @@
       "fixer": {
         "model": "anthropic/claude-sonnet-5-5",
         "variant": "high",
-        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
         "mcps": ["romdev"]
       },
       "fast-generic": {
@@ -291,6 +296,7 @@
           "content-research-writer",
           "impeccable",
           "openai-imagegen",
+          "romdev",
           "systematic:*"
         ],
         "mcps": ["romdev"]
@@ -298,7 +304,7 @@
       "fixer": {
         "model": "anthropic/claude-sonnet-5-5",
         "variant": "high",
-        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
         "mcps": ["romdev"]
       },
       "fast-generic": {
@@ -341,6 +347,7 @@
           "content-research-writer",
           "impeccable",
           "openai-imagegen",
+          "romdev",
           "systematic:*"
         ],
         "mcps": ["romdev"]
@@ -348,7 +355,7 @@
       "fixer": {
         "model": "anthropic/claude-sonnet-5-5",
         "variant": "high",
-        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "systematic:*"],
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
         "mcps": ["romdev"]
       },
       "fast-generic": {
