@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "devDependencies": {
-    "@opencode-ai/sdk": "1.19.3",
+    "@opencode-ai/sdk": "1.19.4",
     "@types/bun": "1.4.3",
     "prettier": "3.9.10",
     "typescript": "7.0.2"
