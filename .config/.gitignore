@@ -17,6 +17,7 @@
 !/goose/config.yaml
 /grammarly-languageserver/
 /homebrew/trust.json.lock
+/htop/htoprc
 /ipython/profile_default/history.sqlite
 /ipython/profile_default/log
 /ipython/profile_default/pid
