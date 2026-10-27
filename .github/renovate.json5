@@ -101,6 +101,7 @@
         'agent-browser',
         'ast-grep',
         'astral-sh/uv',
+        'metacogs',
         'opencode-copilot-delegate'
       ],
       matchUpdateTypes: ['minor', 'patch'],
