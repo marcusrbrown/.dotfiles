@@ -373,13 +373,6 @@
       "mcps": []
     }
   },
-  "backgroundJobs": {
-    "strategy": "checkpoint-compatible",
-    "maxRetainedSnapshots": 50,
-    "orchestratorWake": {
-      "enabled": false
-    }
-  },
   "council": {
     "presets": {
       "default": {
