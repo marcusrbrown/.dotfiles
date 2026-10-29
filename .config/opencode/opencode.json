@@ -1,10 +1,10 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "@cortexkit/opencode-anthropic-auth@2.4.0",
-    "@cortexkit/opencode-openai-auth@1.8.0",
+    "@cortexkit/opencode-anthropic-auth@2.4.2",
+    "@cortexkit/opencode-openai-auth@1.8.4",
     "oh-my-opencode-slim@3.0.6",
-    "@cortexkit/opencode-magic-context@0.49.25",
+    "@cortexkit/opencode-magic-context@0.49.29",
     "@cortexkit/aft-opencode@0.62.0",
     "@fro.bot/systematic@3.27.2",
     "metacogs@0.3.0"
