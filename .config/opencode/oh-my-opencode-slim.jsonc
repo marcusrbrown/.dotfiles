@@ -29,7 +29,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-6-luna",
+        "model": "openai/gpt-6.1-terra",
         "variant": "high",
         "skills": [
           "agent-browser",
@@ -134,7 +134,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-6-luna",
+        "model": "openai/gpt-6.1-terra",
         "variant": "high",
         "skills": [
           "agent-browser",
@@ -185,7 +185,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-6-luna",
+        "model": "openai/gpt-6.1-terra",
         "variant": "high",
         "skills": [
           "agent-browser",
@@ -236,7 +236,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-6-luna",
+        "model": "openai/gpt-6.1-terra",
         "variant": "high",
         "skills": [
           "agent-browser",
@@ -339,7 +339,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-6-luna",
+        "model": "openai/gpt-6.1-terra",
         "variant": "high",
         "skills": [
           "agent-browser",

@@ -23,7 +23,7 @@
     "direct": {
       "categories": {
         "design": {
-          "model": "openai/gpt-6.1-sol",
+          "model": "openai/gpt-6.1-terra",
           "variant": "high"
         },
         "document-review": {
@@ -35,7 +35,7 @@
           "variant": "high"
         },
         "review": {
-          "model": "anthropic/claude-haiku-5-5",
+          "model": "openai/gpt-6.1-terra",
           "variant": "high"
         },
         "workflow": {
