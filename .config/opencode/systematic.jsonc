@@ -45,10 +45,7 @@
         "name": "systematic-lessons",
         "format": "markdown",
         "roots": ["~/src/github.com/marcusrbrown/systematic/docs/solutions"],
-        "projects": [
-          "~/src/github.com/fro-bot/agent",
-          "~/src/github.com/marcusrbrown/metacogs"
-        ]
+        "projects": ["~/src/github.com/fro-bot/agent", "~/src/github.com/marcusrbrown/metacogs"]
       }
     ]
   },
@@ -97,7 +94,7 @@
           "variant": "high"
         },
         "spec-flow-analyzer": {
-          "model": "anthropic/claude-sonnet-5-5",
+          "model": "openai/gpt-6.1-terra",
           "variant": "high"
         },
         "systematic-implementer": {
