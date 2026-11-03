@@ -5,6 +5,54 @@
   // User-owned: a project setting this field for itself has it ignored.
   "allow_project_profiles": true,
 
+  // External decision sources for past-work search (`kind: "external"`).
+  // A repository proposes its own in-repo sources in .opencode/systematic.jsonc;
+  // they are read only for the main roots listed in allow_project_sources.
+  // Sources that live in another repository are declared here, per project.
+  "search": {
+    "allow_project_sources": [
+      "~/src/github.com/fro-bot/agent",
+      "~/src/github.com/marcusrbrown/infra",
+      "~/src/github.com/marcusrbrown/gpt",
+      "~/src/github.com/marcusrbrown/sparkle",
+      "~/src/github.com/marcusrbrown/ddr",
+      "~/src/github.com/marcusrbrown/nr",
+      "~/src/github.com/marcusrbrown/panthea"
+    ],
+    "sources": [
+      {
+        "name": "fro-bot-wiki",
+        "format": "markdown",
+        "roots": ["~/src/github.com/fro-bot/.github/knowledge/wiki"],
+        "projects": [
+          "~/src/github.com/fro-bot/.github",
+          "~/src/github.com/fro-bot/agent",
+          "~/src/github.com/fro-bot/dashboard",
+          "~/src/github.com/fro-bot/space-bus"
+        ]
+      },
+      {
+        "name": "infra-runbooks",
+        "format": "markdown",
+        "roots": ["~/src/github.com/marcusrbrown/infra/docs/runbooks"],
+        "projects": [
+          "~/src/github.com/fro-bot/.github",
+          "~/src/github.com/fro-bot/agent",
+          "~/src/github.com/fro-bot/dashboard"
+        ]
+      },
+      {
+        "name": "systematic-lessons",
+        "format": "markdown",
+        "roots": ["~/src/github.com/marcusrbrown/systematic/docs/solutions"],
+        "projects": [
+          "~/src/github.com/fro-bot/agent",
+          "~/src/github.com/marcusrbrown/metacogs"
+        ]
+      }
+    ]
+  },
+
   // Default routing when a repository expresses no preference. A project's own
   // `profile` overrides this selection, and when it does, the profile named here
   // is not applied at all.
