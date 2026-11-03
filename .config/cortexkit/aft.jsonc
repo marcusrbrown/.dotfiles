@@ -6,9 +6,6 @@
     "compress": true,
     "background": true
   },
-  "bridge": {
-    "hang_threshold": 5
-  },
   "auto_update": false,
   "indexes": {
     "trigram": false,
