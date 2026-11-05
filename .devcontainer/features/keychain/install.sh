@@ -33,7 +33,7 @@ check_packages() {
 export DEBIAN_FRONTEND=noninteractive
 
 # renovate: datasource=github-releases packageName=danielrobbins/keychain
-KEYCHAIN_VERSION=3.0.8
+KEYCHAIN_VERSION=3.0.9
 
 # Install dependencies
 check_packages curl python3
