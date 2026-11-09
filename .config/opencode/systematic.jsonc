@@ -72,11 +72,11 @@
           "variant": "high"
         },
         "document-review": {
-          "model": "anthropic/claude-haiku-5-5",
+          "model": "anthropic/claude-sonnet-5-5",
           "variant": "high"
         },
         "research": {
-          "model": "openai/gpt-6-luna",
+          "model": "openai/gpt-6.1-terra",
           "variant": "high"
         },
         "review": {
@@ -89,6 +89,14 @@
         }
       },
       "agents": {
+        "adversarial-document-reviewer": {
+          "model": "openai/gpt-6.1-terra",
+          "variant": "high"
+        },
+        "feasibility-reviewer": {
+          "model": "openai/gpt-6.1-terra",
+          "variant": "high"
+        },
         "repo-research-analyst": {
           "model": "anthropic/claude-sonnet-5-5",
           "variant": "high"
