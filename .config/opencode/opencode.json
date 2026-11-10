@@ -4,7 +4,7 @@
     "@cortexkit/opencode-anthropic-auth@2.7.3",
     "@cortexkit/opencode-openai-auth@1.12.0",
     "oh-my-opencode-slim@3.0.7",
-    "@cortexkit/opencode-magic-context@0.49.44",
+    "@cortexkit/opencode-magic-context@0.49.45",
     "@cortexkit/aft-opencode@0.63.5",
     "@fro.bot/systematic@3.32.1",
     "metacogs@0.4.1"
