@@ -38,6 +38,7 @@
 /opencode/oh-my-openagent.json.*
 /opencode/openai-auth*.json
 /opencode/tui-preferences.jsonc
+/opencode/*.local.jsonc
 /pipedream/
 /pnpm/config.yaml
 /pnpm/rc
