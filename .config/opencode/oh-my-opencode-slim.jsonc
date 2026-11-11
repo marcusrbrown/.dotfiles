@@ -371,6 +371,9 @@
       "orchestratorPrompt": "Delegate to @fast-generic for routine mechanical command work: git status/diff/log reconnaissance, normal commit preparation, creating commits, and no-edit command validation such as lint, typecheck, static verification, tests, builds, or package-manager equivalents. Scope each delegation to one phase: commit/PR creation, monitoring/merge, or local cleanup. Ask it to inspect diffs before committing, stage only intended files, avoid secrets, preserve repository commit-message style, and report final commit hashes or push results. Do not use it for code edits, design work, architecture, debugging strategy, docs research, or destructive git history operations such as amend, rebase, reset --hard, clean, force-push, or deleting branches unless the user explicitly requested that exact operation.",
       "skills": [],
       "mcps": []
+    },
+    "connections-researcher": {
+      "model": ["anthropic/claude-sonnet-5-5", "openai/gpt-6.1-terra"]
     }
   },
   "council": {
