@@ -4,6 +4,8 @@
 !/brew-keeper/packages.txt
 /cody-ai/
 /configstore/
+/cortextkit/anthropic-auth*.jsonc*
+/cortextkit/openai-auth*.jsonc*
 /cups/
 /fish/fishd.*
 /fish/fish_variables
