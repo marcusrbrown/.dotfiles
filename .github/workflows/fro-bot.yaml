@@ -376,11 +376,10 @@ jobs:
               || ''
             }}
           token: ${{ secrets.FRO_BOT_PAT }}
-          persist-credentials: >-
-            ${{ !contains(fromJSON('["pull_request", "issue_comment", "issues"]'), github.event_name) }}
+          persist-credentials: false
 
       - name: Run Fro Bot
-        uses: fro-bot/agent@95b0fbf4e39ff2d1c8431050c51260de7bbd34ed # v0.144.1
+        uses: fro-bot/agent@4e394905b7eafda2d7424816eb7846d3f09c40df # v0.144.2
         env:
           OPENCODE_PROMPT_ARTIFACT: 'true'
           PROMPT: >-
@@ -396,3 +395,4 @@ jobs:
           model: ${{ vars.FRO_BOT_MODEL }}
           opencode-config: ${{ secrets.OPENCODE_CONFIG }}
           prompt: ${{ env.PROMPT }}
+          isolate-agent: true
