@@ -4,19 +4,19 @@
   "presets": {
     "openai": {
       "orchestrator": {
-        "model": "openai/gpt-6.1-sol",
+        "model": "openai/gpt-6.2-sol",
         "variant": "high",
         "skills": ["*", "!clonedeps", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-6-astra",
+        "model": "openai/gpt-6.2-astra",
         "variant": "medium",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-6.1-sol"
+        "model": "openai/gpt-6.2-sol"
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
@@ -29,7 +29,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-6.1-terra",
+        "model": "openai/gpt-6.2-sol",
         "variant": "high",
         "skills": [
           "agent-browser",
@@ -115,13 +115,13 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-6.1-sol",
+        "model": "openai/gpt-6.2-sol",
         "variant": "high",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-6.1-sol"
+        "model": "openai/gpt-6.2-sol"
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
@@ -134,7 +134,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-6.1-terra",
+        "model": "openai/gpt-6.2-sol",
         "variant": "high",
         "skills": [
           "agent-browser",
@@ -172,7 +172,7 @@
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-6.1-sol"
+        "model": "openai/gpt-6.2-sol"
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
@@ -185,7 +185,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-6.1-terra",
+        "model": "openai/gpt-6.2-sol",
         "variant": "high",
         "skills": [
           "agent-browser",
@@ -217,13 +217,13 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-6.1-sol",
+        "model": "openai/gpt-6.2-sol",
         "variant": "high",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-6.1-sol"
+        "model": "openai/gpt-6.2-sol"
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
@@ -236,7 +236,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-6.1-terra",
+        "model": "openai/gpt-6.2-sol",
         "variant": "high",
         "skills": [
           "agent-browser",
@@ -314,7 +314,7 @@
     },
     "mixed-sol": {
       "orchestrator": {
-        "model": "openai/gpt-6.1-sol",
+        "model": "openai/gpt-6.2-sol",
         "variant": "medium",
         "skills": ["*", "!clonedeps", "!worktrees"],
         "mcps": ["*", "!context7"]
@@ -326,7 +326,7 @@
         "mcps": []
       },
       "council": {
-        "model": "openai/gpt-6.1-sol"
+        "model": "openai/gpt-6.2-sol"
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
@@ -339,7 +339,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-6.1-terra",
+        "model": "anthropic/claude-sonnet-5-5",
         "variant": "high",
         "skills": [
           "agent-browser",
@@ -384,7 +384,7 @@
           "variant": "high"
         },
         "beta": {
-          "model": "openai/gpt-6.1-sol",
+          "model": "openai/gpt-6.2-sol",
           "variant": "high"
         },
         "gamma": {
