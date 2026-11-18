@@ -379,7 +379,7 @@ jobs:
           persist-credentials: false
 
       - name: Run Fro Bot
-        uses: fro-bot/agent@b70e54edc0333fbf97ca4d4204775ce33158b3b3 # v0.145.0
+        uses: fro-bot/agent@f49a72e96e1d891c61cecd02a768d626817a7831 # v0.145.1
         env:
           OPENCODE_PROMPT_ARTIFACT: 'true'
           PROMPT: >-
