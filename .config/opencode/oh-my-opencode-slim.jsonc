@@ -5,7 +5,7 @@
     "openai": {
       "orchestrator": {
         "model": "openai/gpt-6.2-sol",
-        "variant": "high",
+        "variant": "xhigh",
         "skills": ["*", "!clonedeps", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
@@ -43,7 +43,7 @@
         "mcps": ["romdev"]
       },
       "fixer": {
-        "model": "openai/gpt-6-luna",
+        "model": "openai/gpt-6.1-terra",
         "variant": "high",
         "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
         "mcps": ["romdev"]
@@ -116,7 +116,7 @@
       },
       "oracle": {
         "model": "openai/gpt-6.2-sol",
-        "variant": "high",
+        "variant": "xhigh",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
@@ -160,14 +160,14 @@
     },
     "mixed-astra": {
       "orchestrator": {
-        "model": "openai/gpt-6-astra",
+        "model": "openai/gpt-6.2-astra",
         "variant": "medium",
         "skills": ["*", "!clonedeps", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "anthropic/claude-opus-5-5",
-        "variant": "high",
+        "variant": "xhigh",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
@@ -218,7 +218,7 @@
       },
       "oracle": {
         "model": "openai/gpt-6.2-sol",
-        "variant": "high",
+        "variant": "xhigh",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
@@ -315,13 +315,13 @@
     "mixed-sol": {
       "orchestrator": {
         "model": "openai/gpt-6.2-sol",
-        "variant": "medium",
+        "variant": "xhigh",
         "skills": ["*", "!clonedeps", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "anthropic/claude-opus-5-5",
-        "variant": "high",
+        "variant": "xhigh",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
       },
@@ -353,7 +353,7 @@
         "mcps": ["romdev"]
       },
       "fixer": {
-        "model": "anthropic/claude-sonnet-5-5",
+        "model": "openai/gpt-6.1-terra",
         "variant": "high",
         "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
         "mcps": ["romdev"]
