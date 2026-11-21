@@ -51,6 +51,10 @@
           "model": "openai/gpt-6.1-terra",
           "variant": "high"
         },
+        "adversarial-reviewer": {
+          "model": "openai/gpt-6.2-sol",
+          "variant": "high"
+        },
         "connections-researcher": {
           "model": "anthropic/claude-sonnet-5-5",
           "variant": "high"
@@ -64,7 +68,7 @@
           "variant": "high"
         },
         "spec-flow-analyzer": {
-          "model": "openai/gpt-6.1-terra",
+          "model": "openai/gpt-6.2-sol",
           "variant": "high"
         },
         "systematic-implementer": {
