@@ -218,9 +218,38 @@ Only `Library/LaunchAgents/dev.mrbro.environment.plist` and
 `Library/LaunchAgents/dev.mrbro.disk-monitor.plist` are tracked. Anything else
 present is either vendor-installed or machine-local, and will not survive a rebuild.
 
-The disk monitor is not loaded automatically: run
-`launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.mrbro.disk-monitor.plist`
-to start it; it appends a row every 10 minutes to `~/.local/state/disk-monitor/disk.csv`.
+### Disk monitor (`dev.mrbro.disk-monitor`)
+
+Appends one row every 10 minutes to `~/.local/state/disk-monitor/disk.csv` (kept to
+~30 days) to timestamp disk-full spikes. Script errors go to
+`~/.local/state/disk-monitor/err.log`. launchd loads `~/Library/LaunchAgents` at
+login, so a fresh machine picks it up on next login; to start it now:
+
+```bash
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.mrbro.disk-monitor.plist
+```
+
+Verify:
+
+```bash
+launchctl print gui/$(id -u)/dev.mrbro.disk-monitor
+tail -2 ~/.local/state/disk-monitor/disk.csv
+```
+
+Reload after changing the plist (the script is re-read every run, no reload needed):
+
+```bash
+launchctl bootout gui/$(id -u)/dev.mrbro.disk-monitor
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.mrbro.disk-monitor.plist
+```
+
+Rollback:
+`launchctl bootout gui/$(id -u)/dev.mrbro.disk-monitor`
+
+Failure modes: `bootstrap` fails with `Input/output error` if the agent is already
+loaded (`bootout` first). A gap in the CSV, or a stale last row, means the job did
+not run or could not write — read `err.log`. A full disk can block the write itself,
+so a gap right before a spike is evidence too.
 
 Audit what is actually present versus tracked:
 

@@ -15,13 +15,18 @@
 #   DISK_MONITOR_STATE_DIR  default: ~/.local/state/disk-monitor
 #   DISK_MONITOR_MAX_ROWS   default: 4320 (30 days at 10 min)
 #   DISK_MONITOR_DU_TIMEOUT default: 20 (seconds allowed per `du`)
+#   DISK_MONITOR_VOLUME     default: /System/Volumes/Data (test-only)
+#
+# Errors: stderr and a timestamped "ERR line N" trap line go to
+# $STATE_DIR/err.log on a best-effort basis (trimmed to the last 200 lines once
+# it passes 1000). Check it first when the CSV has gaps.
 #
 # Failure mode worth knowing: if the disk is 100% full the append itself can
 # fail. A gap in the CSV right before a spike is therefore evidence too.
 
 set -eo pipefail
 
-VOLUME="/System/Volumes/Data"
+VOLUME="${DISK_MONITOR_VOLUME:-/System/Volumes/Data}"
 DIFFDISK="$HOME/Library/Application Support/rancher-desktop/lima/0/diffdisk"
 SCRATCH="$HOME/.cache/systematic-scratch"
 
@@ -43,10 +48,38 @@ du_kib() {
 
 mkdir -p "$STATE_DIR"
 
+# Best-effort error log. Every step is allowed to fail without failing (or
+# hanging) the monitor: a full disk makes these writes fail, not block.
+ERR_LOG="$STATE_DIR/err.log"
+if [ "$(wc -l 2>/dev/null <"$ERR_LOG" || echo 0)" -gt 1000 ]; then
+  { tail -n 200 "$ERR_LOG" >"$ERR_LOG.tmp" && mv "$ERR_LOG.tmp" "$ERR_LOG"; } 2>/dev/null || rm -f "$ERR_LOG.tmp" 2>/dev/null || true
+fi
+# Probe first: `exec` inside a redirected group would be undone when the group
+# ends, so redirect stderr only after we know the log is openable.
+if { { :; } 2>>"$ERR_LOG"; } 2>/dev/null; then
+  exec 2>>"$ERR_LOG"
+else
+  exec 2>/dev/null
+fi
+log_err() {
+  local rc=$?
+  printf '%s ERR line %s: exit %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" "$rc" >>"$ERR_LOG" 2>/dev/null || true
+}
+trap 'log_err "$LINENO"' ERR
+
 timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-# POSIX df: Filesystem 1024-blocks Used Available Capacity Mounted-on
-read -r free_kib used_pct < <(df -Pk "$VOLUME" | awk 'NR == 2 { sub(/%$/, "", $5); print $4, $5 }')
+# POSIX df: Filesystem 1024-blocks Used Available Capacity Mounted-on.
+# Not a process substitution: its failure would be invisible to `set -e` and
+# would log a bogus 0-byte row.
+df_line="$(df -Pk "$VOLUME" | awk 'NR == 2 { sub(/%$/, "", $5); print $4, $5 }')"
+read -r free_kib used_pct <<<"$df_line"
+case "$free_kib" in
+  '' | *[!0-9]*)
+    echo "$timestamp unparseable df output for $VOLUME: '$df_line'" >&2
+    exit 1
+    ;;
+esac
 free_bytes=$((free_kib * 1024))
 
 diffdisk_kib="$(du_kib "$DIFFDISK")"
@@ -61,6 +94,11 @@ swap_used_mib="$(sysctl -n vm.swapusage | awk '{
   }
 }')"
 
+# A previous run killed mid-write can leave a row without its newline; end it
+# first so the new row is not glued onto it.
+if [ -s "$CSV" ] && [ -n "$(tail -c 1 "$CSV")" ]; then
+  echo >>"$CSV"
+fi
 if [ ! -s "$CSV" ]; then
   echo "$HEADER" >"$CSV"
 fi
