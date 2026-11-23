@@ -180,12 +180,12 @@
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
       },
       "explorer": {
-        "model": "anthropic/claude-haiku-5-5",
+        "model": "openai/gpt-6.1-terra",
         "skills": [],
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-6.2-sol",
+        "model": "anthropic/claude-opus-5-5",
         "variant": "high",
         "skills": [
           "agent-browser",
