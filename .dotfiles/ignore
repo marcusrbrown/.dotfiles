@@ -73,6 +73,7 @@
 !/Library/LaunchAgents/
 /Library/LaunchAgents/*
 !/Library/LaunchAgents/dev.mrbro.environment.plist
+!/Library/LaunchAgents/dev.mrbro.disk-monitor.plist
 
 # ─────────────────────────────────────────────────────────────────────────────
 # AI tool session/log/transcript dirs — dotfiles-specific noise.
