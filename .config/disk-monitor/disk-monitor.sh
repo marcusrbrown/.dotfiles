@@ -73,7 +73,10 @@ timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 # Not a process substitution: its failure would be invisible to `set -e` and
 # would log a bogus 0-byte row.
 df_line="$(df -Pk "$VOLUME" | awk 'NR == 2 { sub(/%$/, "", $5); print $4, $5 }')"
-read -r free_kib used_pct <<<"$df_line"
+# Parameter expansion, not a here-string: bash 3.2 backs `<<<` with a temp file
+# in $TMPDIR, which cannot be created when the disk is full.
+free_kib=${df_line%% *}
+used_pct=${df_line##* }
 case "$free_kib" in
   '' | *[!0-9]*)
     echo "$timestamp unparseable df output for $VOLUME: '$df_line'" >&2
