@@ -214,8 +214,13 @@ On the first Keychain read from a fresh shell macOS prompts for access — choos
 
 ## LaunchAgents
 
-Only `Library/LaunchAgents/dev.mrbro.environment.plist` is tracked. Anything else
+Only `Library/LaunchAgents/dev.mrbro.environment.plist` and
+`Library/LaunchAgents/dev.mrbro.disk-monitor.plist` are tracked. Anything else
 present is either vendor-installed or machine-local, and will not survive a rebuild.
+
+The disk monitor is not loaded automatically: run
+`launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.mrbro.disk-monitor.plist`
+to start it; it appends a row every 10 minutes to `~/.local/state/disk-monitor/disk.csv`.
 
 Audit what is actually present versus tracked:
 
