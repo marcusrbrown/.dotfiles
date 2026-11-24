@@ -1,12 +1,12 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "plugins": [
-    "@cortexkit/opencode-anthropic-auth@2.16.1",
-    "@cortexkit/opencode-openai-auth@1.19.1",
-    "@fro.bot/systematic@3.35.3",
+    "@cortexkit/opencode-anthropic-auth@2.16.6",
+    "@cortexkit/opencode-openai-auth@1.22.0",
+    "@fro.bot/systematic@3.38.0",
     "oh-my-opencode-slim@3.0.7",
-    "@cortexkit/opencode-magic-context@0.49.63",
-    "@cortexkit/aft-opencode@0.66.0",
+    "@cortexkit/opencode-magic-context@0.49.74",
+    "@cortexkit/aft-opencode@0.67.1",
     "metacogs@0.4.1"
   ],
   "mcp": {
@@ -37,9 +37,7 @@
   "lsp": true,
   "update": "disable",
   "share": "disabled",
-  "permissions": [
-    { "action": "external_directory", "resource": "*", "effect": "ask" }
-  ],
+  "permissions": [{ "action": "external_directory", "resource": "*", "effect": "ask" }],
   "policies": [
     { "action": "provider.use", "resource": "*", "effect": "deny" },
     { "action": "provider.use", "resource": "anthropic", "effect": "allow" },
