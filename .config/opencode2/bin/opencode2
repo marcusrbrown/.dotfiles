@@ -10,9 +10,6 @@
 # All isolation (env -i, sandbox HOME/XDG/TMPDIR, AFT dirs, --standalone, etc.) lives
 # in ../lib/run.sh; this wrapper only picks the workdir and the bun/node dirs.
 #
-# run.sh sets OPENCODE_DISABLE_PROJECT_CONFIG=1, so a repo's own opencode config, agents and
-# plugins are ignored. Only the tracked v2 config applies.
-#
 # Deliberately NOT a global npm install of @opencode/cli (it exports both `opencode` and
 # `opencode2` and would shadow this directory).
 set -euo pipefail
