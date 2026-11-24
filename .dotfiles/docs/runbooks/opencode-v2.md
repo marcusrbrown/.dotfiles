@@ -99,5 +99,7 @@ exec zsh -l
 - Never open the same checkout in v1 and v2 at the same time.
 - Snapshots stay off (`snapshots: false`).
 - v1 and v2 share no state: sessions, auth and `opencode.db` are separate.
-- `OPENCODE_DISABLE_PROJECT_CONFIG=1` is set, so project-level OpenCode config (`opencode.json`, `.opencode/`, repo
-  agents and plugins) is ignored on v2. Only the tracked v2 config applies.
+- v2 loads project config like v1: repo `opencode.json`, `.opencode/`, instructions and the root `AGENTS.md`.
+  - Global `policies` still restrict providers.
+  - Project permission rules can override global ones.
+  - File-path plugins (`./src/index.ts`) are dropped by v2 and never load.
