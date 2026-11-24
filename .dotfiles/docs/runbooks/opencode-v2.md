@@ -14,6 +14,8 @@ audience: Dotfiles owner
 | `harness`            | OpenCode **v1** (`@fro.bot/harness`, mise-pinned)      | `~/.config/opencode/`, `~/.local/share/opencode/`                        |
 | mise `opencode` shim | v1, shadowed by the `PATH` entry below                 | —                                                                        |
 
+The launcher supports Apple Silicon macOS only: it hardcodes the `/opt/homebrew` prefix.
+
 `~/.config/opencode2/bin` is first on `PATH` (macOS only), ahead of the mise shims and tool paths. It holds only
 `opencode` and `opencode2`. Three places keep it first: `_.path` in `.config/mise/config.toml` (without it,
 `mise activate` puts the v1 harness install dir, which also ships an `opencode` bin, ahead of it),
