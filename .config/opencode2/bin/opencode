@@ -1,0 +1,14 @@
+#!/bin/sh
+# Bare `opencode` is OpenCode v2; `harness` is v1. This directory must precede the
+# mise tool paths and shims on PATH (see _.path in .config/mise/config.toml, .config/zsh/.zshenv
+# and .config/bash/exports).
+#
+# The launcher is macOS-only. Elsewhere (e.g. the devcontainer, which checks this repo out too)
+# defer to the next `opencode` on PATH instead of shadowing it.
+if [ "$(uname -s)" != Darwin ]; then
+  self=$(cd "$(dirname "$0")" && pwd -P)
+  PATH=$(printf '%s' "$PATH" | tr ':' '\n' | grep -vxF "$self" | paste -sd: -)
+  export PATH
+  exec opencode "$@"
+fi
+exec "$(dirname "$0")/opencode2" "$@"

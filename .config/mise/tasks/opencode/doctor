@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-#MISE description="Inspect OpenCode instance config and metadata"
+#MISE description="Inspect OpenCode instance config and metadata (v1 only: reads the v1 DB and spawns `harness`)"
 #MISE dir="{{cwd}}"
 exec bun "$HOME/.config/opencode/scripts/opencode-doctor.ts" "$@"

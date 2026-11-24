@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# opencode2 — OpenCode v2 in an isolated profile (runtime dir: ~/.local/opt/opencode2-pilot).
+#
+#   opencode2 [--dir <repo>] [opencode args...]
+#
+# `opencode` (next to this file) execs this: bare `opencode` is OpenCode v2; `harness` is v1.
+#
+# Runs in --dir, or the caller's cwd. --dir is consumed here ONLY when it is the
+# first argument (v2 `run` has no --dir of its own; anything later is passed through).
+# All isolation (env -i, sandbox HOME/XDG/TMPDIR, AFT dirs, --standalone, etc.) lives
+# in ../lib/run.sh; this wrapper only picks the workdir and the bun/node dirs.
+#
+# run.sh sets OPENCODE_DISABLE_PROJECT_CONFIG=1, so a repo's own opencode config, agents and
+# plugins are ignored. Only the tracked v2 config applies.
+#
+# Deliberately NOT a global npm install of @opencode/cli (it exports both `opencode` and
+# `opencode2` and would shadow this directory).
+set -euo pipefail
+
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+run="$here/../lib/run.sh"
+[[ -x $run ]] || { echo "opencode2: missing $run" >&2; exit 127; }
+
+workdir=$PWD
+if [[ ${1:-} == --dir ]]; then
+  [[ -n ${2:-} ]] || { echo "opencode2: --dir needs a path" >&2; exit 2; }
+  workdir=$2; shift 2
+elif [[ ${1:-} == --dir=* ]]; then
+  workdir=${1#--dir=}; shift
+fi
+workdir=$(cd -- "$workdir" 2>/dev/null && pwd -P) || { echo "opencode2: not a directory: $workdir" >&2; exit 2; }
+
+# Newest mise-installed bun (plugins shell out to it; env -i drops the caller's PATH).
+bun_dir=
+for d in $(printf '%s\n' "$HOME"/.local/share/mise/installs/bun/*/bin | sort -V); do
+  [[ -x $d/bun ]] && bun_dir=$d
+done
+
+# Newest mise-installed node (full x.y.z dirs only; skips the 24/latest/lts aliases). env -i drops
+# the caller's PATH, and /opt/homebrew/bin/node is a symlink to a directory (EACCES), so node-shebang
+# tools (project biome, used by AFT) need a real node on the sandbox PATH.
+node_dir=
+for d in $(printf '%s\n' "$HOME"/.local/share/mise/installs/node/[0-9]*.[0-9]*.[0-9]*/bin | sort -V); do
+  [[ -x $d/node ]] && node_dir=$d
+done
+
+# run.sh passes through only TERM/COLORTERM/LANG from this environment.
+OPENCODE2_WORKDIR=$workdir OPENCODE2_BUN_DIR=$bun_dir OPENCODE2_NODE_DIR=$node_dir exec "$run" "$@"

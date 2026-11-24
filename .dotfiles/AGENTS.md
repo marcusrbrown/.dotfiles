@@ -127,7 +127,7 @@ mise run install         # install mise-managed tools
 mise run typecheck       # type-check both Bun script projects
 mise run ignore:audit    # assert the allowlist has no dead negations
 mise run claude:settings # merge the tracked Claude settings template into the local file
-mise run opencode:doctor # inspect OpenCode config and metadata
+mise run opencode:doctor # inspect OpenCode config and metadata (v1 only)
 ```
 
 `mise run typecheck` and `mise run format`/`format-check` need a one-time
@@ -138,6 +138,13 @@ auto-discovered. Subdirectories map to `:` (`mise/tools/install` →
 `mise:tools:install`). Do not use `task_config.includes` — it does not expand `~`,
 `$HOME`, or template variables, and silently ignores relative paths in global
 config.
+
+## OpenCode binaries
+
+`opencode` is **v2**, launched through the isolated wrapper in `.config/opencode2/bin/`
+(PATH-first, before the mise shims). `harness` is **v1** and the rollback. Tooling that
+reads the v1 DB (`opencode:doctor`, `opencode:cache-plateau`, `distill`) needs `harness`.
+See `docs/runbooks/opencode-v2.md`.
 
 ## Scripts and tests
 

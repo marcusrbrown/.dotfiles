@@ -417,6 +417,13 @@ fi
 
 prepend_to_path "$HOME/.local/bin"
 
+# OpenCode v2: this directory provides `opencode` (and `opencode2`) and must stay ahead of the
+# mise shims, which provide v1 `opencode`/`harness`. `harness` stays the v1 rollback.
+# macOS only: the launcher hardcodes /opt/homebrew and /usr/bin/env.
+if [[ "$HOST_OS" == "darwin" ]]; then
+    prepend_to_path "$HOME/.config/opencode2/bin"
+fi
+
 # Clean up
 
 unset PREFIX

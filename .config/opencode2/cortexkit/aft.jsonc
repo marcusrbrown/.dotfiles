@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cortexkit/aft/main/assets/aft.schema.json",
+  "restrict_to_project_root": false,
+  "bash": {
+    "rewrite": true,
+    "compress": true,
+    "background": true
+  },
+  "auto_update": false,
+  "indexes": {
+    "trigram": false,
+    "semantic": false
+  }
+}

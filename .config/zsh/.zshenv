@@ -4,11 +4,16 @@
 source "$HOME/.config/bash/exports"
 
 typeset -U {,F,MAN}PATH {,f,man}path
+# ~/.config/opencode2/bin first (macOS only): its `opencode` is v2 and must win over the mise shim (v1).
+opencode2_bin=()
+[[ $HOST_OS == darwin ]] && opencode2_bin=(~/.config/opencode2/bin(N-/))
 path=(
+  $opencode2_bin
   $XDG_DATA_HOME/mise/shims(N-/)
   ~/.local/bin(N-/)
   $path
 )
+unset opencode2_bin
 
 # Recover core functions when inherited FPATH entries are stale.
 zsh_functions_dirs=(
