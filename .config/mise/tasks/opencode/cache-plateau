@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-#MISE description="Detect OpenCode sessions stuck in sustained prompt-cache collapse"
+#MISE description="Detect OpenCode sessions stuck in sustained prompt-cache collapse (v1 only: reads the v1 DB; needs `harness`)"
 #MISE dir="{{cwd}}"
 exec bun "$HOME/.config/opencode/scripts/cache-plateau.ts" "$@"

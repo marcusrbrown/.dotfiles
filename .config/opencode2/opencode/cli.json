@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "theme": {
+    "name": "catppuccin"
+  },
+  "session": {
+    "sidebar": "hide",
+    "grouping": "auto",
+    "verbosity": "high"
+  }
+}

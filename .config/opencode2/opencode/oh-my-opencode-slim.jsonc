@@ -1,0 +1,291 @@
+{
+  "$schema": "https://unpkg.com/oh-my-opencode-slim@3.0.7/oh-my-opencode-slim.schema.json",
+  "preset": "mixed-astra",
+  "presets": {
+    "openai": {
+      "orchestrator": {
+        "model": "openai/gpt-6.2-sol",
+        "variant": "high",
+        "skills": ["*", "!clonedeps", "!worktrees"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "openai/gpt-6.2-astra",
+        "variant": "medium",
+        "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
+        "mcps": []
+      },
+      "council": {
+        "model": "openai/gpt-6.2-sol"
+      },
+      "librarian": {
+        "model": "openai/gpt-6-luna",
+        "skills": [],
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
+      },
+      "explorer": {
+        "model": "openai/gpt-6-luna",
+        "skills": [],
+        "mcps": []
+      },
+      "designer": {
+        "model": "openai/gpt-6.2-sol",
+        "variant": "high",
+        "skills": [
+          "agent-browser",
+          "brand-voice",
+          "content-research-writer",
+          "impeccable",
+          "openai-imagegen",
+          "romdev",
+          "systematic:*"
+        ],
+        "mcps": ["romdev"]
+      },
+      "fixer": {
+        "model": "openai/gpt-6-luna",
+        "variant": "high",
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
+        "mcps": ["romdev"]
+      },
+      "fast-generic": {
+        "model": "anthropic/claude-haiku-5-5",
+        "variant": "low"
+      }
+    },
+    "mixed": {
+      "orchestrator": {
+        "model": "anthropic/claude-opus-5-5",
+        "variant": "high",
+        "skills": ["*", "!clonedeps", "!worktrees"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "openai/gpt-6.2-sol",
+        "variant": "high",
+        "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
+        "mcps": []
+      },
+      "council": {
+        "model": "openai/gpt-6.2-sol"
+      },
+      "librarian": {
+        "model": "openai/gpt-6-luna",
+        "skills": [],
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
+      },
+      "explorer": {
+        "model": "anthropic/claude-haiku-5-5",
+        "skills": [],
+        "mcps": []
+      },
+      "designer": {
+        "model": "openai/gpt-6.2-sol",
+        "variant": "high",
+        "skills": [
+          "agent-browser",
+          "brand-voice",
+          "content-research-writer",
+          "impeccable",
+          "openai-imagegen",
+          "romdev",
+          "systematic:*"
+        ],
+        "mcps": ["romdev"]
+      },
+      "fixer": {
+        "model": "anthropic/claude-sonnet-5-5",
+        "variant": "high",
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
+        "mcps": ["romdev"]
+      },
+      "fast-generic": {
+        "model": "anthropic/claude-haiku-5-5",
+        "variant": "low"
+      }
+    },
+    "mixed-astra": {
+      "orchestrator": {
+        "model": "openai/gpt-6-astra",
+        "variant": "medium",
+        "skills": ["*", "!clonedeps", "!worktrees"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "anthropic/claude-opus-5-5",
+        "variant": "high",
+        "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
+        "mcps": []
+      },
+      "council": {
+        "model": "openai/gpt-6.2-sol"
+      },
+      "librarian": {
+        "model": "openai/gpt-6-luna",
+        "skills": [],
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
+      },
+      "explorer": {
+        "model": "anthropic/claude-haiku-5-5",
+        "skills": [],
+        "mcps": []
+      },
+      "designer": {
+        "model": "openai/gpt-6.2-sol",
+        "variant": "high",
+        "skills": [
+          "agent-browser",
+          "brand-voice",
+          "content-research-writer",
+          "impeccable",
+          "openai-imagegen",
+          "romdev",
+          "systematic:*"
+        ],
+        "mcps": ["romdev"]
+      },
+      "fixer": {
+        "model": "anthropic/claude-sonnet-5-5",
+        "variant": "high",
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
+        "mcps": ["romdev"]
+      },
+      "fast-generic": {
+        "model": "anthropic/claude-haiku-5-5",
+        "variant": "low"
+      }
+    },
+    "mixed-fable": {
+      "orchestrator": {
+        "model": "anthropic/claude-fable-5-2",
+        "variant": "medium",
+        "skills": ["*", "!clonedeps", "!worktrees"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "openai/gpt-6.2-sol",
+        "variant": "high",
+        "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
+        "mcps": []
+      },
+      "council": {
+        "model": "openai/gpt-6.2-sol"
+      },
+      "librarian": {
+        "model": "openai/gpt-6-luna",
+        "skills": [],
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
+      },
+      "explorer": {
+        "model": "anthropic/claude-haiku-5-5",
+        "skills": [],
+        "mcps": []
+      },
+      "designer": {
+        "model": "openai/gpt-6.2-sol",
+        "variant": "high",
+        "skills": [
+          "agent-browser",
+          "brand-voice",
+          "content-research-writer",
+          "impeccable",
+          "openai-imagegen",
+          "romdev",
+          "systematic:*"
+        ],
+        "mcps": ["romdev"]
+      },
+      "fixer": {
+        "model": "anthropic/claude-sonnet-5-5",
+        "variant": "high",
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
+        "mcps": ["romdev"]
+      },
+      "fast-generic": {
+        "model": "anthropic/claude-haiku-5-5",
+        "variant": "low"
+      }
+    },
+    "mixed-sol": {
+      "orchestrator": {
+        "model": "openai/gpt-6.2-sol",
+        "variant": "medium",
+        "skills": ["*", "!clonedeps", "!worktrees"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "anthropic/claude-opus-5-5",
+        "variant": "high",
+        "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
+        "mcps": []
+      },
+      "council": {
+        "model": "openai/gpt-6.2-sol"
+      },
+      "librarian": {
+        "model": "openai/gpt-6-luna",
+        "skills": [],
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack"]
+      },
+      "explorer": {
+        "model": "anthropic/claude-haiku-5-5",
+        "skills": [],
+        "mcps": []
+      },
+      "designer": {
+        "model": "anthropic/claude-sonnet-5-5",
+        "variant": "high",
+        "skills": [
+          "agent-browser",
+          "brand-voice",
+          "content-research-writer",
+          "impeccable",
+          "openai-imagegen",
+          "romdev",
+          "systematic:*"
+        ],
+        "mcps": ["romdev"]
+      },
+      "fixer": {
+        "model": "anthropic/claude-sonnet-5-5",
+        "variant": "high",
+        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
+        "mcps": ["romdev"]
+      },
+      "fast-generic": {
+        "model": "anthropic/claude-haiku-5-5",
+        "variant": "low"
+      }
+    }
+  },
+  "autoUpdate": false,
+  "agents": {
+    "fast-generic": {
+      "prompt": "You are a fast generic execution agent for routine mechanical command work. Run requested shell commands, inspect results, and report concise outcomes. Prefer small single-purpose commands. Separate state changes from readback, use temporary files for multiline bodies instead of nested shell quoting, and verify supported CLI fields or endpoints before querying. Stop immediately when scoped status or diff shows there is nothing to do. Keep commit/PR creation, monitoring/merge, and local cleanup as separate steps. For git commits, inspect git status, git diff, and recent log first; stage only intended files; avoid secrets; preserve repository commit-message style; never amend, rebase, reset --hard, clean, push, force-push, delete branches, or perform destructive history operations unless the user explicitly requested that exact operation. Do not edit code or make architecture/design decisions.",
+      "orchestratorPrompt": "Delegate to @fast-generic for routine mechanical command work: git status/diff/log reconnaissance, normal commit preparation, creating commits, and no-edit command validation such as lint, typecheck, static verification, tests, builds, or package-manager equivalents. Scope each delegation to one phase: commit/PR creation, monitoring/merge, or local cleanup. Ask it to inspect diffs before committing, stage only intended files, avoid secrets, preserve repository commit-message style, and report final commit hashes or push results. Do not use it for code edits, design work, architecture, debugging strategy, docs research, or destructive git history operations such as amend, rebase, reset --hard, clean, force-push, or deleting branches unless the user explicitly requested that exact operation.",
+      "skills": [],
+      "mcps": []
+    },
+    "connections-researcher": {
+      "model": ["anthropic/claude-sonnet-5-5", "openai/gpt-6.1-terra"]
+    }
+  },
+  "council": {
+    "presets": {
+      "default": {
+        "alpha": {
+          "model": "anthropic/claude-opus-5-5",
+          "variant": "high"
+        },
+        "beta": {
+          "model": "openai/gpt-6.2-sol",
+          "variant": "high"
+        },
+        "gamma": {
+          "model": "anthropic/claude-sonnet-5-5",
+          "variant": "high"
+        }
+      }
+    }
+  }
+}

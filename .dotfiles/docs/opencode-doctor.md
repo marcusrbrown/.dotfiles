@@ -4,7 +4,7 @@
 
 `opencode-doctor` is a diagnostic utility for OpenCode environments. It inspects various aspects of the running OpenCode server, project configuration, and integrated tools to provide a comprehensive health check and debugging information.
 
-If an OpenCode server is not already running on the target port, the doctor will attempt to spawn a temporary server instance for the duration of the diagnostic run. The binary is resolved in order: `OPENCODE_BIN` if set (used verbatim), then `harness`, then `opencode`. If none is on `PATH`, server-backed diagnostics fail. The database-only flags below never spawn a server.
+If an OpenCode server is not already running on the target port, the doctor will attempt to spawn a temporary server instance for the duration of the diagnostic run. The binary is resolved in order: `OPENCODE_BIN` if set (used verbatim), then `harness`. Bare `opencode` is never used: it is the v2 launcher, and the doctor is **v1-only** (it reads the v1 database and needs `harness`). If neither resolves, server-backed diagnostics fail. The database-only flags below never spawn a server.
 
 ---
 

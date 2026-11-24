@@ -44,6 +44,9 @@ lua-language-server = "3.19.2"
 UV_SYSTEM_CERTS = "true"
 NPM_TOKEN = "{{ env.NPM_TOKEN | default(value='') }}"
 _.file = [{ path = "{{ env.HOME }}/.config/mise/.env.local", redact = true }]
+# OpenCode v2: `opencode` here is the v2 launcher. Without this, `mise activate` puts the v1 harness
+# install dir (which also ships an `opencode` bin) ahead of it. `harness` stays v1.
+_.path = ["{{ env.HOME }}/.config/opencode2/bin"]
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]

@@ -41,6 +41,7 @@
 /opencode/openai-auth*.json
 /opencode/tui-preferences.jsonc
 /opencode/*.local.jsonc
+/opencode2/*/*.local.jsonc
 /pipedream/
 /pnpm/config.yaml
 /pnpm/rc

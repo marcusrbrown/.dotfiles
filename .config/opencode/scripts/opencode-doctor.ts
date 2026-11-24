@@ -1862,14 +1862,15 @@ export type ServerSpawnDependencies = {
  * Precedence:
  *   1. OPENCODE_BIN, if set — explicit override always wins, used verbatim.
  *   2. `harness` — the Fro Bot pass-through wrapper around the patched OpenCode
- *      binary (this machine's runtime). Preferred when present.
- *   3. `opencode` — the stock binary. Used only when `harness` is absent.
- *   4. Otherwise throw, naming both candidates.
+ *      binary (this machine's v1 runtime).
+ *   3. Otherwise throw.
+ *
+ * Bare `opencode` is deliberately NOT a candidate: it is OpenCode v2, and the doctor
+ * reads the v1 database.
  *
  * "Resolvable" is a PATH lookup (Bun.which). We deliberately do NOT probe
- * runnability here: a dead shim (e.g. a stale npm:opencode-ai install) may
- * resolve but fail at spawn, and that error surfaces with a clear message
- * rather than paying a slow probe on the hot path.
+ * runnability here: a dead shim may resolve but fail at spawn, and that error
+ * surfaces with a clear message rather than paying for a runnability check on the hot path.
  */
 export function resolveOpencodeBin(
   dependencies: ServerSpawnDependencies = {},
@@ -1880,13 +1881,11 @@ export function resolveOpencodeBin(
   if (explicit) {
     return explicit;
   }
-  for (const candidate of ["harness", "opencode"]) {
-    if (resolveBin(candidate)) {
-      return candidate;
-    }
+  if (resolveBin("harness")) {
+    return "harness";
   }
   throw new Error(
-    `Could not resolve an OpenCode binary: tried "harness" and "opencode", neither is on PATH. Set OPENCODE_BIN to an explicit binary to override.`,
+    `Could not resolve an OpenCode binary: "harness" (v1) is not on PATH. The doctor reads the v1 database and never spawns bare "opencode" (v2). Set OPENCODE_BIN to an explicit v1 binary to override.`,
   );
 }
 

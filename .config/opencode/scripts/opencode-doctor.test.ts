@@ -29,7 +29,7 @@ const TEST_TIMEOUT = 90000;
 const lsofTest = Bun.which("lsof") === null ? test.skip : test;
 const opencodeBin = process.env.OPENCODE_BIN
   ? Bun.which(process.env.OPENCODE_BIN)
-  : Bun.which("harness") ?? Bun.which("opencode");
+  : Bun.which("harness");
 const opencodeTest = opencodeBin === null ? test.skip : test;
 
 let spawnedProcs: Array<Pick<ReturnType<typeof Bun.spawn>, "kill" | "exited">> = [];
@@ -1611,21 +1611,22 @@ describe("resolveOpencodeBin", () => {
     expect(bin).toBe("harness");
   });
 
-  test("opencode used when harness absent", () => {
-    const bin = resolveOpencodeBin({
-      env: {},
-      resolveBin: (name) => (name === "opencode" ? "/bin/opencode" : null),
-    });
-    expect(bin).toBe("opencode");
+  test("bare opencode is never used when harness is absent (it is the v2 launcher)", () => {
+    expect(() =>
+      resolveOpencodeBin({
+        env: {},
+        resolveBin: (name) => (name === "opencode" ? "/bin/opencode" : null),
+      })
+    ).toThrow(/harness/i);
   });
 
-  test("throws clear error naming both candidates when neither exists", () => {
+  test("throws clear error naming harness when it is not on PATH", () => {
     expect(() =>
       resolveOpencodeBin({
         env: {},
         resolveBin: () => null,
       })
-    ).toThrow(/harness.*opencode|opencode.*harness/i);
+    ).toThrow(/"harness".*not on PATH/i);
   });
 });
 
