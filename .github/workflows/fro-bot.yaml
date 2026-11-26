@@ -396,3 +396,5 @@ jobs:
           opencode-config: ${{ secrets.OPENCODE_CONFIG }}
           prompt: ${{ env.PROMPT }}
           isolate-agent: true
+          trace-endpoint: https://traces.fro.bot/marcusrbrown/v1/traces
+          trace-headers: 'Authorization: Bearer ${{ secrets.FRO_BOT_TRACE_TOKEN }}'
