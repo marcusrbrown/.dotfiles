@@ -18,12 +18,14 @@
         "headers": {
           "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
         },
+        "protocol": "legacy",
         "codemode": false
       },
       "gh_grep": {
         "type": "remote",
         "url": "https://mcp.grep.app",
         "oauth": false,
+        "protocol": "legacy",
         "codemode": false
       }
     }
@@ -34,6 +36,8 @@
   },
   "compaction": { "auto": false },
   "snapshots": false,
+  "automations": false,
+  "experimental": { "part_rows": false, "video_generate": false },
   "lsp": true,
   "update": "disable",
   "share": "disabled",

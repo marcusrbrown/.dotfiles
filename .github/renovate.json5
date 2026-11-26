@@ -127,9 +127,8 @@
       automerge: false
     },
     {
-      description: 'Hold @opencode/cli below 2.4 (2.4.x is on hold upstream) and never automerge it.',
+      description: 'Never automerge @opencode/cli: the native binary comes from an install script, approved by allowScripts in .config/opencode2/package.json, and a bump needs a real npm ci.',
       matchPackageNames: ['@opencode/cli'],
-      allowedVersions: '<2.4.0',
       automerge: false
     }
   ],
