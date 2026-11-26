@@ -33,15 +33,18 @@ Tooling that reads the v1 database needs `harness`: `mise run opencode:doctor` (
 - `AGENTS.md`, `commands/`, `skills/` and `oh-my-opencode-slim/*.md` are shared with v1: the launcher copies them from
   `~/.config/opencode/` and deletes profile files that no longer exist there. Nothing else of v1's is read.
 - `.config/opencode2/package.json` + `package-lock.json` — the exact `@opencode/cli` pin. Renovate watches it
-  (`<2.4.0`, no automerge).
+  (no automerge). `allowScripts` in `package.json` approves that one package's install script; npm 12 skips every
+  dependency install script that is not approved.
 - `.config/opencode2/lib/run.sh` — the `env -i` sandbox launcher. `bin/opencode2` picks the workdir.
 
 Config is **copied** into the profile at launch when content differs, so plugins that rewrite their config edit the
 profile copy, never a tracked file. The next launch restores the tracked content: change config in the tracked file.
 Auth, plugin state and `*.local.jsonc` in the profile are never touched.
 
-The npm install and `profile/` under `~/.local/opt/opencode2-pilot/` are not tracked. The launcher refuses to start
-when the installed `@opencode/cli` differs from the pin.
+The npm install and `profile/` under `~/.local/opt/opencode2-pilot/` are not tracked. `package.json` and
+`package-lock.json` there are copies of the tracked files, made by the update step below; `npm ci --prefix` reads
+them. The launcher refuses to start when the installed `@opencode/cli` differs from the pin, or when its native
+binary is a stub (the postinstall did not run; npm leaves a ~200-byte `opencode.exe` that exits 1).
 
 ## `~/.o2h`
 
@@ -56,11 +59,11 @@ or retargets a symlink; if `~/.o2h` is a real file or directory it aborts. Rollb
 git --git-dir=$HOME/.dotfiles --work-tree=$HOME fetch origin main
 git --git-dir=$HOME/.dotfiles --work-tree=$HOME merge --ff-only origin/main
 
-~/.config/opencode2/bin/opencode2 --version     # expect 2.3.2
+~/.config/opencode2/bin/opencode2 --version     # expect 2.4.2
 
 exec zsh -l                                      # new PATH; or open a new terminal
 command -v opencode                              # expect ~/.config/opencode2/bin/opencode
-opencode --version                               # expect 2.3.2
+opencode --version                               # expect 2.4.2
 harness --version                                # expect @fro.bot/harness base:1.19.5 ...
 ```
 
@@ -69,12 +72,35 @@ Stop any running v2 server first (`opencode2 service stop`). The previous `~/.lo
 
 ## Update the pin
 
-Renovate opens the PR (no automerge). After merging it, reinstall:
+Renovate opens the PR (no automerge). After merging it, reinstall. Stop any running v2 server first.
 
 ```sh
 cp ~/.config/opencode2/package.json ~/.config/opencode2/package-lock.json ~/.local/opt/opencode2-pilot/
 npm ci --prefix ~/.local/opt/opencode2-pilot
+~/.config/opencode2/bin/opencode2 --version     # expect the new pin
 ```
+
+The `cp` carries `allowScripts`, so `npm ci` runs the `@opencode/cli` postinstall that installs the native binary.
+The entry is name-only (`"@opencode/cli": true`), so version bumps need no edit. Never use `--ignore-scripts` here.
+If the launcher reports a stub binary, the copied `package.json` lacks `allowScripts`: re-run the two commands above.
+
+To regenerate the lock after editing the pin, use a scratch directory named `opencode2` (npm takes the lock `name`
+from the directory name) and copy both files back:
+
+```sh
+d=$(mktemp -d)/opencode2; mkdir "$d"; cp package.json package-lock.json "$d"/   # from the tracked dir
+(cd "$d" && npm install --package-lock-only --ignore-scripts --save-exact @opencode/cli@<version>)
+cp "$d"/package.json "$d"/package-lock.json .
+```
+
+## Pin back to 2.3.2
+
+2.3.2 accepts the tracked config unchanged. On a branch cut from a fresh `origin/main`, set `@opencode/cli` to
+`2.3.2`, regenerate the lock (above), merge, then run the update commands. Change only the pin: reverting the whole
+update drops `allowScripts`, and npm 12 then installs a stub binary.
+
+The 2.4 migrations only add a table, and `experimental.part_rows: false` keeps 2.4 from writing the rows that make
+2.3.2 duplicate message content, so the profile database stays usable on 2.3.2.
 
 ## Roll back
 
@@ -98,6 +124,7 @@ exec zsh -l
 - One v2 server at a time.
 - Never open the same checkout in v1 and v2 at the same time.
 - Snapshots stay off (`snapshots: false`).
+- `experimental.part_rows` stays `false`: it keeps a downgrade to 2.3.2 from duplicating message content.
 - v1 and v2 share no state: sessions, auth and `opencode.db` are separate.
 - v2 loads project config like v1: repo `opencode.json`, `.opencode/`, instructions and the root `AGENTS.md`.
   - Global `policies` still restrict providers.

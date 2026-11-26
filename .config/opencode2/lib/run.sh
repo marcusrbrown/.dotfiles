@@ -70,6 +70,11 @@ INSTALLED=$(sed -n -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' \
   "$RUNTIME/node_modules/@opencode/cli/package.json" | head -n 1)
 [ "$INSTALLED" = "$PIN" ] ||
   fail "installed @opencode/cli is ${INSTALLED:-unknown}, tracked pin is $PIN. Reinstall: $INSTALL_HINT"
+# The package version matches even when npm skipped the postinstall, which leaves a ~200-byte
+# stub in place of the native binary. A real binary is tens of MB; `wc -c` on a file is a size lookup.
+BIN_SIZE=$(wc -c <"$RUNTIME/node_modules/.bin/opencode2" | tr -d ' ')
+[ "$BIN_SIZE" -gt 1048576 ] ||
+  fail "@opencode/cli native binary is a stub ($BIN_SIZE bytes): its postinstall did not run. Reinstall: $INSTALL_HINT"
 
 mkdir -p "$PROFILE/home" "$PROFILE/config"
 PROFILE_HOME="$(cd "$PROFILE/home" && pwd -P)"

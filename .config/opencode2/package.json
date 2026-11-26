@@ -1,5 +1,8 @@
 {
   "dependencies": {
-    "@opencode/cli": "2.3.2"
+    "@opencode/cli": "2.4.2"
+  },
+  "allowScripts": {
+    "@opencode/cli": true
   }
 }
