@@ -33,7 +33,7 @@
         "type": "remote",
         "url": "https://traces.fro.bot/agent/langfuse/api/public/mcp",
         "oauth": false,
-        "headers": { "Authorization": "Bearer {file:/Users/mrbrown/.config/infra/traces-reader-workstation.token}" },
+        "headers": { "Authorization": "Bearer {file:~/.config/infra/traces-reader-workstation.token}" },
         "timeout": { "execution": 90000 },
         "protocol": "legacy",
         "codemode": false
@@ -42,7 +42,7 @@
         "type": "remote",
         "url": "https://traces.fro.bot/agent/grafana/mcp",
         "oauth": false,
-        "headers": { "Authorization": "Bearer {file:/Users/mrbrown/.config/infra/traces-reader-workstation.token}" },
+        "headers": { "Authorization": "Bearer {file:~/.config/infra/traces-reader-workstation.token}" },
         "timeout": { "execution": 90000 },
         "protocol": "legacy",
         "codemode": false
