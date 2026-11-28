@@ -156,6 +156,9 @@ mv "$GITCFG.tmp" "$GITCFG"
 
 mkdir -p "$PROFILE_HOME/Library"
 ln -sfn "$REAL_HOME/Library/Keychains" "$PROFILE_HOME/Library/Keychains"
+# Reader tokens for remote MCP servers (`{file:~/.config/infra/...}` in opencode.json).
+mkdir -p "$PROFILE_HOME/.config"
+ln -sfn "$REAL_HOME/.config/infra" "$PROFILE_HOME/.config/infra"
 
 # shellcheck disable=SC2016 # the inner script is deliberately single-quoted: it expands in the inner shell
 exec /usr/bin/env -i \
