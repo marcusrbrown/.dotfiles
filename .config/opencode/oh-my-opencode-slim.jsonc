@@ -18,14 +18,9 @@
       "council": {
         "model": "openai/gpt-6.2-sol"
       },
-      "librarian": {
-        "model": "openai/gpt-6-luna",
-        "skills": [],
-        "mcps": []
-      },
       "explorer": {
         "model": "openai/gpt-6-luna",
-        "skills": [],
+        "skills": ["auditing-agent-traces"],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
@@ -53,60 +48,6 @@
         "variant": "low"
       }
     },
-    "opencode-go": {
-      "orchestrator": {
-        "model": "opencode-go/minimax-m3",
-        "variant": "thinking",
-        "skills": ["*", "!clonedeps", "!worktrees"],
-        "mcps": ["*", "!context7"]
-      },
-      "oracle": {
-        "model": "opencode-go/qwen3.7-max",
-        "variant": "max",
-        "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
-        "mcps": []
-      },
-      "council": {
-        "model": "opencode-go/deepseek-v4-pro",
-        "variant": "high"
-      },
-      "librarian": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "variant": "high",
-        "skills": [],
-        "mcps": []
-      },
-      "explorer": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "variant": "high",
-        "skills": [],
-        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
-      },
-      "designer": {
-        "model": "opencode-go/kimi-k2.6",
-        "variant": "medium",
-        "skills": [
-          "agent-browser",
-          "brand-voice",
-          "content-research-writer",
-          "impeccable",
-          "openai-imagegen",
-          "romdev",
-          "systematic:*"
-        ],
-        "mcps": ["romdev"]
-      },
-      "fixer": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "variant": "high",
-        "skills": ["agent-browser", "ce:*", "file-organizer", "impeccable", "romdev", "systematic:*"],
-        "mcps": ["romdev"]
-      },
-      "fast-generic": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "variant": "low"
-      }
-    },
     "mixed": {
       "orchestrator": {
         "model": "anthropic/claude-opus-5-5",
@@ -123,14 +64,9 @@
       "council": {
         "model": "openai/gpt-6.2-sol"
       },
-      "librarian": {
-        "model": "openai/gpt-6-luna",
-        "skills": [],
-        "mcps": []
-      },
       "explorer": {
         "model": "anthropic/claude-haiku-5-5",
-        "skills": [],
+        "skills": ["auditing-agent-traces"],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
@@ -174,14 +110,9 @@
       "council": {
         "model": "openai/gpt-6.2-sol"
       },
-      "librarian": {
-        "model": "openai/gpt-6-luna",
-        "skills": [],
-        "mcps": []
-      },
       "explorer": {
         "model": "openai/gpt-6.1-terra",
-        "skills": [],
+        "skills": ["auditing-agent-traces"],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
@@ -225,14 +156,9 @@
       "council": {
         "model": "openai/gpt-6.2-sol"
       },
-      "librarian": {
-        "model": "openai/gpt-6-luna",
-        "skills": [],
-        "mcps": []
-      },
       "explorer": {
         "model": "anthropic/claude-haiku-5-5",
-        "skills": [],
+        "skills": ["auditing-agent-traces"],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
@@ -268,7 +194,7 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "opencode-go/qwen3.7-max",
+        "model": "opencode-go/qwen4-max",
         "variant": "max",
         "skills": ["ce:brainstorm", "ce:ideate", "simplify", "systematic:*", "reflect"],
         "mcps": []
@@ -277,14 +203,9 @@
         "model": "opencode-go/deepseek-v4-pro",
         "variant": "high"
       },
-      "librarian": {
-        "model": "anthropic/claude-haiku-5-5",
-        "skills": [],
-        "mcps": []
-      },
       "explorer": {
         "model": "anthropic/claude-haiku-5-5",
-        "skills": [],
+        "skills": ["auditing-agent-traces"],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
@@ -328,14 +249,9 @@
       "council": {
         "model": "openai/gpt-6.2-sol"
       },
-      "librarian": {
-        "model": "openai/gpt-6-luna",
-        "skills": [],
-        "mcps": []
-      },
       "explorer": {
         "model": "anthropic/claude-haiku-5-5",
-        "skills": [],
+        "skills": ["auditing-agent-traces"],
         "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
@@ -388,7 +304,7 @@
           "variant": "high"
         },
         "gamma": {
-          "model": "opencode-go/deepseek-v4-pro",
+          "model": "opencode-go/qwen4-max",
           "variant": "high"
         }
       }
