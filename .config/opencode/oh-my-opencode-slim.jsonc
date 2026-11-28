@@ -21,12 +21,12 @@
       "librarian": {
         "model": "openai/gpt-6-luna",
         "skills": [],
-        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
+        "mcps": []
       },
       "explorer": {
         "model": "openai/gpt-6-luna",
         "skills": [],
-        "mcps": []
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
         "model": "openai/gpt-6.2-sol",
@@ -74,13 +74,13 @@
         "model": "opencode-go/deepseek-v4-flash",
         "variant": "high",
         "skills": [],
-        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
+        "mcps": []
       },
       "explorer": {
         "model": "opencode-go/deepseek-v4-flash",
         "variant": "high",
         "skills": [],
-        "mcps": []
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
         "model": "opencode-go/kimi-k2.6",
@@ -126,12 +126,12 @@
       "librarian": {
         "model": "openai/gpt-6-luna",
         "skills": [],
-        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
+        "mcps": []
       },
       "explorer": {
         "model": "anthropic/claude-haiku-5-5",
         "skills": [],
-        "mcps": []
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
         "model": "openai/gpt-6.2-sol",
@@ -177,12 +177,12 @@
       "librarian": {
         "model": "openai/gpt-6-luna",
         "skills": [],
-        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
+        "mcps": []
       },
       "explorer": {
         "model": "openai/gpt-6.1-terra",
         "skills": [],
-        "mcps": []
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
         "model": "anthropic/claude-opus-5-5",
@@ -228,12 +228,12 @@
       "librarian": {
         "model": "openai/gpt-6-luna",
         "skills": [],
-        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
+        "mcps": []
       },
       "explorer": {
         "model": "anthropic/claude-haiku-5-5",
         "skills": [],
-        "mcps": []
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
         "model": "openai/gpt-6.2-sol",
@@ -280,12 +280,12 @@
       "librarian": {
         "model": "anthropic/claude-haiku-5-5",
         "skills": [],
-        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
+        "mcps": []
       },
       "explorer": {
         "model": "anthropic/claude-haiku-5-5",
         "skills": [],
-        "mcps": []
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
         "model": "anthropic/claude-sonnet-5-5",
@@ -331,12 +331,12 @@
       "librarian": {
         "model": "openai/gpt-6-luna",
         "skills": [],
-        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
+        "mcps": []
       },
       "explorer": {
         "model": "anthropic/claude-haiku-5-5",
         "skills": [],
-        "mcps": []
+        "mcps": ["aha", "atlassian", "box", "context7", "gh_grep", "slack", "traces-grafana", "traces-langfuse"]
       },
       "designer": {
         "model": "anthropic/claude-sonnet-5-5",
