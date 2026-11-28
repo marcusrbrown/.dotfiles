@@ -20,6 +20,7 @@
 /grammarly-languageserver/
 /homebrew/trust.json.lock
 /htop/htoprc
+/infra/*.token
 /ipython/profile_default/history.sqlite
 /ipython/profile_default/log
 /ipython/profile_default/pid

@@ -2,11 +2,12 @@
   "$schema": "https://opencode.ai/config.json",
   "plugins": [
     "@cortexkit/opencode-anthropic-auth@2.17.1",
-    "@cortexkit/opencode-openai-auth@1.23.2",
-    "@fro.bot/systematic@3.38.3",
+    "@cortexkit/opencode-openai-auth@1.23.4",
+    "@fro.bot/opencode-plugin@0.3.2",
+    "@fro.bot/systematic@3.38.5",
     "oh-my-opencode-slim@3.0.7",
-    "@cortexkit/opencode-magic-context@0.49.81",
-    "@cortexkit/aft-opencode@0.68.0",
+    "@cortexkit/opencode-magic-context@0.49.90",
+    "@cortexkit/aft-opencode@0.68.1",
     "metacogs@0.4.1"
   ],
   "mcp": {
@@ -25,6 +26,24 @@
         "type": "remote",
         "url": "https://mcp.grep.app",
         "oauth": false,
+        "protocol": "legacy",
+        "codemode": false
+      },
+      "traces-langfuse": {
+        "type": "remote",
+        "url": "https://traces.fro.bot/agent/langfuse/api/public/mcp",
+        "oauth": false,
+        "headers": { "Authorization": "Bearer {file:/Users/mrbrown/.config/infra/traces-reader-workstation.token}" },
+        "timeout": { "execution": 90000 },
+        "protocol": "legacy",
+        "codemode": false
+      },
+      "traces-grafana": {
+        "type": "remote",
+        "url": "https://traces.fro.bot/agent/grafana/mcp",
+        "oauth": false,
+        "headers": { "Authorization": "Bearer {file:/Users/mrbrown/.config/infra/traces-reader-workstation.token}" },
+        "timeout": { "execution": 90000 },
         "protocol": "legacy",
         "codemode": false
       }
